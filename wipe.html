@@ -7,29 +7,104 @@
   <link rel="stylesheet" href="css/eduflow-theme.css">
   <style>
     .wipe-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;padding:16px}
-    .wipe-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px;max-width:440px;width:100%;text-align:center;backdrop-filter:blur(20px)}
+    .wipe-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px;max-width:460px;width:100%;text-align:center;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:var(--shadow-lg)}
+    .wipe-log{background:var(--surface-hover);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-top:16px;max-height:200px;overflow-y:auto;text-align:right;font-size:12px;font-family:var(--font-en);display:none}
+    .wipe-log .ok{color:var(--success)}
+    .wipe-log .err{color:var(--danger)}
+    .wipe-log .info{color:var(--text-muted)}
+    .spin{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite;vertical-align:middle}
+    @keyframes spin{to{transform:rotate(360deg)}}
   </style>
 </head>
 <body data-theme="dark">
   <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
+
   <div class="wipe-wrap">
     <div class="wipe-card">
       <div style="font-size:56px;">🧹</div>
       <h2 style="margin:12px 0 4px;">مسح كل البيانات</h2>
-      <p class="text-sm text-muted" style="margin-bottom:20px;">هيتم حذف كل البيانات المخزنة محلياً (طلاب، مدرسين، حضور، واجبات، إعدادات...) والبدء من الصفر</p>
-      <button class="btn btn-danger w-full btn-lg" onclick="doWipe()">🗑️ امسح كل حاجة وابدأ نضيف</button>
+      <p class="text-sm text-muted" style="margin-bottom:20px;">
+        هيتم حذف كل البيانات من <strong>جهازك</strong> (localStorage) ومن <strong>Firebase</strong> (Firestore) نهائياً، والبدء من الصفر
+      </p>
+
+      <button class="btn btn-danger w-full btn-lg" id="wipeBtn" onclick="doWipe()">🗑️ امسح كل حاجة وابدأ نضيف</button>
       <a href="index.html" class="btn btn-ghost w-full" style="margin-top:8px;">إلغاء</a>
+
+      <div class="wipe-log" id="wipeLog"></div>
     </div>
   </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="js/config.js"></script>
+
   <script>
-    function doWipe(){
-      if(!confirm('تحذير: هيتم حذف كل البيانات نهائياً ولا يمكن التراجع. متابعة؟')) return;
-      // امسح كل مفاتيح localStorage اللي بتبدأ بـ eduflow
-      Object.keys(localStorage).forEach(k=>{ if(k.startsWith('eduflow')) localStorage.removeItem(k); });
-      // امسح sessionStorage (الجلسات)
+    const COLLECTIONS = [
+      'users','groups','enrollments','attendance','vocabulary','homework','submissions',
+      'reattemptRequests','exams','examAttempts','payments','materials','materialOrders',
+      'weeklyReports','tasks','notifications','activityLogs'
+    ];
+    const META_DOCS = ['organization','settings','features','branding'];
+
+    function log(msg, type){
+      const el = document.getElementById('wipeLog');
+      el.style.display = 'block';
+      const line = document.createElement('div');
+      line.className = type || 'info';
+      line.textContent = '> ' + msg;
+      el.appendChild(line);
+      el.scrollTop = el.scrollHeight;
+    }
+
+    async function doWipe(){
+      if(!confirm('⚠️ تحذير: هيتم حذف كل البيانات نهائياً من جهازك ومن Firebase ولا يمكن التراجع. متابعة؟')) return;
+
+      const btn = document.getElementById('wipeBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spin"></span> جاري المسح...';
+
+      // ===== 1) امسح localStorage =====
+      log('مسح localStorage...', 'info');
+      let removed = 0;
+      Object.keys(localStorage).forEach(k => {
+        if (k.startsWith('eduflow')) { localStorage.removeItem(k); removed++; }
+      });
       sessionStorage.clear();
-      alert('✅ تم مسح كل البيانات. هتحوّل لصفحة الإعداد...');
-      location.href = 'setup.html';
+      log('تم حذف ' + removed + ' مفتاح من localStorage', 'ok');
+
+      // ===== 2) امسح Firestore =====
+      try {
+        log('الاتصال بـ Firebase...', 'info');
+        const app = firebase.initializeApp(window.EduFlowConfig.firebase);
+        const db = firebase.firestore();
+
+        for (const col of COLLECTIONS) {
+          try {
+            const snap = await db.collection(col).get();
+            if (snap.empty) { log(col + ': فاضي', 'info'); continue; }
+            const batch = db.batch();
+            snap.docs.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+            log(col + ': تم حذف ' + snap.size + ' عنصر', 'ok');
+          } catch (e) {
+            log(col + ': ' + e.message, 'err');
+          }
+        }
+
+        // meta docs
+        for (const d of META_DOCS) {
+          try { await db.collection('meta').doc(d).delete(); log('meta/' + d + ': تم الحذف', 'ok'); }
+          catch (e) { log('meta/' + d + ': ' + e.message, 'err'); }
+        }
+
+        log('✅ اكتمل المسح من Firebase', 'ok');
+      } catch (err) {
+        log('⚠️ مشكلة في Firebase: ' + err.message, 'err');
+      }
+
+      log('تحويل لصفحة الإعداد...', 'info');
+      setTimeout(() => { location.href = 'setup.html'; }, 1200);
     }
   </script>
 </body>

@@ -1,12 +1,16 @@
-// js/config.js
+// js/config.js — إعدادات EduFlow + Firebase
 const EduFlowConfig = {
-  appName: "EduFlow",
-  company: "NEXORA Digital",
-  version: "2.1.0",
+  // ===== إعدادات عامة =====
+  appName: 'EduFlow',
+  appVersion: '2.1.0',
+  companyName: 'EduFlow',
+  
+  // ===== وضع التشغيل =====
+  demoMode: false,          // ❌ مش demo — production
+  useFirebase: true,        // ✅ استخدم Firebase
+  useLocalStorageFallback: true, // لو Firebase فشل، ارجع لـ localStorage
 
-  // 🔥 false = وضع محلي تجريبي | true = إنتاج بـ Firebase
-  useFirebase: false,
-
+  // ===== Firebase Config =====
   firebase: {
     apiKey: "AIzaSyBj2wM0CgWbXVohSTI8y5fIPmT1vNw3Jl8",
     authDomain: "follow-up-ee4cc.firebaseapp.com",
@@ -18,52 +22,44 @@ const EduFlowConfig = {
     measurementId: "G-B31RT3KJDP"
   },
 
-  demoMode: true,
-
+  // ===== Feature Flags =====
   featureFlags: {
-    vocabulary: { enabled: true, status: "active", name: "نظام المفردات", desc: "بنك الكلمات والصوتيات" },
-    payments: { enabled: true, status: "active", name: "التحصيل المالي", desc: "المدفوعات الشهرية" },
-    materials: { enabled: true, status: "active", name: "المواد والملازم", desc: "الطلبات والمخزون" },
-    homework: { enabled: true, status: "active", name: "الواجبات", desc: "إنشاء وتصحيح" },
-    exams: { enabled: true, status: "active", name: "الامتحانات", desc: "منزلي + داخل الحصة" },
-    attendance: { enabled: true, status: "active", name: "الحضور والغياب", desc: "تتبع يومي" },
-    reports: { enabled: true, status: "active", name: "التقارير", desc: "تحليلات شاملة" },
-    notifications: { enabled: true, status: "active", name: "الإشعارات", desc: "تنبيهات داخلية" },
-    schedule: { enabled: true, status: "ready", name: "الجداول", desc: "حصص ومواعيد" },
-    tasks: { enabled: true, status: "ready", name: "المهام", desc: "متابعات ومهام" },
-    rewards: { enabled: false, status: "coming_soon", name: "المكافآت", desc: "نقاط وشارات" },
-    certificates: { enabled: false, status: "coming_soon", name: "الشهادات", desc: "شهادات إنجاز" },
-    achievements: { enabled: false, status: "coming_soon", name: "الإنجازات", desc: "نظام إنجازات" },
-    branches: { enabled: false, status: "coming_soon", name: "الفروع", desc: "فروع متعددة" },
-    whatsapp: { enabled: false, status: "coming_soon", name: "واتساب", desc: "رسائل واتساب" },
-    aiInsights: { enabled: false, status: "coming_soon", name: "رؤى AI", desc: "تحليلات ذكية" },
-    qrAttendance: { enabled: false, status: "coming_soon", name: "حضور QR", desc: "تسجيل بـ QR" }
+    gamification:     { enabled: false, name: 'نظام النقاط والإنجازات', desc: 'نقاط، شارات، ترتيب طلاب', status: 'coming_soon' },
+    live_chat:        { enabled: false, name: 'الدردشة المباشرة', desc: 'محادثة داخل التطبيق', status: 'coming_soon' },
+    pdf_reports:      { enabled: false, name: 'تقارير PDF', desc: 'تصدير تقارير وشهادات', status: 'coming_soon' },
+    online_lessons:   { enabled: false, name: 'حصص أونلاين', desc: 'Zoom / Google Meet مدمج', status: 'coming_soon' },
+    parent_app:       { enabled: false, name: 'تطبيق ولي الأمر', desc: 'تطبيق موبايل منفصل', status: 'coming_soon' },
+    analytics_ai:     { enabled: false, name: 'تحليلات ذكية', desc: 'توقعات وتوصيات AI', status: 'coming_soon' },
+    multi_language:   { enabled: false, name: 'متعدد اللغات', desc: 'عربي/إنجليزي', status: 'coming_soon' }
   },
 
-  defaultPermissions: {
-    assistant: {
-      students: { view: true, create: true, edit: true, delete: false, export: true },
-      attendance: { view: true, create: true, edit: true, approve: true },
-      homework: { view: true, create: true, edit: true, grade: true, publish: true },
-      exams: { view: true, create: true, edit: true, grade: true, approve: true },
-      payments: { view: true, create: true, edit: true, delete: false },
-      materials: { view: true, create: true, edit: true, delete: false },
-      reports: { view: true, export: true, send: true },
-      vocabulary: { view: true, create: true, edit: true, delete: true },
-      notifications: { view: true, send: true },
-      settings: { view: false, edit: false }
-    },
-    teacher: {
-      students: { view: true, create: false, edit: false, delete: false, export: false },
-      attendance: { view: true, create: true, edit: false, approve: false },
-      homework: { view: true, create: true, edit: true, grade: false, publish: false },
-      exams: { view: true, create: true, edit: true, grade: false, approve: false },
-      payments: { view: false, create: false, edit: false, delete: false },
-      materials: { view: true, create: false, edit: false, delete: false },
-      reports: { view: true, export: false, send: false },
-      vocabulary: { view: true, create: true, edit: true, delete: false },
-      notifications: { view: true, send: false },
-      settings: { view: false, edit: false }
-    }
+  // ===== الإعدادات الافتراضية =====
+  settings: {
+    defaultLanguage: 'ar',
+    defaultTheme: 'dark',
+    currency: 'EGP',
+    currencySymbol: 'ج.م',
+    timezone: 'Africa/Cairo',
+    academicYear: '2025-2026',
+    studentIdPrefix: 'STU-',
+    codePrefix: 'EDU-',
+    supportPhone: '',
+    allowSelfRegistration: true,
+    paymentMethods: ['cash', 'vodafone_cash', 'bank_transfer']
+  },
+
+  // ===== حد أقصى =====
+  limits: {
+    maxStudentsPerGroup: 50,
+    maxHomeworkAttempts: 5,
+    maxExamAttempts: 3,
+    maxFileSizeMB: 10,
+    maxActivityLogs: 1000
   }
 };
+
+// تصدير عالمي
+window.EduFlowConfig = EduFlowConfig;
+
+// ===== تحذير: لو apiKey ظاهرة في الـ frontend، لازم تضبط Firestore Security Rules =====
+console.log('✅ EduFlow Config loaded — Firebase project:', EduFlowConfig.firebase.projectId);
