@@ -20,9 +20,19 @@
     .cert-preview{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border-radius:var(--radius);padding:24px;text-align:center;margin-bottom:16px}
     .wa-btn{background:#25d366;color:#fff;border:none;padding:8px 14px;border-radius:var(--radius-sm);font-weight:700;cursor:pointer}
     .rep-table td,.rep-table th{padding:8px 12px;font-size:13px}
+    .boot-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:16px}
+    .boot-screen .spin{width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
   </style>
 </head>
 <body data-theme="dark">
+
+  <!-- Boot Screen -->
+  <div class="boot-screen" id="bootScreen">
+    <div class="spin"></div>
+    <p class="text-muted">جاري تحميل المنصة...</p>
+  </div>
+
   <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
@@ -64,6 +74,7 @@
               <button class="btn btn-primary" onclick="openTeacherModal()">👨‍🏫 إضافة مدرس</button>
               <button class="btn btn-secondary" onclick="openAssistantModal()">🧑‍💼 إضافة مساعد</button>
               <button class="btn btn-secondary" onclick="openGroupModal()">👥 مجموعة</button>
+              <a href="activation-codes.html" class="btn btn-secondary">🔑 أكواد التفعيل</a>
               <button class="btn btn-secondary" onclick="showSection('backup')">💾 نسخ احتياطي</button>
             </div>
           </div>
@@ -254,19 +265,19 @@
     </main>
   </div>
 
+  <!-- ✅ Firebase SDK أولاً -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+  <!-- ✅ App Scripts بالترتيب الصح -->
   <script src="js/config.js"></script>
+  <script src="js/firebase-service.js"></script>
   <script src="js/data-service.js"></script>
   <script src="js/theme-manager.js"></script>
   <script src="js/auth-service.js"></script>
+
   <script>
-    // ✅ بدون return مبكر
-    AuthService.requireRole(['super_admin']);
-    const currentUser = AuthService.getCurrentUser();
-    console.log('✅ Admin Dashboard initialized for:', currentUser.name);
-
-    document.getElementById('userName').textContent = currentUser.name;
-    document.getElementById('userAvatar').textContent = currentUser.name.charAt(0);
-
     const DAYS=[{en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},{en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'},{en:'Saturday',ar:'السبت'}];
     const dayAr = en => (DAYS.find(d => d.en === en) || {}).ar || en;
     const dayOptions = () => DAYS.map(d => `<option value="${d.en}">${d.ar}</option>`).join('');
@@ -274,23 +285,62 @@
     const save = d => DataService._saveData(d);
     const initKey = (d,k,v) => { if(!d[k]) d[k]=v; };
 
-    const adminMenu = [
-      {section:"نظرة عامة",items:[{id:"overview",label:"الرئيسية",icon:"🏠"}]},
-      {section:"الأشخاص",items:[{id:"students",label:"الطلاب",icon:"🎓"},{id:"teachers",label:"المدرسون",icon:"👨‍🏫"},{id:"assistants",label:"المساعدون",icon:"🧑‍💼"}]},
-      {section:"الأكاديمي",items:[{id:"groups",label:"المجموعات",icon:"👥"},{id:"attendance",label:"الحضور",icon:"📋"},{id:"homework",label:"الواجبات",icon:"📝"},{id:"exams",label:"الامتحانات",icon:"🎓"},{id:"vocabulary",label:"المفردات",icon:"📚"}]},
-      {section:"العمليات",items:[{id:"tasks",label:"المهام",icon:"✅"},{id:"followups",label:"المتابعات",icon:"📌"},{id:"calendar",label:"التقويم",icon:"📅"}]},
-      {section:"المالية",items:[{id:"materials",label:"المواد",icon:"📦"},{id:"payments",label:"المدفوعات",icon:"💰"}]},
-      {section:"التواصل",items:[{id:"notifications",label:"الإشعارات",icon:"🔔"},{id:"templates",label:"القوالب",icon:"📄"},{id:"whatsapp",label:"واتساب",icon:"💬"}]},
-      {section:"التحليلات",items:[{id:"reports",label:"التقارير",icon:"📊"}]},
-      {section:"المشاركة",items:[{id:"achievements",label:"الإنجازات",icon:"🏆"},{id:"rewards",label:"المكافآت",icon:"🎁"},{id:"certificates",label:"الشهادات",icon:"📜"}]},
-      {section:"الإدارة",items:[{id:"branches",label:"الفروع",icon:"🏫"},{id:"permissions",label:"الصلاحيات",icon:"🔐"},{id:"settings",label:"الإعدادات",icon:"⚙️"},{id:"features",label:"الخصائص",icon:"🚩"},{id:"backup",label:"النسخ الاحتياطي",icon:"💾"},{id:"logs",label:"سجل النشاط",icon:"📜"}]}
-    ];
+    let currentUser = null;
 
-    document.getElementById('sidebarNav').innerHTML = adminMenu.map((s,si) =>
-      `<div class="sidebar-section"><div class="sidebar-section-title">${s.section}</div>${s.items.map((it,ii) =>
-        `<div class="sidebar-item ${si===0&&ii===0?'active':''}" data-section="${it.id}" onclick="showSection('${it.id}')"><span class="sidebar-item-icon">${it.icon}</span><span class="sidebar-item-label">${it.label}</span></div>`
-      ).join('')}</div>`
-    ).join('');
+    // ✅ Boot: استنى Firebase + DataService يجهزوا
+    (async function boot(){
+      try {
+        await DataService.init();
+        if (!AuthService.requireRole(['super_admin'])) return;
+        currentUser = AuthService.getCurrentUser();
+        document.getElementById('userName').textContent = currentUser.name;
+        document.getElementById('userAvatar').textContent = currentUser.name.charAt(0);
+        document.getElementById('bootScreen').style.display = 'none';
+        console.log('✅ Admin Dashboard initialized for:', currentUser.name);
+
+        // ✅ Auto-refresh عند تحديث Firestore
+        window.__eduflowRefresh = function(type) {
+          console.log('🔄 Data changed:', type);
+          const active = document.querySelector('.sidebar-item.active')?.dataset.section;
+          if (active) showSection(active);
+        };
+
+        buildMenu();
+        loadOverview();
+      } catch (err) {
+        console.error('❌ Boot error:', err);
+        document.getElementById('bootScreen').innerHTML =
+          '<p style="color:var(--danger)">حصل خطأ أثناء التحميل: ' + err.message + '</p>' +
+          '<a href="login.html" class="btn btn-primary">العودة للدخول</a>';
+      }
+    })();
+
+    function buildMenu(){
+      const adminMenu = [
+        {section:"نظرة عامة",items:[{id:"overview",label:"الرئيسية",icon:"🏠"}]},
+        {section:"الأشخاص",items:[{id:"students",label:"الطلاب",icon:"🎓"},{id:"teachers",label:"المدرسون",icon:"👨‍🏫"},{id:"assistants",label:"المساعدون",icon:"🧑‍💼"}]},
+        {section:"الأكاديمي",items:[{id:"groups",label:"المجموعات",icon:"👥"},{id:"attendance",label:"الحضور",icon:"📋"},{id:"homework",label:"الواجبات",icon:"📝"},{id:"exams",label:"الامتحانات",icon:"🎓"},{id:"vocabulary",label:"المفردات",icon:"📚"}]},
+        {section:"العمليات",items:[{id:"tasks",label:"المهام",icon:"✅"},{id:"followups",label:"المتابعات",icon:"📌"},{id:"calendar",label:"التقويم",icon:"📅"}]},
+        {section:"المالية",items:[{id:"materials",label:"المواد",icon:"📦"},{id:"payments",label:"المدفوعات",icon:"💰"}]},
+        {section:"التواصل",items:[{id:"notifications",label:"الإشعارات",icon:"🔔"},{id:"templates",label:"القوالب",icon:"📄"},{id:"whatsapp",label:"واتساب",icon:"💬"}]},
+        {section:"التحليلات",items:[{id:"reports",label:"التقارير",icon:"📊"}]},
+        {section:"المشاركة",items:[{id:"achievements",label:"الإنجازات",icon:"🏆"},{id:"rewards",label:"المكافآت",icon:"🎁"},{id:"certificates",label:"الشهادات",icon:"📜"}]},
+        {section:"الإدارة",items:[
+          {id:"branches",label:"الفروع",icon:"🏫"},
+          {id:"permissions",label:"الصلاحيات",icon:"🔐"},
+          {id:"settings",label:"الإعدادات",icon:"⚙️"},
+          {id:"features",label:"الخصائص",icon:"🚩"},
+          {id:"backup",label:"النسخ الاحتياطي",icon:"💾"},
+          {id:"logs",label:"سجل النشاط",icon:"📜"}
+        ]}
+      ];
+
+      document.getElementById('sidebarNav').innerHTML = adminMenu.map((s,si) =>
+        `<div class="sidebar-section"><div class="sidebar-section-title">${s.section}</div>${s.items.map((it,ii) =>
+          `<div class="sidebar-item ${si===0&&ii===0?'active':''}" data-section="${it.id}" onclick="showSection('${it.id}')"><span class="sidebar-item-icon">${it.icon}</span><span class="sidebar-item-label">${it.label}</span></div>`
+        ).join('')}</div>`
+      ).join('');
+    }
 
     // ✅ Show Section
     window.showSection = function(id) {
@@ -298,7 +348,7 @@
       document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
       const section = document.getElementById('section-'+id);
       if (section) section.classList.add('active');
-      
+
       document.querySelectorAll('.sidebar-item').forEach(i =>
         i.classList.toggle('active', i.dataset.section === id)
       );
@@ -315,7 +365,7 @@
       };
       document.getElementById('pageTitle').textContent = (t[id] && t[id][0]) || '';
       document.getElementById('pageSubtitle').textContent = (t[id] && t[id][1]) || '';
-      
+
       const loaders = {
         overview:loadOverview, students:loadStudents, teachers:loadTeachers, assistants:loadAssistants,
         groups:loadGroups, attendance:loadAttendance, homework:loadHomework, exams:loadExams,
@@ -354,7 +404,7 @@
       let list = DataService.getStudents();
       if (q) list = list.filter(s => s.name.toLowerCase().includes(q) || (s.code||'').toLowerCase().includes(q) || (s.phone||'').includes(q));
       document.getElementById('studentsTable').innerHTML = list.map(s => {
-        const ts = DataService.getStudentTeachers(s.id).map(x => x.teacher.name).join('، ') || '—';
+        const ts = DataService.getStudentTeachers(s.id).map(x => x.teacher?.name).filter(Boolean).join('، ') || '—';
         return `<tr><td><strong style="color:var(--primary)">${s.code||'—'}</strong></td><td>${s.name}</td><td>${ts}</td><td>${s.phone}</td>
         <td><button class="btn btn-ghost btn-sm" onclick="viewStudent('${s.id}')">👁️</button><button class="btn btn-ghost btn-sm" onclick="editStudentEnroll('${s.id}')">🔗</button><button class="btn btn-danger btn-sm" onclick="delUser('${s.id}')">🗑️</button></td></tr>`;
       }).join('') || '<tr><td colspan="5" class="text-center text-muted">لا يوجد طلاب</td></tr>';
@@ -392,11 +442,11 @@
         `<label style="display:flex;gap:8px;align-items:center;margin-bottom:6px;"><input type="checkbox" class="s-grp" value="${g.id}"> ${g.name} (${dayAr(g.day)} ${g.time})</label>`
       ).join('') || '<p class="text-muted">لا مجموعات</p>';
     };
-    // ✅ استبدل saveStudent القديمة بدي
-    window.saveStudent = function(e) {
+
+    window.saveStudent = async function(e) {
       e.preventDefault();
       const enrollments = [...document.querySelectorAll('.s-grp')].filter(c => c.checked).map(c => ({groupId:c.value}));
-      const r = DataService.addStudentByAdmin({
+      const r = await DataService.addStudentByAdmin({
         name:document.getElementById('sName').value,
         phone:document.getElementById('sPhone').value,
         parentPhone:document.getElementById('sParent').value,
@@ -408,15 +458,13 @@
         password:document.getElementById('sPass').value,
         enrollments
       });
-      DataService.logActivity(currentUser.id, currentUser.name, 'إضافة طالب', r.code);
+      await DataService.logActivity(currentUser.id, currentUser.name, 'إضافة طالب', r.code);
       ThemeManager.closeModal();
       loadStudents();
-      // ✅ اعرض الكود في نافذة واضحة بدل الـ toast
       showStudentCode(r);
       return false;
     };
 
-    // ✅ جديدة: نافذة عرض كود الطالب
     window.showStudentCode = function(r) {
       ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🎉 تم إضافة الطالب</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
       <div class="modal-body" style="text-align:center;">
@@ -430,7 +478,7 @@
         <p class="text-sm" style="color:var(--warning);margin-top:10px;">⚠️ الكود مش هيظهر تاني — انسخه دلوقتي</p>
       </div>`);
     };
-                                                                                    
+
     window.viewStudent = function(id) {
       const s = DataService.getUserById(id);
       const ts = DataService.getStudentTeachers(id);
@@ -499,9 +547,9 @@
         <button class="btn btn-primary w-full">💾 حفظ</button></form></div>`);
     };
 
-    window.saveTeacher = function(e) {
+    window.saveTeacher = async function(e) {
       e.preventDefault();
-      DataService.addUser({
+      await DataService.addUser({
         name:document.getElementById('tName').value,
         subject:document.getElementById('tSub').value,
         phone:document.getElementById('tPhone').value,
@@ -512,7 +560,7 @@
         password:document.getElementById('tPass').value,
         role:'teacher'
       });
-      DataService.logActivity(currentUser.id, currentUser.name, 'إضافة مدرس', document.getElementById('tName').value);
+      await DataService.logActivity(currentUser.id, currentUser.name, 'إضافة مدرس', document.getElementById('tName').value);
       ThemeManager.closeModal();
       ThemeManager.toast('تم ✓', 'success');
       loadTeachers();
@@ -554,9 +602,9 @@
       </div>`);
     };
 
-    window.addGroupToTeacher = function(tid) {
+    window.addGroupToTeacher = async function(tid) {
       const t = DataService.getUserById(tid);
-      DataService.addGroup({
+      await DataService.addGroup({
         name:document.getElementById('tfName').value,
         teacherId:tid,
         subject:t.subject,
@@ -610,9 +658,9 @@
         <button class="btn btn-primary w-full">💾 حفظ</button></form></div>`);
     };
 
-    window.saveAssistant = function(e) {
+    window.saveAssistant = async function(e) {
       e.preventDefault();
-      DataService.addUser({
+      await DataService.addUser({
         name:document.getElementById('aName').value,
         email:document.getElementById('aEmail').value,
         phone:document.getElementById('aPhone').value,
@@ -636,8 +684,8 @@
       <button class="btn btn-primary w-full" onclick="saveAssign('${id}')">💾 حفظ</button></div>`);
     };
 
-    window.saveAssign = function(id) {
-      DataService.assignAssistantTeachers(id, [...document.querySelectorAll('.asg-chk')].filter(c => c.checked).map(c => c.value));
+    window.saveAssign = async function(id) {
+      await DataService.assignAssistantTeachers(id, [...document.querySelectorAll('.asg-chk')].filter(c => c.checked).map(c => c.value));
       ThemeManager.closeModal();
       ThemeManager.toast('تم ✓', 'success');
       loadAssistants();
@@ -653,13 +701,13 @@
       <button class="btn btn-primary w-full" style="margin-top:12px;" onclick="savePerms('${id}')">💾 حفظ</button></div>`);
     };
 
-    window.savePerms = function(id) {
+    window.savePerms = async function(id) {
       const perms = {};
       document.querySelectorAll('.permission-grid input').forEach(c => {
         const m = c.dataset.m, a = c.dataset.a;
         (perms[m] = perms[m] || {})[a] = c.checked;
       });
-      DataService.updateUser(id, {permissions:perms});
+      await DataService.updateUser(id, {permissions:perms});
       ThemeManager.closeModal();
       ThemeManager.toast('تم ✓', 'success');
     };
@@ -714,7 +762,7 @@
         <button class="btn btn-primary w-full">💾 حفظ</button></form></div>`);
     };
 
-    window.saveGroup = function(e, editId) {
+    window.saveGroup = async function(e, editId) {
       e.preventDefault();
       const data = {
         name:document.getElementById('gName').value,
@@ -728,17 +776,17 @@
         monthlyFee:parseInt(document.getElementById('gFee').value),
         maxStudents:parseInt(document.getElementById('gMax').value)
       };
-      if (editId) DataService.updateGroup(editId, data);
-      else DataService.addGroup(data);
+      if (editId) await DataService.updateGroup(editId, data);
+      else await DataService.addGroup(data);
       ThemeManager.closeModal();
       ThemeManager.toast('تم ✓', 'success');
       renderGroups();
       return false;
     };
 
-    window.delGroup = function(id) {
+    window.delGroup = async function(id) {
       if (!confirm('حذف المجموعة؟')) return;
-      DataService.deleteGroup(id);
+      await DataService.deleteGroup(id);
       renderGroups();
     };
 
@@ -768,8 +816,8 @@
       loadAttendance();
     };
 
-    window.approveAtt = function(id) {
-      DataService.approveAttendance(id, currentUser.id);
+    window.approveAtt = async function(id) {
+      await DataService.approveAttendance(id, currentUser.id);
       ThemeManager.toast('تم ✓', 'success');
       loadAttendance();
     };
@@ -871,12 +919,12 @@
       ).join('');
     };
 
-    window.saveHw = function() {
+    window.saveHw = async function() {
       if (!document.getElementById('hwTitle').value || !hwQ.length) {
         ThemeManager.toast('أكمل البيانات', 'error');
         return;
       }
-      DataService.addHomework({
+      await DataService.addHomework({
         title:document.getElementById('hwTitle').value,
         groupId:document.getElementById('hwGroup').value,
         deadline:document.getElementById('hwDeadline').value,
@@ -897,9 +945,9 @@
       ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📝 ${h.title}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">${h.questions.map((q,i)=>`<div class="text-sm" style="padding:6px;background:var(--surface-hover);border-radius:6px;margin-bottom:4px;">س${i+1}: ${q.text}</div>`).join('')}<h4 class="text-sm" style="margin:12px 0 8px;">التسليمات:</h4>${subs.map(s=>`<div class="text-sm">${DataService.getUserById(s.studentId)?.name} — ${s.status==='graded'?s.score+'%':'معلق'}</div>`).join('')||'<p class="text-muted">لا تسليمات</p>'}</div>`);
     };
 
-    window.delHw = function(id) {
+    window.delHw = async function(id) {
       if (!confirm('حذف؟')) return;
-      DataService.deleteHomework(id);
+      await DataService.deleteHomework(id);
       loadHomework();
     };
 
@@ -957,12 +1005,12 @@
       ).join('');
     };
 
-    window.saveEx = function() {
+    window.saveEx = async function() {
       if (!document.getElementById('exTitle').value || !exQ.length) {
         ThemeManager.toast('أكمل البيانات', 'error');
         return;
       }
-      DataService.addExam({
+      await DataService.addExam({
         title:document.getElementById('exTitle').value,
         groupId:document.getElementById('exGroup').value,
         mode:document.getElementById('exMode').value,
@@ -985,13 +1033,13 @@
       ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🎓 ${e.title}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">${at.map(a=>`<div class="text-sm" style="padding:6px;background:var(--surface-hover);border-radius:6px;margin-bottom:4px;">${DataService.getUserById(a.studentId)?.name} — ${a.status==='approved'?a.score+'%':a.status}</div>`).join('')||'<p class="text-muted">لا محاولات</p>'}</div>`);
     };
 
-    window.delEx = function(id) {
+    window.delEx = async function(id) {
       if (!confirm('حذف؟')) return;
-      DataService.deleteExam(id);
+      await DataService.deleteExam(id);
       loadExams();
     };
 
-    // ===== 8) Vocabulary (general) =====
+    // ===== 8) Vocabulary =====
     let vocabFilter = 'all';
     window.loadVocabulary = function() {
       const subjects = [...new Set(DataService.getVocabulary().map(v => v.subject))];
@@ -1029,9 +1077,9 @@
         <button class="btn btn-primary w-full">💾 حفظ</button></form></div>`);
     };
 
-    window.saveVocab = function(e) {
+    window.saveVocab = async function(e) {
       e.preventDefault();
-      DataService.addVocabulary({
+      await DataService.addVocabulary({
         word:document.getElementById('vWord').value,
         meaning:document.getElementById('vMean').value,
         example:document.getElementById('vEx').value,
@@ -1046,8 +1094,8 @@
       return false;
     };
 
-    window.delVocab = function(id) {
-      DataService.deleteVocabulary(id);
+    window.delVocab = async function(id) {
+      await DataService.deleteVocabulary(id);
       renderVocab();
     };
 
@@ -1071,9 +1119,9 @@
       ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">✅ مهمة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveTask(event)"><div class="form-group"><label>العنوان</label><input id="tkT" class="form-input" required></div><div class="form-group"><label>المسؤول</label><select id="tkTo" class="form-select">${DataService.getAssistants().map(a=>`<option value="${a.id}">${a.name}</option>`).join('')}</select></div><div class="form-group"><label>الأولوية</label><select id="tkP" class="form-select"><option value="low">منخفضة</option><option value="medium" selected>متوسطة</option><option value="high">عالية</option></select></div><button class="btn btn-primary w-full">💾</button></form></div>`);
     };
 
-    window.saveTask = function(e) {
+    window.saveTask = async function(e) {
       e.preventDefault();
-      DataService.addTask({
+      await DataService.addTask({
         title:document.getElementById('tkT').value,
         assignedTo:document.getElementById('tkTo').value,
         priority:document.getElementById('tkP').value,
@@ -1084,15 +1132,14 @@
       return false;
     };
 
-    window.toggleTask = function(id) {
+    window.toggleTask = async function(id) {
       const d = db();
       const t = d.tasks.find(x => x.id === id);
-      if (t) t.status = t.status === 'completed' ? 'open' : 'completed';
-      save(d);
+      if (t) { t.status = t.status === 'completed' ? 'open' : 'completed'; save(d); await DataService.updateTask(id, {status:t.status}); }
       loadTasks();
     };
 
-    window.delTask = function(id) {
+    window.delTask = async function(id) {
       const d = db();
       d.tasks = d.tasks.filter(t => t.id !== id);
       save(d);
@@ -1109,9 +1156,9 @@
       ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📌 متابعة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveFu(event)"><div class="form-group"><label>الطالب</label><select id="fuStu" class="form-select">${DataService.getStudents().map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div><div class="form-group"><label>السبب</label><textarea id="fuR" class="form-textarea" required></textarea></div><button class="btn btn-primary w-full">💾</button></form></div>`);
     };
 
-    window.saveFu = function(e) {
+    window.saveFu = async function(e) {
       e.preventDefault();
-      DataService.addTask({
+      await DataService.addTask({
         title:'متابعة',
         studentId:document.getElementById('fuStu').value,
         notes:document.getElementById('fuR').value,
@@ -1123,8 +1170,8 @@
       return false;
     };
 
-    window.completeFu = function(id) {
-      DataService.updateTask(id, {status:'completed'});
+    window.completeFu = async function(id) {
+      await DataService.updateTask(id, {status:'completed'});
       loadFollowups();
     };
 
@@ -1150,7 +1197,7 @@
       ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📦 مادة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveMat(event,'${editId||''}')"><div class="form-group"><label>الاسم</label><input id="mName" class="form-input" value="${m?.name||''}" required></div><div class="form-group"><label>الوصف</label><textarea id="mDesc" class="form-textarea">${m?.description||''}</textarea></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المادة</label><input id="mSub" class="form-input" value="${m?.subject||'English'}"></div><div class="form-group"><label>السعر</label><input type="number" id="mPrice" class="form-input" value="${m?.price||0}"></div></div><div class="form-group"><label>التوفر</label><select id="mAvail" class="form-select"><option value="available" ${m?.availability==='available'?'selected':''}>متوفر</option><option value="out_of_stock" ${m?.availability==='out_of_stock'?'selected':''}>غير متوفر</option></select></div><button class="btn btn-primary w-full">💾</button></form></div>`);
     };
 
-    window.saveMat = function(e, editId) {
+    window.saveMat = async function(e, editId) {
       e.preventDefault();
       const data = {
         name:document.getElementById('mName').value,
@@ -1165,16 +1212,16 @@
         Object.assign(m, data);
         save(d);
       } else {
-        DataService.addMaterial(data);
+        await DataService.addMaterial(data);
       }
       ThemeManager.closeModal();
       loadMaterials();
       return false;
     };
 
-    window.delMat = function(id) {
+    window.delMat = async function(id) {
       if (!confirm('حذف؟')) return;
-      DataService.deleteMaterial(id);
+      await DataService.deleteMaterial(id);
       loadMaterials();
     };
 
@@ -1192,9 +1239,9 @@
       ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">💰 دفعة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return savePay(event)"><div class="form-group"><label>الطالب</label><select id="pStu" class="form-select">${DataService.getStudents().map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div><div class="form-group"><label>الشهر</label><input type="month" id="pMonth" class="form-input" required></div><div class="form-group"><label>المبلغ</label><input type="number" id="pAmt" class="form-input" required></div><button class="btn btn-primary w-full">💾</button></form></div>`);
     };
 
-    window.savePay = function(e) {
+    window.savePay = async function(e) {
       e.preventDefault();
-      DataService.addPayment({
+      await DataService.addPayment({
         studentId:document.getElementById('pStu').value,
         month:document.getElementById('pMonth').value,
         amount:parseInt(document.getElementById('pAmt').value),
@@ -1205,10 +1252,10 @@
       return false;
     };
 
-    window.recordPay = function(id) {
+    window.recordPay = async function(id) {
       const amt = prompt('المبلغ:');
       if (!amt) return;
-      DataService.recordPayment(id, parseInt(amt), 'cash');
+      await DataService.recordPayment(id, parseInt(amt), 'cash');
       ThemeManager.toast('تم ✓', 'success');
       loadPayments();
     };
@@ -1228,15 +1275,15 @@
         <button class="btn btn-primary w-full">📤 إرسال</button></form></div>`);
     };
 
-    window.sendNotify = function(e) {
+    window.sendNotify = async function(e) {
       e.preventDefault();
-      DataService.addNotification({
+      await DataService.addNotification({
         title:document.getElementById('nTitle').value,
         message:document.getElementById('nMsg').value,
         targetUserId:document.getElementById('nTarget').value,
         priority:'medium', type:'general'
       });
-      DataService.logActivity(currentUser.id, currentUser.name, 'إرسال إشعار', document.getElementById('nTarget').value);
+      await DataService.logActivity(currentUser.id, currentUser.name, 'إرسال إشعار', document.getElementById('nTarget').value);
       ThemeManager.closeModal();
       loadNotifications();
       return false;
@@ -1287,8 +1334,10 @@
     window.useTemplate = function(i) {
       location.hash = '';
       showSection('whatsapp');
-      document.getElementById('waTemplate').value = i;
-      previewWA();
+      setTimeout(() => {
+        document.getElementById('waTemplate').value = i;
+        previewWA();
+      }, 100);
     };
 
     // ===== 13) WhatsApp =====
@@ -1306,12 +1355,12 @@
       document.getElementById('waPreview').value = msg;
     };
 
-    window.sendWA = function() {
+    window.sendWA = async function() {
       const s = DataService.getUserById(document.getElementById('waStudent').value);
       const num = (s.parentPhone || s.phone || '').replace(/\D/g, '');
       const msg = encodeURIComponent(document.getElementById('waPreview').value);
       window.open(`https://wa.me/2${num}?text=${msg}`, '_blank');
-      DataService.logActivity(currentUser.id, currentUser.name, 'إرسال واتساب', s.name);
+      await DataService.logActivity(currentUser.id, currentUser.name, 'إرسال واتساب', s.name);
     };
 
     // ===== 14) Reports =====
@@ -1326,7 +1375,7 @@
       const d = db();
       let html = '';
       const att = DataService.getAttendance().filter(a => a.status === 'approved');
-      
+
       if (r === 'all' || r === 'attendance') {
         html += `<h4 style="margin-bottom:8px;">📋 تقرير الحضور حسب المجموعة</h4><table class="table rep-table"><thead><tr><th>المجموعة</th><th>سجلات</th><th>حاضر</th><th>غائب</th><th>النسبة</th></tr></thead><tbody>` + DataService.getGroups().map(g => {
           const ga = att.filter(a => a.groupId === g.id);
@@ -1335,7 +1384,7 @@
           return `<tr><td>${g.name}</td><td>${tot}</td><td>${pr}</td><td>${tot-pr}</td><td>${tot?Math.round(pr/tot*100):0}%</td></tr>`;
         }).join('') + `</tbody></table>`;
       }
-      
+
       if (r === 'all' || r === 'performance') {
         html += `<h4 style="margin:16px 0 8px;">📊 أداء الطلاب</h4><table class="table rep-table"><thead><tr><th>الطالب</th><th>حضور</th><th>واجبات</th><th>متوسط</th></tr></thead><tbody>` + DataService.getStudents().map(s => {
           const sa = att.filter(a => a.records.some(x => x.studentId === s.id && x.status === 'present')).length;
@@ -1344,13 +1393,13 @@
           return `<tr><td>${s.name}</td><td>${sa}</td><td>${sub.length}</td><td>${avg}%</td></tr>`;
         }).join('') + `</tbody></table>`;
       }
-      
+
       if (r === 'all' || r === 'payments') {
         html += `<h4 style="margin:16px 0 8px;">💰 التقرير المالي</h4><table class="table rep-table"><thead><tr><th>الطالب</th><th>الشهر</th><th>المطلوب</th><th>المدفوع</th><th>المتبقي</th></tr></thead><tbody>` + DataService.getPayments().map(p =>
           `<tr><td>${DataService.getUserById(p.studentId)?.name||'-'}</td><td>${p.month}</td><td>${p.amount}</td><td>${p.paidAmount}</td><td>${p.amount-p.paidAmount}</td></tr>`
         ).join('') + `</tbody></table>`;
       }
-      
+
       document.getElementById('reportView').innerHTML = html;
     };
 
@@ -1432,7 +1481,7 @@
       ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📜 إصدار شهادة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveCert(event)"><div class="form-group"><label>الطالب</label><select id="ceStu" class="form-select">${DataService.getStudents().map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div><div class="form-group"><label>النوع</label><select id="ceType" class="form-select"><option>شهادة تميز</option><option>شهادة حضور</option><option>شهادة تفوق</option><option>شهادة إنجاز</option></select></div><div class="form-group"><label>السبب</label><textarea id="ceR" class="form-textarea"></textarea></div><button class="btn btn-primary w-full">📜 إصدار</button></form></div>`);
     };
 
-    window.saveCert = function(e) {
+    window.saveCert = async function(e) {
       e.preventDefault();
       const s = DataService.getUserById(document.getElementById('ceStu').value);
       const c = JSON.parse(localStorage.getItem('eduflow_certificates') || '[]');
@@ -1444,7 +1493,7 @@
         code:'CERT-'+Date.now().toString().slice(-6)
       });
       localStorage.setItem('eduflow_certificates', JSON.stringify(c));
-      DataService.logActivity(currentUser.id, currentUser.name, 'إصدار شهادة', s.name);
+      await DataService.logActivity(currentUser.id, currentUser.name, 'إصدار شهادة', s.name);
       ThemeManager.closeModal();
       loadCertificates();
       return false;
@@ -1510,7 +1559,7 @@
 
     window.renderLogo = function() {
       const b = JSON.parse(localStorage.getItem('eduflow_branding') || 'null');
-      document.getElementById('logoPreview').innerHTML = b?.logo ? `<img src="${b.logo}" style="width:100%;height:100%;object-fit:cover;">` : ThemeManager.defaultLogo;
+      document.getElementById('logoPreview').innerHTML = b?.logo ? `<img src="${b.logo}" style="width:100%;height:100%;object-fit:cover;">` : (ThemeManager.defaultLogo || '🎓');
     };
 
     window.handleLogo = function(e) {
@@ -1520,15 +1569,15 @@
       r.onload = ev => {
         localStorage.setItem('eduflow_branding', JSON.stringify({logo:ev.target.result, companyName:DataService.getOrganization().name}));
         DataService.updateOrganization({logo:ev.target.result});
-        ThemeManager.applyBranding();
+        if (ThemeManager.applyBranding) ThemeManager.applyBranding();
         renderLogo();
         ThemeManager.toast('تم ✓', 'success');
       };
       r.readAsDataURL(f);
     };
 
-    window.saveSettings = function() {
-      DataService.updateOrganization({
+    window.saveSettings = async function() {
+      await DataService.updateOrganization({
         name:document.getElementById('setCompany').value,
         contactPhone:document.getElementById('setPhone').value
       });
@@ -1597,9 +1646,9 @@
       ).join('') || '<p class="text-muted">لا سجل</p>';
     };
 
-    window.delUser = function(id) {
+    window.delUser = async function(id) {
       if (!confirm('تأكيد الحذف؟')) return;
-      DataService.deleteUser(id);
+      await DataService.deleteUser(id);
       loadStudents();
       loadTeachers();
       loadAssistants();
@@ -1608,11 +1657,6 @@
     window.handleLogout = function() {
       if (confirm('تسجيل الخروج؟')) AuthService.logout();
     };
-
-    // ✅ تشغيل
-    console.log('🚀 Loading overview...');
-    loadOverview();
-    console.log('✅ Admin Dashboard ready!');
   </script>
 </body>
 </html>

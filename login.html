@@ -1,99 +1,44 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>تسجيل الدخول - EduFlow</title>
   <link rel="stylesheet" href="css/eduflow-theme.css">
-  <style>
-    .auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;padding:16px}
-    .auth-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:36px 32px;max-width:440px;width:100%;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:var(--shadow-lg);position:relative;overflow:hidden}
-    .auth-logo{width:80px;height:80px;border-radius:24px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;margin:0 auto 16px;box-shadow:0 12px 32px var(--primary-glow);animation:float 3s ease-in-out infinite}
-    .auth-logo svg{width:44px;height:44px}
-    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-    .auth-brand{font-family:var(--font-en);font-size:30px;font-weight:800;text-align:center;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-    .auth-tag{text-align:center;font-size:12px;color:var(--text-muted);margin-bottom:24px}
-    .auth-tabs{display:flex;gap:4px;background:var(--surface-hover);border-radius:var(--radius-sm);padding:4px;margin-bottom:20px}
-    .auth-tab{flex:1;padding:10px;border:none;border-radius:8px;background:transparent;color:var(--text-secondary);font-weight:600;font-family:var(--font-ar);cursor:pointer;transition:all .2s}
-    .auth-tab.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff}
-    .theme-float{position:fixed;top:20px;left:20px;z-index:100}
-  </style>
+  <style>.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;padding:16px}.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px;max-width:440px;width:100%;backdrop-filter:blur(20px)}.auth-tabs{display:flex;gap:4px;background:var(--surface-hover);border-radius:var(--radius-sm);padding:4px;margin-bottom:20px}.auth-tab{flex:1;padding:10px;border:none;border-radius:8px;background:transparent;color:var(--text-secondary);font-weight:600;cursor:pointer}.auth-tab.active{background:var(--primary);color:#fff}</style>
 </head>
 <body data-theme="dark">
   <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
-  <button class="icon-btn theme-float" id="themeToggle" title="تبديل الوضع"></button>
-
-  <div class="auth-wrap">
-    <div class="auth-card">
-      <div class="auth-logo" data-logo></div>
-      <div class="auth-brand" data-brand-name>EduFlow</div>
-      <div class="auth-tag">منصة إدارة المراكز التعليمية</div>
-
-      <div class="auth-tabs">
-        <button class="auth-tab active" onclick="switchTab('main',this)">🔐 دخول</button>
-        <button class="auth-tab" onclick="switchTab('parent',this)">👨‍👩‍ ولي أمر</button>
-      </div>
-
-      <!-- دخول موحد (إيميل / رقم / كود) -->
-      <form id="mainForm" onsubmit="return doLogin(event,false)">
-        <div class="form-group"><label class="form-label">البريد / رقم الموبايل / الكود</label>
-          <input type="text" id="identifier" class="form-input" placeholder="example@mail.com أو 01xxxxxxxxx أو EDU-1001" required></div>
-        <div class="form-group"><label class="form-label">كلمة المرور</label>
-          <input type="password" id="mainPass" class="form-input" placeholder="••••••••" required></div>
-        <button type="submit" class="btn btn-primary w-full btn-lg">تسجيل الدخول</button>
-      </form>
-
-      <!-- ولي الأمر (بكود الابن) -->
-      <form id="parentForm" style="display:none;" onsubmit="return doLogin(event,true)">
-        <div class="form-group"><label class="form-label">كود الابن (EDU-XXXX)</label>
-          <input type="text" id="childCode" class="form-input" placeholder="EDU-1001" required></div>
-        <div class="form-group"><label class="form-label">كلمة المرور</label>
-          <input type="password" id="parentPass" class="form-input" placeholder="••••••••" required></div>
-        <button type="submit" class="btn btn-primary w-full btn-lg">متابعة الابن</button>
-        <p class="text-sm text-muted text-center" style="margin-top:12px;">تقدر تتابع حضور ودرجات وتحصيل ابنك من هنا 💙</p>
-      </form>
-
-      <div class="text-center" style="margin-top:20px;">
-        <span class="text-sm text-muted">طالب جديد؟</span>
-        <a href="register.html" class="text-sm" style="color:var(--primary);font-weight:700;">سجّل الآن</a>
-      </div>
+  <div class="auth-wrap"><div class="auth-card">
+    <div style="text-align:center;margin-bottom:20px;"><div style="font-size:40px;">🔐</div><h2 style="margin:8px 0;">تسجيل الدخول</h2></div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="tab('main',this)"> دخول</button>
+      <button class="auth-tab" onclick="tab('parent',this)">👨👩 ولي أمر</button>
     </div>
-  </div>
+    <form id="mainForm" onsubmit="return doLogin(event)">
+      <div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="email" class="form-input" required></div>
+      <div class="form-group"><label>كلمة المرور</label><input type="password" id="pass" class="form-input" required></div>
+      <button class="btn btn-primary w-full btn-lg">دخول</button>
+    </form>
+    <form id="parentForm" style="display:none" onsubmit="return doParent(event)">
+      <div class="form-group"><label>كود الابن (EDU-XXXX)</label><input type="text" id="pCode" class="form-input" required></div>
+      <div class="form-group"><label>كلمة مرور ولي الأمر</label><input type="password" id="pPass" class="form-input" required></div>
+      <button class="btn btn-primary w-full btn-lg">متابعة الابن</button>
+    </form>
+    <div class="text-center" style="margin-top:16px;"><span class="text-sm text-muted">حساب جديد؟</span> <a href="register.html" class="text-sm" style="color:var(--primary);font-weight:700;">سجّل بكود تفعيل</a></div>
+  </div></div>
 
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <script src="js/config.js"></script>
+  <script src="js/firebase-service.js"></script>
   <script src="js/data-service.js"></script>
   <script src="js/theme-manager.js"></script>
   <script src="js/auth-service.js"></script>
   <script>
-    // ✅ لو مفيش أدمن → روح على صفحة الإعداد أول مرة
-    if (!DataService.hasAdmin()) { location.href = 'setup.html'; }
-
-    // ✅ لو مسجل دخول بالفعل → روح على داشبورده
-    (function(){
-      var u = AuthService.getCurrentUser();
-      if (u) { AuthService.redirectToDashboard(u.role); }
-    })();
-
-    function switchTab(tab, btn){
-      document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById('mainForm').style.display = tab==='main' ? 'block' : 'none';
-      document.getElementById('parentForm').style.display = tab==='parent' ? 'block' : 'none';
-    }
-
-    async function doLogin(e, asParent){
-      e.preventDefault();
-      const id = asParent ? document.getElementById('childCode').value : document.getElementById('identifier').value;
-      const pass = asParent ? document.getElementById('parentPass').value : document.getElementById('mainPass').value;
-      const res = await AuthService.login(id, pass, asParent);
-      if (res.success) {
-        ThemeManager.toast('تم تسجيل الدخول ✓','success');
-        setTimeout(()=>AuthService.redirectToDashboard(res.user.role), 500);
-      } else {
-        ThemeManager.toast(res.message || 'بيانات غير صحيحة','error');
-      }
-      return false;
-    }
+    function tab(t,btn){document.querySelectorAll('.auth-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('mainForm').style.display=t==='main'?'block':'none';document.getElementById('parentForm').style.display=t==='parent'?'block':'none';}
+    async function doLogin(e){e.preventDefault();const r=await AuthService.login(document.getElementById('email').value,document.getElementById('pass').value);if(r.success){ThemeManager.toast('أهلاً ✓','success');setTimeout(()=>AuthService.redirectToDashboard(r.user.role),500);}else ThemeManager.toast(r.message,'error');return false;}
+    async function doParent(e){e.preventDefault();const r=await AuthService.loginParent(document.getElementById('pCode').value,document.getElementById('pPass').value);if(r.success){setTimeout(()=>AuthService.redirectToDashboard('parent'),400);}else ThemeManager.toast(r.message,'error');return false;}
   </script>
 </body>
 </html>
