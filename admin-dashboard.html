@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة الأدمن - EduFlow</title>
+  <link rel="stylesheet" href="css/eduflow-theme.css">
+  <style>
+    .enroll-row{display:flex;gap:8px;margin-bottom:8px}.enroll-row select{flex:1}
+    .teacher-file-group{background:var(--surface-hover);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;border-right:3px solid var(--primary)}
+    .question-builder{background:var(--surface-hover);border-radius:var(--radius);padding:16px;margin-bottom:12px;border:1px solid var(--border)}
+    .question-builder-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .option-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}.option-row input[type=radio]{width:20px;height:20px;accent-color:var(--success)}.option-row input[type=text]{flex:1}
+    .hw-card,.ex-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;transition:all .2s}
+    .hw-card:hover,.ex-card:hover{border-color:var(--primary);transform:translateY(-2px)}
+    .perf-bar{height:8px;background:var(--surface-hover);border-radius:9999px;overflow:hidden;margin-top:8px}
+    .perf-bar-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:9999px}
+    .qr-box{text-align:center;padding:20px;background:var(--surface-hover);border-radius:var(--radius);margin-bottom:12px}
+    .qr-code{font-family:var(--font-en);font-size:28px;font-weight:800;letter-spacing:4px;color:var(--primary);margin:12px 0}
+    .cert-preview{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border-radius:var(--radius);padding:24px;text-align:center;margin-bottom:16px}
+    .wa-btn{background:#25d366;color:#fff;border:none;padding:8px 14px;border-radius:var(--radius-sm);font-weight:700;cursor:pointer}
+    .rep-table td,.rep-table th{padding:8px 12px;font-size:13px}
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo" data-logo></div>
+        <div class="sidebar-brand"><div class="sidebar-brand-name" data-brand-name>EduFlow</div><div class="sidebar-brand-tagline">Super Admin</div></div>
+      </div>
+      <nav class="sidebar-nav" id="sidebarNav"></nav>
+      <div class="sidebar-footer">
+        <div class="sidebar-user"><div class="sidebar-user-avatar" id="userAvatar">A</div><div class="sidebar-user-info"><div class="sidebar-user-name" id="userName">Admin</div><div class="sidebar-user-role">مدير النظام</div></div></div>
+        <button class="btn btn-ghost w-full" onclick="handleLogout()">🚪 تسجيل الخروج</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="main-header">
+        <div class="main-header-right">
+          <button class="menu-toggle" id="menuToggle"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+          <div><h1 class="page-title" id="pageTitle">نظرة عامة</h1><p class="page-subtitle" id="pageSubtitle">لوحة تحكم الأدمن</p></div>
+        </div>
+        <div class="main-header-left"><div class="header-actions"><button class="icon-btn" id="themeToggle"></button></div></div>
+      </header>
+
+      <div class="content-area">
+
+        <section class="section active" id="section-overview">
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">الطلاب</span><div class="stat-card-icon">🎓</div></div><div class="stat-card-value" id="stStudents">0</div></div>
+            <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">المدرسون</span><div class="stat-card-icon">👨‍🏫</div></div><div class="stat-card-value" id="stTeachers">0</div></div>
+            <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">المساعدون</span><div class="stat-card-icon">🧑‍💼</div></div><div class="stat-card-value" id="stAssistants">0</div></div>
+            <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">المجموعات</span><div class="stat-card-icon">👥</div></div><div class="stat-card-value" id="stGroups">0</div></div>
+            <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">الفروع</span><div class="stat-card-icon">🏫</div></div><div class="stat-card-value" id="stBranches">0</div></div>
+          </div>
+          <div class="card"><div class="card-header"><h3 class="card-title">⚡ إجراءات سريعة</h3></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn btn-primary" onclick="openStudentModal()">🎓 إضافة طالب</button>
+              <button class="btn btn-primary" onclick="openTeacherModal()">👨‍🏫 إضافة مدرس</button>
+              <button class="btn btn-secondary" onclick="openAssistantModal()">🧑‍💼 إضافة مساعد</button>
+              <button class="btn btn-secondary" onclick="openGroupModal()">👥 مجموعة</button>
+              <button class="btn btn-secondary" onclick="showSection('backup')">💾 نسخ احتياطي</button>
+            </div>
+          </div>
+          <div class="card" style="margin-top:16px;"><div class="card-header"><h3 class="card-title">📜 آخر النشاط</h3></div><div id="recentLogs"></div></div>
+        </section>
+
+        <section class="section" id="section-students">
+          <div class="section-header"><div><h2 class="section-title">🎓 الطلاب</h2></div><button class="btn btn-primary" onclick="openStudentModal()">+ إضافة طالب</button></div>
+          <div class="card">
+            <div class="search-bar" style="margin-bottom:16px;"><input type="text" id="stuSearch" placeholder="بحث بالاسم / الكود / الرقم..." onkeyup="loadStudents()"></div>
+            <div class="table-container"><table class="table"><thead><tr><th>الكود</th><th>الاسم</th><th>المدرسين</th><th>الهاتف</th><th>إجراءات</th></tr></thead><tbody id="studentsTable"></tbody></table></div>
+          </div>
+        </section>
+
+        <section class="section" id="section-teachers">
+          <div class="section-header"><div><h2 class="section-title">👨‍🏫 المدرسون</h2></div><button class="btn btn-primary" onclick="openTeacherModal()">+ إضافة مدرس</button></div>
+          <div id="teachersList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;"></div>
+        </section>
+
+        <section class="section" id="section-assistants">
+          <div class="section-header"><div><h2 class="section-title">🧑‍💼 المساعدون</h2></div><button class="btn btn-primary" onclick="openAssistantModal()">+ إضافة مساعد</button></div>
+          <div id="assistantsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;"></div>
+        </section>
+
+        <section class="section" id="section-groups">
+          <div class="section-header"><div><h2 class="section-title">👥 المجموعات</h2></div><button class="btn btn-primary" onclick="openGroupModal()">+ مجموعة</button></div>
+          <div class="filter-bar" id="groupFilterBar"></div>
+          <div id="groupsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;"></div>
+        </section>
+
+        <section class="section" id="section-attendance">
+          <div class="section-header"><div><h2 class="section-title">📋 الحضور</h2></div></div>
+          <div class="card" style="margin-bottom:16px;">
+            <h3 class="card-title" style="margin-bottom:12px;">📱 جلسات حضور QR</h3>
+            <div class="form-group"><label class="form-label">اختر المجموعة لبدء جلسة</label>
+              <select id="qrGroup" class="form-select"></select></div>
+            <button class="btn btn-primary" onclick="startQR()">▶️ بدء جلسة QR</button>
+            <div id="qrSessions" style="margin-top:16px;"></div>
+          </div>
+          <div class="filter-bar">
+            <button class="filter-btn active" onclick="filterAtt('all',this)">الكل</button>
+            <button class="filter-btn" onclick="filterAtt('pending',this)">معلق</button>
+            <button class="filter-btn" onclick="filterAtt('approved',this)">معتمد</button>
+          </div>
+          <div class="card"><div id="attendanceList"></div></div>
+        </section>
+
+        <section class="section" id="section-homework">
+          <div class="section-header"><div><h2 class="section-title">📝 الواجبات</h2></div><button class="btn btn-primary" onclick="openHwBuilder()">+ واجب جديد</button></div>
+          <div id="hwList"></div>
+        </section>
+
+        <section class="section" id="section-exams">
+          <div class="section-header"><div><h2 class="section-title">🎓 الامتحانات</h2></div><button class="btn btn-primary" onclick="openExBuilder()">+ امتحان جديد</button></div>
+          <div id="exList"></div>
+        </section>
+
+        <section class="section" id="section-vocabulary">
+          <div class="section-header"><div><h2 class="section-title">📚 المفردات (عامة)</h2><p class="text-sm text-muted">لكل المدرسين — مش مرتبطة بمدرس معين</p></div><button class="btn btn-primary" onclick="openVocabModal()">+ كلمة</button></div>
+          <div class="filter-bar" id="vocabFilterBar"></div>
+          <div id="vocabList"></div>
+        </section>
+
+        <section class="section" id="section-tasks">
+          <div class="section-header"><div><h2 class="section-title">✅ المهام</h2></div><button class="btn btn-primary" onclick="openTaskModal()">+ مهمة</button></div>
+          <div class="filter-bar">
+            <button class="filter-btn active" onclick="filterTasks('all',this)">الكل</button>
+            <button class="filter-btn" onclick="filterTasks('open',this)">مفتوحة</button>
+            <button class="filter-btn" onclick="filterTasks('completed',this)">مكتملة</button>
+          </div>
+          <div class="card"><div id="tasksList"></div></div>
+        </section>
+
+        <section class="section" id="section-followups">
+          <div class="section-header"><div><h2 class="section-title">📌 المتابعات</h2></div><button class="btn btn-primary" onclick="openFollowupModal()">+ متابعة</button></div>
+          <div class="card"><div id="followupsList"></div></div>
+        </section>
+
+        <section class="section" id="section-calendar">
+          <div class="section-header"><div><h2 class="section-title">📅 التقويم الأسبوعي</h2></div></div>
+          <div class="card"><div id="calendarView"></div></div>
+        </section>
+
+        <section class="section" id="section-materials">
+          <div class="section-header"><div><h2 class="section-title">📦 المواد</h2></div><button class="btn btn-primary" onclick="openMaterialModal()">+ مادة</button></div>
+          <div id="materialsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;"></div>
+        </section>
+
+        <section class="section" id="section-payments">
+          <div class="section-header"><div><h2 class="section-title">💰 المدفوعات</h2></div><button class="btn btn-primary" onclick="openPaymentModal()">+ تسجيل دفعة</button></div>
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">المطلوب</span></div><div class="stat-card-value" id="payTotal">0</div></div>
+            <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">المدفوع</span></div><div class="stat-card-value" id="payPaid" style="color:var(--success)">0</div></div>
+            <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">المتبقي</span></div><div class="stat-card-value" id="payRemain" style="color:var(--warning)">0</div></div>
+          </div>
+          <div class="card"><div id="paymentsList"></div></div>
+        </section>
+
+        <section class="section" id="section-notifications">
+          <div class="section-header"><div><h2 class="section-title">🔔 الإشعارات</h2></div><button class="btn btn-primary" onclick="openNotifyModal()">+ إرسال إشعار</button></div>
+          <div class="card"><div id="notificationsList"></div></div>
+        </section>
+
+        <section class="section" id="section-templates">
+          <div class="section-header"><div><h2 class="section-title">📄 القوالب</h2></div><button class="btn btn-primary" onclick="openTemplateModal()">+ قالب</button></div>
+          <div class="card"><div id="templatesList"></div></div>
+        </section>
+
+        <section class="section" id="section-whatsapp">
+          <div class="section-header"><div><h2 class="section-title">💬 واتساب</h2><p class="text-sm text-muted">إرسال رسائل بالقوالب</p></div></div>
+          <div class="card">
+            <div class="form-group"><label class="form-label">القالب</label><select id="waTemplate" class="form-select" onchange="previewWA()"></select></div>
+            <div class="form-group"><label class="form-label">الطالب (لتعبئة المتغيرات)</label><select id="waStudent" class="form-select" onchange="previewWA()"></select></div>
+            <div class="form-group"><label class="form-label">معاينة الرسالة</label><textarea id="waPreview" class="form-textarea" rows="4"></textarea></div>
+            <button class="wa-btn" onclick="sendWA()">💬 فتح واتساب وإرسال</button>
+          </div>
+        </section>
+
+        <section class="section" id="section-reports">
+          <div class="section-header"><div><h2 class="section-title">📊 التقارير المفصلة</h2></div></div>
+          <div class="filter-bar">
+            <button class="filter-btn active" onclick="setReport('all',this)">الكل</button>
+            <button class="filter-btn" onclick="setReport('attendance',this)">الحضور</button>
+            <button class="filter-btn" onclick="setReport('performance',this)">الأداء</button>
+            <button class="filter-btn" onclick="setReport('payments',this)">المالية</button>
+          </div>
+          <div class="card"><div id="reportView"></div></div>
+        </section>
+
+        <section class="section" id="section-achievements">
+          <div class="section-header"><div><h2 class="section-title">🏆 الإنجازات</h2></div><button class="btn btn-primary" onclick="openAchievementModal()">+ إنجاز</button></div>
+          <div class="card"><div class="achievement-grid" id="achievementsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;"></div></div>
+        </section>
+
+        <section class="section" id="section-rewards">
+          <div class="section-header"><div><h2 class="section-title">🎁 المكافآت</h2></div><button class="btn btn-primary" onclick="openRewardModal()">+ مكافأة</button></div>
+          <div class="card"><div id="rewardsList"></div></div>
+        </section>
+
+        <section class="section" id="section-certificates">
+          <div class="section-header"><div><h2 class="section-title">📜 الشهادات</h2></div><button class="btn btn-primary" onclick="openCertificateModal()">+ إصدار شهادة</button></div>
+          <div id="certificatesList"></div>
+        </section>
+
+        <section class="section" id="section-branches">
+          <div class="section-header"><div><h2 class="section-title">🏫 الفروع</h2></div><button class="btn btn-primary" onclick="openBranchModal()">+ فرع</button></div>
+          <div id="branchesList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;"></div>
+        </section>
+
+        <section class="section" id="section-permissions">
+          <div class="section-header"><div><h2 class="section-title">🔐 الصلاحيات</h2></div></div>
+          <div class="card"><p class="text-sm text-muted">خصص صلاحيات كل مساعد من قسم "المساعدون" → 🔐 صلاحيات</p></div>
+        </section>
+
+        <section class="section" id="section-settings">
+          <div class="section-header"><div><h2 class="section-title">⚙️ الإعدادات</h2></div></div>
+          <div class="card" style="margin-bottom:16px;">
+            <h3 class="card-title" style="margin-bottom:12px;">🖼️ الشعار</h3>
+            <div class="logo-upload" onclick="document.getElementById('logoInput').click()"><div class="logo-preview" id="logoPreview"></div><div><h4>اضغط لرفع شعار</h4></div></div>
+            <input type="file" id="logoInput" accept="image/*" style="display:none;" onchange="handleLogo(event)">
+          </div>
+          <div class="card">
+            <div class="form-group"><label class="form-label">اسم الشركة</label><input type="text" id="setCompany" class="form-input"></div>
+            <div class="form-group"><label class="form-label">رقم الدعم</label><input type="text" id="setPhone" class="form-input"></div>
+            <button class="btn btn-primary" onclick="saveSettings()">💾 حفظ</button>
+          </div>
+        </section>
+
+        <section class="section" id="section-features">
+          <div class="section-header"><div><h2 class="section-title">🚩 الخصائص</h2></div></div>
+          <div class="card"><div id="featuresList"></div></div>
+        </section>
+
+        <section class="section" id="section-backup">
+          <div class="section-header"><div><h2 class="section-title">💾 النسخ الاحتياطي</h2></div></div>
+          <div class="card"><div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="exportBackup()">📥 تصدير</button>
+            <label class="btn btn-secondary" style="cursor:pointer;">📂 استيراد<input type="file" id="importFile" accept=".json" style="display:none;" onchange="importBackup(event)"></label>
+          </div></div>
+        </section>
+
+        <section class="section" id="section-logs">
+          <div class="section-header"><div><h2 class="section-title">📜 سجل النشاط</h2></div></div>
+          <div class="card"><div id="logsList"></div></div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/data-service.js"></script>
+  <script src="js/theme-manager.js"></script>
+  <script src="js/auth-service.js"></script>
+  <script>
+    // ✅ بدون return مبكر
+    AuthService.requireRole(['super_admin']);
+    const currentUser = AuthService.getCurrentUser();
+    console.log('✅ Admin Dashboard initialized for:', currentUser.name);
+
+    document.getElementById('userName').textContent = currentUser.name;
+    document.getElementById('userAvatar').textContent = currentUser.name.charAt(0);
+
+    const DAYS=[{en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},{en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'},{en:'Saturday',ar:'السبت'}];
+    const dayAr = en => (DAYS.find(d => d.en === en) || {}).ar || en;
+    const dayOptions = () => DAYS.map(d => `<option value="${d.en}">${d.ar}</option>`).join('');
+    const db = () => DataService._getData();
+    const save = d => DataService._saveData(d);
+    const initKey = (d,k,v) => { if(!d[k]) d[k]=v; };
+
+    const adminMenu = [
+      {section:"نظرة عامة",items:[{id:"overview",label:"الرئيسية",icon:"🏠"}]},
+      {section:"الأشخاص",items:[{id:"students",label:"الطلاب",icon:"🎓"},{id:"teachers",label:"المدرسون",icon:"👨‍🏫"},{id:"assistants",label:"المساعدون",icon:"🧑‍💼"}]},
+      {section:"الأكاديمي",items:[{id:"groups",label:"المجموعات",icon:"👥"},{id:"attendance",label:"الحضور",icon:"📋"},{id:"homework",label:"الواجبات",icon:"📝"},{id:"exams",label:"الامتحانات",icon:"🎓"},{id:"vocabulary",label:"المفردات",icon:"📚"}]},
+      {section:"العمليات",items:[{id:"tasks",label:"المهام",icon:"✅"},{id:"followups",label:"المتابعات",icon:"📌"},{id:"calendar",label:"التقويم",icon:"📅"}]},
+      {section:"المالية",items:[{id:"materials",label:"المواد",icon:"📦"},{id:"payments",label:"المدفوعات",icon:"💰"}]},
+      {section:"التواصل",items:[{id:"notifications",label:"الإشعارات",icon:"🔔"},{id:"templates",label:"القوالب",icon:"📄"},{id:"whatsapp",label:"واتساب",icon:"💬"}]},
+      {section:"التحليلات",items:[{id:"reports",label:"التقارير",icon:"📊"}]},
+      {section:"المشاركة",items:[{id:"achievements",label:"الإنجازات",icon:"🏆"},{id:"rewards",label:"المكافآت",icon:"🎁"},{id:"certificates",label:"الشهادات",icon:"📜"}]},
+      {section:"الإدارة",items:[{id:"branches",label:"الفروع",icon:"🏫"},{id:"permissions",label:"الصلاحيات",icon:"🔐"},{id:"settings",label:"الإعدادات",icon:"⚙️"},{id:"features",label:"الخصائص",icon:"🚩"},{id:"backup",label:"النسخ الاحتياطي",icon:"💾"},{id:"logs",label:"سجل النشاط",icon:"📜"}]}
+    ];
+
+    document.getElementById('sidebarNav').innerHTML = adminMenu.map((s,si) =>
+      `<div class="sidebar-section"><div class="sidebar-section-title">${s.section}</div>${s.items.map((it,ii) =>
+        `<div class="sidebar-item ${si===0&&ii===0?'active':''}" data-section="${it.id}" onclick="showSection('${it.id}')"><span class="sidebar-item-icon">${it.icon}</span><span class="sidebar-item-label">${it.label}</span></div>`
+      ).join('')}</div>`
+    ).join('');
+
+    // ✅ Show Section
+    window.showSection = function(id) {
+      console.log('🔄 Switching to section:', id);
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      const section = document.getElementById('section-'+id);
+      if (section) section.classList.add('active');
+      
+      document.querySelectorAll('.sidebar-item').forEach(i =>
+        i.classList.toggle('active', i.dataset.section === id)
+      );
+
+      const t = {
+        overview:['نظرة عامة','لوحة الأدمن'],students:['الطلاب','إدارة الطلاب'],teachers:['المدرسون','ملفات المدرسين'],
+        assistants:['المساعدون','الإدارة'],groups:['المجموعات','الإدارة'],attendance:['الحضور','اعتماد + QR'],
+        homework:['الواجبات','Builder'],exams:['الامتحانات','Builder'],vocabulary:['المفردات','عامة'],
+        tasks:['المهام',''],followups:['المتابعات',''],calendar:['التقويم',''],materials:['المواد',''],
+        payments:['المدفوعات',''],notifications:['الإشعارات',''],templates:['القوالب',''],whatsapp:['واتساب',''],
+        reports:['التقارير',''],achievements:['الإنجازات',''],rewards:['المكافآت',''],certificates:['الشهادات',''],
+        branches:['الفروع',''],permissions:['الصلاحيات',''],settings:['الإعدادات',''],features:['الخصائص',''],
+        backup:['النسخ الاحتياطي',''],logs:['السجل','']
+      };
+      document.getElementById('pageTitle').textContent = (t[id] && t[id][0]) || '';
+      document.getElementById('pageSubtitle').textContent = (t[id] && t[id][1]) || '';
+      
+      const loaders = {
+        overview:loadOverview, students:loadStudents, teachers:loadTeachers, assistants:loadAssistants,
+        groups:loadGroups, attendance:loadAttendance, homework:loadHomework, exams:loadExams,
+        vocabulary:loadVocabulary, tasks:loadTasks, followups:loadFollowups, calendar:loadCalendar,
+        materials:loadMaterials, payments:loadPayments, notifications:loadNotifications,
+        templates:loadTemplates, whatsapp:loadWA, reports:() => renderReport(currentReport),
+        achievements:loadAchievements, rewards:loadRewards, certificates:loadCertificates,
+        branches:loadBranches, settings:loadSettings, features:loadFeatures, logs:loadLogs
+      };
+      if (loaders[id]) loaders[id]();
+
+      if (window.innerWidth <= 1024) {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sidebarOverlay').classList.remove('show');
+      }
+    };
+
+    // ===== Overview =====
+    window.loadOverview = function() {
+      console.log('📊 Loading overview...');
+      const d = db();
+      document.getElementById('stStudents').textContent = DataService.getStudents().length;
+      document.getElementById('stTeachers').textContent = DataService.getTeachers().length;
+      document.getElementById('stAssistants').textContent = DataService.getAssistants().length;
+      document.getElementById('stGroups').textContent = d.groups.length;
+      document.getElementById('stBranches').textContent = d.branches.length;
+      document.getElementById('recentLogs').innerHTML = DataService.getActivityLogs().slice(0,5).map(l =>
+        `<div class="activity-item"><div class="activity-dot"></div><div class="activity-content"><div class="activity-title">${l.action}</div><div class="activity-meta"><span>👤 ${l.userName}</span><span>🎯 ${l.target}</span></div></div></div>`
+      ).join('') || '<p class="text-muted">لا نشاط</p>';
+      console.log('✅ Overview loaded');
+    };
+
+    // ===== 1) Students =====
+    window.loadStudents = function() {
+      const q = (document.getElementById('stuSearch').value || '').toLowerCase();
+      let list = DataService.getStudents();
+      if (q) list = list.filter(s => s.name.toLowerCase().includes(q) || (s.code||'').toLowerCase().includes(q) || (s.phone||'').includes(q));
+      document.getElementById('studentsTable').innerHTML = list.map(s => {
+        const ts = DataService.getStudentTeachers(s.id).map(x => x.teacher.name).join('، ') || '—';
+        return `<tr><td><strong style="color:var(--primary)">${s.code||'—'}</strong></td><td>${s.name}</td><td>${ts}</td><td>${s.phone}</td>
+        <td><button class="btn btn-ghost btn-sm" onclick="viewStudent('${s.id}')">👁️</button><button class="btn btn-ghost btn-sm" onclick="editStudentEnroll('${s.id}')">🔗</button><button class="btn btn-danger btn-sm" onclick="delUser('${s.id}')">🗑️</button></td></tr>`;
+      }).join('') || '<tr><td colspan="5" class="text-center text-muted">لا يوجد طلاب</td></tr>';
+    };
+
+    window.openStudentModal = function() {
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🎓 إضافة طالب</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body"><form onsubmit="return saveStudent(event)">
+        <div class="form-group"><label>الاسم الكامل</label><input type="text" id="sName" class="form-input" required></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label>رقم الطالب</label><input type="tel" id="sPhone" class="form-input" required></div>
+          <div class="form-group"><label>رقم ولي الأمر</label><input type="tel" id="sParent" class="form-input"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label>صلة القرابة</label><select id="sRel" class="form-select"><option>الأب</option><option>الأم</option><option>الأخ</option><option>أخرى</option></select></div>
+          <div class="form-group"><label>الواتساب على</label><select id="sWa" class="form-select"><option value="parent">ولي الأمر</option><option value="student">الطالب</option></select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label>المرحلة</label><select id="sStage" class="form-select"><option>Primary</option><option>Preparatory</option><option selected>Secondary</option></select></div>
+          <div class="form-group"><label>الصف</label><input type="text" id="sGrade" class="form-input" value="Secondary 1"></div>
+        </div>
+        <div class="form-group"><label>البريد (اختياري)</label><input type="email" id="sEmail" class="form-input"></div>
+        <div class="form-group"><label>كلمة المرور</label><input type="text" id="sPass" class="form-input" value="12345678"></div>
+        <div class="form-group"><label>يشترك مع مدرس</label><select id="sTeacher" class="form-select" onchange="loadTeacherGroupsForStudent()"><option value="">-- بدون --</option>${DataService.getTeachers().map(t=>`<option value="${t.id}">${t.name} (${t.subject})</option>`).join('')}</select></div>
+        <div class="form-group"><label>المجموعات (اختيار متعدد)</label><div id="sGroups"></div></div>
+        <button type="submit" class="btn btn-primary w-full">💾 حفظ</button>
+      </form></div>`);
+    };
+
+    window.loadTeacherGroupsForStudent = function() {
+      const tid = document.getElementById('sTeacher').value;
+      const box = document.getElementById('sGroups');
+      if (!tid) { box.innerHTML = '<p class="text-muted text-sm">اختر مدرس أولاً</p>'; return; }
+      box.innerHTML = DataService.getGroupsByTeacher(tid).map(g =>
+        `<label style="display:flex;gap:8px;align-items:center;margin-bottom:6px;"><input type="checkbox" class="s-grp" value="${g.id}"> ${g.name} (${dayAr(g.day)} ${g.time})</label>`
+      ).join('') || '<p class="text-muted">لا مجموعات</p>';
+    };
+    // ✅ استبدل saveStudent القديمة بدي
+    window.saveStudent = function(e) {
+      e.preventDefault();
+      const enrollments = [...document.querySelectorAll('.s-grp')].filter(c => c.checked).map(c => ({groupId:c.value}));
+      const r = DataService.addStudentByAdmin({
+        name:document.getElementById('sName').value,
+        phone:document.getElementById('sPhone').value,
+        parentPhone:document.getElementById('sParent').value,
+        parentRelation:document.getElementById('sRel').value,
+        whatsappOn:document.getElementById('sWa').value,
+        stage:document.getElementById('sStage').value,
+        grade:document.getElementById('sGrade').value,
+        email:document.getElementById('sEmail').value,
+        password:document.getElementById('sPass').value,
+        enrollments
+      });
+      DataService.logActivity(currentUser.id, currentUser.name, 'إضافة طالب', r.code);
+      ThemeManager.closeModal();
+      loadStudents();
+      // ✅ اعرض الكود في نافذة واضحة بدل الـ toast
+      showStudentCode(r);
+      return false;
+    };
+
+    // ✅ جديدة: نافذة عرض كود الطالب
+    window.showStudentCode = function(r) {
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🎉 تم إضافة الطالب</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body" style="text-align:center;">
+        <p class="text-sm text-muted" style="margin-bottom:12px;">سلّم الكود ده للطالب — <strong>ولي الأمر هيدخل بيه</strong></p>
+        <div style="background:linear-gradient(135deg,var(--primary),var(--accent));border-radius:var(--radius);padding:24px;color:#fff;">
+          <div style="font-size:12px;opacity:.9;">كود الطالب</div>
+          <div style="font-family:var(--font-en);font-size:36px;font-weight:800;letter-spacing:3px;margin:6px 0;">${r.code}</div>
+          <div style="font-size:12px;opacity:.9;">Student ID: ${r.studentId}</div>
+        </div>
+        <button class="btn btn-secondary w-full" style="margin-top:12px;" onclick="navigator.clipboard.writeText('${r.code}').then(()=>ThemeManager.toast('تم النسخ ✓','success'))">📋 نسخ الكود</button>
+        <p class="text-sm" style="color:var(--warning);margin-top:10px;">⚠️ الكود مش هيظهر تاني — انسخه دلوقتي</p>
+      </div>`);
+    };
+                                                                                    
+    window.viewStudent = function(id) {
+      const s = DataService.getUserById(id);
+      const ts = DataService.getStudentTeachers(id);
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📁 ${s.name}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body">
+        <div class="text-sm text-muted">الكود: <strong style="color:var(--primary)">${s.code}</strong> · ${s.phone} · ولي الأمر: ${s.parentPhone||'-'} (${s.parentRelation||'-'})</div>
+        <h4 class="text-sm" style="margin:12px 0 8px;">الاشتراكات:</h4>
+        ${ts.map(t => `<div class="teacher-file-group"><strong>${t.teacher.name}</strong> — ${t.group.name}<div class="text-sm text-muted">${dayAr(t.group.day)} ${t.group.time}</div></div>`).join('') || '<p class="text-muted">لا اشتراكات</p>'}
+      </div>`);
+    };
+
+    window.editStudentEnroll = function(id) {
+      const s = DataService.getUserById(id);
+      const cur = DataService.getStudentTeachers(id).map(x => x.enrollment.groupId);
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🔗 مجموعات: ${s.name}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body">${DataService.getGroups().map(g =>
+        `<label style="display:flex;gap:8px;align-items:center;margin-bottom:6px;"><input type="checkbox" class="enr-chk" value="${g.id}" ${cur.includes(g.id)?'checked':''}> ${g.name} (${DataService.getUserById(g.teacherId)?.name})</label>`
+      ).join('')}
+      <button class="btn btn-primary w-full" onclick="saveEnroll('${id}')">💾 حفظ</button></div>`);
+    };
+
+    window.saveEnroll = function(id) {
+      const d = db();
+      d.enrollments = d.enrollments.filter(e => e.studentId !== id);
+      [...document.querySelectorAll('.enr-chk')].filter(c => c.checked).forEach(c => {
+        const g = d.groups.find(x => x.id === c.value);
+        d.enrollments.push({
+          id:`enr_${Date.now()}_${Math.random().toString(36).slice(2,5)}`,
+          studentId:id, groupId:c.value, teacherId:g?.teacherId,
+          subject:g?.subject||'', status:'active', enrolledAt:new Date().toISOString()
+        });
+      });
+      save(d);
+      ThemeManager.closeModal();
+      ThemeManager.toast('تم ✓', 'success');
+      loadStudents();
+    };
+
+    // ===== 2) Teachers =====
+    window.loadTeachers = function() {
+      document.getElementById('teachersList').innerHTML = DataService.getTeachers().map(t => {
+        const gs = DataService.getGroupsByTeacher(t.id);
+        const st = gs.reduce((n,g) => n + DataService.getStudentsByGroup(g.id).length, 0);
+        return `<div class="user-card"><div class="user-card-header"><div class="user-avatar">${t.name.charAt(0)}</div><div class="user-info"><div class="user-name">${t.name}</div><div class="user-meta"><span>📚 ${t.subject}</span><span>📞 ${t.phone||'-'}</span></div></div></div>
+        <div class="user-meta"><span>🎓 ${t.qualification||'-'}</span><span>💼 ${t.experience||0} سنة خبرة</span></div>
+        <div class="user-stats"><div class="user-stat"><div class="user-stat-value">${gs.length}</div><div class="user-stat-label">مجموعة</div></div><div class="user-stat"><div class="user-stat-value">${st}</div><div class="user-stat-label">طالب</div></div></div>
+        <div class="user-actions"><button class="btn btn-primary btn-sm" onclick="openTeacherFile('${t.id}')">📁 الملف</button><button class="btn btn-danger btn-sm" onclick="delUser('${t.id}')">🗑️</button></div></div>`;
+      }).join('') || '<p class="text-muted">لا مدرسون</p>';
+    };
+
+    window.openTeacherModal = function() {
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">👨‍🏫 إضافة مدرس</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body"><form onsubmit="return saveTeacher(event)">
+        <div class="form-group"><label>الاسم</label><input type="text" id="tName" class="form-input" required></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label>التخصص</label><input type="text" id="tSub" class="form-input" required></div>
+          <div class="form-group"><label>الهاتف</label><input type="tel" id="tPhone" class="form-input"></div>
+        </div>
+        <div class="form-group"><label>البريد</label><input type="email" id="tEmail" class="form-input" required></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label>المؤهل</label><input type="text" id="tQual" class="form-input" placeholder="ليسانس/بكالوريوس..."></div>
+          <div class="form-group"><label>سنوات الخبرة</label><input type="number" id="tExp" class="form-input" value="0"></div>
+        </div>
+        <div class="form-group"><label>ملاحظات</label><textarea id="tNotes" class="form-textarea" rows="2"></textarea></div>
+        <div class="form-group"><label>كلمة المرور</label><input type="text" id="tPass" class="form-input" value="12345678"></div>
+        <button class="btn btn-primary w-full">💾 حفظ</button></form></div>`);
+    };
+
+    window.saveTeacher = function(e) {
+      e.preventDefault();
+      DataService.addUser({
+        name:document.getElementById('tName').value,
+        subject:document.getElementById('tSub').value,
+        phone:document.getElementById('tPhone').value,
+        email:document.getElementById('tEmail').value,
+        qualification:document.getElementById('tQual').value,
+        experience:document.getElementById('tExp').value,
+        notes:document.getElementById('tNotes').value,
+        password:document.getElementById('tPass').value,
+        role:'teacher'
+      });
+      DataService.logActivity(currentUser.id, currentUser.name, 'إضافة مدرس', document.getElementById('tName').value);
+      ThemeManager.closeModal();
+      ThemeManager.toast('تم ✓', 'success');
+      loadTeachers();
+      return false;
+    };
+
+    window.openTeacherFile = function(id) {
+      const t = DataService.getUserById(id);
+      const d = db();
+      initKey(d, 'lessons', []);
+      save(d);
+      const gs = DataService.getGroupsByTeacher(id);
+      const ls = (db().lessons || []).filter(l => l.teacherId === id);
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📁 ${t.name}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body">
+        <div class="text-sm text-muted" style="margin-bottom:12px;">📚 ${t.subject} · 📞 ${t.phone||'-'} · 🎓 ${t.qualification||'-'} · 💼 ${t.experience||0} سنة</div>
+        <h4 class="text-sm" style="margin:8px 0;">المجموعات:</h4>
+        ${gs.map(g => `<div class="teacher-file-group"><strong>${g.name}</strong><div class="text-sm text-muted">${dayAr(g.day)} ${g.time} · 📍 ${g.location} · 👥 ${DataService.getStudentsByGroup(g.id).length}</div></div>`).join('') || '<p class="text-muted">لا مجموعات</p>'}
+        <h4 class="text-sm" style="margin:12px 0 8px;">+ إضافة مجموعة:</h4>
+        <div class="form-group"><input type="text" id="tfName" class="form-input" placeholder="اسم المجموعة"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <select id="tfDay" class="form-select">${dayOptions()}</select>
+          <input type="time" id="tfTime" class="form-input">
+        </div>
+        <div class="form-group"><input type="text" id="tfLoc" class="form-input" placeholder="المكان"></div>
+        <button class="btn btn-secondary w-full" onclick="addGroupToTeacher('${id}')">+ إضافة مجموعة</button>
+        <h4 class="text-sm" style="margin:16px 0 8px;">جدول الحصص والدروس:</h4>
+        ${ls.map(l => `<div class="teacher-file-group"><strong>${l.title}</strong><div class="text-sm text-muted">${dayAr(l.day)} ${l.time} · ${l.duration} د · ${DataService.getGroups().find(g=>g.id===l.groupId)?.name||''}</div></div>`).join('') || '<p class="text-muted">لا حصص</p>'}
+        <div class="form-group"><input type="text" id="tlTitle" class="form-input" placeholder="عنوان الحصة/الدرس"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <select id="tlGroup" class="form-select">${gs.map(g=>`<option value="${g.id}">${g.name}</option>`).join('')}</select>
+          <select id="tlDay" class="form-select">${dayOptions()}</select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <input type="time" id="tlTime" class="form-input">
+          <input type="number" id="tlDur" class="form-input" value="120" placeholder="المدة">
+        </div>
+        <button class="btn btn-secondary w-full" onclick="addLesson('${id}')">+ إضافة حصة</button>
+      </div>`);
+    };
+
+    window.addGroupToTeacher = function(tid) {
+      const t = DataService.getUserById(tid);
+      DataService.addGroup({
+        name:document.getElementById('tfName').value,
+        teacherId:tid,
+        subject:t.subject,
+        day:document.getElementById('tfDay').value,
+        time:document.getElementById('tfTime').value,
+        location:document.getElementById('tfLoc').value,
+        grade:''
+      });
+      ThemeManager.toast('تم ✓', 'success');
+      openTeacherFile(tid);
+      loadTeachers();
+    };
+
+    window.addLesson = function(tid) {
+      const d = db();
+      initKey(d, 'lessons', []);
+      d.lessons.push({
+        id:'ls_'+Date.now(),
+        teacherId:tid,
+        title:document.getElementById('tlTitle').value,
+        groupId:document.getElementById('tlGroup').value,
+        day:document.getElementById('tlDay').value,
+        time:document.getElementById('tlTime').value,
+        duration:parseInt(document.getElementById('tlDur').value)
+      });
+      save(d);
+      ThemeManager.toast('تم ✓', 'success');
+      openTeacherFile(tid);
+    };
+
+    // ===== 3) Assistants =====
+    window.loadAssistants = function() {
+      document.getElementById('assistantsList').innerHTML = DataService.getAssistants().map(a => {
+        const ts = DataService.getAssistantTeachers(a.id);
+        const scope = DataService.getAssistantScope(a.id);
+        const acts = DataService.getActivityLogs().filter(l => l.userId === a.id).length;
+        return `<div class="user-card"><div class="user-card-header"><div class="user-avatar">${a.name.charAt(0)}</div><div class="user-info"><div class="user-name">${a.name}</div><div class="user-meta"><span>📧 ${a.email}</span></div></div></div>
+        <div class="user-meta"><span>🔗 يتابع: ${ts.map(t=>t.name).join('، ')||'لم يُعيَّن'}</span></div>
+        <div class="user-stats"><div class="user-stat"><div class="user-stat-value">${scope.students.length}</div><div class="user-stat-label">طالب</div></div><div class="user-stat"><div class="user-stat-value">${scope.groupIds.length}</div><div class="user-stat-label">مجموعة</div></div><div class="user-stat"><div class="user-stat-value">${acts}</div><div class="user-stat-label">عملية</div></div></div>
+        <div class="user-actions"><button class="btn btn-primary btn-sm" onclick="openAssign('${a.id}')">🔗 تعيين</button><button class="btn btn-secondary btn-sm" onclick="openPerms('${a.id}')">🔐 صلاحيات</button><button class="btn btn-danger btn-sm" onclick="delUser('${a.id}')">🗑️</button></div></div>`;
+      }).join('') || '<p class="text-muted">لا مساعدون</p>';
+    };
+
+    window.openAssistantModal = function() {
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🧑‍💼 إضافة مساعد</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body"><form onsubmit="return saveAssistant(event)">
+        <div class="form-group"><label>الاسم</label><input type="text" id="aName" class="form-input" required></div>
+        <div class="form-group"><label>البريد</label><input type="email" id="aEmail" class="form-input" required></div>
+        <div class="form-group"><label>الهاتف</label><input type="tel" id="aPhone" class="form-input"></div>
+        <div class="form-group"><label>كلمة المرور</label><input type="text" id="aPass" class="form-input" value="12345678"></div>
+        <button class="btn btn-primary w-full">💾 حفظ</button></form></div>`);
+    };
+
+    window.saveAssistant = function(e) {
+      e.preventDefault();
+      DataService.addUser({
+        name:document.getElementById('aName').value,
+        email:document.getElementById('aEmail').value,
+        phone:document.getElementById('aPhone').value,
+        password:document.getElementById('aPass').value,
+        role:'assistant',
+        assignedTeacherIds:[]
+      });
+      ThemeManager.closeModal();
+      ThemeManager.toast('تم ✓', 'success');
+      loadAssistants();
+      return false;
+    };
+
+    window.openAssign = function(id) {
+      const a = DataService.getUserById(id);
+      const cur = a.assignedTeacherIds || [];
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🔗 تعيين: ${a.name}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body">${DataService.getTeachers().map(t =>
+        `<label style="display:flex;gap:8px;align-items:center;margin-bottom:6px;"><input type="checkbox" class="asg-chk" value="${t.id}" ${cur.includes(t.id)?'checked':''}> ${t.name} (${t.subject})</label>`
+      ).join('')}
+      <button class="btn btn-primary w-full" onclick="saveAssign('${id}')">💾 حفظ</button></div>`);
+    };
+
+    window.saveAssign = function(id) {
+      DataService.assignAssistantTeachers(id, [...document.querySelectorAll('.asg-chk')].filter(c => c.checked).map(c => c.value));
+      ThemeManager.closeModal();
+      ThemeManager.toast('تم ✓', 'success');
+      loadAssistants();
+    };
+
+    window.openPerms = function(id) {
+      const a = DataService.getUserById(id);
+      const p = a.permissions || {};
+      const mods = ['students','attendance','homework','exams','payments','reports'];
+      const acts = ['view','create','edit','delete'];
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🔐 صلاحيات: ${a.name}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body"><div class="permission-grid" style="grid-template-columns:120px repeat(4,1fr);"><div class="permission-cell header">الوحدة</div>${acts.map(x=>`<div class="permission-cell header">${x}</div>`).join('')}${mods.map(m=>`<div class="permission-cell label">${m}</div>${acts.map(act=>`<div class="permission-cell"><input type="checkbox" data-m="${m}" data-a="${act}" ${(p[m] && p[m][act])?'checked':''}></div>`).join('')}`).join('')}</div>
+      <button class="btn btn-primary w-full" style="margin-top:12px;" onclick="savePerms('${id}')">💾 حفظ</button></div>`);
+    };
+
+    window.savePerms = function(id) {
+      const perms = {};
+      document.querySelectorAll('.permission-grid input').forEach(c => {
+        const m = c.dataset.m, a = c.dataset.a;
+        (perms[m] = perms[m] || {})[a] = c.checked;
+      });
+      DataService.updateUser(id, {permissions:perms});
+      ThemeManager.closeModal();
+      ThemeManager.toast('تم ✓', 'success');
+    };
+
+    // ===== 4) Groups =====
+    let grpFilter = 'all';
+    window.loadGroups = function() {
+      const bar = document.getElementById('groupFilterBar');
+      bar.innerHTML = `<button class="filter-btn active" onclick="filterGroups('all',this)">الكل</button>` + DataService.getTeachers().map(t =>
+        `<button class="filter-btn" onclick="filterGroups('${t.id}',this)">${t.name}</button>`
+      ).join('');
+      renderGroups();
+    };
+
+    window.filterGroups = function(t, btn) {
+      grpFilter = t;
+      document.querySelectorAll('#groupFilterBar .filter-btn').forEach(b => b.classList.toggle('active', b === btn));
+      renderGroups();
+    };
+
+    window.renderGroups = function() {
+      let list = DataService.getGroups();
+      if (grpFilter !== 'all') list = list.filter(g => g.teacherId === grpFilter);
+      document.getElementById('groupsList').innerHTML = list.map(g => {
+        const t = DataService.getUserById(g.teacherId);
+        return `<div class="user-card"><div class="user-card-header"><div class="user-avatar">👥</div><div class="user-info"><div class="user-name">${g.name}</div><div class="user-meta"><span>👨‍🏫 ${t?.name||'-'}</span><span>📚 ${g.subject}</span></div></div></div>
+        <div class="user-meta"><span>📅 ${dayAr(g.day)} ${g.time}</span><span>📍 ${g.location}</span><span>💰 ${g.monthlyFee||0}</span><span>👥 ${DataService.getStudentsByGroup(g.id).length}</span></div>
+        <div class="user-actions"><button class="btn btn-secondary btn-sm" onclick="openGroupModal('${g.id}')">✏️ تعديل</button><button class="btn btn-danger btn-sm" onclick="delGroup('${g.id}')">🗑️</button></div></div>`;
+      }).join('') || '<p class="text-muted">لا مجموعات</p>';
+    };
+
+    window.openGroupModal = function(editId) {
+      const g = editId ? DataService.getGroups().find(x => x.id === editId) : null;
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${g?'✏️ تعديل':'👥'} مجموعة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body"><form onsubmit="return saveGroup(event,'${editId||''}')">
+        <div class="form-group"><label>الاسم</label><input type="text" id="gName" class="form-input" value="${g?.name||''}" required></div>
+        <div class="form-group"><label>المدرس</label><select id="gTeacher" class="form-select">${DataService.getTeachers().map(t=>`<option value="${t.id}" ${g?.teacherId===t.id?'selected':''}>${t.name}</option>`).join('')}</select></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label>المادة</label><input type="text" id="gSub" class="form-input" value="${g?.subject||''}"></div>
+          <div class="form-group"><label>الصف</label><input type="text" id="gGrade" class="form-input" value="${g?.grade||''}"></div>
+        </div>
+        <div class="form-group"><label>المكان</label><input type="text" id="gLoc" class="form-input" value="${g?.location||''}"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label>اليوم</label><select id="gDay" class="form-select">${DAYS.map(d=>`<option value="${d.en}" ${g?.day===d.en?'selected':''}>${d.ar}</option>`).join('')}</select></div>
+          <div class="form-group"><label>الوقت</label><input type="time" id="gTime" class="form-input" value="${g?.time||''}"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+          <div class="form-group"><label>المدة</label><input type="number" id="gDur" class="form-input" value="${g?.duration||120}"></div>
+          <div class="form-group"><label>الرسوم</label><input type="number" id="gFee" class="form-input" value="${g?.monthlyFee||0}"></div>
+          <div class="form-group"><label>الحد الأقصى</label><input type="number" id="gMax" class="form-input" value="${g?.maxStudents||30}"></div>
+        </div>
+        <button class="btn btn-primary w-full">💾 حفظ</button></form></div>`);
+    };
+
+    window.saveGroup = function(e, editId) {
+      e.preventDefault();
+      const data = {
+        name:document.getElementById('gName').value,
+        teacherId:document.getElementById('gTeacher').value,
+        subject:document.getElementById('gSub').value,
+        grade:document.getElementById('gGrade').value,
+        location:document.getElementById('gLoc').value,
+        day:document.getElementById('gDay').value,
+        time:document.getElementById('gTime').value,
+        duration:parseInt(document.getElementById('gDur').value),
+        monthlyFee:parseInt(document.getElementById('gFee').value),
+        maxStudents:parseInt(document.getElementById('gMax').value)
+      };
+      if (editId) DataService.updateGroup(editId, data);
+      else DataService.addGroup(data);
+      ThemeManager.closeModal();
+      ThemeManager.toast('تم ✓', 'success');
+      renderGroups();
+      return false;
+    };
+
+    window.delGroup = function(id) {
+      if (!confirm('حذف المجموعة؟')) return;
+      DataService.deleteGroup(id);
+      renderGroups();
+    };
+
+    // ===== 5) Attendance + QR =====
+    let attFilter = 'all';
+    window.loadAttendance = function() {
+      const d = db();
+      initKey(d, 'qrSessions', []);
+      save(d);
+      document.getElementById('qrGroup').innerHTML = DataService.getGroups().map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+      renderQRSessions();
+      let list = DataService.getAttendance();
+      if (attFilter !== 'all') list = list.filter(a => a.status === attFilter);
+      document.getElementById('attendanceList').innerHTML = list.map(a => {
+        const present = a.records.filter(r => r.status === 'present').length;
+        return `<div class="card" style="margin-bottom:12px;background:var(--surface-hover);">
+          <div style="display:flex;justify-content:space-between;align-items:center;"><div><strong>${a.groupName}</strong><div class="text-sm text-muted">📅 ${a.date}</div></div><span class="badge ${a.status==='pending'?'badge-warning':'badge-success'}">${a.status==='pending'?'معلق':'معتمد'}</span></div>
+          <div class="text-sm" style="margin:8px 0;">✓ ${present} · ✗ ${a.records.length-present}</div>
+          ${a.status==='pending'?`<div style="display:flex;gap:8px;"><button class="btn btn-success btn-sm" onclick="approveAtt('${a.id}')">✓ اعتماد</button><button class="btn btn-danger btn-sm" onclick="rejectAtt('${a.id}')">✗ رفض</button></div>`:''}
+        </div>`;
+      }).join('') || '<p class="text-muted">لا سجلات</p>';
+    };
+
+    window.filterAtt = function(s, btn) {
+      attFilter = s;
+      document.querySelectorAll('#section-attendance .filter-btn').forEach(b => b.classList.toggle('active', b === btn));
+      loadAttendance();
+    };
+
+    window.approveAtt = function(id) {
+      DataService.approveAttendance(id, currentUser.id);
+      ThemeManager.toast('تم ✓', 'success');
+      loadAttendance();
+    };
+
+    window.rejectAtt = function(id) {
+      const d = db();
+      const a = d.attendance.find(x => x.id === id);
+      if (a) { a.status = 'rejected'; save(d); }
+      loadAttendance();
+    };
+
+    window.startQR = function() {
+      const d = db();
+      initKey(d, 'qrSessions', []);
+      const gid = document.getElementById('qrGroup').value;
+      const g = DataService.getGroups().find(x => x.id === gid);
+      const code = 'QR-' + Math.random().toString(36).slice(2,8).toUpperCase();
+      d.qrSessions.push({
+        id:'qr_'+Date.now(), groupId:gid, groupName:g.name, code,
+        startedBy:currentUser.name, startedAt:new Date().toISOString(),
+        expiresAt:new Date(Date.now()+2*60*60*1000).toISOString(),
+        active:true, checkIns:[]
+      });
+      save(d);
+      DataService.logActivity(currentUser.id, currentUser.name, 'بدء جلسة QR', g.name);
+      ThemeManager.toast('تم بدء الجلسة ✓', 'success');
+      renderQRSessions();
+    };
+
+    window.renderQRSessions = function() {
+      const d = db();
+      const sessions = (d.qrSessions || []).filter(s => s.active);
+      document.getElementById('qrSessions').innerHTML = sessions.map(s =>
+        `<div class="qr-box">
+          <div class="text-sm text-muted">${s.groupName} · بدأها ${s.startedBy}</div>
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent('EDUFLOW-ATT:'+s.code)}" alt="QR" style="border-radius:12px;margin:8px 0;">
+          <div class="qr-code">${s.code}</div>
+          <div class="text-sm text-muted">✅ ${s.checkIns.length} حضور مسجل</div>
+          <button class="btn btn-danger btn-sm" onclick="endQR('${s.id}')">⏹️ إنهاء الجلسة</button>
+        </div>`
+      ).join('') || '<p class="text-muted">لا جلسات نشطة</p>';
+    };
+
+    window.endQR = function(id) {
+      const d = db();
+      const s = d.qrSessions.find(x => x.id === id);
+      if (s) s.active = false;
+      save(d);
+      renderQRSessions();
+    };
+
+    // ===== 6) Homework Builder =====
+    let hwQ = [];
+    window.loadHomework = function() {
+      document.getElementById('hwList').innerHTML = DataService.getHomework().map(h => {
+        const subs = DataService.getSubmissions({homeworkId:h.id});
+        return `<div class="hw-card"><div style="display:flex;justify-content:space-between;"><div><h4>${h.title}</h4><div class="text-sm text-muted">${DataService.getGroups().find(g=>g.id===h.groupId)?.name||'-'} · ${h.questions.length} سؤال · ${h.deadline}</div></div><span class="badge badge-primary">${subs.length} تسليم</span></div>
+        <div style="display:flex;gap:8px;margin-top:8px;"><button class="btn btn-secondary btn-sm" onclick="viewHw('${h.id}')">👁️</button><button class="btn btn-danger btn-sm" onclick="delHw('${h.id}')">🗑️</button></div></div>`;
+      }).join('') || '<p class="text-muted">لا واجبات</p>';
+    };
+
+    window.openHwBuilder = function() {
+      hwQ = [];
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📝 واجب جديد</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body">
+        <div class="form-group"><label>العنوان</label><input type="text" id="hwTitle" class="form-input" required></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label>المجموعة</label><select id="hwGroup" class="form-select">${DataService.getGroups().map(g=>`<option value="${g.id}">${g.name}</option>`).join('')}</select></div>
+          <div class="form-group"><label>الموعد</label><input type="date" id="hwDeadline" class="form-input" required></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+          <div class="form-group"><label>المحاولات</label><input type="number" id="hwAtt" class="form-input" value="2"></div>
+          <div class="form-group"><label>درجة النجاح</label><input type="number" id="hwPass" class="form-input" value="60"></div>
+          <div class="form-group"><label>إظهار النتيجة</label><select id="hwShow" class="form-select"><option value="true">فوراً</option><option value="false">بعد الاعتماد</option></select></div>
+        </div>
+        <div id="hwQList"></div>
+        <div style="display:flex;gap:8px;margin:8px 0;"><button type="button" class="btn btn-secondary btn-sm" onclick="addHwQ('mcq')">+ MCQ</button><button type="button" class="btn btn-secondary btn-sm" onclick="addHwQ('truefalse')">+ صح/خطأ</button><button type="button" class="btn btn-secondary btn-sm" onclick="addHwQ('short')">+ مقالي</button></div>
+        <button class="btn btn-primary w-full" onclick="saveHw()">💾 حفظ</button>
+      </div>`);
+    };
+
+    window.addHwQ = function(t) {
+      hwQ.push({
+        id:'q_'+Date.now()+Math.random().toString(36).slice(2,5),
+        type:t, text:'', options:t==='mcq'?['','','','']:[],
+        correctAnswer:t==='mcq'?0:t==='truefalse'?true:null,
+        points:10, requiresManualReview:t==='short'
+      });
+      renderHwQ();
+    };
+
+    window.renderHwQ = function() {
+      document.getElementById('hwQList').innerHTML = hwQ.map((q,i) =>
+        `<div class="question-builder"><div class="question-builder-header"><strong>س${i+1}</strong><button type="button" class="btn btn-danger btn-sm" onclick="hwQ.splice(${i},1);renderHwQ()">🗑️</button></div>
+        <input type="text" class="form-input" placeholder="نص السؤال" onchange="hwQ[${i}].text=this.value">
+        ${q.type==='mcq'?q.options.map((o,oi)=>`<div class="option-row"><input type="radio" name="c_${q.id}" ${q.correctAnswer===oi?'checked':''} onchange="hwQ[${i}].correctAnswer=${oi}"><input type="text" class="form-input" placeholder="خيار ${oi+1}" onchange="hwQ[${i}].options[${oi}]=this.value"></div>`).join(''):''}
+        ${q.type==='truefalse'?`<select class="form-select" onchange="hwQ[${i}].correctAnswer=this.value==='true'"><option value="true">صح</option><option value="false">خطأ</option></select>`:''}
+        </div>`
+      ).join('');
+    };
+
+    window.saveHw = function() {
+      if (!document.getElementById('hwTitle').value || !hwQ.length) {
+        ThemeManager.toast('أكمل البيانات', 'error');
+        return;
+      }
+      DataService.addHomework({
+        title:document.getElementById('hwTitle').value,
+        groupId:document.getElementById('hwGroup').value,
+        deadline:document.getElementById('hwDeadline').value,
+        maxAttempts:parseInt(document.getElementById('hwAtt').value),
+        passingScore:parseInt(document.getElementById('hwPass').value),
+        showResults:document.getElementById('hwShow').value==='true',
+        subject:'English', openDate:new Date().toISOString().split('T')[0],
+        questions:hwQ, createdBy:currentUser.id
+      });
+      ThemeManager.closeModal();
+      ThemeManager.toast('تم ✓', 'success');
+      loadHomework();
+    };
+
+    window.viewHw = function(id) {
+      const h = DataService.getHomeworkById(id);
+      const subs = DataService.getSubmissions({homeworkId:id});
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📝 ${h.title}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">${h.questions.map((q,i)=>`<div class="text-sm" style="padding:6px;background:var(--surface-hover);border-radius:6px;margin-bottom:4px;">س${i+1}: ${q.text}</div>`).join('')}<h4 class="text-sm" style="margin:12px 0 8px;">التسليمات:</h4>${subs.map(s=>`<div class="text-sm">${DataService.getUserById(s.studentId)?.name} — ${s.status==='graded'?s.score+'%':'معلق'}</div>`).join('')||'<p class="text-muted">لا تسليمات</p>'}</div>`);
+    };
+
+    window.delHw = function(id) {
+      if (!confirm('حذف؟')) return;
+      DataService.deleteHomework(id);
+      loadHomework();
+    };
+
+    // ===== 7) Exams Builder =====
+    let exQ = [];
+    window.loadExams = function() {
+      document.getElementById('exList').innerHTML = DataService.getExams().map(e => {
+        const at = DataService.getExamAttempts({examId:e.id});
+        return `<div class="ex-card"><div style="display:flex;justify-content:space-between;"><div><h4>${e.title}</h4><div class="text-sm text-muted">${e.mode==='home'?'منزلي':'حصة'} · ${e.questions.length} سؤال · ${e.duration} د</div></div><span class="badge badge-primary">${at.length} محاولة</span></div>
+        <div style="display:flex;gap:8px;margin-top:8px;"><button class="btn btn-secondary btn-sm" onclick="viewEx('${e.id}')">👁️</button><button class="btn btn-danger btn-sm" onclick="delEx('${e.id}')">🗑️</button></div></div>`;
+      }).join('') || '<p class="text-muted">لا امتحانات</p>';
+    };
+
+    window.openExBuilder = function() {
+      exQ = [];
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🎓 امتحان جديد</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body">
+        <div class="form-group"><label>العنوان</label><input type="text" id="exTitle" class="form-input" required></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label>المجموعة</label><select id="exGroup" class="form-select">${DataService.getGroups().map(g=>`<option value="${g.id}">${g.name}</option>`).join('')}</select></div>
+          <div class="form-group"><label>النوع</label><select id="exMode" class="form-select"><option value="home">منزلي</option><option value="class">داخل الحصة</option></select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label>البداية</label><input type="datetime-local" id="exStart" class="form-input"></div>
+          <div class="form-group"><label>النهاية</label><input type="datetime-local" id="exEnd" class="form-input"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+          <div class="form-group"><label>المدة</label><input type="number" id="exDur" class="form-input" value="60"></div>
+          <div class="form-group"><label>المحاولات</label><input type="number" id="exAtt" class="form-input" value="1"></div>
+          <div class="form-group"><label>عشوائية الأسئلة</label><select id="exRand" class="form-select"><option value="true">نعم</option><option value="false">لا</option></select></div>
+        </div>
+        <div id="exQList"></div>
+        <div style="display:flex;gap:8px;margin:8px 0;"><button type="button" class="btn btn-secondary btn-sm" onclick="addExQ('mcq')">+ MCQ</button><button type="button" class="btn btn-secondary btn-sm" onclick="addExQ('truefalse')">+ صح/خطأ</button><button type="button" class="btn btn-secondary btn-sm" onclick="addExQ('short')">+ مقالي</button></div>
+        <button class="btn btn-primary w-full" onclick="saveEx()">💾 حفظ</button>
+      </div>`);
+    };
+
+    window.addExQ = function(t) {
+      exQ.push({
+        id:'q_'+Date.now()+Math.random().toString(36).slice(2,5),
+        type:t, text:'', options:t==='mcq'?['','','','']:[],
+        correctAnswer:t==='mcq'?0:t==='truefalse'?true:null,
+        points:10, requiresManualReview:t==='short'
+      });
+      renderExQ();
+    };
+
+    window.renderExQ = function() {
+      document.getElementById('exQList').innerHTML = exQ.map((q,i) =>
+        `<div class="question-builder"><div class="question-builder-header"><strong>س${i+1}</strong><button type="button" class="btn btn-danger btn-sm" onclick="exQ.splice(${i},1);renderExQ()">🗑️</button></div>
+        <input type="text" class="form-input" placeholder="نص السؤال" onchange="exQ[${i}].text=this.value">
+        ${q.type==='mcq'?q.options.map((o,oi)=>`<div class="option-row"><input type="radio" name="c_${q.id}" ${q.correctAnswer===oi?'checked':''} onchange="exQ[${i}].correctAnswer=${oi}"><input type="text" class="form-input" placeholder="خيار ${oi+1}" onchange="exQ[${i}].options[${oi}]=this.value"></div>`).join(''):''}
+        ${q.type==='truefalse'?`<select class="form-select" onchange="exQ[${i}].correctAnswer=this.value==='true'"><option value="true">صح</option><option value="false">خطأ</option></select>`:''}
+        </div>`
+      ).join('');
+    };
+
+    window.saveEx = function() {
+      if (!document.getElementById('exTitle').value || !exQ.length) {
+        ThemeManager.toast('أكمل البيانات', 'error');
+        return;
+      }
+      DataService.addExam({
+        title:document.getElementById('exTitle').value,
+        groupId:document.getElementById('exGroup').value,
+        mode:document.getElementById('exMode').value,
+        startTime:document.getElementById('exStart').value,
+        endTime:document.getElementById('exEnd').value,
+        duration:parseInt(document.getElementById('exDur').value),
+        maxAttempts:parseInt(document.getElementById('exAtt').value),
+        randomizeQuestions:document.getElementById('exRand').value==='true',
+        passingScore:50, subject:'English',
+        questions:exQ, createdBy:currentUser.id
+      });
+      ThemeManager.closeModal();
+      ThemeManager.toast('تم ✓', 'success');
+      loadExams();
+    };
+
+    window.viewEx = function(id) {
+      const e = DataService.getExamById(id);
+      const at = DataService.getExamAttempts({examId:id});
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🎓 ${e.title}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">${at.map(a=>`<div class="text-sm" style="padding:6px;background:var(--surface-hover);border-radius:6px;margin-bottom:4px;">${DataService.getUserById(a.studentId)?.name} — ${a.status==='approved'?a.score+'%':a.status}</div>`).join('')||'<p class="text-muted">لا محاولات</p>'}</div>`);
+    };
+
+    window.delEx = function(id) {
+      if (!confirm('حذف؟')) return;
+      DataService.deleteExam(id);
+      loadExams();
+    };
+
+    // ===== 8) Vocabulary (general) =====
+    let vocabFilter = 'all';
+    window.loadVocabulary = function() {
+      const subjects = [...new Set(DataService.getVocabulary().map(v => v.subject))];
+      document.getElementById('vocabFilterBar').innerHTML = `<button class="filter-btn active" onclick="filterVocab('all',this)">الكل</button>` + subjects.map(s =>
+        `<button class="filter-btn" onclick="filterVocab('${s}',this)">${s}</button>`
+      ).join('');
+      renderVocab();
+    };
+
+    window.filterVocab = function(s, btn) {
+      vocabFilter = s;
+      document.querySelectorAll('#vocabFilterBar .filter-btn').forEach(b => b.classList.toggle('active', b === btn));
+      renderVocab();
+    };
+
+    window.renderVocab = function() {
+      let list = DataService.getVocabulary();
+      if (vocabFilter !== 'all') list = list.filter(v => v.subject === vocabFilter);
+      document.getElementById('vocabList').innerHTML = list.map(v =>
+        `<div class="card" style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;"><div><strong style="color:var(--primary);font-family:var(--font-en);">${v.word}</strong> <span class="text-muted">(${v.meaning})</span><div class="text-xs text-muted">${v.subject} · ${v.unit||''}</div></div><button class="btn btn-danger btn-sm" onclick="delVocab('${v.id}')">🗑️</button></div>`
+      ).join('') || '<p class="text-muted">لا مفردات</p>';
+    };
+
+    window.openVocabModal = function() {
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📚 كلمة جديدة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body"><form onsubmit="return saveVocab(event)">
+        <div class="form-group"><label>الكلمة</label><input type="text" id="vWord" class="form-input" required></div>
+        <div class="form-group"><label>المعنى</label><input type="text" id="vMean" class="form-input" required></div>
+        <div class="form-group"><label>مثال</label><input type="text" id="vEx" class="form-input"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label>المادة (عامة)</label><input type="text" id="vSub" class="form-input" value="English"></div>
+          <div class="form-group"><label>الوحدة</label><input type="text" id="vUnit" class="form-input"></div>
+        </div>
+        <div class="form-group"><label>رابط الصوت</label><input type="url" id="vAudio" class="form-input"></div>
+        <button class="btn btn-primary w-full">💾 حفظ</button></form></div>`);
+    };
+
+    window.saveVocab = function(e) {
+      e.preventDefault();
+      DataService.addVocabulary({
+        word:document.getElementById('vWord').value,
+        meaning:document.getElementById('vMean').value,
+        example:document.getElementById('vEx').value,
+        subject:document.getElementById('vSub').value,
+        unit:document.getElementById('vUnit').value,
+        audioUrl:document.getElementById('vAudio').value,
+        createdBy:currentUser.id
+      });
+      ThemeManager.closeModal();
+      ThemeManager.toast('تم ✓', 'success');
+      renderVocab();
+      return false;
+    };
+
+    window.delVocab = function(id) {
+      DataService.deleteVocabulary(id);
+      renderVocab();
+    };
+
+    // ===== 9) Tasks / Followups / Calendar =====
+    let taskFilter = 'all';
+    window.loadTasks = function() {
+      let l = DataService.getTasks({type:'task'});
+      if (taskFilter !== 'all') l = l.filter(t => t.status === taskFilter);
+      document.getElementById('tasksList').innerHTML = l.map(t =>
+        `<div class="task-item priority-${t.priority}"><div class="task-checkbox ${t.status==='completed'?'checked':''}" onclick="toggleTask('${t.id}')">${t.status==='completed'?'✓':''}</div><div style="flex:1;"><div class="task-title">${t.title}</div><div class="text-sm text-muted">${DataService.getUserById(t.assignedTo)?.name||''} · ${t.notes||''}</div></div><button class="btn btn-danger btn-sm" onclick="delTask('${t.id}')">🗑️</button></div>`
+      ).join('') || '<p class="text-muted">لا مهام</p>';
+    };
+
+    window.filterTasks = function(s, btn) {
+      taskFilter = s;
+      document.querySelectorAll('#section-tasks .filter-btn').forEach(b => b.classList.toggle('active', b === btn));
+      loadTasks();
+    };
+
+    window.openTaskModal = function() {
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">✅ مهمة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveTask(event)"><div class="form-group"><label>العنوان</label><input id="tkT" class="form-input" required></div><div class="form-group"><label>المسؤول</label><select id="tkTo" class="form-select">${DataService.getAssistants().map(a=>`<option value="${a.id}">${a.name}</option>`).join('')}</select></div><div class="form-group"><label>الأولوية</label><select id="tkP" class="form-select"><option value="low">منخفضة</option><option value="medium" selected>متوسطة</option><option value="high">عالية</option></select></div><button class="btn btn-primary w-full">💾</button></form></div>`);
+    };
+
+    window.saveTask = function(e) {
+      e.preventDefault();
+      DataService.addTask({
+        title:document.getElementById('tkT').value,
+        assignedTo:document.getElementById('tkTo').value,
+        priority:document.getElementById('tkP').value,
+        status:'open', type:'task', notes:''
+      });
+      ThemeManager.closeModal();
+      loadTasks();
+      return false;
+    };
+
+    window.toggleTask = function(id) {
+      const d = db();
+      const t = d.tasks.find(x => x.id === id);
+      if (t) t.status = t.status === 'completed' ? 'open' : 'completed';
+      save(d);
+      loadTasks();
+    };
+
+    window.delTask = function(id) {
+      const d = db();
+      d.tasks = d.tasks.filter(t => t.id !== id);
+      save(d);
+      loadTasks();
+    };
+
+    window.loadFollowups = function() {
+      document.getElementById('followupsList').innerHTML = DataService.getTasks({type:'followup'}).map(t =>
+        `<div class="card" style="margin-bottom:12px;background:var(--surface-hover);"><strong>${DataService.getUserById(t.studentId)?.name||''}</strong><div class="text-sm">${t.notes}</div><div style="display:flex;gap:8px;margin-top:8px;"><button class="btn btn-success btn-sm" onclick="completeFu('${t.id}')">✓</button><button class="btn btn-danger btn-sm" onclick="delTask('${t.id}');loadFollowups()">🗑️</button></div></div>`
+      ).join('') || '<p class="text-muted">لا متابعات</p>';
+    };
+
+    window.openFollowupModal = function() {
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📌 متابعة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveFu(event)"><div class="form-group"><label>الطالب</label><select id="fuStu" class="form-select">${DataService.getStudents().map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div><div class="form-group"><label>السبب</label><textarea id="fuR" class="form-textarea" required></textarea></div><button class="btn btn-primary w-full">💾</button></form></div>`);
+    };
+
+    window.saveFu = function(e) {
+      e.preventDefault();
+      DataService.addTask({
+        title:'متابعة',
+        studentId:document.getElementById('fuStu').value,
+        notes:document.getElementById('fuR').value,
+        priority:'medium', assignedTo:currentUser.id,
+        status:'open', type:'followup'
+      });
+      ThemeManager.closeModal();
+      loadFollowups();
+      return false;
+    };
+
+    window.completeFu = function(id) {
+      DataService.updateTask(id, {status:'completed'});
+      loadFollowups();
+    };
+
+    window.loadCalendar = function() {
+      const d = db();
+      initKey(d, 'lessons', []);
+      document.getElementById('calendarView').innerHTML = DAYS.map(day => {
+        const gs = DataService.getGroups().filter(g => g.day === day.en);
+        const ls = (d.lessons || []).filter(l => l.day === day.en);
+        return `<div style="margin-bottom:16px;"><h4 style="margin-bottom:8px;">📅 ${day.ar}</h4>${[...gs.map(g=>`<div class="card" style="margin-bottom:6px;background:var(--surface-hover);padding:10px;"><strong>${g.name}</strong> · ${g.time}</div>`),...ls.map(l=>`<div class="card" style="margin-bottom:6px;background:var(--primary-bg);padding:10px;">📖 ${l.title} · ${l.time}</div>`)].join('')||'<p class="text-sm text-muted">لا حصص</p>'}</div>`;
+      }).join('');
+    };
+
+    // ===== 10) Materials / Payments =====
+    window.loadMaterials = function() {
+      document.getElementById('materialsList').innerHTML = DataService.getMaterials().map(m =>
+        `<div class="user-card"><div class="user-card-header"><div class="user-avatar">📦</div><div class="user-info"><div class="user-name">${m.name}</div><div class="user-meta"><span>${m.subject}</span><span>💰 ${m.price}</span></div></div></div><div class="user-actions"><button class="btn btn-secondary btn-sm" onclick="openMaterialModal('${m.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="delMat('${m.id}')">🗑️</button></div></div>`
+      ).join('') || '<p class="text-muted">لا مواد</p>';
+    };
+
+    window.openMaterialModal = function(editId) {
+      const m = editId ? DataService.getMaterialById(editId) : null;
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📦 مادة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveMat(event,'${editId||''}')"><div class="form-group"><label>الاسم</label><input id="mName" class="form-input" value="${m?.name||''}" required></div><div class="form-group"><label>الوصف</label><textarea id="mDesc" class="form-textarea">${m?.description||''}</textarea></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المادة</label><input id="mSub" class="form-input" value="${m?.subject||'English'}"></div><div class="form-group"><label>السعر</label><input type="number" id="mPrice" class="form-input" value="${m?.price||0}"></div></div><div class="form-group"><label>التوفر</label><select id="mAvail" class="form-select"><option value="available" ${m?.availability==='available'?'selected':''}>متوفر</option><option value="out_of_stock" ${m?.availability==='out_of_stock'?'selected':''}>غير متوفر</option></select></div><button class="btn btn-primary w-full">💾</button></form></div>`);
+    };
+
+    window.saveMat = function(e, editId) {
+      e.preventDefault();
+      const data = {
+        name:document.getElementById('mName').value,
+        description:document.getElementById('mDesc').value,
+        subject:document.getElementById('mSub').value,
+        price:parseInt(document.getElementById('mPrice').value),
+        availability:document.getElementById('mAvail').value
+      };
+      if (editId) {
+        const d = db();
+        const m = d.materials.find(x => x.id === editId);
+        Object.assign(m, data);
+        save(d);
+      } else {
+        DataService.addMaterial(data);
+      }
+      ThemeManager.closeModal();
+      loadMaterials();
+      return false;
+    };
+
+    window.delMat = function(id) {
+      if (!confirm('حذف؟')) return;
+      DataService.deleteMaterial(id);
+      loadMaterials();
+    };
+
+    window.loadPayments = function() {
+      const s = DataService.getPaymentSummary();
+      document.getElementById('payTotal').textContent = s.total;
+      document.getElementById('payPaid').textContent = s.paid;
+      document.getElementById('payRemain').textContent = s.remaining;
+      document.getElementById('paymentsList').innerHTML = DataService.getPayments().map(p =>
+        `<div class="card" style="margin-bottom:12px;background:var(--surface-hover);"><div style="display:flex;justify-content:space-between;"><strong>${DataService.getUserById(p.studentId)?.name||'-'}</strong><span class="badge ${p.status==='paid'?'badge-success':p.status==='partially_paid'?'badge-warning':'badge-danger'}">${p.status}</span></div><div class="text-sm" style="margin:6px 0;">${p.month} · ${p.amount} · مدفوع ${p.paidAmount}</div>${p.status!=='paid'?`<button class="btn btn-success btn-sm" onclick="recordPay('${p.id}')">💵 تسجيل دفعة</button>`:''}</div>`
+      ).join('') || '<p class="text-muted">لا مدفوعات</p>';
+    };
+
+    window.openPaymentModal = function() {
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">💰 دفعة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return savePay(event)"><div class="form-group"><label>الطالب</label><select id="pStu" class="form-select">${DataService.getStudents().map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div><div class="form-group"><label>الشهر</label><input type="month" id="pMonth" class="form-input" required></div><div class="form-group"><label>المبلغ</label><input type="number" id="pAmt" class="form-input" required></div><button class="btn btn-primary w-full">💾</button></form></div>`);
+    };
+
+    window.savePay = function(e) {
+      e.preventDefault();
+      DataService.addPayment({
+        studentId:document.getElementById('pStu').value,
+        month:document.getElementById('pMonth').value,
+        amount:parseInt(document.getElementById('pAmt').value),
+        paidAmount:0, status:'unpaid'
+      });
+      ThemeManager.closeModal();
+      loadPayments();
+      return false;
+    };
+
+    window.recordPay = function(id) {
+      const amt = prompt('المبلغ:');
+      if (!amt) return;
+      DataService.recordPayment(id, parseInt(amt), 'cash');
+      ThemeManager.toast('تم ✓', 'success');
+      loadPayments();
+    };
+
+    // ===== 11) Notifications =====
+    window.loadNotifications = function() {
+      document.getElementById('notificationsList').innerHTML = DataService.getNotifications().map(n =>
+        `<div class="card" style="margin-bottom:12px;background:var(--surface-hover);"><div style="display:flex;justify-content:space-between;"><strong>${n.title}</strong><span class="badge badge-muted">${n.targetUserId}</span></div><div class="text-sm">${n.message}</div></div>`
+      ).join('') || '<p class="text-muted">لا إشعارات</p>';
+    };
+
+    window.openNotifyModal = function() {
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🔔 إشعار</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return sendNotify(event)">
+        <div class="form-group"><label>المستلم</label><select id="nTarget" class="form-select"><option value="all">الكل</option><option value="students">كل الطلاب</option><option value="parents">كل أولياء الأمور</option><option value="teachers">كل المدرسين</option><option value="assistants">كل المساعدين</option>${DataService.getGroups().map(g=>`<option value="group:${g.id}">مجموعة ${g.name}</option>`).join('')}</select></div>
+        <div class="form-group"><label>العنوان</label><input id="nTitle" class="form-input" required></div>
+        <div class="form-group"><label>الرسالة</label><textarea id="nMsg" class="form-textarea" required></textarea></div>
+        <button class="btn btn-primary w-full">📤 إرسال</button></form></div>`);
+    };
+
+    window.sendNotify = function(e) {
+      e.preventDefault();
+      DataService.addNotification({
+        title:document.getElementById('nTitle').value,
+        message:document.getElementById('nMsg').value,
+        targetUserId:document.getElementById('nTarget').value,
+        priority:'medium', type:'general'
+      });
+      DataService.logActivity(currentUser.id, currentUser.name, 'إرسال إشعار', document.getElementById('nTarget').value);
+      ThemeManager.closeModal();
+      loadNotifications();
+      return false;
+    };
+
+    // ===== 12) Templates =====
+    function getTemplates() {
+      return JSON.parse(localStorage.getItem('eduflow_templates') || 'null') || [
+        {name:'تنبيه غياب',type:'attendance',content:'السلام عليكم، نفيدكم بأن الطالب {{name}} تغيب عن حصة {{date}}. برجاء المتابعة.',variables:'name, date'},
+        {name:'تذكير واجب',type:'homework',content:'تذكير: الطالب {{name}} عليه واجب {{hw}} مطلوب تسليمه قبل {{deadline}}.',variables:'name, hw, deadline'}
+      ];
+    }
+    function saveTemplates(t) { localStorage.setItem('eduflow_templates', JSON.stringify(t)); }
+
+    window.loadTemplates = function() {
+      const t = getTemplates();
+      document.getElementById('templatesList').innerHTML = t.map((x,i) =>
+        `<div class="card" style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;"><strong>${x.name}</strong><span class="badge badge-muted">${x.type}</span></div><div class="text-sm" style="margin:8px 0;padding:8px;background:var(--surface-hover);border-radius:6px;">${x.content}</div><div class="text-xs text-muted">متغيرات: {{${x.variables}}}</div><div style="display:flex;gap:8px;margin-top:8px;"><button class="btn btn-secondary btn-sm" onclick="useTemplate(${i})">💬 استخدام</button><button class="btn btn-danger btn-sm" onclick="delTemplate(${i})">🗑️</button></div></div>`
+      ).join('');
+    };
+
+    window.openTemplateModal = function() {
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📄 قالب</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveTpl(event)"><div class="form-group"><label>الاسم</label><input id="tpName" class="form-input" required></div><div class="form-group"><label>النوع</label><select id="tpType" class="form-select"><option>attendance</option><option>homework</option><option>payment</option><option>exam</option><option>general</option></select></div><div class="form-group"><label>المحتوى (استخدم {{متغير}})</label><textarea id="tpContent" class="form-textarea" rows="4" required></textarea></div><div class="form-group"><label>المتغيرات</label><input id="tpVars" class="form-input" placeholder="name, date"></div><button class="btn btn-primary w-full">💾</button></form></div>`);
+    };
+
+    window.saveTpl = function(e) {
+      e.preventDefault();
+      const t = getTemplates();
+      t.push({
+        name:document.getElementById('tpName').value,
+        type:document.getElementById('tpType').value,
+        content:document.getElementById('tpContent').value,
+        variables:document.getElementById('tpVars').value
+      });
+      saveTemplates(t);
+      ThemeManager.closeModal();
+      loadTemplates();
+      return false;
+    };
+
+    window.delTemplate = function(i) {
+      const t = getTemplates();
+      t.splice(i, 1);
+      saveTemplates(t);
+      loadTemplates();
+    };
+
+    window.useTemplate = function(i) {
+      location.hash = '';
+      showSection('whatsapp');
+      document.getElementById('waTemplate').value = i;
+      previewWA();
+    };
+
+    // ===== 13) WhatsApp =====
+    window.loadWA = function() {
+      document.getElementById('waTemplate').innerHTML = getTemplates().map((t,i) => `<option value="${i}">${t.name}</option>`).join('');
+      document.getElementById('waStudent').innerHTML = DataService.getStudents().map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+      previewWA();
+    };
+
+    window.previewWA = function() {
+      const t = getTemplates()[parseInt(document.getElementById('waTemplate').value) || 0];
+      const s = DataService.getUserById(document.getElementById('waStudent').value);
+      if (!t || !s) return;
+      let msg = t.content.replace('{{name}}', s.name).replace('{{date}}', new Date().toLocaleDateString('ar-EG')).replace('{{hw}}', 'الواجب').replace('{{deadline}}', 'غداً');
+      document.getElementById('waPreview').value = msg;
+    };
+
+    window.sendWA = function() {
+      const s = DataService.getUserById(document.getElementById('waStudent').value);
+      const num = (s.parentPhone || s.phone || '').replace(/\D/g, '');
+      const msg = encodeURIComponent(document.getElementById('waPreview').value);
+      window.open(`https://wa.me/2${num}?text=${msg}`, '_blank');
+      DataService.logActivity(currentUser.id, currentUser.name, 'إرسال واتساب', s.name);
+    };
+
+    // ===== 14) Reports =====
+    let currentReport = 'all';
+    window.setReport = function(r, btn) {
+      currentReport = r;
+      document.querySelectorAll('#section-reports .filter-btn').forEach(b => b.classList.toggle('active', b === btn));
+      renderReport(r);
+    };
+
+    window.renderReport = function(r) {
+      const d = db();
+      let html = '';
+      const att = DataService.getAttendance().filter(a => a.status === 'approved');
+      
+      if (r === 'all' || r === 'attendance') {
+        html += `<h4 style="margin-bottom:8px;">📋 تقرير الحضور حسب المجموعة</h4><table class="table rep-table"><thead><tr><th>المجموعة</th><th>سجلات</th><th>حاضر</th><th>غائب</th><th>النسبة</th></tr></thead><tbody>` + DataService.getGroups().map(g => {
+          const ga = att.filter(a => a.groupId === g.id);
+          const tot = ga.reduce((s,a) => s + a.records.length, 0);
+          const pr = ga.reduce((s,a) => s + a.records.filter(x => x.status === 'present').length, 0);
+          return `<tr><td>${g.name}</td><td>${tot}</td><td>${pr}</td><td>${tot-pr}</td><td>${tot?Math.round(pr/tot*100):0}%</td></tr>`;
+        }).join('') + `</tbody></table>`;
+      }
+      
+      if (r === 'all' || r === 'performance') {
+        html += `<h4 style="margin:16px 0 8px;">📊 أداء الطلاب</h4><table class="table rep-table"><thead><tr><th>الطالب</th><th>حضور</th><th>واجبات</th><th>متوسط</th></tr></thead><tbody>` + DataService.getStudents().map(s => {
+          const sa = att.filter(a => a.records.some(x => x.studentId === s.id && x.status === 'present')).length;
+          const sub = DataService.getSubmissions({studentId:s.id}).filter(x => x.status === 'graded');
+          const avg = sub.length ? Math.round(sub.reduce((a,x) => a + (x.score||0), 0) / sub.length) : 0;
+          return `<tr><td>${s.name}</td><td>${sa}</td><td>${sub.length}</td><td>${avg}%</td></tr>`;
+        }).join('') + `</tbody></table>`;
+      }
+      
+      if (r === 'all' || r === 'payments') {
+        html += `<h4 style="margin:16px 0 8px;">💰 التقرير المالي</h4><table class="table rep-table"><thead><tr><th>الطالب</th><th>الشهر</th><th>المطلوب</th><th>المدفوع</th><th>المتبقي</th></tr></thead><tbody>` + DataService.getPayments().map(p =>
+          `<tr><td>${DataService.getUserById(p.studentId)?.name||'-'}</td><td>${p.month}</td><td>${p.amount}</td><td>${p.paidAmount}</td><td>${p.amount-p.paidAmount}</td></tr>`
+        ).join('') + `</tbody></table>`;
+      }
+      
+      document.getElementById('reportView').innerHTML = html;
+    };
+
+    // ===== 16) Achievements / Rewards / Certificates =====
+    window.loadAchievements = function() {
+      const a = JSON.parse(localStorage.getItem('eduflow_achievements') || '[]');
+      document.getElementById('achievementsList').innerHTML = a.map((x,i) =>
+        `<div class="achievement-card" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center;"><div style="font-size:36px;">${x.icon}</div><h4>${x.name}</h4><p class="text-sm text-muted">${x.desc}</p><p class="text-sm" style="margin-top:6px;">🎯 ${x.requirement}</p><button class="btn btn-danger btn-sm" style="margin-top:8px;" onclick="delAch(${i})">🗑️</button></div>`
+      ).join('') || '<p class="text-muted">لا إنجازات</p>';
+    };
+
+    window.openAchievementModal = function() {
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🏆 إنجاز</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveAch(event)"><div class="form-group"><label>الاسم</label><input id="acN" class="form-input" required></div><div class="form-group"><label>الأيقونة (emoji)</label><input id="acI" class="form-input" value="🏆"></div><div class="form-group"><label>الوصف</label><textarea id="acD" class="form-textarea"></textarea></div><div class="form-group"><label>شرط الاستحقاق</label><input id="acR" class="form-input" placeholder="حضور 10 حصص متتالية"></div><button class="btn btn-primary w-full">💾</button></form></div>`);
+    };
+
+    window.saveAch = function(e) {
+      e.preventDefault();
+      const a = JSON.parse(localStorage.getItem('eduflow_achievements') || '[]');
+      a.push({
+        name:document.getElementById('acN').value,
+        icon:document.getElementById('acI').value,
+        desc:document.getElementById('acD').value,
+        requirement:document.getElementById('acR').value
+      });
+      localStorage.setItem('eduflow_achievements', JSON.stringify(a));
+      ThemeManager.closeModal();
+      loadAchievements();
+      return false;
+    };
+
+    window.delAch = function(i) {
+      const a = JSON.parse(localStorage.getItem('eduflow_achievements') || '[]');
+      a.splice(i, 1);
+      localStorage.setItem('eduflow_achievements', JSON.stringify(a));
+      loadAchievements();
+    };
+
+    window.loadRewards = function() {
+      const r = JSON.parse(localStorage.getItem('eduflow_rewards') || '[]');
+      document.getElementById('rewardsList').innerHTML = r.map((x,i) =>
+        `<div style="display:flex;gap:12px;align-items:center;padding:12px;background:var(--surface-hover);border-radius:var(--radius-sm);margin-bottom:8px;"><div style="font-size:32px;">${x.icon}</div><div style="flex:1;"><strong>${x.name}</strong><div class="text-sm text-muted">${x.points} نقطة · ${x.desc}</div></div><button class="btn btn-danger btn-sm" onclick="delRew(${i})">🗑️</button></div>`
+      ).join('') || '<p class="text-muted">لا مكافآت</p>';
+    };
+
+    window.openRewardModal = function() {
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🎁 مكافأة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveRew(event)"><div class="form-group"><label>الاسم</label><input id="rwN" class="form-input" required></div><div class="form-group"><label>الأيقونة</label><input id="rwI" class="form-input" value="🎁"></div><div class="form-group"><label>النقاط المطلوبة</label><input type="number" id="rwP" class="form-input" required></div><div class="form-group"><label>الوصف / الجائزة</label><textarea id="rwD" class="form-textarea"></textarea></div><button class="btn btn-primary w-full">💾</button></form></div>`);
+    };
+
+    window.saveRew = function(e) {
+      e.preventDefault();
+      const r = JSON.parse(localStorage.getItem('eduflow_rewards') || '[]');
+      r.push({
+        name:document.getElementById('rwN').value,
+        icon:document.getElementById('rwI').value,
+        points:parseInt(document.getElementById('rwP').value),
+        desc:document.getElementById('rwD').value
+      });
+      localStorage.setItem('eduflow_rewards', JSON.stringify(r));
+      ThemeManager.closeModal();
+      loadRewards();
+      return false;
+    };
+
+    window.delRew = function(i) {
+      const r = JSON.parse(localStorage.getItem('eduflow_rewards') || '[]');
+      r.splice(i, 1);
+      localStorage.setItem('eduflow_rewards', JSON.stringify(r));
+      loadRewards();
+    };
+
+    window.loadCertificates = function() {
+      const c = JSON.parse(localStorage.getItem('eduflow_certificates') || '[]');
+      document.getElementById('certificatesList').innerHTML = c.map((x,i) =>
+        `<div class="cert-preview"><h3>🏆 ${x.type}</h3><p>${x.studentName}</p><p style="font-size:12px;margin-top:8px;">${x.reason}</p><p style="font-size:11px;opacity:.7;margin-top:8px;">${x.code} · ${new Date(x.date).toLocaleDateString('ar-EG')}</p></div><button class="btn btn-danger btn-sm" style="margin-bottom:16px;" onclick="delCert(${i})">🗑️</button>`
+      ).join('') || '<p class="text-muted">لا شهادات</p>';
+    };
+
+    window.openCertificateModal = function() {
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📜 إصدار شهادة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveCert(event)"><div class="form-group"><label>الطالب</label><select id="ceStu" class="form-select">${DataService.getStudents().map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div><div class="form-group"><label>النوع</label><select id="ceType" class="form-select"><option>شهادة تميز</option><option>شهادة حضور</option><option>شهادة تفوق</option><option>شهادة إنجاز</option></select></div><div class="form-group"><label>السبب</label><textarea id="ceR" class="form-textarea"></textarea></div><button class="btn btn-primary w-full">📜 إصدار</button></form></div>`);
+    };
+
+    window.saveCert = function(e) {
+      e.preventDefault();
+      const s = DataService.getUserById(document.getElementById('ceStu').value);
+      const c = JSON.parse(localStorage.getItem('eduflow_certificates') || '[]');
+      c.push({
+        studentName:s.name, studentId:s.id,
+        type:document.getElementById('ceType').value,
+        reason:document.getElementById('ceR').value,
+        date:new Date().toISOString(),
+        code:'CERT-'+Date.now().toString().slice(-6)
+      });
+      localStorage.setItem('eduflow_certificates', JSON.stringify(c));
+      DataService.logActivity(currentUser.id, currentUser.name, 'إصدار شهادة', s.name);
+      ThemeManager.closeModal();
+      loadCertificates();
+      return false;
+    };
+
+    window.delCert = function(i) {
+      const c = JSON.parse(localStorage.getItem('eduflow_certificates') || '[]');
+      c.splice(i, 1);
+      localStorage.setItem('eduflow_certificates', JSON.stringify(c));
+      loadCertificates();
+    };
+
+    // ===== 17) Branches =====
+    window.loadBranches = function() {
+      document.getElementById('branchesList').innerHTML = DataService.getBranches().map(b =>
+        `<div class="user-card"><div class="user-card-header"><div class="user-avatar">🏫</div><div class="user-info"><div class="user-name">${b.name}</div><div class="user-meta"><span>📍 ${b.address}</span><span>${b.type==='online'?'🌐':'🏢'}</span></div></div></div><div class="user-meta"><span class="badge ${b.isActive?'badge-success':'badge-muted'}">${b.isActive?'نشط':'معطل'}</span></div><div class="user-actions"><button class="btn btn-secondary btn-sm" onclick="toggleBranch('${b.id}')">${b.isActive?'⏸️ تعطيل':'▶️ تفعيل'}</button><button class="btn btn-danger btn-sm" onclick="delBranch('${b.id}')">🗑️</button></div></div>`
+      ).join('');
+    };
+
+    window.openBranchModal = function() {
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🏫 فرع</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveBranch(event)"><div class="form-group"><label>الاسم</label><input id="brN" class="form-input" required></div><div class="form-group"><label>العنوان</label><input id="brA" class="form-input" required></div><div class="form-group"><label>النوع</label><select id="brT" class="form-select"><option value="offline">فعلي</option><option value="online">أونلاين</option></select></div><button class="btn btn-primary w-full">💾</button></form></div>`);
+    };
+
+    window.saveBranch = function(e) {
+      e.preventDefault();
+      const d = db();
+      d.branches.push({
+        id:'br_'+Date.now(),
+        name:document.getElementById('brN').value,
+        address:document.getElementById('brA').value,
+        type:document.getElementById('brT').value,
+        isActive:true
+      });
+      save(d);
+      ThemeManager.closeModal();
+      loadBranches();
+      return false;
+    };
+
+    window.toggleBranch = function(id) {
+      const d = db();
+      const b = d.branches.find(x => x.id === id);
+      b.isActive = !b.isActive;
+      save(d);
+      loadBranches();
+    };
+
+    window.delBranch = function(id) {
+      if (!confirm('حذف؟')) return;
+      const d = db();
+      d.branches = d.branches.filter(b => b.id !== id);
+      save(d);
+      loadBranches();
+    };
+
+    // ===== Settings / Features / Backup / Logs =====
+    window.loadSettings = function() {
+      const o = DataService.getOrganization();
+      document.getElementById('setCompany').value = o.name;
+      document.getElementById('setPhone').value = o.contactPhone;
+      renderLogo();
+    };
+
+    window.renderLogo = function() {
+      const b = JSON.parse(localStorage.getItem('eduflow_branding') || 'null');
+      document.getElementById('logoPreview').innerHTML = b?.logo ? `<img src="${b.logo}" style="width:100%;height:100%;object-fit:cover;">` : ThemeManager.defaultLogo;
+    };
+
+    window.handleLogo = function(e) {
+      const f = e.target.files[0];
+      if (!f) return;
+      const r = new FileReader();
+      r.onload = ev => {
+        localStorage.setItem('eduflow_branding', JSON.stringify({logo:ev.target.result, companyName:DataService.getOrganization().name}));
+        DataService.updateOrganization({logo:ev.target.result});
+        ThemeManager.applyBranding();
+        renderLogo();
+        ThemeManager.toast('تم ✓', 'success');
+      };
+      r.readAsDataURL(f);
+    };
+
+    window.saveSettings = function() {
+      DataService.updateOrganization({
+        name:document.getElementById('setCompany').value,
+        contactPhone:document.getElementById('setPhone').value
+      });
+      ThemeManager.toast('تم ✓', 'success');
+    };
+
+    window.loadFeatures = function() {
+      const f = DataService.getFeatureFlags();
+      document.getElementById('featuresList').innerHTML = Object.entries(f).map(([k,v]) =>
+        `<div class="feature-flag"><div class="feature-flag-info"><div class="feature-flag-name">${v.name} <span class="badge badge-${v.status==='active'?'success':v.status==='ready'?'warning':'muted'}">${v.status}</span></div><div class="feature-flag-desc">${v.desc}</div></div><div class="toggle ${v.enabled?'active':''}" onclick="toggleFeature('${k}',this)"></div></div>`
+      ).join('');
+    };
+
+    window.toggleFeature = function(k, el) {
+      const f = DataService.getFeatureFlags();
+      if (f[k].status === 'coming_soon') {
+        ThemeManager.toast('قريباً', 'warning');
+        return;
+      }
+      DataService.updateFeatureFlag(k, {enabled:!f[k].enabled});
+      el.classList.toggle('active');
+    };
+
+    window.exportBackup = function() {
+      const data = {
+        version:'2.1',
+        exportedAt:new Date().toISOString(),
+        data:db(),
+        branding:localStorage.getItem('eduflow_branding'),
+        features:localStorage.getItem('eduflow_features'),
+        templates:localStorage.getItem('eduflow_templates'),
+        achievements:localStorage.getItem('eduflow_achievements'),
+        rewards:localStorage.getItem('eduflow_rewards'),
+        certificates:localStorage.getItem('eduflow_certificates')
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `eduflow_backup_${Date.now()}.json`;
+      a.click();
+      ThemeManager.toast('تم التصدير ✓', 'success');
+    };
+
+    window.importBackup = function(e) {
+      const f = e.target.files[0];
+      if (!f) return;
+      if (!confirm('سيتم استبدال كل البيانات!')) return;
+      const r = new FileReader();
+      r.onload = ev => {
+        try {
+          const b = JSON.parse(ev.target.result);
+          save(b.data);
+          if (b.branding) localStorage.setItem('eduflow_branding', b.branding);
+          ThemeManager.toast('تم الاستيراد ✓', 'success');
+          setTimeout(() => location.reload(), 800);
+        } catch {
+          ThemeManager.toast('ملف غير صالح', 'error');
+        }
+      };
+      r.readAsText(f);
+    };
+
+    window.loadLogs = function() {
+      document.getElementById('logsList').innerHTML = DataService.getActivityLogs().map(l =>
+        `<div class="activity-item"><div class="activity-dot"></div><div class="activity-content"><div class="activity-title">${l.action}</div><div class="activity-meta"><span>👤 ${l.userName}</span><span>🎯 ${l.target}</span><span>🕐 ${new Date(l.timestamp).toLocaleString('ar-EG')}</span></div></div></div>`
+      ).join('') || '<p class="text-muted">لا سجل</p>';
+    };
+
+    window.delUser = function(id) {
+      if (!confirm('تأكيد الحذف؟')) return;
+      DataService.deleteUser(id);
+      loadStudents();
+      loadTeachers();
+      loadAssistants();
+    };
+
+    window.handleLogout = function() {
+      if (confirm('تسجيل الخروج؟')) AuthService.logout();
+    };
+
+    // ✅ تشغيل
+    console.log('🚀 Loading overview...');
+    loadOverview();
+    console.log('✅ Admin Dashboard ready!');
+  </script>
+</body>
+</html>

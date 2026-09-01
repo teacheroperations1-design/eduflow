@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>المفردات - EduFlow</title>
+  <link rel="stylesheet" href="css/eduflow-theme.css">
+  <style>
+    .v-topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:50;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+    .v-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+    .v-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+    .v-card:hover{transform:translateY(-3px);border-color:var(--primary);box-shadow:var(--shadow-md)}
+    .v-word{font-size:22px;font-weight:800;color:var(--primary);font-family:var(--font-en)}
+    .v-back{display:none}
+    .v-card.flipped .v-front{display:none}
+    .v-card.flipped .v-back{display:block}
+    .audio-btn{margin-top:10px;background:var(--primary-bg);color:var(--primary);border:none;padding:6px 14px;border-radius:9999px;cursor:pointer;font-weight:600;font-size:12px;transition:all .2s}
+    .audio-btn:hover{background:var(--primary);color:#fff}
+    .quiz-opt{display:block;width:100%;text-align:right;padding:12px 16px;background:var(--surface-hover);border:2px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;cursor:pointer;font-size:15px;transition:all .2s}
+    .quiz-opt:hover{border-color:var(--primary)}
+    .quiz-opt.correct{border-color:var(--success);background:var(--success-bg)}
+    .quiz-opt.wrong{border-color:var(--danger);background:var(--danger-bg)}
+    .quiz-progress{height:8px;background:var(--surface-hover);border-radius:9999px;overflow:hidden;margin-bottom:16px}
+    .quiz-progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:9999px;transition:width .4s ease}
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
+
+  <div class="v-topbar">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <a href="student-dashboard.html" class="btn btn-ghost btn-sm">→ رجوع</a>
+      <strong>📚 بنك المفردات</strong>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="startQuiz()">🧪 اختبار سريع</button>
+  </div>
+
+  <div style="max-width:1000px;margin:24px auto;padding:0 16px;position:relative;z-index:1;">
+    <div id="cardsWrap" class="v-grid"></div>
+    <div id="quizWrap" style="display:none;max-width:600px;margin:0 auto;"></div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/data-service.js"></script>
+  <script src="js/theme-manager.js"></script>
+  <script src="js/auth-service.js"></script>
+  <script>
+    // ✅ بدون return مبكر
+    AuthService.requireRole(['student']);
+    const currentUser = AuthService.getCurrentUser();
+    console.log('✅ Vocabulary page initialized for:', currentUser.name);
+
+    const vocab = DataService.getVocabulary({ subject: currentUser.subject || 'English' });
+    console.log('📚 Loaded vocab:', vocab.length);
+
+    // ✅ عرض البطاقات (Flashcards)
+    window.renderCards = function() {
+      document.getElementById('cardsWrap').style.display = 'grid';
+      document.getElementById('quizWrap').style.display = 'none';
+
+      if (vocab.length === 0) {
+        document.getElementById('cardsWrap').innerHTML = '<p class="text-muted text-center" style="grid-column:1/-1;padding:40px;">لا توجد مفردات بعد</p>';
+        return;
+      }
+
+      document.getElementById('cardsWrap').innerHTML = vocab.map(v => `
+        <div class="v-card" onclick="this.classList.toggle('flipped')">
+          <div class="v-front">
+            <div class="v-word">${v.word}</div>
+            <div class="text-sm text-muted" style="margin-top:6px;">${v.unit || ''} ${v.lesson ? '· ' + v.lesson : ''}</div>
+            ${v.audioUrl ? `<button class="audio-btn" onclick="event.stopPropagation();playAudio('${v.audioUrl}', this)">🔊 استماع</button>` : ''}
+            <div class="text-xs text-muted" style="margin-top:10px;">اضغط لرؤية المعنى ↺</div>
+          </div>
+          <div class="v-back">
+            <div class="v-word">${v.word}</div>
+            <div style="font-size:17px;font-weight:700;margin:8px 0;">${v.meaning}</div>
+            ${v.example ? `<div class="text-sm" style="font-style:italic;color:var(--text-muted);">"${v.example}"</div>` : ''}
+            ${v.audioUrl ? `<button class="audio-btn" onclick="event.stopPropagation();playAudio('${v.audioUrl}', this)">🔊 استماع</button>` : ''}
+          </div>
+        </div>`).join('');
+    };
+
+    window.playAudio = function(url, btn) {
+      try {
+        const a = new Audio(url);
+        a.play();
+        if (btn) {
+          const old = btn.textContent;
+          btn.textContent = '▶️ جاري التشغيل...';
+          a.onended = function() { btn.textContent = old; };
+        }
+      } catch(e) {
+        console.warn('⚠️ Audio play failed:', e);
+      }
+    };
+
+    // ✅ الاختبار السريع
+    let quizList = [];
+    let quizIndex = 0;
+    let quizScore = 0;
+
+    window.startQuiz = function() {
+      if (vocab.length === 0) { alert('لا توجد مفردات للاختبار'); return; }
+      // خلط الكلمات
+      quizList = vocab.slice().sort(function() { return Math.random() - 0.5; });
+      quizIndex = 0;
+      quizScore = 0;
+      document.getElementById('cardsWrap').style.display = 'none';
+      document.getElementById('quizWrap').style.display = 'block';
+      showQuizQ();
+    };
+
+    window.showQuizQ = function() {
+      const wrap = document.getElementById('quizWrap');
+
+      // نهاية الاختبار
+      if (quizIndex >= quizList.length) {
+        const pct = Math.round((quizScore / quizList.length) * 100);
+        wrap.innerHTML = `<div class="card" style="text-align:center;padding:40px;">
+          <div style="font-size:48px;">${pct >= 70 ? '🏆' : '📚'}</div>
+          <div style="font-size:36px;font-weight:800;color:var(--primary);font-family:var(--font-en);margin:12px 0;">${quizScore}/${quizList.length}</div>
+          <p class="text-muted" style="margin-bottom:16px;">نسبتك: ${pct}% ${pct >= 70 ? '— أحسنت!' : '— حاول تاني'}</p>
+          <div style="display:flex;gap:8px;justify-content:center;">
+            <button class="btn btn-primary" onclick="startQuiz()">🔄 إعادة الاختبار</button>
+            <button class="btn btn-secondary" onclick="renderCards()">→ البطاقات</button>
+          </div>
+        </div>`;
+        return;
+      }
+
+      const q = quizList[quizIndex];
+
+      // بناء الخيارات: المعنى الصحيح + 3 معاني تانية
+      const others = vocab.filter(function(v) { return v.id !== q.id; })
+        .sort(function() { return Math.random() - 0.5; })
+        .slice(0, 3)
+        .map(function(v) { return v.meaning; });
+      const options = [q.meaning].concat(others).sort(function() { return Math.random() - 0.5; });
+
+      const progress = Math.round((quizIndex / quizList.length) * 100);
+
+      wrap.innerHTML = `
+        <div class="quiz-progress"><div class="quiz-progress-fill" style="width:${progress}%"></div></div>
+        <div class="card" style="padding:24px;">
+          <div class="text-sm text-muted" style="margin-bottom:8px;">سؤال ${quizIndex + 1} من ${quizList.length} · النتيجة: ${quizScore}</div>
+          <div class="v-word" style="margin-bottom:16px;">${q.word}</div>
+          ${q.audioUrl ? `<button class="audio-btn" onclick="playAudio('${q.audioUrl}', this)">🔊 استماع</button>` : ''}
+          <div style="margin-top:16px;">
+            ${options.map(function(o) {
+              return `<button type="button" class="quiz-opt" onclick="answerQuiz(this, ${o === q.meaning})">${o}</button>`;
+            }).join('')}
+          </div>
+        </div>`;
+    };
+
+    window.answerQuiz = function(btn, isCorrect) {
+      // قفل كل الخيارات
+      const opts = btn.parentElement.querySelectorAll('.quiz-opt');
+      opts.forEach(function(b) { b.disabled = true; });
+
+      if (isCorrect) {
+        btn.classList.add('correct');
+        quizScore++;
+      } else {
+        btn.classList.add('wrong');
+        // ورّي الإجابة الصحيحة
+        opts.forEach(function(b) { if (!b.classList.contains('wrong')) { /* noop */ } });
+      }
+
+      setTimeout(function() {
+        quizIndex++;
+        showQuizQ();
+      }, 700);
+    };
+
+    // ✅ تشغيل أول عرض
+    renderCards();
+    console.log('✅ Vocabulary page ready!');
+  </script>
+</body>
+</html>

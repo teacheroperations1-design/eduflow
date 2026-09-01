@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>التقارير والتحليلات - EduFlow</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .chart-bar {
+      height: 24px; background: var(--primary); border-radius: 4px;
+      transition: width 0.5s ease; display: flex; align-items: center;
+      padding: 0 0.5rem; color: white; font-size: 0.85rem; font-weight: 600;
+    }
+    .stat-circle {
+      width: 120px; height: 120px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.75rem; font-weight: 800; color: white;
+      background: conic-gradient(var(--primary) var(--percent), var(--border) 0);
+      position: relative;
+    }
+    .stat-circle::before {
+      content: ''; position: absolute; inset: 8px;
+      background: var(--surface); border-radius: 50%;
+    }
+    .stat-circle span { position: relative; z-index: 1; color: var(--text-primary); }
+  </style>
+</head>
+<body>
+  <header style="background: var(--surface); border-bottom: 1px solid var(--border); padding: 1rem;">
+    <div class="container flex justify-between items-center">
+      <div>
+        <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--primary);">EduFlow</h2>
+        <span class="text-sm" style="color: var(--text-secondary);">التقارير والتحليلات</span>
+      </div>
+      <a href="assistant-dashboard.html" class="btn btn-outline text-sm">العودة</a>
+    </div>
+  </header>
+
+  <div class="container" style="margin-top: 1.5rem;">
+    <!-- Filters -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+      <div class="flex gap-2" style="flex-wrap: wrap;">
+        <select id="filterGroup" class="form-select" style="min-width: 200px;" onchange="loadReport()">
+          <option value="">كل المجموعات</option>
+        </select>
+        <button onclick="exportReport()" class="btn btn-outline">📥 تصدير التقرير</button>
+      </div>
+    </div>
+
+    <!-- Overview Cards -->
+    <div class="flex gap-4" style="flex-wrap: wrap; margin-bottom: 1.5rem;">
+      <div class="card" style="flex: 1; min-width: 180px;">
+        <div class="text-sm" style="color: var(--text-secondary);">إجمالي الطلاب</div>
+        <div style="font-size: 1.75rem; font-weight: 700; margin-top: 0.5rem;" id="totalStudents">0</div>
+      </div>
+      <div class="card" style="flex: 1; min-width: 180px;">
+        <div class="text-sm" style="color: var(--text-secondary);">نسبة الحضور</div>
+        <div style="font-size: 1.75rem; font-weight: 700; margin-top: 0.5rem; color: var(--success);" id="attendanceRate">0%</div>
+      </div>
+      <div class="card" style="flex: 1; min-width: 180px;">
+        <div class="text-sm" style="color: var(--text-secondary);">متوسط الواجبات</div>
+        <div style="font-size: 1.75rem; font-weight: 700; margin-top: 0.5rem; color: var(--primary);" id="avgHW">0%</div>
+      </div>
+      <div class="card" style="flex: 1; min-width: 180px;">
+        <div class="text-sm" style="color: var(--text-secondary);">متوسط الامتحانات</div>
+        <div style="font-size: 1.75rem; font-weight: 700; margin-top: 0.5rem; color: var(--primary);" id="avgExam">0%</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex gap-2" style="margin-bottom: 1rem; overflow-x: auto;">
+      <button class="btn btn-primary tab-btn" data-tab="teachers">👨‍🏫 المدرسون</button>
+      <button class="btn btn-outline tab-btn" data-tab="groups">👥 المجموعات</button>
+      <button class="btn btn-outline tab-btn" data-tab="students">🎓 أفضل الطلاب</button>
+      <button class="btn btn-outline tab-btn" data-tab="attention">⚠️ يحتاجون متابعة</button>
+    </div>
+
+    <!-- Tab: Teachers -->
+    <div id="tab-teachers" class="tab-content">
+      <div class="card">
+        <h3 style="margin-bottom: 1rem;">إحصائيات المدرسين</h3>
+        <div id="teachersReport"></div>
+      </div>
+    </div>
+
+    <!-- Tab: Groups -->
+    <div id="tab-groups" class="tab-content hidden">
+      <div class="card">
+        <h3 style="margin-bottom: 1rem;">إحصائيات المجموعات</h3>
+        <div id="groupsReport"></div>
+      </div>
+    </div>
+
+    <!-- Tab: Top Students -->
+    <div id="tab-students" class="tab-content hidden">
+      <div class="card">
+        <h3 style="margin-bottom: 1rem;">🏆 أفضل 10 طلاب</h3>
+        <div id="topStudentsReport"></div>
+      </div>
+    </div>
+
+    <!-- Tab: Attention -->
+    <div id="tab-attention" class="tab-content hidden">
+      <div class="card">
+        <h3 style="margin-bottom: 1rem;">⚠️ الطلاب الذين يحتاجون متابعة</h3>
+        <div id="attentionReport"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/data-service.js"></script>
+  <script src="js/auth-service.js"></script>
+  <script>
+    if (!AuthService.requireRole(['super_admin', 'assistant'])) { /* redirected */ }
+
+    let currentReport = null;
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('btn-primary', btn.dataset.tab === tabId);
+        btn.classList.toggle('btn-outline', btn.dataset.tab !== tabId);
+      });
+    }
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+
+    function loadGroupFilter() {
+      const groups = DataService._getData().groups;
+      const select = document.getElementById('filterGroup');
+      select.innerHTML = '<option value="">كل المجموعات</option>' + 
+        groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+    }
+
+    function loadReport() {
+      const groupId = document.getElementById('filterGroup').value;
+      currentReport = DataService.generateAnalyticsReport(groupId ? { groupId } : {});
+
+      // Overview
+      document.getElementById('totalStudents').textContent = currentReport.overview.totalStudents;
+      document.getElementById('attendanceRate').textContent = `${currentReport.attendance.rate}%`;
+      document.getElementById('avgHW').textContent = `${currentReport.performance.avgHomeworkScore}%`;
+      document.getElementById('avgExam').textContent = `${currentReport.performance.avgExamScore}%`;
+
+      // Teachers
+      document.getElementById('teachersReport').innerHTML = currentReport.teacherStats.map(t => `
+        <div class="card" style="margin-bottom: 1rem; background: var(--background);">
+          <div class="flex justify-between items-start" style="margin-bottom: 0.5rem;">
+            <div>
+              <h4>${t.teacherName}</h4>
+              <p class="text-sm" style="color: var(--text-secondary);">${t.subject}</p>
+            </div>
+            <div class="text-sm" style="text-align: left;">
+              <div><strong>${t.studentsCount}</strong> طالب</div>
+              <div><strong>${t.groupsCount}</strong> مجموعة</div>
+            </div>
+          </div>
+          <div class="flex gap-4 text-sm">
+            <span>📝 ${t.homeworkCount} واجب</span>
+            <span>🎓 ${t.examsCount} امتحان</span>
+          </div>
+        </div>
+      `).join('') || '<p class="text-center" style="padding: 2rem; color: var(--text-secondary);">لا يوجد مدرسون</p>';
+
+      // Groups
+      document.getElementById('groupsReport').innerHTML = currentReport.groupStats.map(g => `
+        <div class="card" style="margin-bottom: 1rem; background: var(--background);">
+          <div class="flex justify-between items-start" style="margin-bottom: 0.5rem;">
+            <div>
+              <h4>${g.groupName}</h4>
+              <p class="text-sm" style="color: var(--text-secondary);">${g.teacherName}</p>
+            </div>
+            <div style="text-align: left;">
+              <div class="text-sm"><strong>${g.studentsCount}</strong> طالب</div>
+              <div class="text-sm"><strong>${g.monthlyFee}</strong> ج.م/شهر</div>
+            </div>
+          </div>
+          <div style="margin-top: 0.5rem;">
+            <div class="text-sm" style="margin-bottom: 0.25rem;">نسبة الحضور: ${g.attendanceRate}%</div>
+            <div style="background: var(--border); border-radius: 4px; height: 8px; overflow: hidden;">
+              <div style="background: var(--success); height: 100%; width: ${g.attendanceRate}%;"></div>
+            </div>
+          </div>
+        </div>
+      `).join('') || '<p class="text-center" style="padding: 2rem; color: var(--text-secondary);">لا توجد مجموعات</p>';
+
+      // Top Students
+      document.getElementById('topStudentsReport').innerHTML = currentReport.topStudents.map((s, idx) => `
+        <div class="card" style="margin-bottom: 0.75rem; padding: 0.75rem;">
+          <div class="flex items-center gap-4">
+            <div style="font-size: 1.5rem; font-weight: 800; color: ${idx < 3 ? 'var(--warning)' : 'var(--text-secondary)'}; min-width: 40px;">
+              ${idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`}
+            </div>
+            <div style="flex: 1;">
+              <div style="font-weight: 600;">${s.studentName}</div>
+              <div class="text-sm" style="color: var(--text-secondary);">${s.groupName} | ${s.studentCode}</div>
+            </div>
+            <div style="text-align: left;">
+              <div class="text-sm"><strong style="color: var(--primary);">${s.avgScore}%</strong> متوسط</div>
+              <div class="text-sm">${s.attendanceCount} حضور</div>
+            </div>
+          </div>
+        </div>
+      `).join('') || '<p class="text-center" style="padding: 2rem; color: var(--text-secondary);">لا توجد بيانات</p>';
+
+      // Attention
+      const attentionList = DataService.getStudentsNeedingAttention();
+      document.getElementById('attentionReport').innerHTML = attentionList.map(s => `
+        <div class="card" style="margin-bottom: 1rem; border-right: 4px solid ${s.status === 'high_attention' ? 'var(--danger)' : 'var(--warning)'};">
+          <div class="flex justify-between items-start" style="margin-bottom: 0.5rem;">
+            <div>
+              <h4>${s.student.name}</h4>
+              <p class="text-sm" style="color: var(--text-secondary);">${s.student.studentId}</p>
+            </div>
+            <span class="badge ${s.status === 'high_attention' ? 'badge-danger' : 'badge-warning'}">
+              ${s.status === 'high_attention' ? '⚠️ متابعة عاجلة' : 'يحتاج متابعة'}
+            </span>
+          </div>
+          <div style="margin-top: 0.5rem;">
+            ${s.issues.map(issue => `<div class="text-sm" style="color: var(--danger);">• ${issue}</div>`).join('')}
+          </div>
+        </div>
+      `).join('') || '<p class="text-center" style="padding: 2rem; color: var(--text-secondary);">✅ لا يوجد طلاب يحتاجون متابعة حالياً</p>';
+    }
+
+    function exportReport() {
+      if (!currentReport) return;
+      const dataStr = JSON.stringify(currentReport, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `eduflow-report-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+    }
+
+    loadGroupFilter();
+    loadReport();
+  </script>
+</body>
+</html>

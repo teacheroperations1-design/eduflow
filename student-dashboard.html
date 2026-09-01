@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة الطالب - EduFlow</title>
+  <link rel="stylesheet" href="css/eduflow-theme.css">
+  <style>
+    .teacher-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:all .2s;cursor:pointer;position:relative;overflow:hidden}
+    .teacher-card:hover{transform:translateY(-4px);border-color:var(--primary);box-shadow:var(--shadow-md)}
+    .teacher-card::before{content:'';position:absolute;top:0;right:0;width:100%;height:4px;background:linear-gradient(90deg,var(--primary),var(--accent))}
+    .teacher-avatar-lg{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px;font-weight:700;margin:0 auto 12px;box-shadow:0 8px 24px var(--primary-glow)}
+    .teacher-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+    .teacher-stat{text-align:center;padding:8px;background:var(--surface-hover);border-radius:var(--radius-xs)}
+    .teacher-stat-value{font-size:16px;font-weight:700;color:var(--primary);font-family:var(--font-en)}
+    .teacher-stat-label{font-size:10px;color:var(--text-muted);margin-top:2px}
+    .goal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+    .goal-bar{height:8px;background:var(--surface-hover);border-radius:9999px;overflow:hidden;margin-top:8px}
+    .goal-bar-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:9999px;transition:width .8s ease}
+    .goal-bar-fill.success{background:linear-gradient(90deg,var(--success),#059669)}
+    .goal-bar-fill.warning{background:linear-gradient(90deg,var(--warning),#d97706)}
+    .goal-bar-fill.danger{background:linear-gradient(90deg,var(--danger),#dc2626)}
+    .hw-item,.ex-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;border-right:4px solid var(--primary);transition:all .2s}
+    .hw-item:hover,.ex-item:hover{border-right-color:var(--accent);transform:translateX(-4px)}
+    .hw-item.completed{border-right-color:var(--success)}
+    .hw-item.overdue{border-right-color:var(--danger)}
+    .ex-item.upcoming{border-right-color:var(--warning)}
+    .ex-item.live{border-right-color:var(--success);animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{box-shadow:0 0 0 0 var(--success-bg)}50%{box-shadow:0 0 0 8px transparent}}
+    .schedule-item{display:flex;gap:12px;padding:12px;background:var(--surface-hover);border-radius:var(--radius-sm);margin-bottom:8px;border-right:3px solid var(--primary)}
+    .schedule-day{width:50px;text-align:center;flex-shrink:0}
+    .schedule-day-name{font-size:11px;color:var(--text-muted);font-weight:600}
+    .schedule-day-num{font-size:20px;font-weight:700;color:var(--primary);font-family:var(--font-en)}
+    .resource-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;cursor:pointer;transition:all .2s}
+    .resource-card:hover{border-color:var(--primary);transform:translateY(-4px);box-shadow:var(--shadow-md)}
+    .resource-icon{font-size:36px;margin-bottom:8px}
+    .achievement-preview{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-top:12px}
+    .ach-card{background:var(--surface-hover);border-radius:var(--radius);padding:12px;text-align:center;transition:all .2s}
+    .ach-card:hover{transform:translateY(-2px)}
+    .ach-icon{font-size:32px;margin-bottom:4px}
+    .ach-name{font-size:12px;font-weight:600}
+    .welcome-banner{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-radius:var(--radius);padding:24px;margin-bottom:24px;position:relative;overflow:hidden}
+    .welcome-banner::before{content:'';position:absolute;top:-50%;left:-10%;width:200px;height:200px;background:rgba(255,255,255,.1);border-radius:50%}
+    .welcome-banner h2{font-size:24px;font-weight:800;margin-bottom:4px;position:relative;z-index:1}
+    .welcome-banner p{opacity:.9;position:relative;z-index:1}
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo" data-logo></div>
+        <div class="sidebar-brand"><div class="sidebar-brand-name" data-brand-name>EduFlow</div><div class="sidebar-brand-tagline">Student Panel</div></div>
+      </div>
+      <nav class="sidebar-nav" id="sidebarNav"></nav>
+      <div class="sidebar-footer">
+        <div class="sidebar-user"><div class="sidebar-user-avatar" id="userAvatar">S</div><div class="sidebar-user-info"><div class="sidebar-user-name" id="userName">طالب</div><div class="sidebar-user-role" id="userCode">EDU-0000</div></div></div>
+        <button class="btn btn-ghost w-full" onclick="handleLogout()">🚪 تسجيل الخروج</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="main-header">
+        <div class="main-header-right">
+          <button class="menu-toggle" id="menuToggle"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+          <div><h1 class="page-title" id="pageTitle">مرحباً بك</h1><p class="page-subtitle" id="pageSubtitle">لوحة الطالب</p></div>
+        </div>
+        <div class="main-header-left"><div class="header-actions">
+          <button class="icon-btn" id="themeToggle"></button>
+          <button class="icon-btn" onclick="showSection('notifications')" title="الإشعارات">🔔<span class="badge-dot" id="notifBadge"></span></button>
+        </div></div>
+      </header>
+
+      <div class="content-area">
+
+        <section class="section active" id="section-overview">
+          <div class="welcome-banner">
+            <h2>مرحباً، <span id="welcomeName">طالب</span> 👋</h2>
+            <p>إليك ملخص يومك الدراسي</p>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">نسبة الحضور</span><div class="stat-card-icon">📋</div></div><div class="stat-card-value" id="stAttendance">0%</div></div>
+            <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">واجبات مكتملة</span><div class="stat-card-icon">📝</div></div><div class="stat-card-value" id="stHwDone">0</div></div>
+            <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">امتحانات</span><div class="stat-card-icon">🎓</div></div><div class="stat-card-value" id="stExams">0</div></div>
+            <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">كلمات محفوظة</span><div class="stat-card-icon">📚</div></div><div class="stat-card-value" id="stVocab">0</div></div>
+          </div>
+
+          <div class="card" style="margin-bottom:24px;">
+            <div class="card-header"><h3 class="card-title">👨‍🏫 مدرّسوك</h3><p class="text-sm text-muted">المدرسين المشترك معهم</p></div>
+            <div id="teachersGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;"></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px;">
+            <div class="resource-card" onclick="location.href='student-homework.html'"><div class="resource-icon">📝</div><div>الواجبات</div><div class="text-xs text-muted" id="hwCount">0 واجب</div></div>
+            <div class="resource-card" onclick="location.href='student-exam.html'"><div class="resource-icon">🎓</div><div>الامتحانات</div><div class="text-xs text-muted" id="exCount">0 امتحان</div></div>
+            <div class="resource-card" onclick="location.href='student-vocabulary.html'"><div class="resource-icon">📚</div><div>المفردات</div><div class="text-xs text-muted" id="vocabCount">0 كلمة</div></div>
+            <div class="resource-card" onclick="showSection('materials')"><div class="resource-icon">📦</div><div>المواد</div><div class="text-xs text-muted">ملازم وكتب</div></div>
+          </div>
+
+          <div class="card" style="margin-bottom:24px;">
+            <div class="card-header"><h3 class="card-title">📅 جدول اليوم</h3><p class="text-sm text-muted" id="todayDate"></p></div>
+            <div id="todaySchedule"></div>
+          </div>
+
+          <div class="card" style="margin-bottom:24px;">
+            <div class="card-header"><h3 class="card-title">🎯 أهدافي هذا الأسبوع</h3></div>
+            <div id="myGoals"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3 class="card-title">🏆 إنجازاتي</h3><p class="text-sm text-muted">الإنجازات اللي حصلت عليها</p></div>
+            <div id="myAchievements" class="achievement-preview"></div>
+          </div>
+        </section>
+
+        <section class="section" id="section-homework">
+          <div class="section-header"><div><h2 class="section-title">📝 واجباتي</h2></div><a href="student-homework.html" class="btn btn-primary">فتح صفحة الواجبات</a></div>
+          <div class="stats-grid" style="margin-bottom:16px;">
+            <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">إجمالي الواجبات</span></div><div class="stat-card-value" id="hwTotalCount">0</div></div>
+            <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">مكتملة</span></div><div class="stat-card-value" id="hwDoneCount" style="color:var(--success)">0</div></div>
+            <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">قيد التصحيح</span></div><div class="stat-card-value" id="hwPendingCount" style="color:var(--warning)">0</div></div>
+            <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">متوسط الدرجات</span></div><div class="stat-card-value" id="hwAvgScore">0%</div></div>
+          </div>
+          <div id="hwList"></div>
+        </section>
+
+        <section class="section" id="section-exams">
+          <div class="section-header"><div><h2 class="section-title">🎓 امتحاناتي</h2></div><a href="student-exam.html" class="btn btn-primary">فتح صفحة الامتحانات</a></div>
+          <div class="stats-grid" style="margin-bottom:16px;">
+            <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">إجمالي الامتحانات</span></div><div class="stat-card-value" id="exTotalCount">0</div></div>
+            <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">مكتملة</span></div><div class="stat-card-value" id="exDoneCount" style="color:var(--success)">0</div></div>
+            <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">قادمة</span></div><div class="stat-card-value" id="exUpcomingCount" style="color:var(--warning)">0</div></div>
+            <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">متوسط الدرجات</span></div><div class="stat-card-value" id="exAvgScore">0%</div></div>
+          </div>
+          <div id="exList"></div>
+        </section>
+
+        <section class="section" id="section-vocabulary">
+          <div class="section-header"><div><h2 class="section-title">📚 المفردات</h2></div><a href="student-vocabulary.html" class="btn btn-primary">فتح المفردات</a></div>
+          <div class="card"><div class="empty-state"><p>استخدم الصفحة المتخصصة لتعلم المفردات مع الصوت</p></div></div>
+        </section>
+
+        <section class="section" id="section-materials">
+          <div class="section-header"><div><h2 class="section-title">📦 المواد والملازم</h2></div></div>
+          <div id="materialsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;"></div>
+        </section>
+
+        <section class="section" id="section-schedule">
+          <div class="section-header"><div><h2 class="section-title">📅 جدولي الدراسي</h2></div></div>
+          <div class="card"><div id="fullSchedule"></div></div>
+        </section>
+
+        <section class="section" id="section-notifications">
+          <div class="section-header"><div><h2 class="section-title">🔔 الإشعارات</h2></div></div>
+          <div class="card"><div id="notificationsList"></div></div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/data-service.js"></script>
+  <script src="js/theme-manager.js"></script>
+  <script src="js/auth-service.js"></script>
+  <script>
+    // ✅ إزالة الـ return المبكر
+    AuthService.requireRole(['student']);
+    const currentUser = AuthService.getCurrentUser();
+    console.log('✅ Student Dashboard initialized for:', currentUser.name);
+
+    document.getElementById('userName').textContent = currentUser.name;
+    document.getElementById('userAvatar').textContent = currentUser.name.charAt(0);
+    document.getElementById('welcomeName').textContent = currentUser.name;
+    document.getElementById('userCode').textContent = currentUser.code || currentUser.studentId || 'طالب';
+
+    const DAYS = [
+      {en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},
+      {en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},
+      {en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'},
+      {en:'Saturday',ar:'السبت'}
+    ];
+    const dayAr = en => (DAYS.find(d=>d.en===en)||{}).ar || en;
+
+    const myGroups = DataService.getGroups().filter(g => {
+      const ens = DataService.getStudentTeachers(currentUser.id);
+      return ens.some(e => e.group.id === g.id);
+    });
+    const myTeachers = DataService.getStudentTeachers(currentUser.id);
+
+    console.log('📊 Student data:', {groups:myGroups.length, teachers:myTeachers.length});
+
+    const studentMenu = [
+      {section:"الرئيسية",items:[{id:"overview",label:"نظرة عامة",icon:"🏠"}]},
+      {section:"التعلم",items:[
+        {id:"homework",label:"الواجبات",icon:"📝"},
+        {id:"exams",label:"الامتحانات",icon:"🎓"},
+        {id:"vocabulary",label:"المفردات",icon:"📚"},
+        {id:"materials",label:"المواد",icon:"📦"}
+      ]},
+      {section:"الجدول",items:[{id:"schedule",label:"جدولي",icon:"📅"}]},
+      {section:"أخرى",items:[{id:"notifications",label:"الإشعارات",icon:"🔔"}]}
+    ];
+
+    document.getElementById('sidebarNav').innerHTML = studentMenu.map((sec,si) => 
+      `<div class="sidebar-section">
+        <div class="sidebar-section-title">${sec.section}</div>
+        ${sec.items.map((it,ii) => 
+          `<div class="sidebar-item ${si===0&&ii===0?'active':''}" data-section="${it.id}" onclick="showSection('${it.id}')">
+            <span class="sidebar-item-icon">${it.icon}</span>
+            <span class="sidebar-item-label">${it.label}</span>
+          </div>`
+        ).join('')}
+      </div>`
+    ).join('');
+
+    // ✅ Show Section
+    window.showSection = function(id) {
+      console.log('🔄 Switching to section:', id);
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      const section = document.getElementById('section-'+id);
+      if (section) section.classList.add('active');
+      
+      document.querySelectorAll('.sidebar-item').forEach(i => 
+        i.classList.toggle('active', i.dataset.section===id)
+      );
+
+      const titles = {
+        overview:['مرحباً بك','لوحة الطالب'],
+        homework:['الواجبات','واجباتك المطلوبة'],
+        exams:['الامتحانات','امتحاناتك ونتائجك'],
+        vocabulary:['المفردات','بنك الكلمات'],
+        materials:['المواد','الملازم والكتب'],
+        schedule:['جدولي','مواعيد الحصص'],
+        notifications:['الإشعارات','كل التنبيهات']
+      };
+
+      document.getElementById('pageTitle').textContent = titles[id]?.[0] || 'EduFlow';
+      document.getElementById('pageSubtitle').textContent = titles[id]?.[1] || '';
+      
+      const loaders = {
+        overview:loadOverview, homework:loadHomework, exams:loadExams,
+        materials:loadMaterials, schedule:loadSchedule, notifications:loadNotifications
+      };
+      if (loaders[id]) loaders[id]();
+
+      if (window.innerWidth <= 1024) {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sidebarOverlay').classList.remove('show');
+      }
+    };
+
+    // ✅ Overview
+    window.loadOverview = function() {
+      console.log('📊 Loading overview...');
+      
+      const att = DataService.getAttendance().filter(a => a.status === 'approved' && a.records.some(r => r.studentId === currentUser.id));
+      const present = att.filter(a => a.records.find(r => r.studentId === currentUser.id)?.status === 'present').length;
+      const attRate = att.length ? Math.round((present/att.length)*100) : 0;
+      const subs = DataService.getSubmissions({studentId:currentUser.id}).filter(s=>s.status==='graded');
+      const exams = DataService.getExamAttempts({studentId:currentUser.id}).filter(a=>a.status==='approved');
+      const vocab = DataService.getVocabulary();
+      const allHw = DataService.getHomework().filter(h=>myGroups.some(g=>g.id===h.groupId));
+      const allExams = DataService.getExams().filter(e=>myGroups.some(g=>g.id===e.groupId));
+
+      document.getElementById('stAttendance').textContent = attRate+'%';
+      document.getElementById('stHwDone').textContent = subs.length;
+      document.getElementById('stExams').textContent = exams.length;
+      document.getElementById('stVocab').textContent = vocab.length;
+      document.getElementById('todayDate').textContent = new Date().toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+      // Resource counts
+      document.getElementById('hwCount').textContent = allHw.length + ' واجب';
+      document.getElementById('exCount').textContent = allExams.length + ' امتحان';
+      document.getElementById('vocabCount').textContent = vocab.length + ' كلمة';
+
+      // Teachers Grid
+      document.getElementById('teachersGrid').innerHTML = myTeachers.map(t => {
+        const subs = DataService.getSubmissions({studentId:currentUser.id}).filter(s=>{const hw=DataService.getHomeworkById(s.homeworkId); return hw && hw.groupId===t.group.id;});
+        const graded = subs.filter(s=>s.status==='graded');
+        const avg = graded.length ? Math.round(graded.reduce((a,s)=>a+(s.score||0),0)/graded.length) : 0;
+        const tAtt = DataService.getAttendance().filter(a=>a.status==='approved' && a.groupId===t.group.id && a.records.some(r=>r.studentId===currentUser.id));
+        const tPresent = tAtt.filter(a=>a.records.find(r=>r.studentId===currentUser.id)?.status==='present').length;
+        const tAttRate = tAtt.length ? Math.round((tPresent/tAtt.length)*100) : 0;
+
+        return `<div class="teacher-card">
+          <div class="teacher-avatar-lg">${t.teacher.name.charAt(0)}</div>
+          <div style="text-align:center;">
+            <div style="font-size:16px;font-weight:700;">${t.teacher.name}</div>
+            <div class="text-sm text-muted">${t.teacher.subject}</div>
+            <div class="text-sm" style="color:var(--primary);margin-top:4px;">${t.group.name}</div>
+          </div>
+          <div class="teacher-stats">
+            <div class="teacher-stat"><div class="teacher-stat-value">${tAttRate}%</div><div class="teacher-stat-label">الحضور</div></div>
+            <div class="teacher-stat"><div class="teacher-stat-value">${avg}%</div><div class="teacher-stat-label">الواجبات</div></div>
+            <div class="teacher-stat"><div class="teacher-stat-value">${subs.length}</div><div class="teacher-stat-label">تسليمات</div></div>
+          </div>
+          <div style="margin-top:12px;padding:8px;background:var(--primary-bg);border-radius:var(--radius-xs);text-align:center;font-size:12px;">
+            📅 الحصّة القادمة: <strong>${dayAr(t.group.day)} ${t.group.time}</strong>
+          </div>
+        </div>`;
+      }).join('') || '<p class="text-muted text-center">لم يتم تسجيلك في أي مجموعة</p>';
+
+      // Today's Schedule
+      const dayName = new Date().toLocaleDateString('en-US',{weekday:'long'});
+      const todayGroups = myGroups.filter(g=>g.day===dayName);
+      document.getElementById('todaySchedule').innerHTML = todayGroups.length ? todayGroups.map(g=>{
+        const t = myTeachers.find(x=>x.group.id===g.id);
+        return `<div class="schedule-item">
+          <div class="schedule-day"><div class="schedule-day-name">اليوم</div><div class="schedule-day-num">${g.time.split(':')[0]}</div></div>
+          <div style="flex:1;"><div style="font-weight:600;">${g.name}</div><div class="text-sm text-muted">👨‍🏫 ${t?.teacher.name||'-'} · 📍 ${g.location} · 🕐 ${g.time}</div></div>
+        </div>`;
+      }).join('') : '<p class="text-muted text-center">📅 لا توجد حصص اليوم</p>';
+
+      // Goals
+      const goals = [
+        { title: 'حضور الحصص', current: present, target: Math.max(att.length, 5), unit: 'حصة' },
+        { title: 'حل الواجبات', current: subs.length, target: Math.max(allHw.length, 3), unit: 'واجب' },
+        { title: 'حفظ المفردات', current: Math.min(vocab.length, 30), target: 30, unit: 'كلمة' }
+      ];
+      document.getElementById('myGoals').innerHTML = goals.map(g => {
+        const pct = Math.min(100, Math.round((g.current/g.target)*100));
+        const cls = pct >= 80 ? 'success' : pct >= 50 ? 'warning' : 'danger';
+        return `<div class="goal-card">
+          <div style="display:flex;justify-content:space-between;"><strong>${g.title}</strong><span class="text-sm" style="color:var(--primary);">${g.current}/${g.target} ${g.unit}</span></div>
+          <div class="goal-bar"><div class="goal-bar-fill ${cls}" style="width:${pct}%"></div></div>
+        </div>`;
+      }).join('');
+
+      // Achievements
+      const achievements = JSON.parse(localStorage.getItem('eduflow_achievements') || '[]');
+      document.getElementById('myAchievements').innerHTML = achievements.slice(0,4).map(a => 
+        `<div class="ach-card">
+          <div class="ach-icon">${a.icon}</div>
+          <div class="ach-name">${a.name}</div>
+        </div>`
+      ).join('') || '<p class="text-muted text-center">لا توجد إنجازات بعد</p>';
+
+      const unread = DataService.getUnreadCount(currentUser.id);
+      document.getElementById('notifBadge').style.display = unread > 0 ? 'block' : 'none';
+      
+      console.log('✅ Overview loaded');
+    };
+
+    // ✅ Homework
+    window.loadHomework = function() {
+      const today = new Date().toISOString().split('T')[0];
+      const hws = DataService.getHomework().filter(h => myGroups.some(g => g.id === h.groupId));
+      const subs = DataService.getSubmissions({studentId:currentUser.id});
+      const graded = subs.filter(s=>s.status==='graded');
+      const avg = graded.length ? Math.round(graded.reduce((a,s)=>a+(s.score||0),0)/graded.length) : 0;
+      const pending = subs.filter(s=>s.status==='pending_review').length;
+
+      document.getElementById('hwTotalCount').textContent = hws.length;
+      document.getElementById('hwDoneCount').textContent = graded.length;
+      document.getElementById('hwPendingCount').textContent = pending;
+      document.getElementById('hwAvgScore').textContent = avg + '%';
+
+      document.getElementById('hwList').innerHTML = hws.map(h => {
+        const g = myGroups.find(x => x.id === h.groupId);
+        const sub = subs.find(s => s.homeworkId === h.id);
+        const isExpired = h.deadline < today;
+        const isOpen = h.openDate <= today;
+        let status = 'pending', badge = '';
+        
+        if (sub) {
+          if (sub.status === 'graded') { status = 'completed'; badge = `<span class="badge badge-success">${sub.score}%</span>`; }
+          else { badge = '<span class="badge badge-warning">بانتظار التصحيح</span>'; }
+        } else if (isExpired) { status = 'overdue'; badge = '<span class="badge badge-danger">انتهى الموعد</span>'; }
+        else if (!isOpen) { badge = '<span class="badge badge-muted">لم يفتح بعد</span>'; }
+
+        return `<div class="hw-item ${status}">
+          <div style="display:flex;justify-content:space-between;align-items:start;">
+            <div style="flex:1;">
+              <h4>${h.title}</h4>
+              <div class="text-sm text-muted">${g?.name||'-'} · ${h.questions.length} سؤال · الموعد: ${h.deadline}</div>
+            </div>
+            ${badge}
+          </div>
+          <div style="display:flex;gap:8px;margin-top:12px;">
+            ${isOpen && !isExpired && (!sub || subs.filter(s=>s.homeworkId===h.id).length < h.maxAttempts) ? `<a href="student-homework.html?hw=${h.id}" class="btn btn-primary btn-sm">حل الواجب</a>` : ''}
+            ${sub && sub.status==='graded' ? `<button class="btn btn-ghost btn-sm" onclick="viewHwResult('${h.id}')">👁️ النتيجة</button>` : ''}
+          </div>
+        </div>`;
+      }).join('') || '<p class="text-muted text-center">لا توجد واجبات</p>';
+    };
+
+    window.viewHwResult = function(hwId) {
+      const hw = DataService.getHomeworkById(hwId);
+      const sub = DataService.getSubmissions({studentId:currentUser.id}).find(s=>s.homeworkId===hwId);
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📝 نتيجة: ${hw.title}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body">
+        <div class="text-center" style="margin-bottom:16px;">
+          <div style="font-size:48px;font-weight:800;color:var(--primary);">${sub.score}%</div>
+          <div class="text-sm text-muted">الدرجة النهائية</div>
+        </div>
+        <div class="text-sm"><strong>التصحيح:</strong> ${sub.status==='graded'?'تم':'معلق'}</div>
+        ${sub.notes?`<div class="text-sm" style="margin-top:8px;"><strong>ملاحظات المدرس:</strong> ${sub.notes}</div>`:''}
+      </div>`);
+    };
+
+    // ✅ Exams
+    window.loadExams = function() {
+      const exams = DataService.getExams().filter(e => myGroups.some(g => g.id === e.groupId));
+      const attempts = DataService.getExamAttempts({studentId:currentUser.id});
+      const now = new Date();
+      const approved = attempts.filter(a=>a.status==='approved');
+      const avg = approved.length ? Math.round(approved.reduce((a,x)=>a+(x.score||0),0)/approved.length) : 0;
+      const upcoming = exams.filter(e=>now < new Date(e.startTime)).length;
+
+      document.getElementById('exTotalCount').textContent = exams.length;
+      document.getElementById('exDoneCount').textContent = approved.length;
+      document.getElementById('exUpcomingCount').textContent = upcoming;
+      document.getElementById('exAvgScore').textContent = avg + '%';
+
+      document.getElementById('exList').innerHTML = exams.map(e => {
+        const g = myGroups.find(x => x.id === e.groupId);
+        const attempt = attempts.find(a => a.examId === e.id);
+        const startTime = new Date(e.startTime);
+        const endTime = new Date(e.endTime);
+        const isUpcoming = now < startTime;
+        const isLive = e.mode === 'class' ? e.status === 'live' : (now >= startTime && now <= endTime);
+        const isEnded = now > endTime;
+        let badge = '<span class="badge badge-warning">قادم</span>', cls='upcoming';
+        
+        if (attempt && attempt.status === 'approved') { badge = `<span class="badge badge-success">${attempt.score}%</span>`; cls=''; }
+        else if (isLive) { badge = '<span class="badge badge-success">🟢 متاح الآن</span>'; cls='live'; }
+        else if (isEnded) { badge = '<span class="badge badge-muted">انتهى</span>'; cls=''; }
+
+        return `<div class="ex-item ${cls}">
+          <div style="display:flex;justify-content:space-between;align-items:start;">
+            <div style="flex:1;">
+              <h4>${e.title}</h4>
+              <div class="text-sm text-muted">${g?.name||'-'} · ${e.questions.length} سؤال · ${e.duration} د</div>
+              <div class="text-xs text-muted" style="margin-top:4px;">${e.mode==='home'?`📅 ${startTime.toLocaleString('ar-EG')}`:`🏫 داخل الحصة · ${e.status==='live'?'🟢 مباشر':'⏰ في انتظار البدء'}`}</div>
+            </div>
+            ${badge}
+          </div>
+          <div style="display:flex;gap:8px;margin-top:12px;">
+            ${isLive && (!attempt || attempts.filter(a=>a.examId===e.id).length < e.maxAttempts) ? `<a href="student-exam.html?exam=${e.id}" class="btn btn-primary btn-sm">🚀 ابدأ الامتحان</a>` : ''}
+            ${attempt && attempt.status === 'approved' ? `<button class="btn btn-ghost btn-sm" onclick="viewExResult('${e.id}')">👁️ النتيجة</button>` : ''}
+          </div>
+        </div>`;
+      }).join('') || '<p class="text-muted text-center">لا توجد امتحانات</p>';
+    };
+
+    window.viewExResult = function(examId) {
+      const ex = DataService.getExamById(examId);
+      const attempt = DataService.getExamAttempts({studentId:currentUser.id}).find(a=>a.examId===examId);
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🎓 نتيجة: ${ex.title}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body">
+        <div class="text-center" style="margin-bottom:16px;">
+          <div style="font-size:48px;font-weight:800;color:var(--primary);">${attempt.score}%</div>
+          <div class="text-sm text-muted">الدرجة النهائية</div>
+        </div>
+        <div class="text-sm">الدرجة التلقائية: ${attempt.autoScore}/${attempt.totalAutoPoints}</div>
+        ${attempt.suspiciousActivities?.length>0?`<div class="text-sm" style="color:var(--warning);margin-top:8px;">⚠️ ${attempt.suspiciousActivities.length} نشاط مشبوه</div>`:''}
+        ${attempt.notes?`<div class="text-sm" style="margin-top:8px;"><strong>ملاحظات:</strong> ${attempt.notes}</div>`:''}
+      </div>`);
+    };
+
+    // ✅ Materials
+    window.loadMaterials = function() {
+      const materials = DataService.getMaterials();
+      document.getElementById('materialsList').innerHTML = materials.map(m => 
+        `<div class="resource-card">
+          <div class="resource-icon">📦</div>
+          <h4>${m.name}</h4>
+          <div class="text-sm text-muted">${m.subject} · ${m.grade||'-'}</div>
+          <div style="color:var(--primary);font-weight:700;margin-top:8px;">${m.price} ج.م</div>
+          <button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="orderMaterial('${m.id}')">🛒 اطلب</button>
+        </div>`
+      ).join('') || '<p class="text-muted text-center">لا توجد مواد</p>';
+    };
+
+    window.orderMaterial = function(id) {
+      const mat = DataService.getMaterialById(id);
+      if (!confirm(`طلب: ${mat.name} بسعر ${mat.price} ج.م؟`)) return;
+      DataService.placeOrder({materialId:id, studentId:currentUser.id, quantity:1});
+      DataService.logActivity(currentUser.id, currentUser.name, 'طلب مادة', mat.name);
+      ThemeManager.toast('تم إرسال الطلب ✓ — سيتواصل معك المساعد','success');
+    };
+
+    // ✅ Schedule
+    window.loadSchedule = function() {
+      document.getElementById('fullSchedule').innerHTML = DAYS.map(day => {
+        const dayGroups = myGroups.filter(g => g.day === day.en);
+        return `<div style="margin-bottom:16px;"><h4 style="margin-bottom:8px;">📅 ${day.ar}</h4>
+          ${dayGroups.map(g => {
+            const t = myTeachers.find(x => x.group.id === g.id);
+            return `<div class="schedule-item">
+              <div class="schedule-day"><div class="schedule-day-num">${g.time.split(':')[0]}</div></div>
+              <div style="flex:1;"><div style="font-weight:600;">${g.name}</div><div class="text-sm text-muted">👨‍🏫 ${t?.teacher.name||'-'} · 📍 ${g.location} · 🕐 ${g.time}</div></div>
+            </div>`;
+          }).join('') || '<p class="text-sm text-muted">لا توجد حصص</p>'}
+        </div>`;
+      }).join('');
+    };
+
+    // ✅ Notifications
+    window.loadNotifications = function() {
+      document.getElementById('notificationsList').innerHTML = DataService.getNotifications().filter(n => n.targetUserId===currentUser.id||n.targetUserId==='all').map(n => 
+        `<div class="card" style="margin-bottom:12px;background:var(--surface-hover);">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <strong>${n.title}</strong>
+            <span class="badge badge-${n.priority==='high'?'danger':'info'}">${n.priority}</span>
+          </div>
+          <div class="text-sm" style="margin-top:4px;">${n.message}</div>
+          <div class="text-xs text-muted" style="margin-top:4px;">${new Date(n.createdAt).toLocaleString('ar-EG')}</div>
+        </div>`
+      ).join('') || '<p class="text-muted">لا إشعارات</p>';
+    };
+
+    // ✅ Logout
+    window.handleLogout = function() {
+      if (confirm('تسجيل الخروج؟')) AuthService.logout();
+    };
+
+    // ✅ Load Overview on start
+    console.log('🚀 Loading overview...');
+    loadOverview();
+    console.log('✅ Student Dashboard ready!');
+  </script>
+</body>
+</html>

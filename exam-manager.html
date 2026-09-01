@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إدارة الامتحانات - EduFlow</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header style="background: var(--surface); border-bottom: 1px solid var(--border); padding: 1rem;">
+    <div class="container flex justify-between items-center">
+      <div>
+        <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--primary);">EduFlow</h2>
+        <span class="text-sm" style="color: var(--text-secondary);">إدارة الامتحانات (Exams)</span>
+      </div>
+      <a href="assistant-dashboard.html" class="btn btn-outline text-sm">العودة للرئيسية</a>
+    </div>
+  </header>
+
+  <div class="container" style="margin-top: 1.5rem;">
+    <!-- Tabs -->
+    <div class="flex gap-2" style="margin-bottom: 1.5rem; overflow-x: auto;">
+      <button class="btn btn-primary tab-btn" data-tab="create">➕ إنشاء امتحان</button>
+      <button class="btn btn-outline tab-btn" data-tab="list">📋 الامتحانات</button>
+      <button class="btn btn-outline tab-btn" data-tab="review">✏️ اعتماد النتائج</button>
+    </div>
+
+    <!-- Tab 1: Create Exam -->
+    <div id="tab-create" class="tab-content">
+      <div class="card">
+        <h3 style="margin-bottom: 1rem;">معلومات الامتحان</h3>
+        <form id="examForm">
+          <div class="form-group">
+            <label class="form-label">عنوان الامتحان</label>
+            <input type="text" id="exTitle" class="form-input" required placeholder="مثال: Unit 1 Midterm">
+          </div>
+          <div class="form-group">
+            <label class="form-label">الوصف</label>
+            <textarea id="exDescription" class="form-input" rows="2" placeholder="تعليمات للطلاب..."></textarea>
+          </div>
+
+          <div class="flex gap-2">
+            <div class="form-group" style="flex: 1;">
+              <label class="form-label">المجموعة</label>
+              <select id="exGroup" class="form-select" required></select>
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label class="form-label">نوع الامتحان</label>
+              <select id="exType" class="form-select" required>
+                <option value="scheduled">مجدول (Scheduled)</option>
+                <option value="in-class">داخل الحصة (In-Class)</option>
+                <option value="home">منزلي (Home)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex gap-2">
+            <div class="form-group" style="flex: 1;">
+              <label class="form-label">وقت البداية</label>
+              <input type="datetime-local" id="exStartTime" class="form-input" required>
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label class="form-label">وقت النهاية</label>
+              <input type="datetime-local" id="exEndTime" class="form-input" required>
+            </div>
+          </div>
+
+          <div class="flex gap-2">
+            <div class="form-group" style="flex: 1;">
+              <label class="form-label">المدة (بالدقائق)</label>
+              <input type="number" id="exDuration" class="form-input" value="60" min="1" required>
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label class="form-label">عدد المحاولات</label>
+              <input type="number" id="exMaxAttempts" class="form-input" value="1" min="1" required>
+            </div>
+          </div>
+
+          <div class="flex gap-2">
+            <div class="form-group" style="flex: 1;">
+              <label class="form-label">درجة النجاح (%)</label>
+              <input type="number" id="exPassingScore" class="form-input" value="50" min="0" max="100" required>
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label class="form-label">عرض النتيجة فوراً؟</label>
+              <select id="exShowResults" class="form-select">
+                <option value="false">لا (يحتاج اعتماد)</option>
+                <option value="true">نعم</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="checkbox" id="exRandomize"> عشوائية ترتيب الأسئلة
+            </label>
+          </div>
+
+          <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--border);">
+
+          <h3 style="margin-bottom: 1rem;">الأسئلة</h3>
+          <div id="questionsContainer"></div>
+
+          <div class="flex gap-2" style="margin-top: 1rem; flex-wrap: wrap;">
+            <button type="button" class="btn btn-outline" onclick="addQuestion('mcq')">+ MCQ</button>
+            <button type="button" class="btn btn-outline" onclick="addQuestion('truefalse')">+ True/False</button>
+            <button type="button" class="btn btn-outline" onclick="addQuestion('short')">+ Short Answer</button>
+            <button type="button" class="btn btn-outline" onclick="addQuestion('essay')">+ Essay</button>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block" style="margin-top: 1.5rem;">نشر الامتحان</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Tab 2: Exams List -->
+    <div id="tab-list" class="tab-content hidden">
+      <div class="card">
+        <h3 style="margin-bottom: 1rem;">قائمة الامتحانات</h3>
+        <div id="examList"></div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Review & Approve -->
+    <div id="tab-review" class="tab-content hidden">
+      <div class="card">
+        <h3 style="margin-bottom: 1rem;">التسليمات التي تحتاج اعتماد/تصحيح</h3>
+        <div id="pendingAttempts"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/data-service.js"></script>
+  <script src="js/auth-service.js"></script>
+  <script>
+    if (!AuthService.requireRole(['super_admin', 'assistant', 'teacher'])) { /* redirected */ }
+
+    const currentUser = AuthService.getCurrentUser();
+    let questions = [];
+    let questionCounter = 0;
+
+    // --- Tabs ---
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('btn-primary', btn.dataset.tab === tabId);
+        btn.classList.toggle('btn-outline', btn.dataset.tab !== tabId);
+      });
+      if (tabId === 'list') loadExamList();
+      if (tabId === 'review') loadPendingAttempts();
+    }
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+
+    // --- Load Groups ---
+    function loadGroups() {
+      const data = DataService._getData();
+      const select = document.getElementById('exGroup');
+      const groups = currentUser.role === 'teacher' 
+        ? DataService.getGroupsByTeacher(currentUser.id)
+        : data.groups;
+      select.innerHTML = groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+    }
+
+    // --- Questions Builder (نفس منطق الواجبات) ---
+    function addQuestion(type) {
+      questionCounter++;
+      const q = { id: `eq_${questionCounter}`, type, text: '', points: 10 };
+      if (type === 'mcq') { q.options = ['', '', '', '']; q.correctAnswer = 0; }
+      if (type === 'truefalse') q.correctAnswer = true;
+      if (type === 'short' || type === 'essay') q.requiresManualReview = true;
+      questions.push(q);
+      renderQuestions();
+    }
+
+    function removeQuestion(id) {
+      questions = questions.filter(q => q.id !== id);
+      renderQuestions();
+    }
+
+    function renderQuestions() {
+      const container = document.getElementById('questionsContainer');
+      if (questions.length === 0) {
+        container.innerHTML = '<p class="text-sm" style="color: var(--text-secondary); text-align: center; padding: 1rem;">لم تضف أي أسئلة بعد.</p>';
+        return;
+      }
+
+      container.innerHTML = questions.map((q, idx) => {
+        let html = `
+          <div class="card" style="margin-bottom: 1rem; background: var(--background);">
+            <div class="flex justify-between items-center" style="margin-bottom: 0.75rem;">
+              <strong>سؤال ${idx + 1} (${q.type.toUpperCase()})</strong>
+              <button type="button" class="btn btn-danger text-sm" style="padding: 0.25rem 0.5rem;" onclick="removeQuestion('${q.id}')">حذف</button>
+            </div>
+            <div class="form-group">
+              <label class="form-label">نص السؤال</label>
+              <textarea class="form-input q-text" data-id="${q.id}" rows="2" required>${q.text}</textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">الدرجة</label>
+              <input type="number" class="form-input q-points" data-id="${q.id}" value="${q.points}" min="1" style="max-width: 120px;">
+            </div>
+        `;
+
+        if (q.type === 'mcq') {
+          html += `
+            <div class="form-group">
+              <label class="form-label">الخيارات</label>
+              ${q.options.map((opt, i) => `
+                <div class="flex gap-2 items-center" style="margin-bottom: 0.5rem;">
+                  <input type="radio" name="correct_${q.id}" value="${i}" ${q.correctAnswer === i ? 'checked' : ''} onchange="updateCorrectAnswer('${q.id}', ${i})">
+                  <input type="text" class="form-input q-option" data-qid="${q.id}" data-idx="${i}" value="${opt}" placeholder="خيار ${i + 1}">
+                </div>
+              `).join('')}
+            </div>
+          `;
+        } else if (q.type === 'truefalse') {
+          html += `
+            <div class="form-group">
+              <label class="form-label">الإجابة الصحيحة</label>
+              <select class="form-select q-correct-tf" data-id="${q.id}" style="max-width: 200px;">
+                <option value="true" ${q.correctAnswer === true ? 'selected' : ''}>True</option>
+                <option value="false" ${q.correctAnswer === false ? 'selected' : ''}>False</option>
+              </select>
+            </div>
+          `;
+        } else {
+          html += `<p class="text-sm" style="color: var(--text-secondary);">⚠️ يتطلب تصحيحاً يدوياً.</p>`;
+        }
+
+        html += `</div>`;
+        return html;
+      }).join('');
+
+      // ربط الأحداث
+      document.querySelectorAll('.q-text').forEach(el => {
+        el.addEventListener('input', e => {
+          const q = questions.find(q => q.id === e.target.dataset.id);
+          if (q) q.text = e.target.value;
+        });
+      });
+      document.querySelectorAll('.q-points').forEach(el => {
+        el.addEventListener('input', e => {
+          const q = questions.find(q => q.id === e.target.dataset.id);
+          if (q) q.points = parseInt(e.target.value) || 0;
+        });
+      });
+      document.querySelectorAll('.q-option').forEach(el => {
+        el.addEventListener('input', e => {
+          const q = questions.find(q => q.id === e.target.dataset.qid);
+          if (q) q.options[parseInt(e.target.dataset.idx)] = e.target.value;
+        });
+      });
+      document.querySelectorAll('.q-correct-tf').forEach(el => {
+        el.addEventListener('change', e => {
+          const q = questions.find(q => q.id === e.target.dataset.id);
+          if (q) q.correctAnswer = e.target.value === 'true';
+        });
+      });
+    }
+
+    function updateCorrectAnswer(qId, idx) {
+      const q = questions.find(q => q.id === qId);
+      if (q) q.correctAnswer = idx;
+    }
+
+    // --- Submit Exam ---
+    document.getElementById('examForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (questions.length === 0) { alert('يجب إضافة سؤال واحد على الأقل.'); return; }
+      if (questions.some(q => !q.text)) { alert('يجب كتابة نص كل سؤال.'); return; }
+
+      const groupId = document.getElementById('exGroup').value;
+      const group = DataService._getData().groups.find(g => g.id === groupId);
+
+      const examData = {
+        title: document.getElementById('exTitle').value,
+        description: document.getElementById('exDescription').value,
+        groupId: groupId,
+        subject: group.subject,
+        type: document.getElementById('exType').value,
+        startTime: document.getElementById('exStartTime').value,
+        endTime: document.getElementById('exEndTime').value,
+        duration: parseInt(document.getElementById('exDuration').value),
+        maxAttempts: parseInt(document.getElementById('exMaxAttempts').value),
+        passingScore: parseInt(document.getElementById('exPassingScore').value),
+        showResults: document.getElementById('exShowResults').value === 'true',
+        randomizeQuestions: document.getElementById('exRandomize').checked,
+        createdBy: currentUser.id,
+        questions: questions
+      };
+
+      const result = DataService.addExam(examData);
+      if (result.success) {
+        alert('تم نشر الامتحان بنجاح!');
+        e.target.reset();
+        questions = [];
+        renderQuestions();
+        loadGroups();
+      }
+    });
+
+    // --- Exams List ---
+    function loadExamList() {
+      const filter = currentUser.role === 'teacher' ? { subject: currentUser.subject } : {};
+      const exams = DataService.getExams(filter);
+      const container = document.getElementById('examList');
+
+      if (exams.length === 0) {
+        container.innerHTML = '<p class="text-center" style="padding: 2rem; color: var(--text-secondary);">لا توجد امتحانات.</p>';
+        return;
+      }
+
+      container.innerHTML = exams.map(ex => {
+        const attempts = DataService.getExamAttempts({ examId: ex.id });
+        return `
+          <div class="card" style="margin-bottom: 1rem;">
+            <div class="flex justify-between items-start" style="margin-bottom: 0.5rem;">
+              <div>
+                <h4 style="font-size: 1.05rem;">${ex.title}</h4>
+                <p class="text-sm" style="color: var(--text-secondary);">
+                  ${ex.type} | ${new Date(ex.startTime).toLocaleString('ar-EG')} - ${new Date(ex.endTime).toLocaleString('ar-EG', {hour: '2-digit', minute:'2-digit'})}
+                </p>
+              </div>
+              <button class="btn btn-danger text-sm" style="padding: 0.25rem 0.5rem;" onclick="deleteExam('${ex.id}')">حذف</button>
+            </div>
+            <div class="flex gap-4 text-sm" style="margin-top: 0.5rem;">
+              <span>📝 ${ex.questions.length} أسئلة</span>
+              <span>⏱️ ${ex.duration} دقيقة</span>
+              <span>👥 ${attempts.length} محاولة</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function deleteExam(id) {
+      if (confirm('هل أنت متأكد من حذف هذا الامتحان وجميع محاولاته؟')) {
+        DataService.deleteExam(id);
+        loadExamList();
+      }
+    }
+
+    // --- Review Attempts ---
+    function loadPendingAttempts() {
+      const pending = [
+        ...DataService.getExamAttempts({ status: 'pending_review' }),
+        ...DataService.getExamAttempts({ status: 'pending_approval' })
+      ];
+      const container = document.getElementById('pendingAttempts');
+
+      if (pending.length === 0) {
+        container.innerHTML = '<p class="text-center" style="padding: 2rem; color: var(--text-secondary);">✅ لا توجد تسليمات تحتاج اعتماداً.</p>';
+        return;
+      }
+
+      const data = DataService._getData();
+      container.innerHTML = pending.map(att => {
+        const exam = DataService.getExamById(att.examId);
+        const student = data.users.find(u => u.id === att.studentId);
+        const suspiciousCount = att.suspiciousActivities?.length || 0;
+        return `
+          <div class="card" style="margin-bottom: 1rem; border-right: 4px solid ${suspiciousCount > 0 ? 'var(--danger)' : 'var(--warning)'};">
+            <div class="flex justify-between items-start" style="margin-bottom: 0.75rem;">
+              <div>
+                <h4>${student?.name || 'طالب'} - ${exam?.title || 'امتحان'}</h4>
+                <p class="text-sm" style="color: var(--text-secondary);">
+                  المحاولة #${att.attemptNumber} | الدرجة التلقائية: ${att.percentage || att.autoScore}/${att.totalAutoPoints}
+                </p>
+              </div>
+              <div style="text-align: left;">
+                ${suspiciousCount > 0 ? `<span class="badge badge-danger">⚠️ ${suspiciousCount} نشاط مشبوه</span>` : ''}
+                <span class="badge badge-warning" style="margin-top: 0.25rem; display: block;">${att.status === 'pending_review' ? 'يحتاج تصحيح' : 'يحتاج اعتماد'}</span>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-block" onclick="openApproveModal('${att.id}')">مراجعة واعتماد</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openApproveModal(attemptId) {
+      const att = DataService.getExamAttemptById(attemptId);
+      const exam = DataService.getExamById(att.examId);
+      const data = DataService._getData();
+      const student = data.users.find(u => u.id === att.studentId);
+
+      // عرض الأنشطة المشبوهة إن وجدت
+      if (att.suspiciousActivities?.length > 0) {
+        const activities = att.suspiciousActivities.map(a => 
+          `- ${a.type}: ${new Date(a.timestamp).toLocaleString('ar-EG')} ${a.details ? '(' + a.details + ')' : ''}`
+        ).join('\n');
+        alert(`⚠️ أنشطة مشبوهة:\n${activities}`);
+      }
+
+      // عرض الأسئلة المقالية
+      const manualQuestions = exam.questions.filter(q => q.requiresManualReview);
+      if (manualQuestions.length > 0) {
+        const answersHTML = manualQuestions.map(q => {
+          const ans = att.answers.find(a => a.questionId === q.id);
+          return `السؤال: ${q.text}\nالإجابة: ${ans?.answer || '(لا توجد)'}\n`;
+        }).join('\n---\n');
+        alert(`أسئلة تحتاج تصحيح:\n\n${answersHTML}`);
+      }
+
+      const finalScore = prompt(
+        `اعتماد نتيجة: ${student?.name}\n\nالدرجة التلقائية: ${att.percentage || 0}%\n\nأدخل الدرجة النهائية (0-100):`,
+        att.percentage || att.autoScore
+      );
+
+      if (finalScore !== null && !isNaN(finalScore)) {
+        const notes = prompt('ملاحظات (اختياري):', '') || '';
+        const result = DataService.approveExamAttempt(attemptId, parseInt(finalScore), currentUser.id, notes);
+        if (result.success) {
+          alert('تم اعتماد النتيجة.');
+          loadPendingAttempts();
+        }
+      }
+    }
+
+    // --- Init ---
+    loadGroups();
+    renderQuestions();
+  </script>
+</body>
+</html>

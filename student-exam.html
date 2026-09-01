@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>الامتحان - EduFlow</title>
+  <link rel="stylesheet" href="css/eduflow-theme.css">
+  <style>
+    .ex-topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:50;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+    .timer-box{background:var(--primary-bg);color:var(--primary);font-weight:800;font-family:var(--font-en);font-size:20px;padding:6px 16px;border-radius:var(--radius-sm)}
+    .timer-box.warning{background:var(--warning-bg);color:var(--warning)}
+    .timer-box.danger{background:var(--danger-bg);color:var(--danger);animation:blink 1s infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.5}}
+    .q-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+    .q-nav-btn{width:38px;height:38px;border-radius:50%;border:2px solid var(--border);background:var(--surface);cursor:pointer;font-weight:700;transition:all .2s}
+    .q-nav-btn.answered{background:var(--success);border-color:var(--success);color:#fff}
+    .q-nav-btn.current{border-color:var(--primary);background:var(--primary-bg);color:var(--primary)}
+    .q-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
+    .opt-btn{display:block;width:100%;text-align:right;padding:12px 16px;background:var(--surface-hover);border:2px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;cursor:pointer;font-size:15px;transition:all .2s}
+    .opt-btn:hover{border-color:var(--primary)}
+    .opt-btn.selected{border-color:var(--primary);background:var(--primary-bg);color:var(--primary);font-weight:600}
+    .tf-wrap{display:flex;gap:10px}
+    .tf-btn{flex:1;padding:14px;text-align:center;background:var(--surface-hover);border:2px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-weight:600;font-size:15px;transition:all .2s}
+    .tf-btn.selected{border-color:var(--primary);background:var(--primary-bg);color:var(--primary)}
+    .cheat-warn{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--danger);color:#fff;padding:10px 20px;border-radius:var(--radius-sm);z-index:200;display:none;box-shadow:var(--shadow-lg)}
+    .result-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:40px;text-align:center;max-width:500px;margin:40px auto}
+    .result-score{font-size:56px;font-weight:800;color:var(--primary);font-family:var(--font-en)}
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
+  <div class="cheat-warn" id="cheatWarn">⚠️ تم رصد نشاط مشبوه! لا تغادر نافذة الامتحان</div>
+
+  <div class="ex-topbar">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <a href="student-dashboard.html" class="btn btn-ghost btn-sm" onclick="return confirmExit()">→ خروج</a>
+      <strong id="exTitle">الامتحان</strong>
+    </div>
+    <div class="timer-box" id="timerBox">--:--</div>
+  </div>
+
+  <div style="max-width:800px;margin:24px auto;padding:0 16px;position:relative;z-index:1;">
+    <div id="mainWrap">
+      <div class="q-nav" id="qNav"></div>
+      <div id="qWrap"></div>
+      <div style="display:flex;gap:10px;margin-top:16px;">
+        <button class="btn btn-secondary" id="prevBtn" onclick="navQ(-1)">→ السابق</button>
+        <button class="btn btn-secondary" id="nextBtn" onclick="navQ(1)">التالي ←</button>
+        <button class="btn btn-danger" style="margin-right:auto;" onclick="confirmSubmit()">📤 تسليم</button>
+      </div>
+    </div>
+    <div id="resultWrap" style="display:none;"></div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/data-service.js"></script>
+  <script src="js/theme-manager.js"></script>
+  <script src="js/auth-service.js"></script>
+  <script>
+    AuthService.requireRole(['student']);
+    const currentUser = AuthService.getCurrentUser();
+
+    const params = new URLSearchParams(location.search);
+    const examId = params.get('exam');
+    if (!examId) { location.href = 'student-dashboard.html'; }
+
+    const exam = DataService.getExamById(examId);
+    if (!exam) { alert('الامتحان غير موجود'); location.href = 'student-dashboard.html'; }
+
+    document.getElementById('exTitle').textContent = exam.title;
+
+    // ✅ فحص الإتاحة
+    function checkAvailable() {
+      const now = new Date();
+      if (exam.mode === 'home') {
+        if (now < new Date(exam.startTime)) return 'الامتحان لم يبدأ بعد';
+        if (now > new Date(exam.endTime)) return 'انتهى وقت الامتحان';
+      } else {
+        if (exam.status !== 'live') return 'الامتحان لم يبدأ بعد — انتظر إشارة المدرس';
+      }
+      return null;
+    }
+
+    const blocked = checkAvailable();
+    if (blocked) {
+      document.getElementById('mainWrap').innerHTML = '<div class="result-box"><div style="font-size:48px;">⏳</div><h3 style="margin:12px 0;">'+blocked+'</h3><a href="student-dashboard.html" class="btn btn-primary">العودة</a></div>';
+      document.getElementById('timerBox').style.display = 'none';
+    } else {
+      startExam();
+    }
+
+    let attemptId = null;
+    let questions = [];
+    let currentQ = 0;
+    let timeLeft = 0;
+    let timerInt = null;
+    let submitted = false;
+
+    function startExam() {
+      const res = DataService.startExamAttempt(examId, currentUser.id);
+      if (!res.success) { alert(res.message); location.href = 'student-dashboard.html'; return; }
+      attemptId = res.attemptId;
+
+      questions = exam.questions.slice();
+      if (exam.randomizeQuestions) questions.sort(function() { return Math.random() - 0.5; });
+
+      timeLeft = (exam.duration || 60) * 60;
+      startTimer();
+      setupAntiCheat();
+      renderNav();
+      showQ(0);
+    }
+
+    // ✅ العدّاد
+    function startTimer() {
+      updateTimer();
+      timerInt = setInterval(function() {
+        timeLeft--;
+        updateTimer();
+        if (timeLeft <= 0) {
+          clearInterval(timerInt);
+          doSubmit(true);
+        }
+      }, 1000);
+    }
+    function updateTimer() {
+      const m = Math.floor(timeLeft / 60);
+      const s = timeLeft % 60;
+      const box = document.getElementById('timerBox');
+      box.textContent = (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+      box.className = 'timer-box' + (timeLeft < 60 ? ' danger' : timeLeft < 300 ? ' warning' : '');
+    }
+
+    // ✅ Anti-Cheat
+    function setupAntiCheat() {
+      document.addEventListener('visibilitychange', function() {
+        if (document.hidden && !submitted) {
+          DataService.logSuspiciousActivity(attemptId, 'tab_switch', 'غادر نافذة الامتحان');
+          showCheatWarn();
+        }
+      });
+      window.addEventListener('blur', function() {
+        if (!submitted) {
+          DataService.logSuspiciousActivity(attemptId, 'window_blur', 'فقدت النافذة التركيز');
+          showCheatWarn();
+        }
+      });
+      document.addEventListener('contextmenu', function(e) {
+        if (!submitted) { e.preventDefault(); DataService.logSuspiciousActivity(attemptId, 'right_click', ''); }
+      });
+      document.addEventListener('copy', function(e) {
+        if (!submitted) { e.preventDefault(); DataService.logSuspiciousActivity(attemptId, 'copy', ''); }
+      });
+      window.addEventListener('beforeunload', function(e) {
+        if (!submitted) { e.preventDefault(); e.returnValue = ''; }
+      });
+    }
+    function showCheatWarn() {
+      const w = document.getElementById('cheatWarn');
+      w.style.display = 'block';
+      setTimeout(function() { w.style.display = 'none'; }, 2500);
+    }
+    window.confirmExit = function() {
+      return confirm('الخروج الآن سيعتبر تسليم للامتحان. هل تريد المتابعة؟');
+    };
+
+    // ✅ عرض الأسئلة
+    function renderNav() {
+      document.getElementById('qNav').innerHTML = questions.map(function(q, i) {
+        return '<button class="q-nav-btn" id="nav_'+i+'" onclick="showQ('+i+')">'+(i+1)+'</button>';
+      }).join('');
+    }
+    function markNav(i) {
+      const b = document.getElementById('nav_'+i);
+      if (b) b.classList.add('answered');
+    }
+
+    window.showQ = function(i) {
+      currentQ = i;
+      const q = questions[i];
+      document.querySelectorAll('.q-nav-btn').forEach(function(b, bi) { b.classList.toggle('current', bi === i); });
+
+      let body = '';
+      if (q.type === 'mcq') {
+        const opts = exam.randomizeOptions ? q.options.slice().sort(function(){return Math.random()-0.5;}) : q.options;
+        body = opts.map(function(o, oi) {
+          const realIndex = q.options.indexOf(o);
+          return '<button type="button" class="opt-btn" onclick="pick('+realIndex+', this)">'+o+'</button>';
+        }).join('');
+      } else if (q.type === 'truefalse') {
+        body = '<div class="tf-wrap"><button type="button" class="tf-btn" onclick="pick(true, this)">✓ صح</button><button type="button" class="tf-btn" onclick="pick(false, this)">✗ خطأ</button></div>';
+      } else {
+        body = '<textarea class="form-textarea" rows="5" placeholder="اكتب إجابتك هنا..." oninput="saveText(this.value)">'+(getSaved(q.id)||'')+'</textarea>';
+      }
+
+      document.getElementById('qWrap').innerHTML = '<div class="q-block"><div class="text-sm text-muted" style="margin-bottom:8px;">سؤال '+(i+1)+' من '+questions.length+' · '+q.points+' نقطة</div><p style="font-weight:600;margin-bottom:14px;">'+q.text+'</p>'+body+'</div>';
+
+      document.getElementById('prevBtn').style.visibility = i === 0 ? 'hidden' : 'visible';
+      document.getElementById('nextBtn').style.visibility = i === questions.length-1 ? 'hidden' : 'visible';
+    }
+
+    function getSaved(qid) {
+      const a = DataService.getExamAttemptById(attemptId);
+      if (!a) return '';
+      const f = (a.answers || []).find(function(x) { return x.questionId === qid; });
+      return f ? f.answer : '';
+    }
+
+    window.pick = function(val, btn) {
+      const q = questions[currentQ];
+      DataService.saveExamAnswer(attemptId, q.id, val);
+      const block = btn.closest('.q-block');
+      block.querySelectorAll('.opt-btn, .tf-btn').forEach(function(b) { b.classList.remove('selected'); });
+      btn.classList.add('selected');
+      markNav(currentQ);
+    };
+    window.saveText = function(val) {
+      const q = questions[currentQ];
+      DataService.saveExamAnswer(attemptId, q.id, val);
+      markNav(currentQ);
+    };
+
+    window.navQ = function(d) {
+      const n = currentQ + d;
+      if (n >= 0 && n < questions.length) showQ(n);
+    };
+
+    // ✅ التسليم
+    window.confirmSubmit = function() {
+      const a = DataService.getExamAttemptById(attemptId);
+      const answered = (a && a.answers) ? a.answers.length : 0;
+      const un = questions.length - answered;
+      const msg = un > 0 ? 'لديك '+un+' سؤال بدون إجابة. هل تريد التسليم؟' : 'هل تريد تسليم الامتحان؟';
+      if (confirm(msg)) doSubmit(false);
+    };
+
+    function doSubmit(auto) {
+      if (submitted) return;
+      submitted = true;
+      clearInterval(timerInt);
+
+      const res = DataService.submitExamAttempt(attemptId);
+      document.removeEventListener('visibilitychange', function(){});
+
+      document.getElementById('mainWrap').style.display = 'none';
+      document.getElementById('timerBox').style.display = 'none';
+      const rw = document.getElementById('resultWrap');
+      rw.style.display = 'block';
+
+      if (exam.showResults && res.percentage !== null) {
+        rw.innerHTML = '<div class="result-box"><div style="font-size:48px;">'+(res.percentage >= exam.passingScore ? '🎉' : '📚')+'</div><div class="result-score">'+res.percentage+'%</div><p class="text-muted" style="margin:12px 0;">'+(res.percentage >= exam.passingScore ? 'أحسنت!' : 'لم تصل لدرجة النجاح')+'</p><a href="student-dashboard.html" class="btn btn-primary">العودة</a></div>';
+      } else {
+        rw.innerHTML = '<div class="result-box"><div style="font-size:48px;">✅</div><h3 style="margin:12px 0;">تم تسليم الامتحان بنجاح</h3><p class="text-muted">نتمنى لك التوفيق. ستظهر نتيجتك بعد اعتماد المساعد.</p><a href="student-dashboard.html" class="btn btn-primary">العودة</a></div>';
+      }
+    }
+
+    // تشغيل
+    if (!blocked) { /* startExam already called above */ }
+  </script>
+</body>
+</html>

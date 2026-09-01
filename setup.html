@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إعداد المنصة - EduFlow</title>
+  <link rel="stylesheet" href="css/eduflow-theme.css">
+  <style>
+    .setup-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;padding:16px}
+    .setup-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px;max-width:440px;width:100%;backdrop-filter:blur(20px)}
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
+  <div class="setup-wrap">
+    <div class="setup-card">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:40px;">🚀</div>
+        <h2 style="margin:8px 0;">إعداد المنصة لأول مرة</h2>
+        <p class="text-sm text-muted">أنشئ حساب مدير النظام (الأدمن) — بيظهر مرة واحدة فقط</p>
+      </div>
+      <form onsubmit="return doSetup(event)">
+        <div class="form-group"><label>اسم الأدمن</label><input type="text" id="setName" class="form-input" required></div>
+        <div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="setEmail" class="form-input" required></div>
+        <div class="form-group"><label>كلمة المرور (٨ خانات على الأقل)</label><input type="password" id="setPass" class="form-input" minlength="8" required></div>
+        <div class="form-group"><label>تأكيد كلمة المرور</label><input type="password" id="setPass2" class="form-input" minlength="8" required></div>
+        <button class="btn btn-primary w-full">✅ إنشاء الحساب والدخول</button>
+      </form>
+    </div>
+  </div>
+  <script src="js/config.js"></script>
+  <script src="js/data-service.js"></script>
+  <script src="js/theme-manager.js"></script>
+  <script>
+    // لو فيه أدمن بالفعل → روح على login مباشرة
+    if (DataService.hasAdmin()) location.href = 'login.html';
+
+    function doSetup(e){
+      e.preventDefault();
+      const p1=document.getElementById('setPass').value, p2=document.getElementById('setPass2').value;
+      if (p1!==p2){ ThemeManager.toast('كلمتا المرور غير متطابقتين','error'); return false; }
+      const r = DataService.createFirstAdmin(
+        document.getElementById('setName').value,
+        document.getElementById('setEmail').value,
+        p1
+      );
+      if (r.success){
+        // سجّل دخول تلقائي
+        const admin = DataService.authenticate(document.getElementById('setEmail').value, p1);
+        sessionStorage.setItem('eduflow_user', JSON.stringify(admin));
+        ThemeManager.toast('تم إنشاء حساب الأدمن ✓','success');
+        setTimeout(()=>location.href='admin-dashboard.html', 600);
+      } else { ThemeManager.toast(r.message,'error'); }
+      return false;
+    }
+  </script>
+</body>
+</html>
