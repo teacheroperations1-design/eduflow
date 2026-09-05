@@ -1,5 +1,5 @@
 // js/firebase-service.js
-// طبقة تكامل Firebase - بتحمّل SDK تلقائياً وبتشتغل مع Fallback محلي
+// طبقة Firebase — تحميل SDK تلقائي + حماية البيانات المحلية
 
 const FirebaseService = {
   app: null,
@@ -8,9 +8,10 @@ const FirebaseService = {
   storage: null,
   initialized: false,
   connected: false,
-  _sdkLoaded: false,
+  listeners: [],
+  onChangeCallbacks: [],
+  emptyCollections: new Set(),
 
-  // تحميل SDK تلقائياً (بدل ما نعدّل كل صفحات HTML)
   _loadScript(src) {
     return new Promise((resolve, reject) => {
       const s = document.createElement('script');
@@ -23,70 +24,59 @@ const FirebaseService = {
 
   async init() {
     if (this.initialized) return;
-
-    // لو Firebase مش مفعّل من الإعدادات، ارجع للوضع المحلي
-    if (!EduFlowConfig.useFirebase) {
-      console.log('ℹ️ Firebase disabled in config. Using LOCAL demo mode.');
+    if (!window.EduFlowConfig?.useFirebase) {
+      console.log('ℹ️ Firebase disabled — LOCAL mode');
       this.connected = false;
+      this.initialized = true;
       return;
     }
 
     try {
-      // حمّل SDK لو مش موجود
       if (typeof firebase === 'undefined') {
         console.log('⏳ Loading Firebase SDK...');
-        await this._loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
-        await this._loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js');
-        await this._loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js');
-        await this._loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js');
-        this._sdkLoaded = true;
+        await this._loadScript('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
+        await this._loadScript('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js');
+        await this._loadScript('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js');
+        await this._loadScript('https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js');
       }
-
       if (!firebase.apps.length) {
-        this.app = firebase.initializeApp(EduFlowConfig.firebase);
+        this.app = firebase.initializeApp(window.EduFlowConfig.firebase);
       } else {
         this.app = firebase.apps[0];
       }
-
       this.auth = firebase.auth();
       this.db = firebase.firestore();
       this.storage = firebase.storage();
       this.initialized = true;
       this.connected = true;
-
-      console.log('✅ Firebase connected successfully');
-    } catch (error) {
-      console.error('❌ Firebase init failed, falling back to local:', error);
+      console.log('✅ Firebase connected');
+    } catch (err) {
+      console.error('❌ Firebase init failed:', err);
       this.connected = false;
+      this.initialized = true;
     }
   },
 
-  // ===================== AUTH =====================
+  // ================= AUTH =================
   async signIn(email, password) {
     if (!this.connected) return null;
     try {
-      const result = await this.auth.signInWithEmailAndPassword(email, password);
-      const doc = await this.db.collection('users').doc(result.user.uid).get();
+      const r = await this.auth.signInWithEmailAndPassword(email, password);
+      const doc = await this.db.collection('users').doc(r.user.uid).get();
       return doc.exists ? { id: doc.id, ...doc.data() } : null;
-    } catch (e) {
-      console.warn('Firebase signIn failed:', e.message);
-      return null;
-    }
+    } catch (e) { console.warn('signIn:', e.code); return null; }
   },
 
   async signUp(email, password, userData) {
     if (!this.connected) return null;
     try {
-      const result = await this.auth.createUserWithEmailAndPassword(email, password);
-      await this.db.collection('users').doc(result.user.uid).set({
-        ...userData, uid: result.user.uid,
+      const r = await this.auth.createUserWithEmailAndPassword(email, password);
+      await this.db.collection('users').doc(r.user.uid).set({
+        ...userData, uid: r.user.uid,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
-      return { id: result.user.uid, ...userData };
-    } catch (e) {
-      console.warn('Firebase signUp failed:', e.message);
-      return null;
-    }
+      return { id: r.user.uid, ...userData };
+    } catch (e) { console.warn('signUp:', e.code); return null; }
   },
 
   async signOut() {
@@ -94,76 +84,114 @@ const FirebaseService = {
     try { await this.auth.signOut(); } catch (e) { console.warn(e); }
   },
 
-  // ===================== DATA =====================
-  async getCollection(name, filters = {}) {
-    if (!this.connected) return null;
+  // ================= DATA =================
+  async saveDoc(collection, id, data) {
+    if (!this.connected) return false;
     try {
-      let q = this.db.collection(name);
-      Object.keys(filters).forEach(k => { q = q.where(k, '==', filters[k]); });
-      const snap = await q.get();
-      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    } catch (e) { console.warn(e); return null; }
-  },
-
-  async getDocument(name, id) {
-    if (!this.connected) return null;
-    try {
-      const doc = await this.db.collection(name).doc(id).get();
-      return doc.exists ? { id: doc.id, ...doc.data() } : null;
-    } catch (e) { console.warn(e); return null; }
-  },
-
-  async addDocument(name, data) {
-    if (!this.connected) return null;
-    try {
-      const ref = await this.db.collection(name).add({
-        ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      return { id: ref.id, ...data };
-    } catch (e) { console.warn(e); return null; }
-  },
-
-  async updateDocument(name, id, data) {
-    if (!this.connected) return null;
-    try {
-      await this.db.collection(name).doc(id).update({
-        ...data, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
+      const clean = { ...data }; delete clean._id;
+      if (id) await this.db.collection(collection).doc(id).set(clean, { merge: true });
+      else await this.db.collection(collection).add(clean);
       return true;
-    } catch (e) { console.warn(e); return null; }
+    } catch (err) { console.error('saveDoc:', err); return false; }
   },
 
-  async deleteDocument(name, id) {
-    if (!this.connected) return null;
+  async deleteDoc(collection, id) {
+    if (!this.connected) return false;
     try {
-      await this.db.collection(name).doc(id).delete();
+      await this.db.collection(collection).doc(id).delete();
       return true;
-    } catch (e) { console.warn(e); return null; }
+    } catch (err) { console.error('deleteDoc:', err); return false; }
   },
 
-  // ===================== STORAGE =====================
-  async uploadFile(file, path) {
-    if (!this.connected) return URL.createObjectURL(file);
+  async saveMeta(docName, data) {
+    if (!this.connected) return false;
     try {
-      const ref = this.storage.ref(path);
-      await ref.put(file);
-      return await ref.getDownloadURL();
-    } catch (e) {
-      console.warn(e);
-      return URL.createObjectURL(file);
+      await this.db.collection('meta').doc(docName).set(data, { merge: true });
+      return true;
+    } catch (err) { console.error('saveMeta:', err); return false; }
+  },
+
+  async loadAll() {
+    if (!this.connected) return false;
+    const collections = [
+      'users','groups','enrollments','attendance','vocabulary',
+      'homework','submissions','reattemptRequests','exams','examAttempts',
+      'payments','materials','materialOrders','weeklyReports',
+      'tasks','notifications','activityLogs',
+      'followUps','communicationLogs','classSessions','automations','automationLogs',
+      'announcements','activationCodes'
+    ];
+    const data = this._getLocal();
+    for (const col of collections) {
+      try {
+        const snap = await this.db.collection(col).get();
+        if (!snap.empty) {
+          data[col] = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
+          this.emptyCollections.delete(col);
+        } else {
+          this.emptyCollections.add(col);
+          if (!data[col]) data[col] = [];
+        }
+      } catch (err) { console.warn('loadAll ' + col + ':', err.message); if (!data[col]) data[col] = []; }
     }
+    // meta docs
+    try { const d = await this.db.collection('meta').doc('organization').get(); if (d.exists) data.organization = d.data(); } catch(e){}
+    try { const d = await this.db.collection('meta').doc('settings').get(); if (d.exists) data.settings = {...data.settings, ...d.data()}; } catch(e){}
+    this._saveLocal(data);
+    return true;
   },
 
-  // ===================== REALTIME =====================
-  subscribe(name, callback, filters = {}) {
-    if (!this.connected) return () => {};
-    let q = this.db.collection(name);
-    Object.keys(filters).forEach(k => { q = q.where(k, '==', filters[k]); });
-    return q.onSnapshot(snap => {
-      callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  startListeners() {
+    if (!this.connected) return;
+    this.stopListeners();
+    const collections = [
+      'users','groups','enrollments','attendance','vocabulary',
+      'homework','submissions','reattemptRequests','exams','examAttempts',
+      'payments','materials','materialOrders','weeklyReports',
+      'tasks','notifications','activityLogs',
+      'followUps','communicationLogs','classSessions','automations','automationLogs',
+      'announcements','activationCodes'
+    ];
+    collections.forEach(col => {
+      const unsub = this.db.collection(col).onSnapshot(snapshot => {
+        if (snapshot.empty && this.emptyCollections.has(col)) return;
+        const data = this._getLocal();
+        if (!snapshot.empty) {
+          data[col] = snapshot.docs.map(d => ({ _id: d.id, ...d.data() }));
+          this.emptyCollections.delete(col);
+        } else { data[col] = []; this.emptyCollections.add(col); }
+        this._saveLocal(data);
+        this._notifyChange(col);
+      }, err => console.warn('listener ' + col + ':', err.message));
+      this.listeners.push(unsub);
     });
+  },
+
+  stopListeners() { this.listeners.forEach(u => { try { u(); } catch(e){} }); this.listeners = []; },
+  onDataChange(cb) { this.onChangeCallbacks.push(cb); },
+  _notifyChange(type) { this.onChangeCallbacks.forEach(cb => { try { cb(type); } catch(e){} }); },
+  _getLocal() { return JSON.parse(localStorage.getItem('eduflow_db') || '{}'); },
+  _saveLocal(d) { localStorage.setItem('eduflow_db', JSON.stringify(d)); },
+
+  async wipeAll() {
+    if (!this.connected) return false;
+    const collections = [
+      'users','groups','enrollments','attendance','vocabulary','homework','submissions',
+      'reattemptRequests','exams','examAttempts','payments','materials','materialOrders',
+      'weeklyReports','tasks','notifications','activityLogs',
+      'followUps','communicationLogs','classSessions','automations','automationLogs',
+      'announcements','activationCodes'
+    ];
+    for (const col of collections) {
+      try {
+        const snap = await this.db.collection(col).get();
+        const batch = this.db.batch();
+        snap.docs.forEach(d => batch.delete(d.ref));
+        if (snap.docs.length) await batch.commit();
+      } catch (e) { console.warn('wipe ' + col + ':', e.message); }
+    }
+    return true;
   }
 };
 
-// تهيئة تلقائية
-FirebaseService.init();
+window.FirebaseService = FirebaseService;

@@ -1,6 +1,5 @@
-// js/auth-service.js — دخول حقيقي عبر Firebase Auth
+// js/auth-service.js — إدارة المصادقة والصلاحيات
 const AuthService = {
-  // استنى Firebase Auth يجهز ورجّع المستخدم
   async waitAuth() {
     if (!window.FirebaseService?.initialized) return null;
     return new Promise(resolve => {
@@ -8,53 +7,67 @@ const AuthService = {
     });
   },
 
-  // تسجيل دخول بالبريد + باسورد عبر Firebase Auth
   async login(identifier, password) {
-    try {
-      // 1) سجّل دخول في Firebase Auth
-      const cred = await firebase.auth().signInWithEmailAndPassword(identifier.trim(), password);
-      const uid = cred.user.uid;
-
-      // 2) اقرأ البروفايل من Firestore عشان نعرف الدور
-      const doc = await firebase.firestore().collection('users').doc(uid).get();
-      let profile = doc.exists ? doc.data() : null;
-
-      // لو مفيش بروفايل بالـ uid، دوّر بالإيميل
-      if (!profile) {
-        const snap = await firebase.firestore().collection('users').where('email','==',identifier.trim().toLowerCase()).limit(1).get();
-        if (!snap.empty) profile = snap.docs[0].data();
-      }
-      if (!profile) { await firebase.auth().signOut(); return { success:false, message:'لا يوجد حساب مرتبط' }; }
-
-      // 3) خزّن الجلسة محلياً عشان الداشبوردات تشتغل
-      sessionStorage.setItem('eduflow_user', JSON.stringify(profile));
-      return { success:true, user:profile, source:'firebase' };
-    } catch (err) {
-      return { success:false, message: this._authError(err.code) };
+    // 1) محلي أولاً
+    const local = DataService.authenticate(identifier, password);
+    if (local) {
+      sessionStorage.setItem('eduflow_user', JSON.stringify(local));
+      return { success:true, user:local, source:'local' };
     }
+    // 2) Firebase
+    if (window.FirebaseService?.connected) {
+      try {
+        const r = await FirebaseService.signIn(identifier, password);
+        if (r) {
+          sessionStorage.setItem('eduflow_user', JSON.stringify(r));
+          return { success:true, user:r, source:'firebase' };
+        }
+      } catch (e) { console.warn(e); }
+    }
+    return { success:false, message:'بيانات غير صحيحة' };
   },
 
-  // دخول ولي الأمر بكود الابن (قراءة عامة مسموحة)
+  async loginStudent(code, password) {
+    const s = DataService.findStudentByCode(code);
+    if (!s) return { success:false, message:'كود غير صحيح' };
+    if (s.password && s.password !== password) return { success:false, message:'كلمة المرور غير صحيحة' };
+    sessionStorage.setItem('eduflow_user', JSON.stringify(s));
+    return { success:true, user:s };
+  },
+
   async loginParent(code, password) {
-    // ولي الأمر مش عنده Auth account، فبنستخدم كود الابن كـ "باسورد مؤقت"
-    const student = DataService.findStudentByCode(code);
-    if (!student) return { success:false, message:'كود الابن غير صحيح' };
-    if (student.parentAccess !== password) return { success:false, message:'كلمة مرور ولي الأمر غير صحيحة' };
-    const parent = { id:'parent_'+student.id, role:'parent', name:'ولي أمر '+student.name, phone:student.parentPhone, studentIds:[student.studentId], viaChildCode:true };
+    const s = DataService.findStudentByCode(code);
+    if (!s) return { success:false, message:'كود الابن غير صحيح' };
+    if ((s.parentAccess||'') !== password) return { success:false, message:'كلمة مرور ولي الأمر غير صحيحة' };
+    const parent = {
+      id:'parent_'+s.id, role:'parent', name:'ولي أمر '+s.name,
+      phone:s.parentPhone, studentIds:[s.studentId], viaChildCode:true
+    };
     sessionStorage.setItem('eduflow_user', JSON.stringify(parent));
     return { success:true, user:parent };
   },
 
   async logout() {
     sessionStorage.removeItem('eduflow_user');
-    if (window.FirebaseService?.initialized) { try { await firebase.auth().signOut(); } catch(e){} }
+    sessionStorage.removeItem('eduflow_view_as');
+    if (window.FirebaseService?.connected) await FirebaseService.signOut();
     location.href = 'login.html';
   },
 
   getCurrentUser() {
+    const viewAs = sessionStorage.getItem('eduflow_view_as');
+    if (viewAs) return JSON.parse(viewAs);
     const s = sessionStorage.getItem('eduflow_user');
     return s ? JSON.parse(s) : null;
   },
+
+  getRealUser() {
+    const s = sessionStorage.getItem('eduflow_user');
+    return s ? JSON.parse(s) : null;
+  },
+
+  setViewAs(user) { sessionStorage.setItem('eduflow_view_as', JSON.stringify(user)); },
+  clearViewAs() { sessionStorage.removeItem('eduflow_view_as'); },
 
   requireRole(roles) {
     const u = this.getCurrentUser();
@@ -64,26 +77,38 @@ const AuthService = {
   },
 
   redirectToDashboard(role) {
-    const r = { super_admin:'admin-dashboard.html', assistant:'assistant-dashboard.html', teacher:'teacher-dashboard.html', student:'student-dashboard.html', parent:'parent-dashboard.html' };
-    location.href = r[role] || 'login.html';
+    const map = {
+      super_admin:'admin-dashboard.html',
+      assistant:'assistant-dashboard.html',
+      teacher:'teacher-dashboard.html',
+      student:'student-dashboard.html',
+      parent:'parent-dashboard.html'
+    };
+    location.href = map[role] || 'login.html';
   },
 
-  hasPermission(m, a) {
+  hasPermission(module, action) {
     const u = this.getCurrentUser();
     if (!u) return false;
     if (u.role === 'super_admin') return true;
-    return (DataService.getUserPermissions(u.id)||{})[m]?.[a] === true;
+    return (u.permissions||{})[module]?.[action] === true;
   },
 
-  _authError(code) {
-    const map = {
-      'auth/invalid-credential':'بيانات الدخول غير صحيحة',
-      'auth/wrong-password':'كلمة المرور غير صحيحة',
-      'auth/user-not-found':'لا يوجد حساب بهذا البريد',
-      'auth/too-many-requests':'محاولات كثيرة، انتظر قليلاً',
-      'auth/invalid-email':'البريد غير صالح'
-    };
-    return map[code] || 'فشل تسجيل الدخول';
+  // ============ تسجيل أستاذ عبر رابط مؤقت ============
+  async registerTeacherViaLink(linkCode, teacherData) {
+    const validation = DataService.validateTeacherRegisterLink(linkCode);
+    if (!validation.valid) return { success:false, message:validation.message };
+
+    const teacher = await DataService.addUser({
+      ...teacherData,
+      role: 'teacher'
+    });
+
+    await DataService.markTeacherRegisterLinkUsed(linkCode, teacher.id);
+
+    sessionStorage.setItem('eduflow_user', JSON.stringify(teacher));
+    return { success:true, user:teacher, code: teacher.id };
   }
 };
+
 window.AuthService = AuthService;

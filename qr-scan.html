@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مسح باركود الطالب - EduFlow</title>
+  <link rel="stylesheet" href="css/eduflow-theme.css">
+  <style>
+    .scan-area{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;margin-bottom:20px}
+    #qr-video{width:100%;max-width:400px;border-radius:var(--radius);background:#000}
+    .scan-result{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-top:20px}
+    .student-info{background:var(--surface-hover);border-radius:8px;padding:12px;margin-bottom:8px}
+    .student-info .lbl{font-size:11px;color:var(--text-muted);margin-bottom:4px}
+    .student-info .val{font-weight:700;font-size:13px}
+    .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+    .homework-item{background:var(--surface-hover);border-radius:8px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+    @media(max-width:640px){.detail-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div>
+  <div style="max-width:600px;margin:0 auto;padding:20px;position:relative;z-index:1;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h1 style="font-size:20px;">📱 مسح باركود الطالب</h1>
+      <a href="javascript:history.back()" class="btn btn-ghost btn-sm">→ رجوع</a>
+    </div>
+
+    <div class="scan-area">
+      <video id="qr-video" autoplay playsinline muted></video>
+      <p class="text-sm text-muted" style="margin-top:12px;">امسح باركود الطالب</p>
+    </div>
+
+    <div id="scanResult"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/firebase-service.js"></script>
+  <script src="js/data-service.js"></script>
+  <script src="js/operations-service.js"></script>
+  <script src="js/ui-helpers.js"></script>
+  <script src="js/theme-manager.js"></script>
+  <script src="js/auth-service.js"></script>
+
+  <script>
+    let currentUser=null;
+    let scanning=true;
+    let lastScanned=null;
+    let video=null;
+    let canvas=null;
+
+    (async function boot(){
+      try{
+        await DataService.init();
+        if(!AuthService.requireRole(['super_admin','assistant'])) return;
+        currentUser=AuthService.getCurrentUser();
+        startCamera();
+      }catch(err){
+        document.body.innerHTML='<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;"><div class="card"><p class="text-muted">خطأ: '+err.message+'</p></div></div>';
+      }
+    })();
+
+    async function startCamera(){
+      try{
+        const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+        video=document.getElementById('qr-video');
+        video.srcObject=stream;
+        canvas=document.createElement('canvas');
+        scanLoop();
+      }catch(err){
+        document.getElementById('scanResult').innerHTML='<div class="card"><p class="text-muted">لا يمكن الوصول للكاميرا</p></div>';
+      }
+    }
+
+    function scanLoop(){
+      if(!scanning) return;
+      if(video&&video.readyState===video.HAVE_ENOUGH_DATA){
+        canvas.width=video.videoWidth;
+        canvas.height=video.videoHeight;
+        const ctx=canvas.getContext('2d');
+        ctx.drawImage(video,0,0,canvas.width,canvas.height);
+        const imageData=ctx.getImageData(0,0,canvas.width,canvas.height);
+        const code=jsQR(imageData.data,imageData.width,imageData.height);
+        if(code&&code.data!==lastScanned){
+          lastScanned=code.data;
+          handleScan(code.data);
+        }
+      }
+      requestAnimationFrame(scanLoop);
+    }
+
+    window.handleScan=function(code){
+      let studentCode=code;
+      if(code.startsWith('EDUFLOW-ATT:')){
+        studentCode=code.replace('EDUFLOW-ATT:','');
+      }else if(code.startsWith('EDUFLOW-STUDENT:')){
+        studentCode=code.replace('EDUFLOW-STUDENT:','');
+      }
+
+      const student=DataService.findStudentByCode(studentCode);
+      if(!student){
+        document.getElementById('scanResult').innerHTML='<div class="card"><p class="text-muted">الطالب غير موجود</p></div>';
+        return;
+      }
+
+      const now=new Date();
+      const currentDay=DAYS[now.getDay()].en;
+      const studentGroups=DataService.getStudentTeachers(student.id).map(t=>t.group);
+      const activeClasses=studentGroups.filter(g=>g.day===currentDay);
+
+      // الواجبات الورقية المطلوبة
+      const paperHw=DataService.getHomework().filter(h=>
+        studentGroups.some(g=>g.id===h.groupId)&&
+        h.paper&&
+        !DataService.getSubmissions({studentId:student.id}).find(s=>s.homeworkId===h.id)
+      );
+
+      let html=`
+        <div class="scan-result">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="margin:0;">👤 ${student.name||'-'}</h3>
+            <span class="badge badge-muted">${student.code||'-'}</span>
+          </div>
+
+          <div class="detail-grid">
+            <div class="student-info"><div class="lbl">المرحلة</div><div class="val">${student.stage||'-'}</div></div>
+            <div class="student-info"><div class="lbl">الصف</div><div class="val">${student.grade||'-'}</div></div>
+            <div class="student-info"><div class="lbl">الهاتف</div><div class="val">${student.phone||'-'}</div></div>
+            <div class="student-info"><div class="lbl">ولي الأمر</div><div class="val">${student.parentPhone||'-'}</div></div>
+          </div>
+
+          <div class="student-info" style="margin-bottom:16px;">
+            <div class="lbl">المجموعات</div>
+            <div class="val">${studentGroups.map(g=>g.name).join('، ')||'-'}</div>
+          </div>
+      `;
+
+      // لو في حصة جارية → يحضره تلقائياً
+      if(activeClasses.length>0){
+        html+=`
+          <div class="card" style="background:var(--success-bg);border-color:var(--success-border);margin-bottom:16px;">
+            <h4 style="margin:0 0 8px;">✅ حضور تلقائي</h4>
+            <p class="text-sm">الطالب في حصة جارية الآن: <strong>${activeClasses.map(g=>g.name).join('، ')}</strong></p>
+            <p class="text-sm text-muted">تم تسجيل حضوره تلقائياً</p>
+          </div>
+        `;
+        activeClasses.forEach(g=>{
+          const attendance={
+            id:'att_'+Date.now(),
+            groupId:g.id,
+            groupName:g.name,
+            date:now.toISOString().split('T')[0],
+            records:[{studentId:student.id,status:'present'}],
+            status:'pending',
+            submittedBy:currentUser.id
+          };
+          DataService._saveData({...DataService._getData(),attendance:[...DataService.getAttendance(),attendance]});
+        });
+      }
+
+      // الواجبات الورقية المطلوبة
+      if(paperHw.length>0){
+        html+=`
+          <div class="card" style="background:var(--warning-bg);border-color:var(--warning-border);margin-bottom:16px;">
+            <h4 style="margin:0 0 8px;">📝 واجبات ورقية مطلوبة</h4>
+            ${paperHw.map(h=>{
+              const g=DataService.getGroups().find(x=>x.id===h.groupId);
+              return `<div class="homework-item">
+                <div><strong>${h.title}</strong><div class="text-xs text-muted">${g?.name||'-'}</div></div>
+                <button class="btn btn-primary btn-sm" onclick="gradePaperHw('${student.id}','${h.id}')">✏️ رصد الدرجة</button>
+              </div>`;
+            }).join('')}
+          </div>
+        `;
+      }
+
+      html+=`
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-primary btn-sm" onclick="editStudent('${student.id}')">✏️ تعديل البيانات</button>
+            <button class="btn btn-secondary btn-sm" onclick="resetScan()">🔄 مسح طالب آخر</button>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('scanResult').innerHTML=html;
+    };
+
+    window.gradePaperHw=function(studentId,hwId){
+      const h=DataService.getHomeworkById(hwId);
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">✏️ رصد درجة: ${h?.title||'-'}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body">
+        <div class="form-group"><label>الدرجة (من ${h?.totalPoints||100})</label><input type="number" id="gradeInput" class="form-input" min="0" max="${h?.totalPoints||100}"></div>
+        <button class="btn btn-primary w-full" onclick="submitGrade('${studentId}','${hwId}')">💾 حفظ الدرجة</button>
+      </div>`,'modal-sm');
+    };
+
+    window.submitGrade=async function(studentId,hwId){
+      const score=parseInt(document.getElementById('gradeInput').value)||0;
+      const h=DataService.getHomeworkById(hwId);
+      const submission={
+        id:'sub_'+Date.now(),
+        homeworkId:hwId,
+        studentId:studentId,
+        score:score,
+        maxScore:h?.totalPoints||100,
+        status:'graded',
+        gradedBy:currentUser.id,
+        gradedAt:new Date().toISOString(),
+        offline:true
+      };
+      const d=DataService._getData();
+      d.submissions=d.submissions||[];
+      d.submissions.push(submission);
+      DataService._saveData(d);
+      ThemeManager.closeModal();
+      ThemeManager.toast('تم رصد الدرجة ✓','success');
+      lastScanned=null;
+      document.getElementById('scanResult').innerHTML='';
+      scanning=true;
+      scanLoop();
+    };
+
+    window.resetScan=function(){
+      lastScanned=null;
+      document.getElementById('scanResult').innerHTML='';
+      scanning=true;
+      scanLoop();
+    };
+
+    window.editStudent=function(id){
+      window.open('admin-dashboard.html#student='+id,'_blank');
+    };
+  </script>
+</body>
+</html>

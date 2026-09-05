@@ -1,16 +1,6 @@
-// js/config.js — إعدادات EduFlow + Firebase
+// js/config.js
 const EduFlowConfig = {
-  // ===== إعدادات عامة =====
-  appName: 'EduFlow',
-  appVersion: '2.1.0',
-  companyName: 'EduFlow',
-  
-  // ===== وضع التشغيل =====
-  demoMode: false,          // ❌ مش demo — production
-  useFirebase: true,        // ✅ استخدم Firebase
-  useLocalStorageFallback: true, // لو Firebase فشل، ارجع لـ localStorage
-
-  // ===== Firebase Config =====
+  useFirebase: true,
   firebase: {
     apiKey: "AIzaSyBj2wM0CgWbXVohSTI8y5fIPmT1vNw3Jl8",
     authDomain: "follow-up-ee4cc.firebaseapp.com",
@@ -22,44 +12,54 @@ const EduFlowConfig = {
     measurementId: "G-B31RT3KJDP"
   },
 
-  // ===== Feature Flags =====
+  hesetak: {
+    url: 'https://hesetak.vercel.app/',
+    logo: '',
+    title: 'منصة حصتك',
+    subtitle: 'منصتك التعليمية الشاملة للدروس والمحتوى',
+    stats: [{v:'+500',l:'درس فيديو'},{v:'+50',l:'مادة دراسية'},{v:'24/7',l:'وصول دائم'}],
+    features: [
+      {i:'🎥',t:'دروس فيديو',d:'شروحات احترافية لكل المواد'},
+      {i:'📖',t:'ملازم وملخصات',d:'محتوى منظم للمراجعة'},
+      {i:'✍️',t:'اختبارات تفاعلية',d:'قيّم نفسك في أي وقت'},
+      {i:'🏆',t:'متابعة التقدم',d:'شاهد تطورك خطوة بخطوة'}
+    ]
+  },
+
+  billing: { defaultSessionsPerMonth:4, absentIsCharged:true, cancelledIsNotCharged:true, currency:'ج.م' },
+  timeFormat: '12h',
+
+  educationLevels: {
+    Primary:{nameAr:'ابتدائي',grades:['الأول','الثاني','الثالث','الرابع','الخامس','السادس']},
+    Preparatory:{nameAr:'إعدادي',grades:['الأول','الثاني','الثالث']},
+    Secondary:{nameAr:'ثانوي',grades:['الأول','الثاني','الثالث']}
+  },
+  subjects:['English','Math','Physics','Chemistry','Biology','Arabic','French','German'],
+
   featureFlags: {
-    gamification:     { enabled: false, name: 'نظام النقاط والإنجازات', desc: 'نقاط، شارات، ترتيب طلاب', status: 'coming_soon' },
-    live_chat:        { enabled: false, name: 'الدردشة المباشرة', desc: 'محادثة داخل التطبيق', status: 'coming_soon' },
-    pdf_reports:      { enabled: false, name: 'تقارير PDF', desc: 'تصدير تقارير وشهادات', status: 'coming_soon' },
-    online_lessons:   { enabled: false, name: 'حصص أونلاين', desc: 'Zoom / Google Meet مدمج', status: 'coming_soon' },
-    parent_app:       { enabled: false, name: 'تطبيق ولي الأمر', desc: 'تطبيق موبايل منفصل', status: 'coming_soon' },
-    analytics_ai:     { enabled: false, name: 'تحليلات ذكية', desc: 'توقعات وتوصيات AI', status: 'coming_soon' },
-    multi_language:   { enabled: false, name: 'متعدد اللغات', desc: 'عربي/إنجليزي', status: 'coming_soon' }
+    qrAttendance:{name:'حضور QR',enabled:true,status:'active'},
+    codeAttendance:{name:'كود حضور',enabled:true,status:'active'},
+    onlineExams:{name:'امتحانات أونلاين',enabled:true,status:'active'},
+    offlineExams:{name:'امتحانات أوفلاين',enabled:true,status:'active'},
+    antiCheat:{name:'منع الغش',enabled:true,status:'active'},
+    parentPortal:{name:'بوابة ولي الأمر',enabled:true,status:'active'},
+    whatsapp:{name:'واتساب',enabled:true,status:'active'},
+    driveImages:{name:'صور Drive',enabled:true,status:'active'},
+    fullBranding:{name:'براندنج كامل',enabled:true,status:'active'},
+    billingSystem:{name:'نظام التحصيل',enabled:true,status:'active'}
   },
 
-  // ===== الإعدادات الافتراضية =====
   settings: {
-    defaultLanguage: 'ar',
-    defaultTheme: 'dark',
-    currency: 'EGP',
-    currencySymbol: 'ج.م',
-    timezone: 'Africa/Cairo',
-    academicYear: '2025-2026',
-    studentIdPrefix: 'STU-',
-    codePrefix: 'EDU-',
-    supportPhone: '',
-    allowSelfRegistration: true,
-    paymentMethods: ['cash', 'vodafone_cash', 'bank_transfer']
-  },
-
-  // ===== حد أقصى =====
-  limits: {
-    maxStudentsPerGroup: 50,
-    maxHomeworkAttempts: 5,
-    maxExamAttempts: 3,
-    maxFileSizeMB: 10,
-    maxActivityLogs: 1000
+    defaultPassword:'12345678', passwordMinLength:8, maxGroupSize:30,
+    qrSessionDuration:2*60*60*1000, teacherRegisterLinkDuration:48, weekStart:'Saturday',
+    examAntiCheat:{enableCamera:true,snapshotInterval:30000,enableTabSwitch:true,enableScreenLock:true,randomizeQuestions:true,randomizeOptions:true}
   }
 };
 
-// تصدير عالمي
-window.EduFlowConfig = EduFlowConfig;
+// حماية: لو الـ config ناقص، عطّل Firebase (وضع محلي)
+(function(){
+  const f=EduFlowConfig.firebase;
+  if(!f||!f.apiKey||f.apiKey.length<30||!f.appId){EduFlowConfig.useFirebase=false;}
+})();
 
-// ===== تحذير: لو apiKey ظاهرة في الـ frontend، لازم تضبط Firestore Security Rules =====
-console.log('✅ EduFlow Config loaded — Firebase project:', EduFlowConfig.firebase.projectId);
+window.EduFlowConfig = EduFlowConfig;

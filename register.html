@@ -2,90 +2,184 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>تسجيل حساب - EduFlow</title>
+  <title>تسجيل طالب جديد - EduFlow</title>
   <link rel="stylesheet" href="css/eduflow-theme.css">
-  <style>.reg-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;padding:16px}.reg-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px;max-width:480px;width:100%;backdrop-filter:blur(20px);max-height:92vh;overflow-y:auto}</style>
+  <style>
+    .step-chip{display:inline-flex;padding:6px 14px;border-radius:9999px;font-size:12px;font-weight:700;background:var(--surface-hover);color:var(--text-muted);margin-inline-end:6px}
+    .step-chip.active{background:var(--grad);color:#fff}
+    .grp-chk{display:flex;gap:8px;align-items:center;padding:10px;background:var(--surface-hover);border-radius:8px;margin-bottom:6px;cursor:pointer;border:1px solid var(--border)}
+  </style>
 </head>
 <body data-theme="dark">
-  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
-  <div class="reg-wrap"><div class="reg-card">
-    <div style="text-align:center;margin-bottom:16px;"><div style="font-size:40px;">🎓</div><h2 style="margin:8px 0;">تسجيل حساب جديد</h2><p class="text-sm text-muted">أدخل كود التفعيل اللي استلمته من المركز</p></div>
-
-    <div class="form-group"><label>كود التفعيل</label>
-      <div style="display:flex;gap:8px;"><input type="text" id="actCode" class="form-input" placeholder="ACT-XXXX"><button class="btn btn-secondary" onclick="checkCode()">تحقق</button></div>
-    </div>
-    <div id="roleBadge" style="display:none;margin-bottom:12px;" class="badge badge-success"></div>
-
-    <form id="regForm" style="display:none" onsubmit="return doRegister(event)">
-      <div class="form-group"><label>الاسم الكامل</label><input type="text" id="rName" class="form-input" required></div>
-      <div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="rEmail" class="form-input" required></div>
-      <div class="form-group"><label>رقم الموبايل</label><input type="tel" id="rPhone" class="form-input" required></div>
-      <div class="form-group"><label>كلمة المرور (٨+)</label><input type="password" id="rPass" class="form-input" minlength="8" required></div>
-      <div id="studentFields" style="display:none">
-        <div class="form-group"><label>رقم ولي الأمر</label><input type="tel" id="rParent" class="form-input"></div>
-        <div class="form-group"><label>كلمة مرور ولي الأمر (يدخل بيها يتابعك)</label><input type="text" id="rParentPass" class="form-input"></div>
+  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div>
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;padding:16px;">
+    <div class="card" style="max-width:560px;width:100%;max-height:92vh;overflow-y:auto;">
+      <div style="text-align:center;margin-bottom:16px;">
+        <div class="sidebar-logo" data-logo style="margin:0 auto;width:60px;height:60px;"></div>
+        <h2 style="margin:10px 0 6px;">تسجيل طالب جديد</h2>
+        <div>
+          <span class="step-chip active" id="c1">1 البيانات</span>
+          <span class="step-chip" id="c2">2 الأساتذة</span>
+          <span class="step-chip" id="c3">3 الحساب</span>
+        </div>
       </div>
-      <button class="btn btn-primary w-full btn-lg">✅ إنشاء الحساب</button>
-    </form>
-    <div class="text-center" style="margin-top:16px;"><span class="text-sm text-muted">عندك حساب؟</span> <a href="login.html" class="text-sm" style="color:var(--primary);font-weight:700;">سجّل دخول</a></div>
-  </div></div>
 
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+      <div id="step1">
+        <div class="form-group"><label>الاسم الكامل</label><input type="text" id="rName" class="form-input"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label>رقمك</label><input type="tel" id="rPhone" class="form-input"></div>
+          <div class="form-group"><label>رقم ولي الأمر</label><input type="tel" id="rParent" class="form-input"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label>المرحلة</label><select id="rLevel" class="form-select"></select></div>
+          <div class="form-group"><label>الصف</label><select id="rGrade" class="form-select"></select></div>
+        </div>
+        <div class="form-group"><label>البريد (اختياري)</label><input type="email" id="rEmail" class="form-input"></div>
+        <div class="form-group"><label>كود تفعيل (اختياري)</label><input type="text" id="rCode" class="form-input" placeholder="ACT-XXXX"></div>
+        <button class="btn btn-primary btn-lg w-full" onclick="next(1)">التالي ←</button>
+      </div>
+
+      <div id="step2" style="display:none;">
+        <p class="text-sm text-muted" style="margin-bottom:10px;">اختار الأساتذة والمجموعات (ممكن أكتر من واحد)</p>
+        <div id="teachersPick"></div>
+        <div id="groupsPick" style="margin-top:12px;"></div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button class="btn btn-secondary" onclick="show(1)">→ السابق</button>
+          <button class="btn btn-primary" style="flex:1;" onclick="next(2)">التالي ←</button>
+        </div>
+      </div>
+
+      <div id="step3" style="display:none;">
+        <div class="form-group"><label>كلمة المرور (٨+)</label><input type="password" id="rPass" class="form-input"></div>
+        <div class="form-group"><label>تأكيد كلمة المرور</label><input type="password" id="rPass2" class="form-input"></div>
+        <div class="card" style="background:var(--info-bg);border-color:var(--info-border);margin-bottom:16px;"><div id="summary" class="text-sm" style="line-height:1.9;"></div></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-secondary" onclick="show(2)">→ السابق</button>
+          <button class="btn btn-primary btn-lg" style="flex:1;" onclick="submitReg()">✓ إنشاء الحساب</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="js/config.js"></script>
   <script src="js/firebase-service.js"></script>
   <script src="js/data-service.js"></script>
+  <script src="js/ui-helpers.js"></script>
   <script src="js/theme-manager.js"></script>
   <script src="js/auth-service.js"></script>
-  <script>
-    const db = firebase.firestore();
-    let currentRole = null;
 
-    async function checkCode(){
-      const code = document.getElementById('actCode').value.trim().toUpperCase();
-      if(!code) return;
-      const doc = await db.collection('activationCodes').doc(code).get();
-      if(!doc.exists || doc.data().used){ ThemeManager.toast('الكود غير صالح أو مستخدم','error'); return; }
-      currentRole = doc.data().role;
-      document.getElementById('roleBadge').style.display='inline-block';
-      document.getElementById('roleBadge').textContent = 'الدور: ' + ({teacher:'مدرس',student:'طالب',parent:'ولي أمر',assistant:'مساعد'}[currentRole]);
-      document.getElementById('regForm').style.display='block';
-      document.getElementById('studentFields').style.display = currentRole==='student' ? 'block':'none';
+  <script>
+    let pickedGroups=[];
+
+    (async function(){
+      await DataService.init();
+      buildStageSelect();
+    })();
+
+    // بناء قائمة المراحل ديناميكياً (بدون template literal في الـ HTML)
+    function buildStageSelect(){
+      var lvl=document.getElementById('rLevel');
+      var html='';
+      for(var key in EduFlowConfig.educationLevels){
+        html+='<option value="'+key+'">'+EduFlowConfig.educationLevels[key].nameAr+'</option>';
+      }
+      lvl.innerHTML=html;
+      lvl.onchange=buildGradeSelect;
+      buildGradeSelect();
+    }
+    function buildGradeSelect(){
+      var key=document.getElementById('rLevel').value;
+      var grades=EduFlowConfig.educationLevels[key].grades;
+      var html='';
+      for(var i=0;i<grades.length;i++){ html+='<option value="'+grades[i]+'">'+grades[i]+'</option>'; }
+      document.getElementById('rGrade').innerHTML=html;
     }
 
-    async function doRegister(e){
-      e.preventDefault();
-      const code = document.getElementById('actCode').value.trim().toUpperCase();
-      const name = document.getElementById('rName').value.trim();
-      const email = document.getElementById('rEmail').value.trim().toLowerCase();
-      const pass = document.getElementById('rPass').value;
-      try{
-        // 1) اعمل حساب Firebase Auth (بيسجّل دخولك)
-        const cred = await firebase.auth().createUserWithEmailAndPassword(email, pass);
-        const uid = cred.user.uid;
-
-        // 2) جهّز البروفايل
-        const profile = { id:uid, uid, name, email, role:currentRole, phone:document.getElementById('rPhone').value, createdAt:new Date().toISOString() };
-        if(currentRole==='student'){
-          profile.studentId = 'STU-' + Date.now().toString().slice(-4);
-          profile.code = 'EDU-' + Math.floor(1000+Math.random()*9000);
-          profile.parentPhone = document.getElementById('rParent').value;
-          profile.parentAccess = document.getElementById('rParentPass').value;
-        }
-
-        // 3) احفظ البروفايل
-        await db.collection('users').doc(uid).set(profile);
-        // 4) علّم الكود كمستخدم
-        await db.collection('activationCodes').doc(code).update({ used:true, usedBy:uid });
-
-        sessionStorage.setItem('eduflow_user', JSON.stringify(profile));
-        ThemeManager.toast('تم إنشاء حسابك ✓','success');
-        setTimeout(()=>AuthService.redirectToDashboard(currentRole),600);
-      }catch(err){
-        ThemeManager.toast('فشل التسجيل: '+err.code,'error');
+    function show(n){
+      for(var i=1;i<=3;i++){
+        document.getElementById('step'+i).style.display=(i===n)?'block':'none';
+        document.getElementById('c'+i).classList.toggle('active',i<=n);
       }
-      return false;
+      if(n===2)buildTeachersPick();
+      if(n===3)buildSummary();
+    }
+
+    function next(f){
+      if(f===1){
+        if(!document.getElementById('rName').value||!document.getElementById('rPhone').value||!document.getElementById('rParent').value){
+          ThemeManager.toast('أكمل البيانات الأساسية','error');return;
+        }
+        show(2);
+      }
+      if(f===2){
+        pickedGroups=[];
+        var boxes=document.querySelectorAll('.g-chk:checked');
+        for(var i=0;i<boxes.length;i++)pickedGroups.push(boxes[i].value);
+        if(pickedGroups.length===0){ThemeManager.toast('اختار مجموعة واحدة على الأقل','error');return;}
+        show(3);
+      }
+    }
+
+    function buildTeachersPick(){
+      var ts=DataService.getTeachers();
+      var html='';
+      ts.forEach(function(t){
+        html+='<label class="grp-chk"><input type="checkbox" class="t-chk" value="'+t.id+'" onchange="renderGroupsPick()"> '+t.name+' <span class="badge badge-muted">'+(t.subject||'')+'</span></label>';
+      });
+      document.getElementById('teachersPick').innerHTML=html||'<p class="text-muted">لا أساتذة بعد</p>';
+      renderGroupsPick();
+    }
+    function renderGroupsPick(){
+      var tids=[];
+      document.querySelectorAll('.t-chk:checked').forEach(function(c){tids.push(c.value);});
+      var gs=DataService.getGroups().filter(function(g){return tids.indexOf(g.teacherId)>-1;});
+      var html='';
+      gs.forEach(function(g){
+        var t=DataService.getUserById(g.teacherId);
+        var count=DataService.getStudentsByGroup(g.id).length;
+        var full=count>=(g.maxStudents||30);
+        html+='<label class="grp-chk"><input type="checkbox" class="g-chk" value="'+g.id+'"> <span style="flex:1;"><strong>'+g.name+'</strong> <span class="text-xs text-muted">· '+(t?t.name:'')+'</span>'+(full?' <span class="badge badge-warning">قائمة انتظار</span>':'')+'</span></label>';
+      });
+      document.getElementById('groupsPick').innerHTML=html||'<p class="text-muted">اختار أستاذ الأول</p>';
+    }
+
+    function buildSummary(){
+      var name=document.getElementById('rName').value;
+      var lvl=document.getElementById('rLevel').value;
+      var grade=document.getElementById('rGrade').value;
+      var gs=pickedGroups.map(function(id){return DataService.getGroups().find(function(g){return g.id===id;});}).filter(Boolean);
+      var names=gs.map(function(g){return g.name;}).join('، ');
+      document.getElementById('summary').innerHTML='الاسم: '+name+'<br>المرحلة: '+EduFlowConfig.educationLevels[lvl].nameAr+' - '+grade+'<br>المجموعات: '+(names||'-');
+    }
+
+    async function submitReg(){
+      var pass=document.getElementById('rPass').value;
+      var pass2=document.getElementById('rPass2').value;
+      if(pass!==pass2){ThemeManager.toast('كلمتا المرور غير متطابقتين','error');return;}
+      var code=document.getElementById('rCode').value.trim().toUpperCase();
+      if(code){
+        var ac=(DataService._getData().activationCodes||[]).find(function(x){return x.code===code&&!x.used;});
+        if(!ac){ThemeManager.toast('كود التفعيل غير صالح','error');return;}
+      }
+      var firstGroup=DataService.getGroups().find(function(g){return g.id===pickedGroups[0];});
+      var user=await DataService.addStudentByAdmin({
+        name:document.getElementById('rName').value,
+        phone:document.getElementById('rPhone').value,
+        parentPhone:document.getElementById('rParent').value,
+        email:document.getElementById('rEmail').value,
+        stage:document.getElementById('rLevel').value,
+        grade:document.getElementById('rGrade').value,
+        password:pass,
+        teacherId:firstGroup?firstGroup.teacherId:'',
+        enrollments:pickedGroups.map(function(g){return {groupId:g};})
+      });
+      if(code){
+        var d=DataService._getData();
+        var ac2=(d.activationCodes||[]).find(function(x){return x.code===code;});
+        if(ac2){ac2.used=true;ac2.usedBy=user.id;DataService._saveData(d);}
+      }
+      sessionStorage.setItem('eduflow_user',JSON.stringify(user));
+      ThemeManager.openModal('<div class="modal-body" style="text-align:center;"><h3>🎉 تم إنشاء حسابك</h3><div style="background:var(--grad);border-radius:10px;padding:20px;color:#fff;margin:16px 0;font-family:var(--font-en);font-size:30px;font-weight:800;letter-spacing:3px;">'+user.code+'</div><p class="text-sm text-muted">سلّم الكود ده لولي أمرك</p><a href="student-dashboard.html" class="btn btn-primary w-full" style="margin-top:12px;">🚀 دخول الداكبورد</a></div>');
     }
   </script>
 </body>

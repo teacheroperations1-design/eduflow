@@ -3,56 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EduFlow | NEXORA Digital</title>
+  <title>EduFlow</title>
   <link rel="stylesheet" href="css/eduflow-theme.css">
-  <style>
-    .splash{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;position:relative;z-index:1}
-    .splash-logo{width:90px;height:90px;border-radius:24px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 12px 40px var(--primary-glow);animation:float 3s ease-in-out infinite}
-    .splash-logo svg{width:48px;height:48px}
-    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-    .splash-title{font-family:var(--font-en);font-size:34px;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-    .loader{width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite}
-    @keyframes spin{to{transform:rotate(360deg)}}
-  </style>
-</head>
-<body data-theme="dark">
-  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
-
-  <div class="splash">
-    <div class="splash-logo" data-logo></div>
-    <div class="splash-title">EduFlow</div>
-    <div class="text-sm text-muted">by NEXORA Digital</div>
-    <div class="loader"></div>
-    <div class="text-sm text-muted" id="redirectMsg">جاري توجيهك...</div>
-  </div>
-
-  <script src="js/config.js"></script>
-  <script src="js/data-service.js"></script>
-  <script src="js/theme-manager.js"></script>
-  <script src="js/auth-service.js"></script>
   <script>
-    // ✅ توجيه ذكي حسب الجلسة
     (function() {
-      var user = AuthService.getCurrentUser();
-      var msg = document.getElementById('redirectMsg');
-
-      setTimeout(function() {
-        if (!user) {
-          msg.textContent = 'تحويل لصفحة الدخول...';
-          location.href = 'login.html';
-          return;
-        }
-        var routes = {
-          super_admin: 'admin-dashboard.html',
-          assistant: 'assistant-dashboard.html',
-          teacher: 'teacher-dashboard.html',
-          student: 'student-dashboard.html',
-          parent: 'parent-dashboard.html'
-        };
-        msg.textContent = 'أهلاً ' + user.name + '...';
-        location.href = routes[user.role] || 'login.html';
-      }, 900);
+      const u = sessionStorage.getItem('eduflow_user');
+      if (u) {
+        try {
+          const user = JSON.parse(u);
+          const map = {
+            super_admin: 'admin-dashboard.html',
+            assistant: 'assistant-dashboard.html',
+            teacher: 'teacher-dashboard.html',
+            student: 'student-dashboard.html',
+            parent: 'parent-dashboard.html'
+          };
+          const dest = map[user.role];
+          if (dest) { location.replace(dest); return; }
+        } catch(e) {}
+      }
+      location.replace('login.html');
     })();
   </script>
+</head>
+<body data-theme="dark">
+  <div class="bg-grid"></div>
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;">
+    <div class="card" style="text-align:center;padding:40px;">
+      <div style="font-size:48px;">🎓</div>
+      <h1 style="margin:12px 0;">EduFlow</h1>
+      <p class="text-muted">جاري التحميل...</p>
+    </div>
+  </div>
 </body>
 </html>

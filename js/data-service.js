@@ -1,830 +1,675 @@
-// js/data-service.js — Cache-first + Firestore sync
+// js/data-service.js — طبقة البيانات الكاملة
 const DataService = {
-  _default: {
-    organization: { id:"org_1", name:"EduFlow", productName:"EduFlow", logo:null, contactPhone:"", supportEmail:"" },
-    branches: [],
-    users: [],
-    groups: [],
-    enrollments: [],
-    attendance: [],
-    vocabulary: [],
-    homework: [],
-    submissions: [],
-    reattemptRequests: [],
-    exams: [],
-    examAttempts: [],
-    payments: [],
-    materials: [],
-    materialOrders: [],
-    weeklyReports: [],
-    tasks: [],
-    notifications: [],
-    activityLogs: [],
-    settings: { studentIdPrefix:"STU-", codePrefix:"EDU-", supportPhone:"", allowSelfRegistration:true, paymentMethods:["cash","vodafone_cash","bank_transfer"] }
-  },
-
-  // ===== init: تحميل cache من Firestore =====
   async init() {
-    // لو فيه cache محلي، استخدمه فوراً
-    if (!localStorage.getItem('eduflow_db')) {
-      localStorage.setItem('eduflow_db', JSON.stringify(this._default));
-    }
-
-    // حاول تحمّل من Firestore
-    if (window.FirebaseService) {
-      const ok = await FirebaseService.init();
-      if (ok) {
-        await FirebaseService.loadAll();
-        FirebaseService.startListeners();
-        // لما Firestore يتحدث، أعد تحميل الواجهة
-        FirebaseService.onDataChange(() => {
-          if (window.__eduflowRefresh) window.__eduflowRefresh();
-        });
-      }
+    if (window.FirebaseService?.initialized) {
+      await FirebaseService.loadAll();
+      FirebaseService.startListeners();
     }
   },
-
-  _getData() { return JSON.parse(localStorage.getItem('eduflow_db') || JSON.stringify(this._default)); },
+  _getData() { return JSON.parse(localStorage.getItem('eduflow_db') || '{}'); },
   _saveData(d) { localStorage.setItem('eduflow_db', JSON.stringify(d)); },
 
-  // ===== مزامنة collection كاملة مع Firestore =====
-  async _syncCollection(collectionName) {
-    if (!window.FirebaseService?.initialized) return;
+  // ============ نظام 12 ساعة ============
+  formatTime12(time24) {
+    if (!time24) return '';
+    const [hStr, mStr] = time24.split(':');
+    let h = parseInt(hStr, 10);
+    const m = mStr || '00';
+    const period = h >= 12 ? 'م' : 'ص';
+    if (h === 0) h = 12;
+    else if (h > 12) h -= 12;
+    return `${h}:${m} ${period}`;
+  },
+  formatTime(time24) {
+    return EduFlowConfig.timeFormat === '12h' ? this.formatTime12(time24) : time24;
+  },
+
+  // ============ AUTH (محلي) ============
+  authenticate(email, password) {
     const d = this._getData();
-    const items = d[collectionName] || [];
-    for (const item of items) {
-      if (item.id) await FirebaseService.saveDoc(collectionName, item.id, item);
-    }
-  },
-
-  async _syncDoc(collectionName, id, data) {
-    if (!window.FirebaseService?.initialized) return;
-    await FirebaseService.saveDoc(collectionName, id, { ...data, _id: id });
-  },
-
-  async _deleteDoc(collectionName, id) {
-    if (!window.FirebaseService?.initialized) return;
-    await FirebaseService.deleteDoc(collectionName, id);
-  },
-
-  async _syncMeta(docName, data) {
-    if (!window.FirebaseService?.initialized) return;
-    await FirebaseService.saveMeta(docName, data);
-  },
-
-  // ===== Auth =====
-  hasAdmin() { return this._getData().users.some(u => u.role === 'super_admin'); },
-
-  async createFirstAdmin(name, email, password) {
-    const d = this._getData();
-    if (d.users.some(u => u.role === 'super_admin')) return { success:false, message:'يوجد أدمن بالفعل' };
-    const id = 'admin_' + Date.now();
-    const user = { id, name, email, password, role:'super_admin', phone:'', createdAt:new Date().toISOString() };
-    d.users.push(user);
-    this._saveData(d);
-    await this._syncDoc('users', id, user);
-    return { success:true };
-  },
-
-  authenticate(identifier, password) {
-    const d = this._getData();
-    const idf = (identifier||'').trim().toLowerCase();
-    const u = d.users.find(x =>
-      (x.email||'').toLowerCase()===idf ||
-      (x.phone||'')===(identifier||'').trim() ||
-      (x.studentId||'').toLowerCase()===idf ||
-      (x.code||'').toLowerCase()===idf
-    );
-    if (u && u.password === password) { const {password:_, ...safe} = u; return safe; }
-    return null;
-  },
-
-  loginParentWithChildCode(code, password) {
-    const d = this._getData();
-    const s = d.users.find(x => x.role==='student' && (x.code||'').toLowerCase()===(code||'').trim().toLowerCase());
-    if (!s || s.password !== password) return null;
-    return { id:'parent_'+s.id, role:'parent', name:'ولي أمر '+s.name, phone:s.parentPhone, studentIds:[s.studentId], viaChildCode:true };
-  },
-
-  // ===== Codes =====
-  generateStudentId() {
-    const d = this._getData();
-    const n = d.users.filter(u=>u.role==='student').length+1;
-    return `${d.settings.studentIdPrefix}${String(n).padStart(4,'0')}`;
-  },
-  generateStudentCode() {
-    const d = this._getData();
-    let c;
-    do { c = `${d.settings.codePrefix}${Math.floor(1000+Math.random()*9000)}`; }
-    while (d.users.some(u => u.code === c));
-    return c;
+    return (d.users||[]).find(x => (x.email||'').toLowerCase() === email.toLowerCase() && x.password === password) || null;
   },
   findStudentByCode(code) {
-    return this._getData().users.find(u => u.role==='student' && (u.code||'').toLowerCase()===(code||'').trim().toLowerCase()) || null;
-  },
-
-  validateRegistrationCode(code) {
-    const codes = JSON.parse(localStorage.getItem('eduflow_reg_codes') || '[]');
-    const idx = codes.indexOf((code||'').trim().toUpperCase());
-    if (idx === -1) return false;
-    codes.splice(idx, 1);
-    localStorage.setItem('eduflow_reg_codes', JSON.stringify(codes));
-    return true;
-  },
-
-  generateRegistrationCode() {
-    const codes = JSON.parse(localStorage.getItem('eduflow_reg_codes') || '[]');
-    let code;
-    do { code = 'REG-' + Math.random().toString(36).slice(2,6).toUpperCase(); }
-    while (codes.includes(code));
-    codes.push(code);
-    localStorage.setItem('eduflow_reg_codes', JSON.stringify(codes));
-    return code;
-  },
-
-  // ===== Students =====
-  async registerStudent(s) {
     const d = this._getData();
-    if (d.users.some(u=>u.email && u.email===s.email) || d.users.some(u=>u.phone===s.phone)) {
-      return { success:false, message:'البريد أو الرقم مسجل بالفعل' };
-    }
-    const id = `stu_${Date.now()}`;
-    const st = {
-      id, role:'student', name:s.name, phone:s.phone, email:s.email||s.phone,
-      password:s.password, parentPhone:s.parentPhone, parentRelation:s.parentRelation||'',
-      whatsappOn:s.whatsappOn||'parent', stage:s.stage||'', grade:s.grade||'',
-      studentId:this.generateStudentId(), code:this.generateStudentCode(),
-      groupId:s.groupId||'', teacherId:s.teacherId||'', subject:s.subject||'English',
-      createdAt:new Date().toISOString()
-    };
-    d.users.push(st);
-    if (s.groupId) {
-      const g = d.groups.find(x => x.id === s.groupId);
-      const enrId = `enr_${Date.now()}`;
-      const enr = { id:enrId, studentId:st.id, groupId:s.groupId, teacherId:s.teacherId||g?.teacherId, subject:g?.subject||'English', status:'active', enrolledAt:new Date().toISOString() };
-      d.enrollments.push(enr);
-      await this._syncDoc('enrollments', enrId, enr);
-    }
-    this._saveData(d);
-    await this._syncDoc('users', id, st);
-    return { success:true, studentId:st.studentId, code:st.code };
+    return (d.users||[]).find(x => x.role==='student' && (x.code||'').toUpperCase() === code.toUpperCase()) || null;
   },
 
-  async addStudentByAdmin(s) {
+  // ============ USERS ============
+  getUserById(id) { return (this._getData().users||[]).find(x => x.id === id) || null; },
+  getStudents() { return (this._getData().users||[]).filter(u => u.role === 'student'); },
+  getTeachers() { return (this._getData().users||[]).filter(u => u.role === 'teacher'); },
+  getAssistants() { return (this._getData().users||[]).filter(u => u.role === 'assistant'); },
+
+  async addUser(data) {
     const d = this._getData();
-    const id = `stu_${Date.now()}`;
-    const st = {
-      id, role:'student', name:s.name, phone:s.phone, email:s.email||s.phone,
-      password:s.password||'12345678', parentPhone:s.parentPhone||'', parentRelation:s.parentRelation||'',
-      whatsappOn:s.whatsappOn||'parent', stage:s.stage||'', grade:s.grade||'',
-      studentId:this.generateStudentId(), code:this.generateStudentCode(),
-      createdAt:new Date().toISOString()
-    };
-    d.users.push(st);
-    (s.enrollments||[]).forEach(en => {
-      const g = d.groups.find(x => x.id === en.groupId);
-      const enrId = `enr_${Date.now()}_${Math.random().toString(36).slice(2,5)}`;
-      const enr = { id:enrId, studentId:st.id, groupId:en.groupId, teacherId:g?.teacherId, subject:g?.subject||'', status:'active', enrolledAt:new Date().toISOString() };
-      d.enrollments.push(enr);
-      this._syncDoc('enrollments', enrId, enr);
-    });
-    if ((s.enrollments||[]).length) {
-      st.groupId = s.enrollments[0].groupId;
-      st.teacherId = d.groups.find(g => g.id === s.enrollments[0].groupId)?.teacherId;
-    }
+    if (!d.users) d.users = [];
+    const id = data.id || 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+    const user = { id, createdAt: new Date().toISOString(), ...data };
+    d.users.push(user);
     this._saveData(d);
-    await this._syncDoc('users', id, st);
-    return { success:true, studentId:st.studentId, code:st.code };
+    if (window.FirebaseService?.initialized) await FirebaseService.saveDoc('users', id, user);
+    return user;
   },
-
-  // ===== Users =====
-  getTeachers() { return this._getData().users.filter(u => u.role === 'teacher'); },
-  getAssistants() { return this._getData().users.filter(u => u.role === 'assistant'); },
-  getStudents() { return this._getData().users.filter(u => u.role === 'student'); },
-  getParents() { return this._getData().users.filter(u => u.role === 'parent'); },
-  getUserById(id) { return this._getData().users.find(u => u.id === id); },
-  getUserPermissions(id) { const u = this.getUserById(id); return u?.permissions || {}; },
-
-  async addUser(u) {
+  async updateUser(id, updates) {
     const d = this._getData();
-    const id = `u_${Date.now()}`;
-    const nu = { id, ...u };
-    d.users.push(nu);
+    const u = (d.users||[]).find(x => x.id === id);
+    if (!u) return null;
+    Object.assign(u, updates, { updatedAt: new Date().toISOString() });
     this._saveData(d);
-    await this._syncDoc('users', id, nu);
-    return { success:true, userId:id };
+    if (window.FirebaseService?.initialized) await FirebaseService.saveDoc('users', id, u);
+    return u;
   },
-
-  async updateUser(id, up) {
-    const d = this._getData();
-    const u = d.users.find(x => x.id === id);
-    if (!u) return { success:false };
-    Object.assign(u, up);
-    this._saveData(d);
-    await this._syncDoc('users', id, u);
-    return { success:true };
-  },
-
   async deleteUser(id) {
     const d = this._getData();
-    d.users = d.users.filter(u => u.id !== id);
-    d.enrollments = d.enrollments.filter(e => e.studentId !== id);
+    d.users = (d.users||[]).filter(u => u.id !== id);
+    d.enrollments = (d.enrollments||[]).filter(e => e.studentId !== id);
     this._saveData(d);
-    await this._deleteDoc('users', id);
-    return { success:true };
+    if (window.FirebaseService?.initialized) await FirebaseService.deleteDoc('users', id);
   },
 
-  // ===== Assistant Scope =====
-  async assignAssistantTeachers(aid, tids) {
-    const d = this._getData();
-    const a = d.users.find(u => u.id === aid);
-    if (!a) return { success:false };
-    a.assignedTeacherIds = tids;
-    this._saveData(d);
-    await this._syncDoc('users', aid, a);
-    return { success:true };
-  },
-  getAssistantTeachers(aid) {
-    const d = this._getData();
-    const a = d.users.find(u => u.id === aid);
-    return (a?.assignedTeacherIds||[]).map(id => d.users.find(u => u.id === id)).filter(Boolean);
-  },
-  getAssistantScope(aid) {
-    const d = this._getData();
-    const a = d.users.find(u => u.id === aid);
-    const tids = a?.assignedTeacherIds || [];
-    const groups = d.groups.filter(g => tids.includes(g.teacherId));
-    const gids = groups.map(g => g.id);
-    const students = d.users.filter(u => u.role==='student' && gids.includes(u.groupId));
-    return { teacherIds:tids, groupIds:gids, students:students.map(s=>s.id), teachers:this.getAssistantTeachers(aid) };
-  },
-
-  // ===== Teacher =====
-  getTeacherNowGroup(tid) {
-    const d = this._getData();
-    const now = new Date();
-    const day = now.toLocaleDateString('en-US', { weekday:'long' });
-    const nowMin = now.getHours()*60 + now.getMinutes();
-    return d.groups.find(g => {
-      if (g.teacherId !== tid || g.day !== day) return false;
-      const [h,m] = g.time.split(':').map(Number);
-      const st = h*60+m;
-      return nowMin >= st && nowMin <= st + (g.duration||120);
-    }) || null;
-  },
-  getTeacherTodayGroups(tid) {
-    const d = this._getData();
-    const day = new Date().toLocaleDateString('en-US', { weekday:'long' });
-    return d.groups.filter(g => g.teacherId === tid && g.day === day);
-  },
-
-  // ===== Groups =====
-  getGroups() { return this._getData().groups; },
-  getGroupsByTeacher(t) { return this._getData().groups.filter(g => g.teacherId === t); },
-
-  async addGroup(g) {
-    const d = this._getData();
-    const id = `g_${Date.now()}`;
-    const ng = { id, duration:120, maxStudents:30, status:'active', ...g };
-    d.groups.push(ng);
-    this._saveData(d);
-    await this._syncDoc('groups', id, ng);
-    return { success:true, groupId:id };
-  },
-
-  async updateGroup(id, up) {
-    const d = this._getData();
-    const g = d.groups.find(x => x.id === id);
-    if (!g) return { success:false };
-    Object.assign(g, up);
-    this._saveData(d);
-    await this._syncDoc('groups', id, g);
-    return { success:true };
-  },
-
-  async deleteGroup(id) {
-    const d = this._getData();
-    d.groups = d.groups.filter(g => g.id !== id);
-    this._saveData(d);
-    await this._deleteDoc('groups', id);
-    return { success:true };
-  },
-
-  getStudentsByGroup(g) { return this._getData().users.filter(u => u.role==='student' && u.groupId === g); },
-
-  getStudentTeachers(sid) {
-    const d = this._getData();
-    return d.enrollments.filter(e => e.studentId === sid && e.status === 'active')
-      .map(e => ({
-        enrollment: e,
-        group: d.groups.find(g => g.id === e.groupId),
-        teacher: d.users.find(u => u.id === e.teacherId)
-      }))
-      .filter(x => x.teacher);
-  },
-
-  // ===== Attendance =====
-  async submitAttendance(a) {
-    const d = this._getData();
-    const id = `att_${Date.now()}`;
-    const att = {
-      id, groupId:a.groupId, groupName:a.groupName,
-      date:new Date().toISOString().split('T')[0],
-      submittedBy:a.submittedBy, status:'pending', records:a.records,
-      submittedAt:new Date().toISOString()
-    };
-    d.attendance.push(att);
-    this._saveData(d);
-    await this._syncDoc('attendance', id, att);
-    return { success:true };
-  },
-  getPendingAttendance() { return this._getData().attendance.filter(a => a.status === 'pending'); },
-  getAttendance() { return this._getData().attendance; },
-
-  async approveAttendance(id, by) {
-    const d = this._getData();
-    const a = d.attendance.find(x => x.id === id);
-    if (!a) return { success:false };
-    a.status = 'approved';
-    a.approvedBy = by;
-    a.approvedAt = new Date().toISOString();
-    this._saveData(d);
-    await this._syncDoc('attendance', id, a);
-    return { success:true };
-  },
-
-  // ===== Vocabulary =====
-  async addVocabulary(v) {
-    const d = this._getData();
-    const id = `vocab_${Date.now()}`;
-    const nv = { id, ...v, createdAt:new Date().toISOString() };
-    d.vocabulary.push(nv);
-    this._saveData(d);
-    await this._syncDoc('vocabulary', id, nv);
-    return { success:true };
-  },
-  getVocabulary(f={}) {
-    let r = this._getData().vocabulary;
-    if (f.subject) r = r.filter(v => v.subject === f.subject);
-    if (f.groupId) r = r.filter(v => v.groupId === f.groupId || !v.groupId);
-    return r.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-  },
-  async deleteVocabulary(id) {
-    const d = this._getData();
-    d.vocabulary = d.vocabulary.filter(v => v.id !== id);
-    this._saveData(d);
-    await this._deleteDoc('vocabulary', id);
-    return { success:true };
-  },
-
-  // ===== Homework =====
-  async addHomework(h) {
-    const d = this._getData();
-    const id = `hw_${Date.now()}`;
-    const nh = { id, status:'published', ...h, createdAt:new Date().toISOString() };
-    d.homework.push(nh);
-    this._saveData(d);
-    await this._syncDoc('homework', id, nh);
-    return { success:true, homeworkId:id };
-  },
-  getHomework(f={}) {
-    let r = this._getData().homework;
-    if (f.groupId) r = r.filter(h => h.groupId === f.groupId);
-    if (f.subject) r = r.filter(h => h.subject === f.subject);
-    return r.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-  },
-  getHomeworkById(id) { return this._getData().homework.find(h => h.id === id); },
-  async deleteHomework(id) {
-    const d = this._getData();
-    d.homework = d.homework.filter(h => h.id !== id);
-    d.submissions = d.submissions.filter(s => s.homeworkId !== id);
-    this._saveData(d);
-    await this._deleteDoc('homework', id);
-    return { success:true };
-  },
-
-  async submitHomework(sub) {
-    const d = this._getData();
-    const hw = d.homework.find(h => h.id === sub.homeworkId);
-    if (!hw) return { success:false, message:'الواجب غير موجود' };
-    const prev = d.submissions.filter(s => s.homeworkId === sub.homeworkId && s.studentId === sub.studentId).length;
-    if (prev >= hw.maxAttempts) return { success:false, message:`استنفدت المحاولات (${hw.maxAttempts})` };
-
-    let auto = 0, total = 0, manual = false;
-    hw.questions.forEach(q => {
-      if (q.type === 'mcq' || q.type === 'truefalse') {
-        total += q.points;
-        const a = sub.answers.find(x => x.questionId === q.id);
-        if (a && String(a.answer) === String(q.correctAnswer)) auto += q.points;
-      } else if (q.requiresManualReview) manual = true;
+  async addStudentByAdmin(data) {
+    const code = 'EDU-' + Math.floor(1000 + Math.random()*9000);
+    const studentId = 'STU-' + Date.now().toString().slice(-4);
+    const user = await this.addUser({
+      ...data, role:'student', code, studentId, status:'active',
+      parentAccess: data.parentAccess || Math.floor(1000 + Math.random()*9000).toString()
     });
-    const score = manual ? null : Math.round((auto/total)*100);
-    const id = `sub_${Date.now()}`;
-    const ns = {
-      id, homeworkId:sub.homeworkId, studentId:sub.studentId, answers:sub.answers,
-      autoScore:auto, totalAutoPoints:total, score,
-      status: manual ? 'pending_review' : 'graded',
-      attemptNumber: prev+1, submittedAt:new Date().toISOString()
+    if (data.enrollments?.length) {
+      for (const enr of data.enrollments) {
+        await this.addEnrollment({ studentId: user.id, groupId: enr.groupId });
+      }
+    }
+    return user;
+  },
+
+  // ============ GROUPS ============
+  getGroups() { return this._getData().groups || []; },
+  getGroupsByTeacher(tid) { return this.getGroups().filter(g => g.teacherId === tid); },
+  getStudentsByGroup(gid) {
+    const d = this._getData();
+    const enrolled = (d.enrollments||[]).filter(e => e.groupId === gid && e.status === 'active').map(e => e.studentId);
+    return this.getStudents().filter(s => enrolled.includes(s.id) || s.groupId === gid);
+  },
+  async addGroup(data) {
+    const d = this._getData();
+    if (!d.groups) d.groups = [];
+    const id = 'g_' + Date.now();
+    const g = {
+      id, createdAt: new Date().toISOString(),
+      sessionFee: 0,                    // سعر الحصة الواحدة
+      monthlyFee: 0,                    // السعر الشهري الكلي
+      sessionsPerMonth: EduFlowConfig.billing.defaultSessionsPerMonth,
+      ...data
     };
-    d.submissions.push(ns);
+    // لو عنده monthlyFee بس مش sessionFee → احسبه
+    if (g.monthlyFee && !g.sessionFee) {
+      g.sessionFee = Math.round(g.monthlyFee / g.sessionsPerMonth);
+    }
+    if (g.sessionFee && !g.monthlyFee) {
+      g.monthlyFee = g.sessionFee * g.sessionsPerMonth;
+    }
+    d.groups.push(g);
     this._saveData(d);
-    await this._syncDoc('submissions', id, ns);
-    return { success:true, score };
+    if (window.FirebaseService?.initialized) await FirebaseService.saveDoc('groups', id, g);
+    return g;
   },
-  getSubmissions(f={}) {
-    let r = this._getData().submissions;
-    if (f.homeworkId) r = r.filter(s => s.homeworkId === f.homeworkId);
-    if (f.studentId) r = r.filter(s => s.studentId === f.studentId);
-    if (f.status) r = r.filter(s => s.status === f.status);
-    return r.sort((a,b) => new Date(b.submittedAt) - new Date(a.submittedAt));
-  },
-  getSubmissionById(id) { return this._getData().submissions.find(s => s.id === id); },
-  async gradeSubmission(id, score, by, notes='') {
+  async updateGroup(id, updates) {
     const d = this._getData();
-    const s = d.submissions.find(x => x.id === id);
-    if (!s) return { success:false };
-    s.score = score; s.status = 'graded'; s.gradedBy = by; s.notes = notes;
-    s.gradedAt = new Date().toISOString();
-    this._saveData(d);
-    await this._syncDoc('submissions', id, s);
-    return { success:true };
-  },
-  async requestReattempt(sid, stid, hid, reason) {
-    const d = this._getData();
-    const id = `reatt_${Date.now()}`;
-    const r = { id, submissionId:sid, studentId:stid, homeworkId:hid, reason, status:'pending', createdAt:new Date().toISOString() };
-    d.reattemptRequests.push(r);
-    this._saveData(d);
-    await this._syncDoc('reattemptRequests', id, r);
-    return { success:true };
-  },
-  getPendingReattemptRequests() { return this._getData().reattemptRequests.filter(r => r.status === 'pending'); },
-  async reviewReattemptRequest(id, approved, by) {
-    const d = this._getData();
-    const r = d.reattemptRequests.find(x => x.id === id);
-    if (!r) return { success:false };
-    r.status = approved ? 'approved' : 'rejected';
-    r.reviewedBy = by;
-    if (approved) {
-      const hw = d.homework.find(h => h.id === r.homeworkId);
-      if (hw) { hw.maxAttempts += 1; await this._syncDoc('homework', hw.id, hw); }
+    const g = (d.groups||[]).find(x => x.id === id);
+    if (!g) return null;
+    Object.assign(g, updates);
+    // إعادة حساب الأسعار
+    if (updates.monthlyFee !== undefined || updates.sessionsPerMonth !== undefined) {
+      if (g.monthlyFee && g.sessionsPerMonth) g.sessionFee = Math.round(g.monthlyFee / g.sessionsPerMonth);
     }
     this._saveData(d);
-    await this._syncDoc('reattemptRequests', id, r);
-    return { success:true };
+    if (window.FirebaseService?.initialized) await FirebaseService.saveDoc('groups', id, g);
+    return g;
+  },
+  async deleteGroup(id) {
+    const d = this._getData();
+    d.groups = (d.groups||[]).filter(g => g.id !== id);
+    d.enrollments = (d.enrollments||[]).filter(e => e.groupId !== id);
+    this._saveData(d);
+    if (window.FirebaseService?.initialized) await FirebaseService.deleteDoc('groups', id);
   },
 
-  // ===== Exams =====
-  async addExam(e) {
+  // ============ ENROLLMENTS ============
+  async addEnrollment(data) {
     const d = this._getData();
-    const id = `ex_${Date.now()}`;
-    const ne = { id, mode:'home', status:'published', ...e, createdAt:new Date().toISOString() };
-    d.exams.push(ne);
+    if (!d.enrollments) d.enrollments = [];
+    const id = 'enr_' + Date.now() + '_' + Math.random().toString(36).slice(2,5);
+    const enr = { id, status:'active', enrolledAt: new Date().toISOString(), ...data };
+    d.enrollments.push(enr);
     this._saveData(d);
-    await this._syncDoc('exams', id, ne);
-    return { success:true, examId:id };
+    if (window.FirebaseService?.initialized) await FirebaseService.saveDoc('enrollments', id, enr);
+    return enr;
   },
-  getExams(f={}) {
-    let r = this._getData().exams;
-    if (f.groupId) r = r.filter(e => e.groupId === f.groupId);
-    if (f.mode) r = r.filter(e => e.mode === f.mode);
-    return r.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-  },
-  getExamById(id) { return this._getData().exams.find(e => e.id === id); },
-  async deleteExam(id) {
+  getStudentTeachers(sid) {
     const d = this._getData();
-    d.exams = d.exams.filter(e => e.id !== id);
-    d.examAttempts = d.examAttempts.filter(a => a.examId !== id);
-    this._saveData(d);
-    await this._deleteDoc('exams', id);
-    return { success:true };
+    const enrs = (d.enrollments||[]).filter(e => e.studentId === sid && e.status === 'active');
+    return enrs.map(e => ({
+      enrollment: e,
+      group: (d.groups||[]).find(g => g.id === e.groupId),
+      teacher: (d.users||[]).find(u => u.id === e.teacherId)
+    })).filter(x => x.group && x.teacher);
   },
-  async startClassExam(id, by) {
+
+  // ============ ATTENDANCE ============
+  getAttendance() { return this._getData().attendance || []; },
+  async submitAttendance(data) {
     const d = this._getData();
-    const e = d.exams.find(x => x.id === id);
-    if (!e) return { success:false };
-    e.status = 'live'; e.classStartedAt = new Date().toISOString(); e.startedBy = by;
+    if (!d.attendance) d.attendance = [];
+    const id = 'att_' + Date.now();
+    const att = { id, date: new Date().toISOString().split('T')[0], status:'pending', ...data };
+    d.attendance.push(att);
     this._saveData(d);
-    await this._syncDoc('exams', id, e);
-    return { success:true };
+    if (window.FirebaseService?.initialized) await FirebaseService.saveDoc('attendance', id, att);
+    return att;
+  },
+  async approveAttendance(id, by) {
+    const d = this._getData();
+    const a = (d.attendance||[]).find(x => x.id === id);
+    if (!a) return;
+    a.status = 'approved'; a.approvedBy = by; a.approvedAt = new Date().toISOString();
+    this._saveData(d);
+    if (window.FirebaseService?.initialized) await FirebaseService.saveDoc('attendance', id, a);
+  },
+
+  // ============ CANCELLED SESSIONS (إلغاء الحصص) ============
+  getCancelledSessions() { return this._getData().cancelledSessions || []; },
+  async cancelSession(groupId, date, reason, cancelledBy) {
+    const d = this._getData();
+    if (!d.cancelledSessions) d.cancelledSessions = [];
+    // منع التكرار
+    if (d.cancelledSessions.some(c => c.groupId === groupId && c.date === date)) {
+      return { success: false, message: 'الحصة ملغية بالفعل' };
+    }
+    const id = 'cs_' + Date.now();
+    const c = { id, groupId, date, reason, cancelledBy, cancelledAt: new Date().toISOString() };
+    d.cancelledSessions.push(c);
+    // لو فيه حضور مسجل للحصة دي، ألغيه
+    d.attendance = (d.attendance||[]).filter(a => !(a.groupId === groupId && a.date === date));
+    this._saveData(d);
+    if (window.FirebaseService?.initialized) {
+      await FirebaseService.saveDoc('cancelledSessions', id, c);
+    }
+    return { success: true, cancellation: c };
+  },
+  isSessionCancelled(groupId, date) {
+    return (this._getData().cancelledSessions||[]).some(c => c.groupId === groupId && c.date === date);
+  },
+
+  // ============ ATTENDANCE CODES (كودات حضور يدوية) ============
+  generateAttendanceCode(groupId) {
+    const d = this._getData();
+    if (!d.attendanceCodes) d.attendanceCodes = [];
+    const code = 'ATT-' + Math.random().toString(36).slice(2,6).toUpperCase();
+    const item = {
+      code, groupId,
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + EduFlowConfig.settings.qrSessionDuration).toISOString(),
+      active: true
+    };
+    d.attendanceCodes.push(item);
+    this._saveData(d);
+    if (window.FirebaseService?.initialized) FirebaseService.saveDoc('attendanceCodes', code, item);
+    return item;
+  },
+  checkInByCode(studentId, code) {
+    const d = this._getData();
+    const c = (d.attendanceCodes||[]).find(x => x.code.toUpperCase() === code.toUpperCase() && x.active);
+    if (!c) return { success: false, message: 'الكود غير صالح' };
+    if (new Date(c.expiresAt) < new Date()) return { success: false, message: 'الكود منتهي' };
+    if (!this.getStudentsByGroup(c.groupId).some(s => s.id === studentId)) {
+      return { success: false, message: 'لست في هذه المجموعة' };
+    }
+    // إضافة check-in
+    if (!c.checkIns) c.checkIns = [];
+    if (c.checkIns.some(x => x.studentId === studentId)) {
+      return { success: false, message: 'سجّلت حضورك بالفعل' };
+    }
+    c.checkIns.push({ studentId, at: new Date().toISOString() });
+    this._saveData(d);
+    if (window.FirebaseService?.initialized) FirebaseService.saveDoc('attendanceCodes', c.code, c);
+    return { success: true, groupId: c.groupId, groupName: this.getGroups().find(g => g.id === c.groupId)?.name };
+  },
+  getActiveAttendanceCodes(groupId) {
+    const now = new Date();
+    return (this._getData().attendanceCodes||[]).filter(c =>
+      (!groupId || c.groupId === groupId) && c.active && new Date(c.expiresAt) > now
+    );
+  },
+
+  // ============ HOMEWORK ============
+  getHomework() { return this._getData().homework || []; },
+  getHomeworkById(id) { return this.getHomework().find(h => h.id === id); },
+  getSubmissions(filter={}) {
+    let r = this._getData().submissions || [];
+    if (filter.homeworkId) r = r.filter(s => s.homeworkId === filter.homeworkId);
+    if (filter.studentId) r = r.filter(s => s.studentId === filter.studentId);
+    return r;
+  },
+  getSubmissionById(id) { return (this._getData().submissions||[]).find(s => s.id === id); },
+  async addHomework(data) {
+    const d = this._getData(); if (!d.homework) d.homework = [];
+    const id = 'hw_' + Date.now();
+    const hw = { id, createdAt: new Date().toISOString(), ...data };
+    d.homework.push(hw); this._saveData(d);
+    if (window.FirebaseService?.initialized) await FirebaseService.saveDoc('homework', id, hw);
+    return hw;
+  },
+  async submitHomework(data) {
+    const d = this._getData(); if (!d.submissions) d.submissions = [];
+    const id = 'sub_' + Date.now();
+    // auto-grade MCQ/truefalse
+    const hw = this.getHomeworkById(data.homeworkId);
+    let autoScore = 0, totalAuto = 0;
+    if (hw) {
+      for (const q of hw.questions) {
+        if (q.type === 'short') continue;
+        const ans = (data.answers||[]).find(a => a.questionId === q.id);
+        if (!ans) continue;
+        totalAuto += q.points;
+        if (String(ans.answer) === String(q.correctAnswer)) autoScore += q.points;
+      }
+    }
+    const percentage = totalAuto > 0 ? Math.round((autoScore / totalAuto) * 100) : 0;
+    const hasManual = hw?.questions?.some(q => q.type === 'short');
+    const sub = {
+      id, homeworkId: data.homeworkId, studentId: data.studentId,
+      answers: data.answers || [],
+      autoScore, totalAutoPoints: totalAuto,
+      score: hasManual ? null : percentage,
+      status: hasManual ? 'pending_review' : 'graded',
+      attemptNumber: data.attemptNumber || 1,
+      submittedAt: new Date().toISOString()
+    };
+    d.submissions.push(sub); this._saveData(d);
+    if (window.FirebaseService?.initialized) await FirebaseService.saveDoc('submissions', id, sub);
+    return sub;
+  },
+  async deleteHomework(id) {
+    const d = this._getData();
+    d.homework = (d.homework||[]).filter(h => h.id !== id);
+    d.submissions = (d.submissions||[]).filter(s => s.homeworkId !== id);
+    this._saveData(d);
+    if (window.FirebaseService?.initialized) await FirebaseService.deleteDoc('homework', id);
+  },
+  async gradeSubmission(id, score, by, notes) {
+    const d = this._getData();
+    const s = (d.submissions||[]).find(x => x.id === id);
+    if (!s) return;
+    s.status = 'graded'; s.score = score; s.gradedBy = by; s.gradeNotes = notes; s.gradedAt = new Date().toISOString();
+    this._saveData(d);
+    if (window.FirebaseService?.initialized) await FirebaseService.saveDoc('submissions', id, s);
+  },
+
+  // ============ EXAMS ============
+  getExams() { return this._getData().exams || []; },
+  getExamById(id) { return this.getExams().find(e => e.id === id); },
+  getExamAttempts(filter={}) {
+    let r = this._getData().examAttempts || [];
+    if (filter.examId) r = r.filter(a => a.examId === filter.examId);
+    if (filter.studentId) r = r.filter(a => a.studentId === filter.studentId);
+    return r;
+  },
+  async addExam(data) {
+    const d = this._getData(); if (!d.exams) d.exams = [];
+    const id = 'ex_' + Date.now();
+    const backupCode = data.backupCode || ('EXAM-' + Math.random().toString(36).slice(2,6).toUpperCase());
+    const e = { id, backupCode, createdAt: new Date().toISOString(), status: data.status || 'published', ...data };
+    d.exams.push(e); this._saveData(d);
+    if (window.FirebaseService?.initialized) await FirebaseService.saveDoc('exams', id, e);
+    return e;
+  },
+  async startClassExam(id) {
+    const d = this._getData();
+    const e = (d.exams||[]).find(x => x.id === id);
+    if (!e) return;
+    e.status = 'live';
+    e.startedAt = new Date().toISOString();
+    this._saveData(d);
+    if (window.FirebaseService?.initialized) await FirebaseService.saveDoc('exams', id, e);
   },
   async endClassExam(id) {
     const d = this._getData();
-    const e = d.exams.find(x => x.id === id);
-    if (!e) return { success:false };
-    e.status = 'ended'; e.classEndedAt = new Date().toISOString();
+    const e = (d.exams||[]).find(x => x.id === id);
+    if (!e) return;
+    e.status = 'ended';
+    e.endedAt = new Date().toISOString();
     this._saveData(d);
-    await this._syncDoc('exams', id, e);
-    return { success:true };
+    if (window.FirebaseService?.initialized) await FirebaseService.saveDoc('exams', id, e);
   },
-  async startExamAttempt(exid, stid) {
-    const d = this._getData();
-    const ex = d.exams.find(e => e.id === exid);
-    if (!ex) return { success:false, message:'الامتحان غير موجود' };
-    const now = new Date();
-    if (ex.mode === 'home') {
-      if (now < new Date(ex.startTime)) return { success:false, message:'لم يبدأ بعد' };
-      if (now > new Date(ex.endTime)) return { success:false, message:'انتهى الوقت' };
-    } else {
-      if (ex.status !== 'live') return { success:false, message:'المدرس لم يبدأ الامتحان' };
+  async submitExamAttempt(data) {
+    const d = this._getData(); if (!d.examAttempts) d.examAttempts = [];
+    const id = 'eat_' + Date.now();
+    const ex = this.getExamById(data.examId);
+    let autoScore = 0, totalAuto = 0, suspicious = [];
+    if (ex) {
+      for (const q of ex.questions) {
+        if (q.type === 'short') continue;
+        const ans = (data.answers||[]).find(a => a.questionId === q.id);
+        if (!ans) continue;
+        totalAuto += q.points;
+        if (String(ans.answer) === String(q.correctAnswer)) autoScore += q.points;
+      }
     }
-    const prev = d.examAttempts.filter(a => a.examId === exid && a.studentId === stid).length;
-    if (prev >= ex.maxAttempts) return { success:false, message:`استنفدت المحاولات (${ex.maxAttempts})` };
-    const id = `eat_${Date.now()}`;
-    const at = {
-      id, examId:exid, studentId:stid, answers:[], startTime:now.toISOString(), endTime:null,
-      score:null, status:'in_progress', attemptNumber:prev+1, suspiciousActivities:[]
+    const attempt = {
+      id, examId: data.examId, studentId: data.studentId,
+      answers: data.answers || [], autoScore, totalAutoPoints: totalAuto,
+      score: totalAuto ? Math.round((autoScore/totalAuto)*100) : 0,
+      percentage: totalAuto ? Math.round((autoScore/totalAuto)*100) : 0,
+      status: 'approved',
+      attemptNumber: data.attemptNumber || 1,
+      startTime: data.startTime, endTime: new Date().toISOString(),
+      suspiciousActivities: data.suspiciousActivities || suspicious
     };
-    d.examAttempts.push(at);
-    this._saveData(d);
-    await this._syncDoc('examAttempts', id, at);
-    return { success:true, attemptId:id };
+    d.examAttempts.push(attempt); this._saveData(d);
+    if (window.FirebaseService?.initialized) await FirebaseService.saveDoc('examAttempts', id, attempt);
+    return attempt;
   },
-  async saveExamAnswer(aid, qid, ans) {
+  async deleteExam(id) {
     const d = this._getData();
-    const a = d.examAttempts.find(x => x.id === aid);
-    if (!a) return { success:false };
-    const ex = a.answers.find(x => x.questionId === qid);
-    if (ex) ex.answer = ans; else a.answers.push({ questionId:qid, answer:ans });
+    d.exams = (d.exams||[]).filter(e => e.id !== id);
+    d.examAttempts = (d.examAttempts||[]).filter(a => a.examId !== id);
     this._saveData(d);
-    await this._syncDoc('examAttempts', aid, a);
-    return { success:true };
-  },
-  async logSuspiciousActivity(aid, type, details='') {
-    const d = this._getData();
-    const a = d.examAttempts.find(x => x.id === aid);
-    if (!a) return { success:false };
-    a.suspiciousActivities.push({ type, timestamp:new Date().toISOString(), details });
-    this._saveData(d);
-    await this._syncDoc('examAttempts', aid, a);
-    return { success:true };
-  },
-  async submitExamAttempt(aid) {
-    const d = this._getData();
-    const a = d.examAttempts.find(x => x.id === aid);
-    if (!a || a.status === 'submitted') return { success:false };
-    const ex = d.exams.find(e => e.id === a.examId);
-    let auto = 0, total = 0, manual = false;
-    ex.questions.forEach(q => {
-      if (q.type === 'mcq' || q.type === 'truefalse') {
-        total += q.points;
-        const ans = a.answers.find(x => x.questionId === q.id);
-        if (ans && String(ans.answer) === String(q.correctAnswer)) auto += q.points;
-      } else if (q.requiresManualReview) manual = true;
-    });
-    const pct = total > 0 ? Math.round((auto/total)*100) : 0;
-    a.endTime = new Date().toISOString(); a.autoScore = auto; a.totalAutoPoints = total;
-    a.percentage = pct; a.status = manual ? 'pending_review' : 'pending_approval';
-    this._saveData(d);
-    await this._syncDoc('examAttempts', aid, a);
-    return { success:true, autoScore:auto, totalAutoPoints:total, percentage:pct };
-  },
-  getExamAttempts(f={}) {
-    let r = this._getData().examAttempts;
-    if (f.examId) r = r.filter(a => a.examId === f.examId);
-    if (f.studentId) r = r.filter(a => a.studentId === f.studentId);
-    if (f.status) r = r.filter(a => a.status === f.status);
-    return r.sort((a,b) => new Date(b.startTime) - new Date(a.startTime));
-  },
-  getExamAttemptById(id) { return this._getData().examAttempts.find(a => a.id === id); },
-  async approveExamAttempt(id, score, by, notes='') {
-    const d = this._getData();
-    const a = d.examAttempts.find(x => x.id === id);
-    if (!a) return { success:false };
-    a.score = score; a.status = 'approved'; a.approvedBy = by; a.notes = notes;
-    a.approvedAt = new Date().toISOString();
-    this._saveData(d);
-    await this._syncDoc('examAttempts', id, a);
-    return { success:true };
+    if (window.FirebaseService?.initialized) await FirebaseService.deleteDoc('exams', id);
   },
 
-  // ===== Payments =====
-  async addPayment(p) {
+  // ============ VOCABULARY ============
+  getVocabulary() { return this._getData().vocabulary || []; },
+  async addVocabulary(data) {
+    const d = this._getData(); if (!d.vocabulary) d.vocabulary = [];
+    const id = 'v_' + Date.now();
+    const v = { id, createdAt: new Date().toISOString(), ...data };
+    d.vocabulary.push(v); this._saveData(d);
+    if (window.FirebaseService?.initialized) await FirebaseService.saveDoc('vocabulary', id, v);
+    return v;
+  },
+  async deleteVocabulary(id) {
     const d = this._getData();
-    const id = `pay_${Date.now()}`;
-    const np = { id, ...p, createdAt:new Date().toISOString(), history:[] };
-    d.payments.push(np);
+    d.vocabulary = (d.vocabulary||[]).filter(v => v.id !== id);
     this._saveData(d);
-    await this._syncDoc('payments', id, np);
-    return { success:true };
-  },
-  getPayments(f={}) {
-    let r = this._getData().payments;
-    if (f.studentId) r = r.filter(p => p.studentId === f.studentId);
-    if (f.month) r = r.filter(p => p.month === f.month);
-    if (f.status) r = r.filter(p => p.status === f.status);
-    return r;
-  },
-  async recordPayment(id, amount, method, notes='') {
-    const d = this._getData();
-    const p = d.payments.find(x => x.id === id);
-    if (!p) return { success:false };
-    p.paidAmount += amount;
-    p.history.push({ date:new Date().toISOString().split('T')[0], amount, method, notes });
-    p.status = p.paidAmount >= p.amount ? 'paid' : 'partially_paid';
-    this._saveData(d);
-    await this._syncDoc('payments', id, p);
-    return { success:true };
-  },
-  getPaymentSummary(f={}) {
-    const ps = this.getPayments(f);
-    const total = ps.reduce((s,p) => s+p.amount, 0);
-    const paid = ps.reduce((s,p) => s+p.paidAmount, 0);
-    return { total, paid, remaining:total-paid, overdue:ps.filter(p => p.status==='overdue').length, count:ps.length };
+    if (window.FirebaseService?.initialized) await FirebaseService.deleteDoc('vocabulary', id);
   },
 
-  // ===== Materials =====
-  async addMaterial(m) {
-    const d = this._getData();
-    const id = `mat_${Date.now()}`;
-    const nm = { id, ...m, createdAt:new Date().toISOString() };
-    d.materials.push(nm);
-    this._saveData(d);
-    await this._syncDoc('materials', id, nm);
-    return { success:true };
-  },
-  getMaterials(f={}) {
-    let r = this._getData().materials;
-    if (f.subject) r = r.filter(m => m.subject === f.subject);
+  // ============ TASKS ============
+  getTasks(filter={}) {
+    let r = this._getData().tasks || [];
+    if (filter.type) r = r.filter(t => t.type === filter.type);
+    if (filter.assignedTo) r = r.filter(t => t.assignedTo === filter.assignedTo);
+    if (filter.status) r = r.filter(t => t.status === filter.status);
     return r;
   },
-  getMaterialById(id) { return this._getData().materials.find(m => m.id === id); },
-  async deleteMaterial(id) {
-    const d = this._getData();
-    d.materials = d.materials.filter(m => m.id !== id);
-    d.materialOrders = d.materialOrders.filter(o => o.materialId !== id);
-    this._saveData(d);
-    await this._deleteDoc('materials', id);
-    return { success:true };
+  async addTask(data) {
+    const d = this._getData(); if (!d.tasks) d.tasks = [];
+    const id = 'task_' + Date.now();
+    const t = { id, createdAt: new Date().toISOString(), ...data };
+    d.tasks.push(t); this._saveData(d);
+    if (window.FirebaseService?.initialized) await FirebaseService.saveDoc('tasks', id, t);
+    return t;
   },
-  async placeOrder(o) {
+  async updateTask(id, updates) {
     const d = this._getData();
-    const m = d.materials.find(x => x.id === o.materialId);
-    if (!m || m.availability !== 'available') return { success:false, message:'غير متوفر' };
-    const id = `ord_${Date.now()}`;
-    const no = { id, materialId:o.materialId, studentId:o.studentId, status:'pending', quantity:o.quantity||1, totalPrice:m.price*(o.quantity||1), notes:o.notes||'', createdAt:new Date().toISOString(), updatedAt:new Date().toISOString() };
-    d.materialOrders.push(no);
+    const t = (d.tasks||[]).find(x => x.id === id);
+    if (!t) return;
+    Object.assign(t, updates);
     this._saveData(d);
-    await this._syncDoc('materialOrders', id, no);
-    return { success:true };
-  },
-  getOrders(f={}) {
-    let r = this._getData().materialOrders;
-    if (f.studentId) r = r.filter(o => o.studentId === f.studentId);
-    if (f.status) r = r.filter(o => o.status === f.status);
-    return r;
-  },
-  async updateOrderStatus(id, status) {
-    const d = this._getData();
-    const o = d.materialOrders.find(x => x.id === id);
-    if (!o) return { success:false };
-    o.status = status; o.updatedAt = new Date().toISOString();
-    this._saveData(d);
-    await this._syncDoc('materialOrders', id, o);
-    return { success:true };
+    if (window.FirebaseService?.initialized) await FirebaseService.saveDoc('tasks', id, t);
+    return t;
   },
 
-  // ===== Parent =====
-  getStudentDataForParent(pid) {
-    const d = this._getData();
-    const p = d.users.find(u => u.id === pid && u.role === 'parent');
-    if (!p) return null;
-    return d.users.filter(u => u.role === 'student' && (p.studentIds||[]).includes(u.studentId))
-      .map(s => ({
-        ...s,
-        group: d.groups.find(g => g.id === s.groupId),
-        teacher: d.users.find(u => u.id === (d.groups.find(g => g.id === s.groupId)||{}).teacherId),
-        attendance: d.attendance.filter(a => a.status==='approved' && a.records.some(r => r.studentId === s.id)),
-        homework: this.getHomework({ groupId:s.groupId }),
-        submissions: this.getSubmissions({ studentId:s.id }),
-        exams: this.getExams({ groupId:s.groupId }),
-        examAttempts: this.getExamAttempts({ studentId:s.id }).filter(a => a.status === 'approved'),
-        payments: this.getPayments({ studentId:s.id })
-      }));
+  // ============ PAYMENTS ============
+  getPayments() { return this._getData().payments || []; },
+  async addPayment(data) {
+    const d = this._getData(); if (!d.payments) d.payments = [];
+    const id = 'pay_' + Date.now();
+    const p = { id, createdAt: new Date().toISOString(), ...data };
+    d.payments.push(p); this._saveData(d);
+    if (window.FirebaseService?.initialized) await FirebaseService.saveDoc('payments', id, p);
+    return p;
   },
-  generateWeeklyReport(sid) {
+  async recordPayment(id, amount, method) {
     const d = this._getData();
-    const s = d.users.find(u => u.id === sid);
-    if (!s) return null;
-    const ws = new Date(); ws.setDate(ws.getDate() - 7);
-    const att = d.attendance.filter(a => new Date(a.date) >= ws && a.status === 'approved' && a.records.some(r => r.studentId === sid));
-    const present = att.reduce((n,a) => n + (a.records.find(r => r.studentId === sid)?.status === 'present' ? 1 : 0), 0);
-    return {
-      studentId:sid, studentName:s.name,
-      weekStart:ws.toISOString().split('T')[0],
-      weekEnd:new Date().toISOString().split('T')[0],
-      attendance:{ present, total:att.length },
-      homeworkCount:d.submissions.filter(x => new Date(x.submittedAt) >= ws && x.studentId === sid).length,
-      examCount:d.examAttempts.filter(a => new Date(a.startTime) >= ws && a.studentId === sid && a.status === 'approved').length,
-      generatedAt:new Date().toISOString()
-    };
-  },
-  async sendWeeklyReport(r) {
-    const d = this._getData();
-    const id = `rpt_${Date.now()}`;
-    const nr = { id, ...r, sentAt:new Date().toISOString() };
-    d.weeklyReports.push(nr);
+    const p = (d.payments||[]).find(x => x.id === id);
+    if (!p) return;
+    p.paidAmount = (p.paidAmount||0) + amount;
+    p.history = p.history || [];
+    p.history.push({ date: new Date().toISOString(), amount, method });
+    p.status = p.paidAmount >= p.amount ? 'paid' : p.paidAmount > 0 ? 'partially_paid' : 'unpaid';
     this._saveData(d);
-    await this._syncDoc('weeklyReports', id, nr);
-    return { success:true };
+    if (window.FirebaseService?.initialized) await FirebaseService.saveDoc('payments', id, p);
   },
-  getWeeklyReports(f={}) {
-    let r = this._getData().weeklyReports;
-    if (f.studentId) r = r.filter(x => x.studentId === f.studentId);
-    return r.sort((a,b) => new Date(b.sentAt) - new Date(a.sentAt));
+  getPaymentSummary() {
+    const pays = this.getPayments();
+    const total = pays.reduce((s,p) => s + (p.amount||0), 0);
+    const paid = pays.reduce((s,p) => s + (p.paidAmount||0), 0);
+    return { total, paid, remaining: total - paid };
   },
 
-  // ===== Tasks / Notifications / Logs =====
-  getTasks(f={}) {
-    let r = this._getData().tasks;
-    if (f.assignedTo) r = r.filter(t => t.assignedTo === f.assignedTo);
-    if (f.status) r = r.filter(t => t.status === f.status);
-    if (f.type) r = r.filter(t => t.type === f.type);
-    return r;
-  },
-  async addTask(t) {
-    const d = this._getData();
-    const id = `task_${Date.now()}`;
-    const nt = { id, ...t, createdAt:new Date().toISOString() };
-    d.tasks.push(nt);
-    this._saveData(d);
-    await this._syncDoc('tasks', id, nt);
-    return { success:true };
-  },
-  async updateTask(id, up) {
-    const d = this._getData();
-    const t = d.tasks.find(x => x.id === id);
-    if (!t) return { success:false };
-    Object.assign(t, up);
-    this._saveData(d);
-    await this._syncDoc('tasks', id, t);
-    return { success:true };
-  },
-  getNotifications(f={}) {
-    let r = this._getData().notifications;
-    if (f.targetUserId) r = r.filter(n => n.targetUserId === f.targetUserId || n.targetUserId === 'all');
-    if (f.isRead !== undefined) r = r.filter(n => n.isRead === f.isRead);
+  // ============ NOTIFICATIONS ============
+  getNotifications(filter={}) {
+    let r = this._getData().notifications || [];
+    if (filter.targetUserId) r = r.filter(n => n.targetUserId === filter.targetUserId || n.targetUserId === 'all');
     return r.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
   },
-  async addNotification(n) {
-    const d = this._getData();
-    const id = `notif_${Date.now()}`;
-    const nn = { id, isRead:false, ...n, createdAt:new Date().toISOString() };
-    d.notifications.push(nn);
-    this._saveData(d);
-    await this._syncDoc('notifications', id, nn);
-    return { success:true };
+  async addNotification(data) {
+    const d = this._getData(); if (!d.notifications) d.notifications = [];
+    const id = 'notif_' + Date.now();
+    const n = { id, isRead:false, createdAt: new Date().toISOString(), ...data };
+    d.notifications.push(n); this._saveData(d);
+    if (window.FirebaseService?.initialized) await FirebaseService.saveDoc('notifications', id, n);
+    return n;
   },
-  getUnreadCount(uid) { return this.getNotifications({ targetUserId:uid }).filter(n => !n.isRead).length; },
-  async logActivity(uid, uname, action, target) {
-    const d = this._getData();
-    const id = `log_${Date.now()}`;
-    d.activityLogs.push({ id, userId:uid, userName:uname, action, target, timestamp:new Date().toISOString() });
-    if (d.activityLogs.length > 500) d.activityLogs = d.activityLogs.slice(-500);
-    this._saveData(d);
-    await this._syncDoc('activityLogs', id, { userId:uid, userName:uname, action, target, timestamp:new Date().toISOString() });
-  },
-  getActivityLogs() { return this._getData().activityLogs.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)); },
 
-  // ===== Org / Branches / Features =====
-  getOrganization() { return this._getData().organization; },
-  async updateOrganization(up) {
-    const d = this._getData();
-    Object.assign(d.organization, up);
+  // ============ ACTIVITY LOGS ============
+  getActivityLogs() { return (this._getData().activityLogs||[]).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)); },
+  async logActivity(uid, uname, action, target) {
+    const d = this._getData(); if (!d.activityLogs) d.activityLogs = [];
+    const u = this.getUserById(uid);
+    const log = { id:'log_'+Date.now(), userId:uid, userName:uname, role:u?.role||'-', action, target, timestamp:new Date().toISOString() };
+    d.activityLogs.push(log);
+    if (d.activityLogs.length > 1000) d.activityLogs = d.activityLogs.slice(-1000);
     this._saveData(d);
-    await this._syncMeta('organization', d.organization);
-    return { success:true };
+    if (window.FirebaseService?.initialized) await FirebaseService.saveDoc('activityLogs', log.id, log);
   },
-  getBranches() { return this._getData().branches; },
+
+  // ============ ORGANIZATION ============
+  getOrganization() { return this._getData().organization || { name:'EduFlow' }; },
+  async updateOrganization(data) {
+    const d = this._getData();
+    d.organization = { ...(d.organization||{}), ...data };
+    this._saveData(d);
+    if (window.FirebaseService?.initialized) await FirebaseService.saveMeta('organization', d.organization);
+  },
+
+  // ============ BRANDING (البراندنج الكامل) ============
+  getBranding() {
+    const local = localStorage.getItem('eduflow_branding');
+    if (local) return JSON.parse(local);
+    return {
+      name: 'EduFlow',
+      tagline: 'منصة إدارة المراكز التعليمية',
+      logo: null,
+      primaryColor: '#6366f1',
+      accentColor: '#8b5cf6',
+      supportPhone: '01000000000',
+      supportEmail: 'support@eduflow.test',
+      whatsappSupport: '01000000000'
+    };
+  },
+  async updateBranding(data) {
+    const current = this.getBranding();
+    const updated = { ...current, ...data, updatedAt: new Date().toISOString() };
+    localStorage.setItem('eduflow_branding', JSON.stringify(updated));
+    // تطبيق الألوان مباشرة
+    this.applyBrandingColors(updated);
+    if (window.FirebaseService?.initialized) await FirebaseService.saveMeta('branding', updated);
+    return updated;
+  },
+  applyBrandingColors(b) {
+    if (b.primaryColor) document.documentElement.style.setProperty('--primary', b.primaryColor);
+    if (b.accentColor) document.documentElement.style.setProperty('--accent', b.accentColor);
+    if (b.primaryColor && b.accentColor) {
+      document.documentElement.style.setProperty('--grad', `linear-gradient(135deg, ${b.primaryColor} 0%, ${b.accentColor} 100%)`);
+    }
+  },
+
+  // ============ BRANCHES ============
+  getBranches() { return this._getData().branches || []; },
+  async addBranch(data) {
+    const d = this._getData(); if (!d.branches) d.branches = [];
+    const id = 'br_' + Date.now();
+    const b = { id, isActive:true, ...data, createdAt: new Date().toISOString() };
+    d.branches.push(b); this._saveData(d);
+    if (window.FirebaseService?.initialized) await FirebaseService.saveDoc('branches', id, b);
+    return b;
+  },
+  async deleteBranch(id) {
+    const d = this._getData();
+    d.branches = (d.branches||[]).filter(b => b.id !== id);
+    this._saveData(d);
+    if (window.FirebaseService?.initialized) await FirebaseService.deleteDoc('branches', id);
+  },
+
+  // ============ FEATURES ============
   getFeatureFlags() {
     const s = localStorage.getItem('eduflow_features');
     return s ? JSON.parse(s) : EduFlowConfig.featureFlags;
   },
   async updateFeatureFlag(k, up) {
     const f = this.getFeatureFlags();
-    if (!f[k]) return { success:false };
+    if (!f[k]) return;
     Object.assign(f[k], up);
     localStorage.setItem('eduflow_features', JSON.stringify(f));
-    await this._syncMeta('features', f);
-    return { success:true };
+    if (window.FirebaseService?.initialized) await FirebaseService.saveMeta('features', f);
   },
 
-  // ===== Analytics =====
-  getStudentsNeedingAttention() {
+  // ============ TEACHER REGISTER LINKS (روابط تسجيل مؤقتة) ============
+  generateTeacherRegisterLink(durationHours = null) {
     const d = this._getData();
-    return d.users.filter(u => u.role === 'student').map(s => {
-      const att = d.attendance.filter(a => a.status === 'approved' && a.records.some(r => r.studentId === s.id));
-      const abs = att.filter(a => a.records.some(r => r.studentId === s.id && r.status === 'absent')).length;
-      const hws = d.homework.filter(h => h.groupId === s.groupId);
-      const subs = d.submissions.filter(x => x.studentId === s.id);
-      const missed = hws.length - subs.length;
-      let status = 'stable';
-      const issues = [];
-      if (abs >= 3) { status = 'high_attention'; issues.push(`غياب متكرر (${abs})`); }
-      else if (abs >= 2) { status = 'needs_attention'; issues.push(`غياب (${abs})`); }
-      if (missed >= 3) { status = status === 'stable' ? 'needs_attention' : status; issues.push(`واجبات غير مسلّمة (${missed})`); }
-      return { student:s, status, issues };
-    }).filter(x => x.status !== 'stable');
+    if (!d.teacherRegisterLinks) d.teacherRegisterLinks = [];
+    const dur = durationHours || EduFlowConfig.settings.teacherRegisterLinkDuration;
+    const linkCode = 'REG-' + Math.random().toString(36).slice(2,8).toUpperCase();
+    const link = {
+      code: linkCode,
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + dur*60*60*1000).toISOString(),
+      durationHours: dur,
+      active: true,
+      usedBy: null
+    };
+    d.teacherRegisterLinks.push(link);
+    this._saveData(d);
+    if (window.FirebaseService?.initialized) FirebaseService.saveDoc('teacherRegisterLinks', linkCode, link);
+    return link;
+  },
+  validateTeacherRegisterLink(code) {
+    const d = this._getData();
+    const link = (d.teacherRegisterLinks||[]).find(l => l.code === code && l.active);
+    if (!link) return { valid: false, message: 'الرابط غير موجود' };
+    if (new Date(link.expiresAt) < new Date()) return { valid: false, message: 'الرابط منتهي الصلاحية' };
+    if (link.usedBy) return { valid: false, message: 'تم استخدام الرابط بالفعل' };
+    return { valid: true, link };
+  },
+  async markTeacherRegisterLinkUsed(code, teacherId) {
+    const d = this._getData();
+    const link = (d.teacherRegisterLinks||[]).find(l => l.code === code);
+    if (link) { link.usedBy = teacherId; link.usedAt = new Date().toISOString(); }
+    this._saveData(d);
+    if (window.FirebaseService?.initialized) await FirebaseService.saveDoc('teacherRegisterLinks', code, link);
+  },
+  deactivateTeacherRegisterLink(code) {
+    const d = this._getData();
+    const link = (d.teacherRegisterLinks||[]).find(l => l.code === code);
+    if (link) { link.active = false; }
+    this._saveData(d);
+    if (window.FirebaseService?.initialized) FirebaseService.saveDoc('teacherRegisterLinks', code, link);
+  },
+  getTeacherRegisterLinks() {
+    return this._getData().teacherRegisterLinks || [];
+  },
+
+  // ============ BILLING (التحصيل) ============
+  calculateBilling(groupId, month) {
+    const g = this.getGroups().find(x => x.id === groupId);
+    if (!g) return null;
+    const d = this._getData();
+    // عدد الحصص الملغاة في الشهر ده
+    const cancelled = (d.cancelledSessions||[]).filter(c =>
+      c.groupId === groupId && c.date && c.date.startsWith(month)
+    ).length;
+    // عدد الحصص الفعلية
+    const actual = Math.max(0, (g.sessionsPerMonth || 4) - cancelled);
+    const total = actual * (g.sessionFee || 0);
+    return {
+      groupId, month,
+      sessionsPerMonth: g.sessionsPerMonth || 4,
+      cancelledSessions: cancelled,
+      actualSessions: actual,
+      sessionFee: g.sessionFee || 0,
+      total,
+      monthlyFee: g.monthlyFee || 0
+    };
+  },
+
+  // ============ MATERIALS ============
+  getMaterials() { return this._getData().materials || []; },
+  getMaterialById(id) { return this.getMaterials().find(m => m.id === id); },
+  async addMaterial(data) {
+    const d = this._getData(); if (!d.materials) d.materials = [];
+    const id = 'mat_' + Date.now();
+    const m = { id, createdAt: new Date().toISOString(), availability:'available', ...data };
+    d.materials.push(m); this._saveData(d);
+    if (window.FirebaseService?.initialized) await FirebaseService.saveDoc('materials', id, m);
+    return m;
+  },
+  async deleteMaterial(id) {
+    const d = this._getData();
+    d.materials = (d.materials||[]).filter(m => m.id !== id);
+    this._saveData(d);
+    if (window.FirebaseService?.initialized) await FirebaseService.deleteDoc('materials', id);
+  },
+
+  // ============ ANNOUNCEMENTS ============
+  getAnnouncements(filter={}) {
+    let r = this._getData().announcements || [];
+    if (filter.groupId) r = r.filter(a => !a.groupId || a.groupId === filter.groupId);
+    return r.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  },
+  getHesetak(){
+    const b=this.getBranding();
+    return b.hesetak || EduFlowConfig.hesetak;
+  },
+  async updateHesetak(data){
+    const b=this.getBranding();
+    b.hesetak={...(b.hesetak||{}),...data};
+    localStorage.setItem('eduflow_branding',JSON.stringify(b));
+    if(window.FirebaseService?.initialized) await FirebaseService.saveMeta('branding',b);
+    return b.hesetak;
+  },
+  // ============ PARENT DATA ============
+  getStudentDataForParent(parentId) {
+    const d = this._getData();
+    const students = (d.users||[]).filter(u => u.role==='student' && u.parentPhone && parentId?.includes?.('parent'));
+    // لو عنده studentIds، استخدمهم
+    const parent = (d.users||[]).find(u => u.id === parentId);
+    const ids = parent?.studentIds || students.map(s => s.studentId);
+    return students.filter(s => ids.includes(s.studentId)).map(s => {
+      const g = (d.groups||[]).find(x => x.id === s.groupId);
+      const t = (d.users||[]).find(u => u.id === g?.teacherId);
+      return {
+        ...s,
+        group: g,
+        teacher: t,
+        attendance: (d.attendance||[]).filter(a => a.groupId === s.groupId),
+        homework: (d.homework||[]).filter(h => h.groupId === s.groupId),
+        submissions: (d.submissions||[]).filter(x => x.studentId === s.id),
+        examAttempts: (d.examAttempts||[]).filter(a => a.studentId === s.id),
+        payments: (d.payments||[]).filter(p => p.studentId === s.id)
+      };
+    });
   }
 };
 

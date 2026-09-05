@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>بطاقة الطالب - EduFlow</title>
+  <link rel="stylesheet" href="css/eduflow-theme.css">
+  <style>
+    .card-container{max-width:400px;margin:40px auto;padding:20px}
+    .student-card{background:var(--surface);border:2px solid var(--primary-border);border-radius:16px;padding:24px;text-align:center;box-shadow:var(--shadow-lg)}
+    .card-logo{width:60px;height:60px;border-radius:12px;background:var(--grad);display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px;margin:0 auto 16px}
+    .student-name{font-size:22px;font-weight:800;margin-bottom:4px}
+    .student-code{font-family:var(--font-en);font-size:28px;font-weight:800;letter-spacing:4px;color:var(--primary);margin:12px 0}
+    .student-info{font-size:13px;color:var(--text-muted);margin-bottom:16px}
+    .qr-container{background:#fff;padding:16px;border-radius:12px;display:inline-block;margin:16px 0}
+    .card-footer{font-size:11px;color:var(--text-muted);margin-top:16px;border-top:1px solid var(--border);padding-top:12px}
+    .print-btn{position:fixed;top:20px;left:20px;z-index:100}
+    @media print{
+      .print-btn,.no-print{display:none!important}
+      .card-container{margin:0 auto;padding:0}
+      body{background:#fff}
+      .student-card{box-shadow:none;border:2px solid #000}
+    }
+  </style>
+</head>
+<body data-theme="light">
+  <button class="btn btn-primary print-btn no-print" onclick="window.print()">🖨️ طباعة البطاقة</button>
+  <button class="btn btn-ghost print-btn no-print" style="top:70px;left:20px;" onclick="window.close()">✕ إغلاق</button>
+
+  <div class="card-container">
+    <div class="student-card" id="studentCard">
+      <div class="card-logo" data-logo>🎓</div>
+      <div class="student-name" id="studentName">-</div>
+      <div class="student-code" id="studentCode">-</div>
+      <div class="student-info" id="studentInfo">-</div>
+      <div class="qr-container">
+        <img id="qrImage" src="" alt="QR" style="width:180px;height:180px;">
+      </div>
+      <div class="card-footer">
+        امسح الباركود للدخول المباشر لداشبورد الطالب
+        <br>البطاقة صالحة طوال فترة الاشتراك
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/firebase-service.js"></script>
+  <script src="js/data-service.js"></script>
+  <script src="js/theme-manager.js"></script>
+
+  <script>
+    (async function(){
+      await DataService.init();
+      const params=new URLSearchParams(location.search);
+      const code=params.get('code')||params.get('student');
+      if(!code){
+        document.getElementById('studentCard').innerHTML='<p style="color:red;text-align:center;padding:40px;">لم يتم تحديد طالب</p>';
+        return;
+      }
+      const student=DataService.findStudentByCode(code);
+      if(!student){
+        document.getElementById('studentCard').innerHTML='<p style="color:red;text-align:center;padding:40px;">الطالب غير موجود</p>';
+        return;
+      }
+      document.getElementById('studentName').textContent=student.name;
+      document.getElementById('studentCode').textContent=student.code;
+      const g=DataService.getGroups().find(x=>x.id===student.groupId);
+      const teacher=g?DataService.getUserById(g.teacherId):null;
+      document.getElementById('studentInfo').innerHTML=`${student.stage||''} ${student.grade||''} · 👥 ${g?.name||'-'}<br>👨‍ ${teacher?.name||'-'}`;
+      
+      // الباركود الذكي
+      const qrData='EDUFLOW-STU:'+student.code;
+      document.getElementById('qrImage').src='https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='+encodeURIComponent(qrData);
+      
+      ThemeManager.applyBranding();
+    })();
+  </script>
+</body>
+</html>
