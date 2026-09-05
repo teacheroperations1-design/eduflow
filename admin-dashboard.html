@@ -36,7 +36,9 @@
     .hw-card:hover{border-color:var(--primary-border)}
     .progress-bar{height:6px;background:var(--surface-hover);border-radius:9999px;overflow:hidden;margin-top:6px}
     .progress-fill{height:100%;background:var(--primary);border-radius:9999px;transition:width var(--t)}
-    @media(max-width:640px){.detail-grid{grid-template-columns:1fr}.stat-mini{grid-template-columns:1fr 1fr}}
+    .stage-grade-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .filter-info{background:var(--info-bg);border:1px solid var(--info-border);border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:12px;color:var(--info)}
+    @media(max-width:640px){.detail-grid{grid-template-columns:1fr}.stat-mini{grid-template-columns:1fr 1fr}.stage-grade-row{grid-template-columns:1fr}}
   </style>
 </head>
 <body data-theme="dark">
@@ -62,10 +64,26 @@
           <div class="card"><div class="card-header"><h3 class="card-title">📜 آخر النشاط</h3></div><div id="recentLogs"></div></div>
         </section>
 
+        <section class="section" id="section-pending">
+          <div class="section-header">
+            <div><h2 class="section-title">⏳ طلبات التسجيل</h2><p class="text-sm text-muted">طلبات الطلاب في انتظار الموافقة</p></div>
+            <button class="btn btn-ghost btn-sm" onclick="loadPending()">🔄 تحديث</button>
+          </div>
+          <div class="stats-grid" id="pendingStats"></div>
+          <div class="card">
+            <div class="filter-bar">
+              <button class="filter-btn active" onclick="setPendingFilter('pending',this)">⏳ بانتظار</button>
+              <button class="filter-btn" onclick="setPendingFilter('approved',this)">✅ الموافق عليها</button>
+              <button class="filter-btn" onclick="setPendingFilter('rejected',this)">❌ المرفوضة</button>
+            </div>
+            <div id="pendingList"></div>
+          </div>
+        </section>
+
         <section class="section" id="section-students">
           <div class="section-header"><div><h2 class="section-title">🎓 الطلاب</h2></div><button class="btn btn-primary" onclick="openStudentModal()">+ طالب</button></div>
           <div class="card"><div class="search-bar" style="margin-bottom:12px;"><input type="text" id="stuSearch" class="form-input" placeholder="بحث بالاسم أو الكود..." onkeyup="loadStudents()"></div>
-          <div class="table-container"><table class="table"><thead><tr><th>الكود</th><th>الاسم</th><th>المرحلة</th><th>الهاتف</th><th>إجراءات</th></tr></thead><tbody id="studentsTable"></tbody></table></div></div>
+          <div class="table-container"><table class="table"><thead><tr><th>الكود</th><th>الاسم</th><th>المرحلة</th><th>الصف</th><th>الهاتف</th><th>إجراءات</th></tr></thead><tbody id="studentsTable"></tbody></table></div></div>
         <button class="btn btn-primary" onclick="window.open('qr-scan.html','_blank')">📱 مسح باركود</button>
 <button class="btn btn-primary" onclick="window.open('print-qr.html','_blank')">🖨️ طباعة باركودات</button>
         </section>
@@ -241,15 +259,15 @@
     })();
 
     function buildMenu(){
-      const menu=[{s:'نظرة عامة',items:[{id:'overview',l:'الرئيسية',i:'🏠'}]},{s:'الأشخاص',items:[{id:'students',l:'الطلاب',i:'🎓'},{id:'teachers',l:'المدرسون',i:'👨‍🏫'},{id:'teacherLinks',l:'روابط التسجيل',i:'🔗'},{id:'assistants',l:'المساعدون',i:'🧑‍'}]},{s:'الأكاديمي',items:[{id:'groups',l:'المجموعات',i:'👥'},{id:'attendance',l:'الحضور',i:'📋'},{id:'homework',l:'الواجبات',i:'📝'},{id:'exams',l:'الامتحانات',i:'🎓'},{id:'vocabulary',l:'المفردات',i:'📚'}]},{s:'المالية',items:[{id:'accounting',l:'المحاسبة',i:'🧮'},{id:'payments',l:'المدفوعات',i:'💰'},{id:'materials',l:'المواد',i:'📦'}]},{s:'العمليات',items:[{id:'tasks',l:'المهام',i:'✅'},{id:'followups',l:'المتابعات',i:'📌'},{id:'calendar',l:'التقويم',i:'📅'}]},{s:'التواصل',items:[{id:'notifications',l:'الإشعارات',i:'🔔'},{id:'templates',l:'القوالب',i:'📄'},{id:'whatsapp',l:'واتساب',i:'💬'}]},{s:'تحليلات',items:[{id:'reports',l:'التقارير',i:'📊'},{id:'achievements',l:'الشهادات',i:'🏆'}]},{s:'إدارة',items:[{id:'branches',l:'الفروع',i:'🏫'},{id:'viewas',l:'View As',i:'👁️'},{id:'settings',l:'الإعدادات',i:'⚙️'},{id:'backup',l:'نسخ',i:'💾'},{id:'logs',l:'السجل',i:'📜'}]}];
-      document.getElementById('sidebarNav').innerHTML=menu.map(sec=>`<div class="sidebar-section"><div class="sidebar-section-title">${sec.s}</div>${sec.items.map(it=>`<div class="sidebar-item" data-section="${it.id}" onclick="showSection('${it.id}')"><span class="sidebar-item-icon">${it.i}</span><span class="sidebar-item-label">${it.l}</span></div>`).join('')}</div>`).join('');
+      const menu=[{s:'نظرة عامة',items:[{id:'overview',l:'الرئيسية',i:'🏠'}]},{s:'الأشخاص',items:[{id:'students',l:'الطلاب',i:'🎓'},{id:'pending',l:'طلبات التسجيل',i:'⏳',badge:'<span id="pendingBadge" class="sidebar-item-badge" style="display:none;">0</span>'},{id:'teachers',l:'المدرسون',i:'👨‍🏫'},{id:'teacherLinks',l:'روابط التسجيل',i:'🔗'},{id:'assistants',l:'المساعدون',i:'🧑‍'}]},{s:'الأكاديمي',items:[{id:'groups',l:'المجموعات',i:'👥'},{id:'attendance',l:'الحضور',i:'📋'},{id:'homework',l:'الواجبات',i:'📝'},{id:'exams',l:'الامتحانات',i:'🎓'},{id:'vocabulary',l:'المفردات',i:'📚'}]},{s:'المالية',items:[{id:'accounting',l:'المحاسبة',i:'🧮'},{id:'payments',l:'المدفوعات',i:'💰'},{id:'materials',l:'المواد',i:'📦'}]},{s:'العمليات',items:[{id:'tasks',l:'المهام',i:'✅'},{id:'followups',l:'المتابعات',i:'📌'},{id:'calendar',l:'التقويم',i:'📅'}]},{s:'التواصل',items:[{id:'notifications',l:'الإشعارات',i:'🔔'},{id:'templates',l:'القوالب',i:'📄'},{id:'whatsapp',l:'واتساب',i:'💬'}]},{s:'تحليلات',items:[{id:'reports',l:'التقارير',i:'📊'},{id:'achievements',l:'الشهادات',i:'🏆'}]},{s:'إدارة',items:[{id:'branches',l:'الفروع',i:'🏫'},{id:'viewas',l:'View As',i:'👁️'},{id:'settings',l:'الإعدادات',i:'⚙️'},{id:'backup',l:'نسخ',i:'💾'},{id:'logs',l:'السجل',i:'📜'}]}];
+      document.getElementById('sidebarNav').innerHTML=menu.map(sec=>`<div class="sidebar-section"><div class="sidebar-section-title">${sec.s}</div>${sec.items.map(it=>`<div class="sidebar-item" data-section="${it.id}" onclick="showSection('${it.id}')"><span class="sidebar-item-icon">${it.i}</span><span class="sidebar-item-label">${it.l}</span>${it.badge||''}</div>`).join('')}</div>`).join('');
     }
 
     window.showSection=function(id){
       document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
       document.getElementById('section-'+id)?.classList.add('active');
       document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.toggle('active',i.dataset.section===id));
-      const L={overview:loadOverview,students:loadStudents,teachers:loadTeachers,teacherLinks:loadTeacherLinks,assistants:loadAssistants,groups:loadGroups,attendance:loadAttendance,accounting:loadAccounting,homework:loadHomework,exams:loadExams,vocabulary:loadVocabulary,tasks:loadTasks,followups:loadFollowups,calendar:loadCalendar,materials:loadMaterials,payments:loadPayments,notifications:loadNotifications,templates:loadTemplates,whatsapp:loadWA,reports:()=>renderReport(currentReport),achievements:loadCerts,branches:loadBranches,viewas:loadViewAs,settings:loadSettings,backup:()=>{},logs:loadLogs};
+      const L={overview:loadOverview,students:loadStudents,pending:loadPending,teachers:loadTeachers,teacherLinks:loadTeacherLinks,assistants:loadAssistants,groups:loadGroups,attendance:loadAttendance,accounting:loadAccounting,homework:loadHomework,exams:loadExams,vocabulary:loadVocabulary,tasks:loadTasks,followups:loadFollowups,calendar:loadCalendar,materials:loadMaterials,payments:loadPayments,notifications:loadNotifications,templates:loadTemplates,whatsapp:loadWA,reports:()=>renderReport(currentReport),achievements:loadCerts,branches:loadBranches,viewas:loadViewAs,settings:loadSettings,backup:()=>{},logs:loadLogs};
       if(L[id])L[id]();
       if(window.innerWidth<=1024){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('show');}
     };
@@ -278,7 +296,10 @@
     window.loadStudents=function(){
       const q=(document.getElementById('stuSearch')?.value||'').toLowerCase();
       let list=DataService.getStudents();if(q)list=list.filter(s=>(s.name||'').toLowerCase().includes(q)||(s.code||'').toLowerCase().includes(q)||(s.phone||'').toLowerCase().includes(q));
-      document.getElementById('studentsTable').innerHTML=list.map(s=>`<tr><td><strong style="color:var(--primary)">${s.code||'—'}</strong></td><td>${s.name}</td><td>${s.grade||'-'}</td><td>${s.phone||'-'}</td><td><button class="btn btn-primary btn-sm" onclick="openStudentProfile('${s.id}')">👁️ الملف الكامل</button><button class="btn btn-ghost btn-sm" onclick="openStudentModal('${s.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="delUser('${s.id}')">🗑️</button></td></tr>`).join('')||'<tr><td colspan="5" class="text-center text-muted">لا طلاب</td></tr>';
+      document.getElementById('studentsTable').innerHTML=list.map(s=>{
+        const stageLabel=EduFlowConfig.educationLevels[s.stage]?.nameAr||'-';
+        return `<tr><td><strong style="color:var(--primary)">${s.code||'—'}</strong></td><td>${s.name}</td><td>${stageLabel}</td><td>${s.grade||'-'}</td><td>${s.phone||'-'}</td><td><button class="btn btn-primary btn-sm" onclick="openStudentProfile('${s.id}')">👁️ الملف الكامل</button><button class="btn btn-ghost btn-sm" onclick="openStudentModal('${s.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="delUser('${s.id}')">🗑️</button></td></tr>`;
+      }).join('')||'<tr><td colspan="6" class="text-center text-muted">لا طلاب</td></tr>';
     };
 
     window.openStudentProfile=function(id){
@@ -325,7 +346,7 @@
           <div class="detail-grid">
             <div class="detail-box"><div class="lbl">الاسم الكامل</div><div class="val">${s.name}</div></div>
             <div class="detail-box"><div class="lbl">الكود</div><div class="val">${s.code||'-'}</div></div>
-            <div class="detail-box"><div class="lbl">المرحلة</div><div class="val">${s.stage||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">المرحلة</div><div class="val">${EduFlowConfig.educationLevels[s.stage]?.nameAr||'-'}</div></div>
             <div class="detail-box"><div class="lbl">الصف</div><div class="val">${s.grade||'-'}</div></div>
             <div class="detail-box"><div class="lbl">الهاتف</div><div class="val">${s.phone||'-'}</div></div>
             <div class="detail-box"><div class="lbl">ولي الأمر</div><div class="val">${s.parentPhone||'-'}</div></div>
@@ -361,13 +382,66 @@
       document.getElementById('tab-'+id).classList.add('active');
     };
 
+    // ===== موديل الطالب — مع فلترة المجموعات حسب (المرحلة + الصف + الأستاذ) =====
     window.openStudentModal=function(editId){
       const s=editId?DataService.getUserById(editId):null;
-      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${s?'✏️ تعديل':'🎓'} طالب</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveStudent(event,'${editId||''}')"><div class="form-group"><label>الاسم</label><input type="text" id="sName" class="form-input" value="${s?.name||''}" required></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>الهاتف</label><input type="tel" id="sPhone" class="form-input" value="${s?.phone||''}" required></div><div class="form-group"><label>ولي الأمر</label><input type="tel" id="sParent" class="form-input" value="${s?.parentPhone||''}"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المرحلة</label><select id="sLevel" class="form-select" onchange="updGrades()">${Object.entries(EduFlowConfig.educationLevels).map(([k,v])=>`<option value="${k}" ${s?.stage===k?'selected':''}>${v.nameAr}</option>`).join('')}</select></div><div class="form-group"><label>الصف</label><select id="sGrade" class="form-select"></select></div></div><div class="form-group"><label>الأستاذ</label><select id="sTeacher" class="form-select" onchange="updGroups()"><option value="">--</option>${DataService.getTeachers().map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}</select></div><div class="form-group"><label>المجموعات</label><div id="sGroups"></div></div><div class="form-group"><label>كلمة المرور</label><input type="text" id="sPass" class="form-input" value="${s?.password||'12345678'}"></div><button class="btn btn-primary w-full">💾 حفظ</button></form></div>`);
-      updGrades(s?.grade);
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${s?'✏️ تعديل':'🎓'} طالب</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveStudent(event,'${editId||''}')"><div class="form-group"><label>الاسم</label><input type="text" id="sName" class="form-input" value="${s?.name||''}" required></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>الهاتف</label><input type="tel" id="sPhone" class="form-input" value="${s?.phone||''}" required></div><div class="form-group"><label>ولي الأمر</label><input type="tel" id="sParent" class="form-input" value="${s?.parentPhone||''}"></div></div>
+        <div class="stage-grade-row">
+          <div class="form-group"><label>المرحلة</label><select id="sLevel" class="form-select" onchange="updStudentGrades();updStudentGroups();">${Object.entries(EduFlowConfig.educationLevels).map(([k,v])=>`<option value="${k}" ${s?.stage===k?'selected':''}>${v.nameAr}</option>`).join('')}</select></div>
+          <div class="form-group"><label>الصف الدراسي</label><select id="sGrade" class="form-select" onchange="updStudentGroups();"></select></div>
+        </div>
+        <div class="form-group"><label>الأستاذ</label><select id="sTeacher" class="form-select" onchange="updStudentGroups();"><option value="">-- اختر أستاذ --</option>${DataService.getTeachers().map(t=>`<option value="${t.id}">${t.name} (${t.subject||'-'})</option>`).join('')}</select></div>
+        <div class="filter-info">🎯 المجموعات اللي هتظهر هي المطابقة للمرحلة + الصف + الأستاذ</div>
+        <div class="form-group"><label>المجموعات</label><div id="sGroups"></div></div>
+        <div class="form-group"><label>كلمة المرور</label><input type="text" id="sPass" class="form-input" value="${s?.password||'12345678'}"></div>
+        <button class="btn btn-primary w-full">💾 حفظ</button></form></div>`);
+      updStudentGrades(s?.grade);
+      updStudentGroups();
     };
-    window.updGrades=function(sel){document.getElementById('sGrade').innerHTML=EduFlowConfig.educationLevels[document.getElementById('sLevel').value].grades.map(g=>`<option ${sel===g?'selected':''}>${g}</option>`).join('');};
-    window.updGroups=function(){const tid=document.getElementById('sTeacher').value;document.getElementById('sGroups').innerHTML=tid?DataService.getGroupsByTeacher(tid).map(g=>`<label style="display:flex;gap:8px;align-items:center;margin-bottom:6px;"><input type="checkbox" class="s-grp" value="${g.id}"> ${g.name}</label>`).join('')||'<p class="text-muted">لا مجموعات</p>':'<p class="text-muted">اختر أستاذ</p>';};
+
+    window.updStudentGrades=function(sel){
+      const lvl=document.getElementById('sLevel').value;
+      const grades=EduFlowConfig.educationLevels[lvl]?.grades||[];
+      document.getElementById('sGrade').innerHTML=grades.map(g=>`<option ${sel===g?'selected':''}>${g}</option>`).join('');
+    };
+
+    // ✅ الفلترة الذكية: المجموعات بتظهر بس اللي بتطابق (المرحلة + الصف + الأستاذ)
+    window.updStudentGroups=function(){
+      const tid=document.getElementById('sTeacher').value;
+      const stage=document.getElementById('sLevel').value;
+      const grade=document.getElementById('sGrade').value;
+      const container=document.getElementById('sGroups');
+
+      if(!tid){
+        container.innerHTML='<p class="text-muted">اختر أستاذ الأول</p>';
+        return;
+      }
+
+      // فلتر: نفس الأستاذ + نفس المرحلة + نفس الصف
+      let groups=DataService.getGroupsByTeacher(tid);
+      groups=groups.filter(g=>{
+        const matchStage=!stage||!g.stage||g.stage===stage;
+        const matchGrade=!grade||!g.grade||g.grade===grade;
+        return matchStage && matchGrade;
+      });
+
+      if(!groups.length){
+        container.innerHTML=`<div class="filter-info" style="background:var(--warning-bg);border-color:var(--warning);color:var(--warning);">⚠️ لا توجد مجموعات مطابقة للأستاذ <strong>${DataService.getUserById(tid)?.name}</strong> في المرحلة <strong>${EduFlowConfig.educationLevels[stage]?.nameAr}</strong> - الصف <strong>${grade}</strong><br><span class="text-xs">تقدر تغير الأستاذ/المرحلة/الصف أو تضيف مجموعة جديدة</span></div>`;
+        return;
+      }
+
+      container.innerHTML=groups.map(g=>{
+        const count=DataService.getStudentsByGroup(g.id).length;
+        return `<label style="display:flex;gap:8px;align-items:center;margin-bottom:6px;padding:8px;background:var(--surface-hover);border-radius:6px;cursor:pointer;border:1px solid var(--border);">
+          <input type="checkbox" class="s-grp" value="${g.id}">
+          <span style="flex:1;"><strong>${g.name}</strong> <span class="text-xs text-muted">· ${dayAr(g.day)} ${T(g.time)} · 👥 ${count}</span></span>
+        </label>`;
+      }).join('');
+    };
+
+    window.updGrades=function(sel){updStudentGrades(sel);};
+    window.updGroups=function(){updStudentGroups();};
+
     window.saveStudent=async function(e,editId){
       e.preventDefault();
       const data={name:document.getElementById('sName').value,phone:document.getElementById('sPhone').value,parentPhone:document.getElementById('sParent').value,stage:document.getElementById('sLevel').value,grade:document.getElementById('sGrade').value,password:document.getElementById('sPass').value};
@@ -417,17 +491,26 @@
           <div class="detail-box"><div class="lbl">المحصل له</div><div class="val">${collected} ج.م</div></div>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin:16px 0 8px;"><h4 class="text-sm" style="margin:0;">المجموعات (${gs.length}):</h4><button class="btn btn-primary btn-sm" onclick="ThemeManager.closeModal();openGroupModal(null,'${id}')">+ إضافة مجموعة</button></div>
-        ${gs.map(g=>`<div style="padding:10px;background:var(--surface-hover);border-radius:8px;margin-bottom:6px;"><div style="display:flex;justify-content:space-between;align-items:center;"><div><strong>${g.name}</strong><div class="text-xs text-muted">${dayAr(g.day)} ${T(g.time)} · مدة ${g.duration||120}د · 💰 ${g.monthlyFee||0}/شهر · 👥 ${DataService.getStudentsByGroup(g.id).length}</div></div><button class="btn btn-ghost btn-sm" onclick="ThemeManager.closeModal();openGroupModal('${g.id}')">✏️</button></div></div>`).join('')||'<p class="text-muted">لا مجموعات</p>'}
+        ${gs.map(g=>{const stageLabel=EduFlowConfig.educationLevels[g.stage]?.nameAr||'';const gradeLabel=g.grade||'';return `<div style="padding:10px;background:var(--surface-hover);border-radius:8px;margin-bottom:6px;"><div style="display:flex;justify-content:space-between;align-items:center;"><div><strong>${g.name}</strong>${stageLabel||gradeLabel?` <span class="badge badge-info">${stageLabel}${stageLabel&&gradeLabel?' - ':''}${gradeLabel}</span>`:''}<div class="text-xs text-muted">${dayAr(g.day)} ${T(g.time)} · مدة ${g.duration||120}د · 💰 ${g.monthlyFee||0}/شهر · 👥 ${DataService.getStudentsByGroup(g.id).length}</div></div><button class="btn btn-ghost btn-sm" onclick="ThemeManager.closeModal();openGroupModal('${g.id}')">✏️</button></div></div>`;}).join('')||'<p class="text-muted">لا مجموعات</p>'}
         <h4 class="text-sm" style="margin:14px 0 8px;">الطلاب (${students.length}):</h4>
         ${students.slice(0,10).map(s=>`<div style="padding:8px;background:var(--surface-hover);border-radius:6px;margin-bottom:4px;display:flex;justify-content:space-between;"><span>${s.name}</span><span class="text-xs text-muted">${s.code||''}</span></div>`).join('')||'<p class="text-muted">لا طلاب</p>'}
       </div>`,'modal-lg');
     };
 
+    // ===== موديل المجموعة — مع إضافة المرحلة والصف الدراسي =====
     window.openGroupModal=function(editId,preTeacher){
       const g=editId?DataService.getGroups().find(x=>x.id===editId):null;
+      const stageOptions=Object.entries(EduFlowConfig.educationLevels).map(([k,v])=>`<option value="${k}" ${g?.stage===k?'selected':''}>${v.nameAr}</option>`).join('');
+      const initialGrades=EduFlowConfig.educationLevels[g?.stage||'Primary']?.grades||[];
+      const gradeOptions=initialGrades.map(gr=>`<option ${g?.grade===gr?'selected':''}>${gr}</option>`).join('');
       ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${g?'✏️ تعديل':'👥 إضافة'} مجموعة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveGroup(event,'${editId||''}')">
         <div class="form-group"><label>الاسم</label><input type="text" id="gName" class="form-input" value="${g?.name||''}" required></div>
         <div class="form-group"><label>المدرس</label><select id="gTeacher" class="form-select">${DataService.getTeachers().map(t=>`<option value="${t.id}" ${g?.teacherId===t.id||preTeacher===t.id?'selected':''}>${t.name}</option>`).join('')}</select></div>
+        <div class="stage-grade-row">
+          <div class="form-group"><label>المرحلة (المرحلة الدراسية)</label><select id="gStage" class="form-select" onchange="updGroupGrades();"><option value="">-- اختر المرحلة --</option>${stageOptions}</select></div>
+          <div class="form-group"><label>الصف الدراسي (السنة)</label><select id="gGrade" class="form-select">${gradeOptions}</select></div>
+        </div>
+        <div class="filter-info">🎯 المرحلة والصف هيساعدوا في فلترة الطلاب المناسبين للمجموعة عند التسجيل</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
           <div class="form-group"><label>اليوم</label><select id="gDay" class="form-select">${DAYS.map(d=>`<option value="${d.en}" ${g?.day===d.en?'selected':''}>${d.ar}</option>`).join('')}</select></div>
           ${UI.timeSelect('gTime', g?.time, 'الوقت')}
@@ -444,13 +527,56 @@
         <button class="btn btn-primary w-full">💾 حفظ</button></form></div>`);
       calcSessionPrice();
     };
+
+    // تحديث قائمة الصفوف عند تغيير المرحلة في موديل المجموعة
+    window.updGroupGrades=function(){
+      const stage=document.getElementById('gStage').value;
+      const grades=EduFlowConfig.educationLevels[stage]?.grades||[];
+      document.getElementById('gGrade').innerHTML=grades.map(g=>`<option>${g}</option>`).join('');
+    };
+
     window.calcSessionPrice=function(){const m=parseInt(document.getElementById('gMonthly').value)||0;const s=parseInt(document.getElementById('gSessions').value)||1;const el=document.getElementById('autoSessionPrice');if(el)el.textContent=Math.round(m/s);};
-    window.saveGroup=async function(e,editId){e.preventDefault();const monthly=parseInt(document.getElementById('gMonthly').value)||0;const sessions=parseInt(document.getElementById('gSessions').value)||4;const data={name:document.getElementById('gName').value,teacherId:document.getElementById('gTeacher').value,day:document.getElementById('gDay').value,time:document.getElementById('gTime').value,duration:parseInt(document.getElementById('gDuration').value)||120,monthlyFee:monthly,sessionsPerMonth:sessions,sessionFee:Math.round(monthly/sessions),teacherSharePerStudent:parseInt(document.getElementById('gShare').value)||0,location:document.getElementById('gLoc').value,notes:document.getElementById('gNotes').value,subject:DataService.getUserById(document.getElementById('gTeacher').value)?.subject||''};if(editId)await DataService.updateGroup(editId,data);else await DataService.addGroup(data);ThemeManager.closeModal();ThemeManager.toast('تم حفظ المجموعة ✓','success');loadGroups();return false;};
+    window.saveGroup=async function(e,editId){
+      e.preventDefault();
+      const monthly=parseInt(document.getElementById('gMonthly').value)||0;
+      const sessions=parseInt(document.getElementById('gSessions').value)||4;
+      const data={
+        name:document.getElementById('gName').value,
+        teacherId:document.getElementById('gTeacher').value,
+        stage:document.getElementById('gStage').value,
+        grade:document.getElementById('gGrade').value,
+        day:document.getElementById('gDay').value,
+        time:document.getElementById('gTime').value,
+        duration:parseInt(document.getElementById('gDuration').value)||120,
+        monthlyFee:monthly,
+        sessionsPerMonth:sessions,
+        sessionFee:Math.round(monthly/sessions),
+        teacherSharePerStudent:parseInt(document.getElementById('gShare').value)||0,
+        location:document.getElementById('gLoc').value,
+        notes:document.getElementById('gNotes').value,
+        subject:DataService.getUserById(document.getElementById('gTeacher').value)?.subject||''
+      };
+      if(editId)await DataService.updateGroup(editId,data);
+      else await DataService.addGroup(data);
+      ThemeManager.closeModal();ThemeManager.toast('تم حفظ المجموعة ✓','success');loadGroups();return false;
+    };
     window.loadGroups=function(){
       const q=(document.getElementById('gSearchBar')?.value||'').toLowerCase();
       let list=DataService.getGroups();
       if(q)list=list.filter(g=>(g.name||'').toLowerCase().includes(q));
-      document.getElementById('groupsList').innerHTML=list.map(g=>{const t=DataService.getUserById(g.teacherId);return `<div class="user-card"><div class="user-card-header"><div class="user-avatar">👥</div><div><div class="user-name">${g.name}</div><div class="user-meta"><span>👨‍ ${t?.name||'-'}</span></div></div></div><div class="user-meta"><span>📅 ${dayAr(g.day)} ${T(g.time)}</span><span>⏱️ ${g.duration||120}د</span><span>💰 ${g.monthlyFee||0}/شهر</span><span>🎟️ ${g.sessionFee||0}/حصة</span></div><div class="user-actions"><button class="btn btn-secondary btn-sm" onclick="openGroupModal('${g.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="delGroup('${g.id}')">🗑️</button></div></div>`;}).join('')||'<p class="text-muted">لا مجموعات</p>';};
+      document.getElementById('groupsList').innerHTML=list.map(g=>{
+        const t=DataService.getUserById(g.teacherId);
+        const stageLabel=EduFlowConfig.educationLevels[g.stage]?.nameAr||'';
+        const gradeLabel=g.grade||'';
+        return `<div class="user-card"><div class="user-card-header"><div class="user-avatar">👥</div><div><div class="user-name">${g.name}</div><div class="user-meta"><span>👨‍ ${t?.name||'-'}</span></div></div></div>
+          <div class="user-meta" style="margin-bottom:8px;">
+            ${stageLabel?`<span class="badge badge-info">📚 ${stageLabel}</span>`:''}
+            ${gradeLabel?`<span class="badge badge-info">🎓 ${gradeLabel}</span>`:''}
+          </div>
+          <div class="user-meta"><span>📅 ${dayAr(g.day)} ${T(g.time)}</span><span>⏱️ ${g.duration||120}د</span><span>💰 ${g.monthlyFee||0}/شهر</span><span>🎟️ ${g.sessionFee||0}/حصة</span></div>
+          <div class="user-actions"><button class="btn btn-secondary btn-sm" onclick="openGroupModal('${g.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="delGroup('${g.id}')">🗑️</button></div></div>`;
+      }).join('')||'<p class="text-muted">لا مجموعات</p>';
+    };
     window.delGroup=async function(id){if(!confirm('حذف؟'))return;await DataService.deleteGroup(id);loadGroups();};
 
     // ===== Attendance =====
@@ -681,7 +807,7 @@
     window.saveExGrade=async function(id){
       const score=parseInt(document.getElementById('gradeVal').value)||0;
       const d=db();const a=(d.examAttempts||[]).find(x=>x.id===id);
-      if(a){a.score=score;a.status='approved';a.gradedBy=currentUser.id;save(d);if(window.FirebaseService?.initialized)FirebaseService.saveDoc('examAttempts',id,a);}
+      if(a){a.score=score;a.status='approved';a.gradedBy=currentUser.id;save(d);if(window.FirebaseService?.connected)FirebaseService.saveDoc('examAttempts',id,a);}
       ThemeManager.closeModal();ThemeManager.toast('تم ✓','success');loadExams();
     };
 
@@ -771,6 +897,175 @@
     window.deactivateLink=function(c){DataService.deactivateTeacherRegisterLink(c);loadTeacherLinks();};
 
     window.handleLogout=function(){if(confirm('خروج؟'))AuthService.logout();};
+
+    // ===== PENDING REGISTRATIONS =====
+    let pendingFilter='pending';
+    window.setPendingFilter=function(f,btn){
+      pendingFilter=f;
+      document.querySelectorAll('#section-pending .filter-btn').forEach(b=>b.classList.toggle('active',b===btn));
+      loadPending();
+    };
+
+    window.loadPending=function(){
+      const all=DataService.getPendingRegistrations();
+      const pending=all.filter(r=>r.status==='pending');
+      const approved=all.filter(r=>r.status==='approved');
+      const rejected=all.filter(r=>r.status==='rejected');
+
+      const badge=document.getElementById('pendingBadge');
+      if(badge){
+        if(pending.length>0){badge.style.display='inline-block';badge.textContent=pending.length;}
+        else badge.style.display='none';
+      }
+
+      document.getElementById('pendingStats').innerHTML=`
+        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">بانتظار الموافقة</span><span class="stat-card-icon">⏳</span></div><div class="stat-card-value" style="color:var(--warning);">${pending.length}</div></div>
+        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">موافق عليها</span><span class="stat-card-icon">✅</span></div><div class="stat-card-value" style="color:var(--success);">${approved.length}</div></div>
+        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">مرفوضة</span><span class="stat-card-icon">❌</span></div><div class="stat-card-value" style="color:var(--danger);">${rejected.length}</div></div>
+        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">إجمالي الطلبات</span><span class="stat-card-icon">📋</span></div><div class="stat-card-value">${all.length}</div></div>
+      `;
+
+      let list=pending;
+      if(pendingFilter==='approved')list=approved;
+      else if(pendingFilter==='rejected')list=rejected;
+      list=list.slice().reverse();
+
+      document.getElementById('pendingList').innerHTML=list.length?list.map(r=>{
+        const gs=(r.groupIds||[]).map(gid=>DataService.getGroups().find(g=>g.id===gid)).filter(Boolean);
+        const groupNames=gs.map(g=>g.name).join('، ')||'-';
+        const stageLabel=EduFlowConfig.educationLevels[r.stage]?.nameAr||'-';
+        return `<div class="sub-row" style="border-right:4px solid ${r.status==='pending'?'var(--warning)':r.status==='approved'?'var(--success)':'var(--danger)'};">
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">
+              <strong style="font-size:15px;">${r.name}</strong>
+              <span class="badge ${r.status==='pending'?'badge-warning':r.status==='approved'?'badge-success':'badge-danger'}">${r.status==='pending'?'⏳ بانتظار':r.status==='approved'?'✅ موافق':'❌ مرفوض'}</span>
+              <span class="badge badge-muted">${r.tempCode||'-'}</span>
+            </div>
+            <div class="text-xs text-muted" style="line-height:1.7;">
+              📱 ${r.phone||'-'} · 👨‍👩 ${r.parentPhone||'-'}<br>
+              📚 ${stageLabel} - ${r.grade||'-'}<br>
+              👥 <strong>المجموعات:</strong> ${groupNames}<br>
+              📅 تاريخ الطلب: ${new Date(r.createdAt).toLocaleString('ar-EG')}
+              ${r.approvedBy?'<br>✅ وافق عليه: '+DataService.getUserById(r.approvedBy)?.name:''}
+              ${r.rejectedBy?'<br>❌ رفضه: '+DataService.getUserById(r.rejectedBy)?.name+(r.rejectReason?' ('+r.rejectReason+')':''):''}
+              ${r.finalCode?'<br>🎟️ الكود النهائي: <strong style="color:var(--primary);">'+r.finalCode+'</strong>':''}
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            ${r.status==='pending'?`
+              <button class="btn btn-success btn-sm" onclick="approvePending('${r.id}')">✅ موافقة</button>
+              <button class="btn btn-danger btn-sm" onclick="rejectPending('${r.id}')">❌ رفض</button>
+            `:''}
+            <button class="btn btn-ghost btn-sm" onclick="viewPendingDetail('${r.id}')">👁️ تفاصيل</button>
+            <button class="btn btn-ghost btn-sm" onclick="deletePending('${r.id}')">🗑️</button>
+          </div>
+        </div>`;
+      }).join(''):`<div class="empty-state"><div class="empty-state-icon">📭</div><h3 class="empty-state-title">لا توجد طلبات ${pendingFilter==='pending'?'بانتظار':pendingFilter==='approved'?'موافق عليها':'مرفوضة'}</h3></div>`;
+    };
+
+    window.approvePending=async function(id){
+      const r=DataService.getPendingRegistrationById(id);
+      if(!r)return;
+      ThemeManager.confirm(
+        `هل تريد الموافقة على تسجيل <strong>${r.name}</strong>؟<br>سيتم إنشاء حساب رسمي وكود طالب دائم.`,
+        async ()=>{
+          try{
+            const res=await DataService.approvePendingRegistration(id,currentUser.id);
+            if(res.success){
+              ThemeManager.toast(`✅ تم إنشاء حساب ${res.user.name} بالكود ${res.code}`,'success');
+              ThemeManager.openModal(`
+                <div class="modal-header"><h3 class="modal-title">✅ تم الموافقة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+                <div class="modal-body" style="text-align:center;">
+                  <p class="text-sm text-muted">تم إنشاء حساب الطالب بنجاح</p>
+                  <div style="background:var(--grad);border-radius:10px;padding:20px;color:#fff;margin:16px 0;">
+                    <div class="text-xs" style="opacity:.9;">اسم الطالب</div>
+                    <div style="font-size:20px;font-weight:700;margin-bottom:10px;">${res.user.name}</div>
+                    <div class="text-xs" style="opacity:.9;">الكود الرسمي (سلّمه للطالب)</div>
+                    <div style="font-family:var(--font-en);font-size:28px;font-weight:800;letter-spacing:3px;margin-top:6px;">${res.code}</div>
+                  </div>
+                  <p class="text-sm text-muted">أطبع الباركود من "طباعة باركودات" وسلّمه للطالب</p>
+                  <div style="display:flex;gap:8px;margin-top:12px;">
+                    <button class="btn btn-secondary" style="flex:1;" onclick="navigator.clipboard.writeText('${res.code}');ThemeManager.toast('تم النسخ','success');">📋 نسخ الكود</button>
+                    <a class="btn btn-primary" style="flex:1;" href="print-qr.html?search=${res.code}" target="_blank">🖨️ طباعة الباركود</a>
+                  </div>
+                </div>
+              `,'modal-lg');
+              loadPending();
+              loadStudents();
+            }
+          }catch(err){ThemeManager.toast('خطأ: '+err.message,'error');}
+        }
+      );
+    };
+
+    window.rejectPending=async function(id){
+      const r=DataService.getPendingRegistrationById(id);
+      if(!r)return;
+      ThemeManager.openModal(`
+        <div class="modal-header"><h3 class="modal-title">❌ رفض الطلب</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+        <div class="modal-body">
+          <p class="text-sm text-muted" style="margin-bottom:12px;">رفض طلب <strong>${r.name}</strong></p>
+          <div class="form-group"><label>السبب (اختياري)</label><textarea id="rejectReason" class="form-textarea" rows="2" placeholder="مثال: البيانات غير مكتملة"></textarea></div>
+          <button class="btn btn-danger w-full" onclick="doReject('${id}')">❌ تأكيد الرفض</button>
+        </div>
+      `);
+    };
+    window.doReject=async function(id){
+      const reason=document.getElementById('rejectReason').value.trim();
+      await DataService.rejectPendingRegistration(id,reason,currentUser.id);
+      ThemeManager.closeModal();
+      ThemeManager.toast('تم رفض الطلب','warning');
+      loadPending();
+    };
+
+    window.viewPendingDetail=function(id){
+      const r=DataService.getPendingRegistrationById(id);
+      if(!r)return;
+      const gs=(r.groupIds||[]).map(gid=>DataService.getGroups().find(g=>g.id===gid)).filter(Boolean);
+      ThemeManager.openModal(`
+        <div class="modal-header"><h3 class="modal-title">👤 ${r.name}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+        <div class="modal-body">
+          <div class="detail-grid">
+            <div class="detail-box"><div class="lbl">الاسم</div><div class="val">${r.name}</div></div>
+            <div class="detail-box"><div class="lbl">الحالة</div><div class="val">${r.status}</div></div>
+            <div class="detail-box"><div class="lbl">الهاتف</div><div class="val">${r.phone||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">ولي الأمر</div><div class="val">${r.parentPhone||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">البريد</div><div class="val">${r.email||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">المرحلة</div><div class="val">${EduFlowConfig.educationLevels[r.stage]?.nameAr||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">الصف</div><div class="val">${r.grade||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">الكود المؤقت</div><div class="val">${r.tempCode||'-'}</div></div>
+          </div>
+          <h4 style="margin:16px 0 8px;">👥 المجموعات المطلوبة:</h4>
+          ${gs.length?gs.map(g=>`<div class="sub-row"><div><strong>${g.name}</strong><div class="text-xs text-muted">${DataService.getUserById(g.teacherId)?.name||'-'}</div></div></div>`).join(''):'<p class="text-muted">-</p>'}
+          ${r.status==='pending'?`<div style="display:flex;gap:8px;margin-top:16px;"><button class="btn btn-success" style="flex:1;" onclick="ThemeManager.closeModal();approvePending('${r.id}')">✅ موافقة</button><button class="btn btn-danger" style="flex:1;" onclick="ThemeManager.closeModal();rejectPending('${r.id}')">❌ رفض</button></div>`:''}
+        </div>
+      `,'modal-lg');
+    };
+
+    window.deletePending=async function(id){
+      ThemeManager.confirm('حذف هذا الطلب نهائياً؟',async()=>{
+        await DataService.deletePendingRegistration(id);
+        ThemeManager.toast('تم الحذف','success');
+        loadPending();
+      });
+    };
+
+    setInterval(()=>{
+      const pending=DataService.getPendingRegistrations().filter(r=>r.status==='pending').length;
+      const badge=document.getElementById('pendingBadge');
+      if(badge){
+        if(pending>0){badge.style.display='inline-block';badge.textContent=pending;}
+        else badge.style.display='none';
+      }
+    },30000);
+
+    (function initPendingBadge(){
+      try{
+        const pending=DataService.getPendingRegistrations().filter(r=>r.status==='pending').length;
+        const badge=document.getElementById('pendingBadge');
+        if(badge&&pending>0){badge.style.display='inline-block';badge.textContent=pending;}
+      }catch(e){}
+    })();
   </script>
 </body>
 </html>
