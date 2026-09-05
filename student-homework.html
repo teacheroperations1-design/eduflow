@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>حل الواجب - EduFlow</title>
+  <link rel="stylesheet" href="css/eduflow-theme.css">
+  <style>
+    .q-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:14px}
+    .opt-btn{display:block;width:100%;text-align:right;padding:12px 16px;background:var(--surface-hover);border:2px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;font-size:14px;transition:all var(--t)}
+    .opt-btn:hover{border-color:var(--primary)}
+    .opt-btn.selected{border-color:var(--primary);background:var(--primary-soft);color:var(--primary);font-weight:700}
+    .result-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:40px;text-align:center}
+    .result-score{font-size:56px;font-weight:800;color:var(--primary);font-family:var(--font-en)}
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div>
+  <div style="max-width:760px;margin:0 auto;padding:20px;position:relative;z-index:1;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <a href="student-dashboard.html" class="btn btn-ghost btn-sm">→ رجوع</a>
+      <h2 id="hwTitle" style="margin:0;">الواجب</h2>
+    </div>
+    <div id="questionsWrap"></div>
+    <button class="btn btn-primary w-full btn-lg" id="submitBtn" onclick="submitHw()">📤 تسليم الواجب</button>
+    <div id="resultWrap" style="display:none;"></div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="js/config.js"></script><script src="js/firebase-service.js"></script><script src="js/data-service.js"></script><script src="js/operations-service.js"></script><script src="js/theme-manager.js"></script><script src="js/auth-service.js"></script>
+
+  <script>
+    let currentUser=null,hw=null,answers={};
+
+    (async function boot(){
+      await DataService.init();
+      if(!AuthService.requireRole(['student'])) return;
+      currentUser=AuthService.getCurrentUser();
+      const id=new URLSearchParams(location.search).get('hw');
+      hw=DataService.getHomeworkById(id);
+      if(!hw){document.getElementById('questionsWrap').innerHTML='<div class="card">الواجب غير موجود</div>';document.getElementById('submitBtn').style.display='none';return;}
+      document.getElementById('hwTitle').textContent=hw.title;
+      renderQuestions();
+    })();
+
+    function renderQuestions(){
+      document.getElementById('questionsWrap').innerHTML=hw.questions.map((q,i)=>{
+        let body='';
+        if(q.type==='mcq'){
+          body=q.options.map((o,oi)=>`<button type="button" class="opt-btn" onclick="pick('${q.id}',${oi},this)">${o}</button>`).join('');
+        }else if(q.type==='truefalse'){
+          body=`<div style="display:flex;gap:8px;"><button type="button" class="opt-btn" style="flex:1" onclick="pick('${q.id}',true,this)">✓ صح</button><button type="button" class="opt-btn" style="flex:1" onclick="pick('${q.id}',false,this)">✗ خطأ</button></div>`;
+        }else{
+          body=`<textarea class="form-textarea" rows="4" placeholder="اكتب إجابتك..." oninput="answers['${q.id}']=this.value"></textarea>`;
+        }
+        return `<div class="q-card"><div style="display:flex;justify-content:space-between;margin-bottom:10px;"><strong>س${i+1}</strong><span class="badge badge-muted">${q.points} نقطة</span></div><p style="margin-bottom:12px;">${q.text}</p>${body}</div>`;
+      }).join('');
+    }
+
+    window.pick=function(qid,val,btn){
+      answers[qid]=val;
+      btn.parentElement.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+    };
+
+    window.submitHw=async function(){
+      const ansList=hw.questions.map(q=>({questionId:q.id,answer:answers[q.id]}));
+      const sub=await DataService.submitHomework({homeworkId:hw.id,studentId:currentUser.id,answers:ansList});
+      document.getElementById('submitBtn').style.display='none';
+      document.getElementById('questionsWrap').style.display='none';
+      const rw=document.getElementById('resultWrap');rw.style.display='block';
+      if(sub.status==='graded'){
+        rw.innerHTML=`<div class="result-box"><div style="font-size:48px;">${sub.score>=60?'🎉':''}</div><div class="result-score">${sub.score}%</div><p class="text-muted">نتيجتك في الواجب</p><a href="student-dashboard.html" class="btn btn-primary">العودة</a></div>`;
+      }else{
+        rw.innerHTML=`<div class="result-box"><div style="font-size:48px;">✅</div><h3>تم استلام واجبك</h3><p class="text-muted">فيه أسئلة مقالية — هتظهر درجتك بعد المراجعة</p><a href="student-dashboard.html" class="btn btn-primary">العودة</a></div>`;
+      }
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة المساعد - EduFlow</title>
+  <link rel="stylesheet" href="css/eduflow-theme.css">
+  <style>
+    .attention-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:all var(--t);border-right:4px solid var(--primary)}
+    .attention-card:hover{transform:translateY(-2px)}
+    .attention-card.danger{border-right-color:var(--danger)}.attention-card.warning{border-right-color:var(--warning)}
+    .attention-value{font-size:26px;font-weight:800;color:var(--primary);font-family:var(--font-en)}
+    .live-class{display:flex;gap:12px;align-items:center;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px}
+    .live-dot{width:10px;height:10px;border-radius:50%;background:var(--success);animation:pulse 1.5s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+    .inbox-item{display:flex;gap:12px;align-items:center;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;cursor:pointer}
+    .inbox-item:hover{border-color:var(--primary)}
+    .qr-box{text-align:center;padding:20px;background:var(--surface-hover);border-radius:var(--radius);margin:12px 0}
+    .qr-code{font-family:var(--font-en);font-size:26px;font-weight:800;letter-spacing:4px;color:var(--primary);margin:10px 0}
+    .settle-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center}
+    .settle-value{font-size:26px;font-weight:800;font-family:var(--font-en)}
+    .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .detail-box{background:var(--surface-hover);border-radius:10px;padding:12px;cursor:pointer;transition:all var(--t)}
+    .detail-box:hover{border-color:var(--primary-border);background:var(--primary-soft)}
+    .detail-box .lbl{font-size:11px;color:var(--text-muted);margin-bottom:4px}.detail-box .val{font-weight:700;font-size:13px}
+    .att-btn{min-width:64px}
+    .stat-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+    .stat-mini-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
+    .stat-mini-value{font-size:18px;font-weight:800;color:var(--primary)}
+    .stat-mini-label{font-size:10px;color:var(--text-muted);margin-top:2px}
+    .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:16px;overflow-x:auto}
+    .tab-btn{padding:8px 14px;background:none;border:none;color:var(--text-secondary);cursor:pointer;font-weight:700;font-size:13px;border-bottom:2px solid transparent;white-space:nowrap}
+    .tab-btn.active{color:var(--primary);border-bottom-color:var(--primary)}
+    .tab-content{display:none}
+    .tab-content.active{display:block}
+    .sub-row{padding:10px;background:var(--surface-hover);border-radius:8px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+    .sub-row.graded{border-right:3px solid var(--success)}
+    .sub-row.pending{border-right:3px solid var(--warning)}
+    .sub-row.missing{border-right:3px solid var(--danger);opacity:.75}
+    .hw-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px}
+    .hw-card:hover{border-color:var(--primary-border)}
+    .pending-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;border-right:4px solid var(--warning)}
+    .pending-card.approved{border-right-color:var(--success)}
+    .pending-card.rejected{border-right-color:var(--danger)}
+    .stage-grade-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .filter-info{background:var(--info-bg);border:1px solid var(--info-border);border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:12px;color:var(--info)}
+    @media(max-width:640px){.detail-grid{grid-template-columns:1fr}.stat-mini{grid-template-columns:1fr 1fr}.stage-grade-row{grid-template-columns:1fr}}
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header"><div class="sidebar-logo" data-logo></div><div><div class="sidebar-brand-name" data-brand-name>EduFlow</div><div class="sidebar-brand-tagline">Assistant</div></div></div>
+      <nav class="sidebar-nav" id="sidebarNav"></nav>
+      <div class="sidebar-footer"><div class="sidebar-user"><div class="sidebar-user-avatar" id="userAvatar">A</div><div><div class="sidebar-user-name" id="userName">Assistant</div><div class="sidebar-user-role" id="userLevel">مساعد</div></div></div><button class="btn btn-ghost w-full" onclick="handleLogout()">🚪 خروج</button></div>
+    </aside>
+    <main class="main-content">
+      <header class="main-header">
+        <div class="main-header-right"><button class="menu-toggle" id="menuToggle"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button><div><h1 class="page-title" id="pageTitle">مركز العمليات</h1><p class="page-subtitle" id="pageSubtitle">ماذا يحتاج انتباهي؟</p></div></div>
+        <div class="main-header-left"><div class="header-actions" style="position:relative;"><div class="search-bar" style="width:200px;"><input type="text" id="globalSearch" class="form-input" placeholder="بحث شامل..." oninput="doGlobalSearch(this.value)"></div><button class="icon-btn" id="themeToggle"></button></div></div>
+      </header>
+      <div class="content-area">
+
+        <section class="section active" id="section-command">
+          <div class="card" style="margin-bottom:16px;background:var(--grad);color:#fff;border:none;"><div id="briefingBanner" style="padding:4px;"></div></div>
+          <h3 style="margin:16px 0 12px;">🎯 ماذا يحتاج انتباهي الآن؟</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:20px;" id="attentionGrid"></div>
+          <h3 style="margin:16px 0 12px;">📡 الحصص الجارية</h3>
+          <div id="liveClasses"></div>
+          <div style="display:flex;gap:8px;margin-top:20px;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="window.open('qr-scan.html','_blank')">📱 مسح باركود طالب</button>
+            <button class="btn btn-secondary" onclick="window.open('print-qr.html','_blank')">🖨️ طباعة باركودات</button>
+          </div>
+        </section>
+
+        <section class="section" id="section-inbox">
+          <div class="section-header"><div><h2 class="section-title">📥 صندوق الوارد</h2></div></div>
+          <div id="inboxList"></div>
+        </section>
+
+        <section class="section" id="section-pending">
+          <div class="section-header">
+            <div><h2 class="section-title">⏳ طلبات التسجيل</h2><p class="text-sm text-muted">طلبات الطلاب في انتظار الموافقة</p></div>
+            <button class="btn btn-ghost btn-sm" onclick="loadPending()">🔄 تحديث</button>
+          </div>
+          <div class="stats-grid" id="pendingStats"></div>
+          <div class="card">
+            <div class="filter-bar">
+              <button class="filter-btn active" onclick="setPendingFilter('pending',this)">⏳ بانتظار</button>
+              <button class="filter-btn" onclick="setPendingFilter('approved',this)">✅ الموافق عليها</button>
+              <button class="filter-btn" onclick="setPendingFilter('rejected',this)">❌ المرفوضة</button>
+            </div>
+            <div id="pendingList"></div>
+          </div>
+        </section>
+
+        <section class="section" id="section-teachers">
+          <div class="section-header"><div><h2 class="section-title">👨‍ مساحات العمل</h2></div></div>
+          <div class="form-group"><label>المدرس</label><select id="wsTeacher" class="form-select" onchange="loadWorkspace()"></select></div>
+          <div id="workspaceView"></div>
+        </section>
+
+        <section class="section" id="section-students">
+          <div class="section-header"><div><h2 class="section-title">🎓 الطلاب</h2></div></div>
+          <div class="card"><div class="search-bar" style="margin-bottom:12px;"><input type="text" id="stuSearch" class="form-input" placeholder="بحث بالاسم أو الكود..." onkeyup="loadStudents()"></div><div id="studentsList"></div></div>
+        </section>
+
+        <section class="section" id="section-attendance">
+          <div class="section-header"><div><h2 class="section-title">📋 الحضور</h2></div></div>
+          <div class="card" style="margin-bottom:16px;"><h3 class="card-title" style="margin-bottom:12px;">✋ تسجيل حضور</h3>
+            <div class="form-group"><label>المجموعة</label><select id="attGroup" class="form-select" onchange="renderManualAtt()"></select></div>
+            <div style="display:flex;gap:8px;margin-bottom:12px;"><button class="btn btn-primary" onclick="startQR()">📱 QR</button><button class="btn btn-secondary" onclick="genCodeAtt()">🎟️ كود</button></div>
+            <div id="qrBox"></div><div id="manualAttList"></div>
+          </div>
+          <div class="card" style="margin-bottom:16px;"><h3 class="card-title" style="margin-bottom:12px;">🚫 إلغاء حصة</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المجموعة</label><select id="cancelGroup" class="form-select"></select></div><div class="form-group"><label>التاريخ</label><input type="date" id="cancelDate" class="form-input"></div></div><button class="btn btn-danger" onclick="doCancelSession()">🚫 إلغاء (متتحسبش)</button></div>
+          <div class="card"><h3 class="card-title" style="margin-bottom:12px;">⏳ بانتظار الاعتماد</h3><div id="pendingAtt"></div></div>
+        </section>
+
+        <section class="section" id="section-accounting">
+          <div class="section-header"><div><h2 class="section-title">🧮 المحاسبة والتسوية</h2></div></div>
+          <div class="card" style="margin-bottom:16px;"><h3 class="card-title" style="margin-bottom:12px;">📊 تسوية شهر</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المجموعة</label><select id="setGroup" class="form-select"></select></div><div class="form-group"><label>الشهر</label><input type="month" id="setMonth" class="form-input"></div></div><button class="btn btn-primary" onclick="renderSettlement()">عرض</button><div id="settlementView" style="margin-top:14px;"></div></div>
+          <div class="card"><h3 class="card-title" style="margin-bottom:12px;">🧾 حساب شهر طالب</h3><div class="form-group"><label>الطالب</label><select id="calcStudent" class="form-select"></select></div><button class="btn btn-secondary" onclick="calcStudentMonth()">احسب</button><div id="calcView" style="margin-top:12px;"></div></div>
+        </section>
+
+        <section class="section" id="section-paperGrades">
+          <div class="section-header"><div><h2 class="section-title">📝 الواجبات والامتحانات الورقية</h2><p class="text-sm text-muted">صحّح الكراسات وارصد الدرجات (من كام لـ كام)</p></div></div>
+          <div class="card">
+            <div class="form-group"><label>المجموعة</label><select id="pgGroup" class="form-select" onchange="pgGroupChanged()"></select></div>
+            <div class="form-group"><label>الواجب / الامتحان الورقي</label><select id="pgRef" class="form-select" onchange="pgRefChanged()"></select></div>
+            <div id="pgNewWrap" style="display:none;border:1px dashed var(--border);border-radius:10px;padding:12px;margin-bottom:12px;">
+              <div class="form-group"><label>عنوان الجديد</label><input type="text" id="pgNewTitle" class="form-input" placeholder="مثال: امتحان الوحدة الأولى ورقي"></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="form-group"><label>النوع</label><select id="pgNewType" class="form-select"><option value="hw">واجب ورقي</option><option value="ex">امتحان ورقي</option></select></div>
+                <div class="form-group"><label>الدرجة الكلية</label><input type="number" id="pgNewTotal" class="form-input" value="10" min="1"></div>
+              </div>
+              <button class="btn btn-secondary w-full" onclick="pgCreateNew()">➕ إنشاء</button>
+            </div>
+            <div id="pgTotalWrap" style="display:none;" class="form-group"><label>الدرجة الكلية</label><input type="number" id="pgTotal" class="form-input" min="1" onchange="pgRenderStudents()"></div>
+            <div id="pgStudents"></div>
+            <button class="btn btn-primary w-full" id="pgSave" onclick="savePaperGrades()" style="display:none;margin-top:8px;">💾 حفظ كل الدرجات</button>
+          </div>
+        </section>
+
+        <section class="section" id="section-monthly">
+          <div class="section-header"><div><h2 class="section-title">💰 تحصيل الشهرية</h2></div></div>
+          <div class="card">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div class="form-group"><label>الشهر</label><input type="month" id="moMonth" class="form-input" onchange="renderMonthly()"></div>
+              <div class="form-group"><label>المجموعة (فلتر)</label><select id="moGroup" class="form-select" onchange="renderMonthly()"><option value="">كل المجموعات</option></select></div>
+            </div>
+            <div id="moSummary"></div>
+            <div class="filter-bar">
+              <button class="filter-btn active" onclick="setMoFilter('all',this)">الكل</button>
+              <button class="filter-btn" onclick="setMoFilter('paid',this)">✅ دفعوا</button>
+              <button class="filter-btn" onclick="setMoFilter('unpaid',this)">⏳ لم يدفعوا</button>
+            </div>
+            <div id="moRows"></div>
+            <h4 class="text-sm" style="margin:16px 0 8px;">📜 سجل المعاملات السابقة</h4>
+            <div id="moHistory"></div>
+          </div>
+        </section>
+
+        <section class="section" id="section-homework">
+          <div class="section-header"><div><h2 class="section-title">📝 الواجبات (تجهيز)</h2></div><button class="btn btn-primary" onclick="openHwBuilder()">+ واجب</button></div>
+          <div class="card" style="margin-bottom:12px;"><div class="search-bar"><input type="text" id="hwSearchBar" class="form-input" placeholder="بحث عن واجب..." onkeyup="loadHomework()"></div></div>
+          <div id="hwList"></div>
+        </section>
+
+        <section class="section" id="section-exams">
+          <div class="section-header"><div><h2 class="section-title">🎓 الامتحانات (تجهيز)</h2></div><button class="btn btn-primary" onclick="openExBuilder()">+ امتحان</button></div>
+          <div class="card" style="margin-bottom:12px;"><div class="search-bar"><input type="text" id="exSearchBar" class="form-input" placeholder="بحث عن امتحان..." onkeyup="loadExams()"></div></div>
+          <div id="exList"></div>
+        </section>
+
+        <section class="section" id="section-grades">
+          <div class="section-header"><div><h2 class="section-title">🎯 الدرجات (أونلاين)</h2></div></div>
+          <div class="filter-bar"><button class="filter-btn active" onclick="setGrades('hw',this)">واجبات</button><button class="filter-btn" onclick="setGrades('ex',this)">امتحانات</button></div>
+          <div id="gradesList"></div>
+        </section>
+
+        <section class="section" id="section-followups">
+          <div class="section-header"><div><h2 class="section-title">📌 المتابعات</h2></div><button class="btn btn-primary" onclick="openFollowupModal()">+ متابعة</button></div>
+          <div id="followupsList"></div>
+        </section>
+
+        <section class="section" id="section-tasks">
+          <div class="section-header"><div><h2 class="section-title">✅ مهامي</h2></div></div>
+          <div class="card"><div id="tasksList"></div></div>
+        </section>
+
+        <section class="section" id="section-payments">
+          <div class="section-header"><div><h2 class="section-title">💰 المدفوعات</h2></div></div>
+          <div class="card"><div id="paymentsList"></div></div>
+        </section>
+
+        <section class="section" id="section-calendar">
+          <div class="section-header"><div><h2 class="section-title">📅 تقويم الحصص</h2></div></div>
+          <div class="card"><div class="form-group"><label>المجموعة</label><select id="calGroup" class="form-select" onchange="loadCalendar()"></select></div><div id="calendarView"></div></div>
+        </section>
+
+        <section class="section" id="section-reports">
+          <div class="section-header"><div><h2 class="section-title">📊 التقارير</h2></div></div>
+          <div class="card"><div id="reportView"></div></div>
+        </section>
+
+        <section class="section" id="section-logs">
+          <div class="section-header"><div><h2 class="section-title">📜 السجل</h2></div></div>
+          <div class="card"><div id="logsList"></div></div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="js/config.js"></script><script src="js/firebase-service.js"></script><script src="js/data-service.js"></script><script src="js/operations-service.js"></script><script src="js/ui-helpers.js"></script><script src="js/drive-service.js"></script><script src="js/theme-manager.js"></script><script src="js/auth-service.js"></script>
+
+  <script>
+    const DAYS=[{en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},{en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'},{en:'Saturday',ar:'السبت'}];
+    const dayAr=en=>(DAYS.find(d=>d.en===en)||{}).ar||en;
+    const T=tm=>DataService.formatTime12(tm);
+    const db=()=>DataService._getData();const save=d=>DataService._saveData(d);
+    let currentUser=null,manualSel={},gradesMode='hw',moFilter='all',pgCurrentRef=null,pendingFilter='pending';
+
+    (async function boot(){
+      try{
+        await DataService.init(); if(window.Ops) await Ops.init();
+        if(!AuthService.requireRole(['assistant','super_admin'])) return;
+        currentUser=AuthService.getCurrentUser();
+        document.getElementById('userName').textContent=currentUser.name;
+        document.getElementById('userAvatar').textContent=currentUser.name.charAt(0);
+        document.getElementById('userLevel').textContent=Ops.getLevel(currentUser.id)==='primary'?'مساعد أساسي':'مساعد احتياطي';
+        generateAutoFollowups();
+        buildMenu(); showSection('command');
+      }catch(err){document.body.innerHTML='<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;"><div class="card">خطأ: '+err.message+'<br><a href="login.html" class="btn btn-primary" style="margin-top:12px;">العودة</a></div></div>';}
+    })();
+
+    function buildMenu(){
+      const menu=[{s:'الرئيسية',items:[{id:'command',l:'مركز العمليات',i:'🎯'},{id:'inbox',l:'صندوق الوارد',i:'📥'},{id:'pending',l:'طلبات التسجيل',i:'⏳'}]},{s:'التشغيل',items:[{id:'teachers',l:'مساحات العمل',i:'👨‍'},{id:'students',l:'الطلاب',i:'🎓'},{id:'attendance',l:'الحضور',i:'📋'},{id:'paperGrades',l:'الواجبات الورقية',i:'📝'},{id:'grades',l:'الدرجات أونلاين',i:'🎯'},{id:'homework',l:'الواجبات',i:'📝'},{id:'exams',l:'الامتحانات',i:'🎓'}]},{s:'المالية',items:[{id:'monthly',l:'تحصيل الشهرية',i:'💰'},{id:'accounting',l:'المحاسبة',i:'🧮'},{id:'payments',l:'المدفوعات',i:'💵'}]},{s:'المتابعة',items:[{id:'followups',l:'المتابعات',i:'📌'},{id:'tasks',l:'مهامي',i:'✅'},{id:'calendar',l:'التقويم',i:'📅'}]},{s:'تحليلات',items:[{id:'reports',l:'التقارير',i:'📊'},{id:'logs',l:'السجل',i:'📜'}]}];
+      document.getElementById('sidebarNav').innerHTML=menu.map(sec=>`<div class="sidebar-section"><div class="sidebar-section-title">${sec.s}</div>${sec.items.map(it=>`<div class="sidebar-item" data-section="${it.id}" onclick="showSection('${it.id}')"><span class="sidebar-item-icon">${it.i}</span><span class="sidebar-item-label">${it.l}</span></div>`).join('')}</div>`).join('');
+    }
+
+    window.showSection=function(id){
+      document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+      document.getElementById('section-'+id)?.classList.add('active');
+      document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.toggle('active',i.dataset.section===id));
+      const L={command:loadCommand,inbox:loadInbox,pending:loadPending,teachers:loadWorkspace,students:loadStudents,attendance:loadAttendance,accounting:loadAccounting,paperGrades:loadPaperGrades,monthly:loadMonthly,grades:loadGrades,homework:loadHomework,exams:loadExams,followups:loadFollowups,tasks:loadTasks,payments:loadPayments,calendar:loadCalendar,reports:loadReports,logs:loadLogs};
+      if(L[id])L[id]();
+      if(window.innerWidth<=1024){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('show');}
+    };
+
+    window.doGlobalSearch=function(q){
+      if(!q||q.length<2)return;
+      const res=Ops.globalSearch(q);
+      if(res.length){
+        const first=res[0];
+        if(first.type==='student'){showSection('students');setTimeout(()=>openStudentProfile(first.id),100);}
+        else if(first.type==='teacher'){showSection('teachers');}
+        else if(first.type==='group'){showSection('teachers');}
+      }
+    };
+
+    window.loadCommand=function(){
+      const b=Ops.buildDailyBriefing(currentUser.id);
+      document.getElementById('briefingBanner').innerHTML=`<h3 style="margin:0 0 6px;">🌅 صباح الخير، ${currentUser.name}</h3><p style="margin:0;opacity:.95;">${b.summary}</p>`;
+      const d=db();const groups=Ops.groupsInScope(currentUser.id);const gids=groups.map(g=>g.id);
+      const pendAtt=(d.attendance||[]).filter(a=>a.status==='pending'&&gids.includes(a.groupId)).length;
+      const teacherFlags=(d.followUps||[]).filter(f=>f.fromTeacher&&f.status!=='resolved').length;
+      const openFu=Ops.getFollowUps({ownerAssistant:currentUser.id}).filter(f=>f.status!=='resolved').length;
+      const pendHw=(d.submissions||[]).filter(s=>s.status==='pending_review').length;
+      const overduePay=(d.payments||[]).filter(p=>p.status!=='paid'&&Ops.studentsInScope(currentUser.id).some(s=>s.id===p.studentId)).length;
+      const pendingRegs=(DataService.getPendingRegistrations?.()||[]).filter(r=>r.status==='pending').length;
+      document.getElementById('attentionGrid').innerHTML=`
+        <div class="attention-card ${pendAtt?'warning':''}" onclick="showSection('attendance')"><div class="attention-value">${pendAtt}</div><div>حضور للمراجعة</div></div>
+        <div class="attention-card ${teacherFlags?'danger':''}" onclick="showSection('followups')"><div class="attention-value">${teacherFlags}</div><div>بلاغات الأستاذ</div></div>
+        <div class="attention-card ${openFu?'warning':''}" onclick="showSection('followups')"><div class="attention-value">${openFu}</div><div>متابعات مفتوحة</div></div>
+        <div class="attention-card ${pendHw?'warning':''}" onclick="showSection('grades')"><div class="attention-value">${pendHw}</div><div>واجبات للتصحيح</div></div>
+        <div class="attention-card ${overduePay?'danger':''}" onclick="showSection('monthly')"><div class="attention-value">${overduePay}</div><div>دفعات متأخرة</div></div>
+        <div class="attention-card ${pendingRegs?'warning':''}" onclick="showSection('pending')"><div class="attention-value">${pendingRegs}</div><div>طلبات تسجيل</div></div>`;
+      const today=new Date().toISOString().split('T')[0];
+      const live=Ops.getClassSessionsForDate(today).filter(s=>gids.includes(s.groupId)&&s.status!=='finished');
+      document.getElementById('liveClasses').innerHTML=live.length?live.map(s=>{const g=DataService.getGroups().find(x=>x.id===s.groupId);return `<div class="live-class"><div class="live-dot"></div><div style="flex:1;"><strong>${g?.name||'-'}</strong><div class="text-xs text-muted">${s.status}</div></div>${s.status==='attendance_submitted'?`<button class="btn btn-success btn-sm" onclick="showSection('attendance')">اعتمد</button>`:''}</div>`;}).join(''):'<p class="text-muted">لا حصص جارية</p>';
+    };
+
+    window.loadInbox=function(){
+      const d=db();const items=[];
+      (d.attendance||[]).filter(a=>a.status==='pending'&&Ops.inScope(currentUser.id,{groupId:a.groupId})).forEach(a=>items.push({icon:'📋',title:'حضور: '+a.groupName,action:`showSection('attendance')`}));
+      (d.followUps||[]).filter(f=>f.fromTeacher&&f.status!=='resolved').forEach(f=>items.push({icon:'🚨',title:'بلاغ: '+(DataService.getUserById(f.studentId)?.name||''),action:`showSection('followups')`}));
+      (d.submissions||[]).filter(s=>s.status==='pending_review').forEach(s=>items.push({icon:'📝',title:'تصحيح: '+(DataService.getUserById(s.studentId)?.name||''),action:`showSection('grades')`}));
+      document.getElementById('inboxList').innerHTML=items.length?items.map(i=>`<div class="inbox-item" onclick="${i.action}"><span style="font-size:22px;">${i.icon}</span><div><strong>${i.title}</strong></div></div>`).join(''):'<p class="text-muted">البريد فاضي ✓</p>';
+    };
+
+    // ===== PENDING REGISTRATIONS =====
+    window.setPendingFilter=function(f,btn){
+      pendingFilter=f;
+      document.querySelectorAll('#section-pending .filter-btn').forEach(b=>b.classList.toggle('active',b===btn));
+      loadPending();
+    };
+
+    window.loadPending=function(){
+      const all=DataService.getPendingRegistrations?.()||[];
+      const pending=all.filter(r=>r.status==='pending');
+      const approved=all.filter(r=>r.status==='approved');
+      const rejected=all.filter(r=>r.status==='rejected');
+
+      document.getElementById('pendingStats').innerHTML=`
+        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">بانتظار الموافقة</span><span class="stat-card-icon">⏳</span></div><div class="stat-card-value" style="color:var(--warning);">${pending.length}</div></div>
+        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">موافق عليها</span><span class="stat-card-icon">✅</span></div><div class="stat-card-value" style="color:var(--success);">${approved.length}</div></div>
+        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">مرفوضة</span><span class="stat-card-icon">❌</span></div><div class="stat-card-value" style="color:var(--danger);">${rejected.length}</div></div>
+        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">إجمالي الطلبات</span><span class="stat-card-icon">📋</span></div><div class="stat-card-value">${all.length}</div></div>
+      `;
+
+      let list=pending;
+      if(pendingFilter==='approved')list=approved;
+      else if(pendingFilter==='rejected')list=rejected;
+      list=list.slice().reverse();
+
+      document.getElementById('pendingList').innerHTML=list.length?list.map(r=>{
+        const gs=(r.groupIds||[]).map(gid=>DataService.getGroups().find(g=>g.id===gid)).filter(Boolean);
+        const groupNames=gs.map(g=>g.name).join('، ')||'-';
+        const stageLabel=EduFlowConfig.educationLevels[r.stage]?.nameAr||'-';
+        return `<div class="pending-card ${r.status}">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">
+                <strong style="font-size:15px;">${r.name}</strong>
+                <span class="badge ${r.status==='pending'?'badge-warning':r.status==='approved'?'badge-success':'badge-danger'}">${r.status==='pending'?'⏳ بانتظار':r.status==='approved'?'✅ موافق':'❌ مرفوض'}</span>
+                <span class="badge badge-muted">${r.tempCode||'-'}</span>
+              </div>
+              <div class="text-xs text-muted" style="line-height:1.7;">
+                📱 ${r.phone||'-'} · 👨‍👩 ${r.parentPhone||'-'}<br>
+                📚 ${stageLabel} - ${r.grade||'-'}<br>
+                👥 <strong>المجموعات:</strong> ${groupNames}<br>
+                📅 تاريخ الطلب: ${new Date(r.createdAt).toLocaleString('ar-EG')}
+                ${r.approvedBy?'<br>✅ وافق عليه: '+DataService.getUserById(r.approvedBy)?.name:''}
+                ${r.rejectedBy?'<br>❌ رفضه: '+DataService.getUserById(r.rejectedBy)?.name+(r.rejectReason?' ('+r.rejectReason+')':''):''}
+                ${r.finalCode?'<br>🎟️ الكود النهائي: <strong style="color:var(--primary);">'+r.finalCode+'</strong>':''}
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              ${r.status==='pending'?`
+                <button class="btn btn-success btn-sm" onclick="approvePending('${r.id}')">✅ موافقة</button>
+                <button class="btn btn-danger btn-sm" onclick="rejectPending('${r.id}')">❌ رفض</button>
+              `:''}
+              <button class="btn btn-ghost btn-sm" onclick="viewPendingDetail('${r.id}')">👁️ تفاصيل</button>
+              <button class="btn btn-ghost btn-sm" onclick="deletePending('${r.id}')">🗑️</button>
+            </div>
+          </div>
+        </div>`;
+      }).join(''):`<div class="empty-state"><div class="empty-state-icon">📭</div><h3 class="empty-state-title">لا توجد طلبات ${pendingFilter==='pending'?'بانتظار':pendingFilter==='approved'?'موافق عليها':'مرفوضة'}</h3></div>`;
+    };
+
+    window.approvePending=async function(id){
+      const r=DataService.getPendingRegistrationById(id);
+      if(!r)return;
+      ThemeManager.confirm(
+        `هل تريد الموافقة على تسجيل <strong>${r.name}</strong>؟<br>سيتم إنشاء حساب رسمي وكود طالب دائم.`,
+        async ()=>{
+          try{
+            const res=await DataService.approvePendingRegistration(id,currentUser.id);
+            if(res.success){
+              ThemeManager.toast(`✅ تم إنشاء حساب ${res.user.name} بالكود ${res.code}`,'success');
+              ThemeManager.openModal(`
+                <div class="modal-header"><h3 class="modal-title">✅ تم الموافقة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+                <div class="modal-body" style="text-align:center;">
+                  <p class="text-sm text-muted">تم إنشاء حساب الطالب بنجاح</p>
+                  <div style="background:var(--grad);border-radius:10px;padding:20px;color:#fff;margin:16px 0;">
+                    <div class="text-xs" style="opacity:.9;">اسم الطالب</div>
+                    <div style="font-size:20px;font-weight:700;margin-bottom:10px;">${res.user.name}</div>
+                    <div class="text-xs" style="opacity:.9;">الكود الرسمي (سلّمه للطالب)</div>
+                    <div style="font-family:var(--font-en);font-size:28px;font-weight:800;letter-spacing:3px;margin-top:6px;">${res.code}</div>
+                  </div>
+                  <p class="text-sm text-muted">أطبع الباركود من "طباعة باركودات" وسلّمه للطالب</p>
+                  <div style="display:flex;gap:8px;margin-top:12px;">
+                    <button class="btn btn-secondary" style="flex:1;" onclick="navigator.clipboard.writeText('${res.code}');ThemeManager.toast('تم النسخ','success');">📋 نسخ الكود</button>
+                    <a class="btn btn-primary" style="flex:1;" href="print-qr.html?search=${res.code}" target="_blank">🖨️ طباعة الباركود</a>
+                  </div>
+                </div>
+              `,'modal-lg');
+              loadPending();
+              loadStudents();
+            }
+          }catch(err){ThemeManager.toast('خطأ: '+err.message,'error');}
+        }
+      );
+    };
+
+    window.rejectPending=async function(id){
+      const r=DataService.getPendingRegistrationById(id);
+      if(!r)return;
+      ThemeManager.openModal(`
+        <div class="modal-header"><h3 class="modal-title">❌ رفض الطلب</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+        <div class="modal-body">
+          <p class="text-sm text-muted" style="margin-bottom:12px;">رفض طلب <strong>${r.name}</strong></p>
+          <div class="form-group"><label>السبب (اختياري)</label><textarea id="rejectReason" class="form-textarea" rows="2" placeholder="مثال: البيانات غير مكتملة"></textarea></div>
+          <button class="btn btn-danger w-full" onclick="doReject('${id}')">❌ تأكيد الرفض</button>
+        </div>
+      `);
+    };
+    window.doReject=async function(id){
+      const reason=document.getElementById('rejectReason').value.trim();
+      await DataService.rejectPendingRegistration(id,reason,currentUser.id);
+      ThemeManager.closeModal();
+      ThemeManager.toast('تم رفض الطلب','warning');
+      loadPending();
+    };
+
+    window.viewPendingDetail=function(id){
+      const r=DataService.getPendingRegistrationById(id);
+      if(!r)return;
+      const gs=(r.groupIds||[]).map(gid=>DataService.getGroups().find(g=>g.id===gid)).filter(Boolean);
+      ThemeManager.openModal(`
+        <div class="modal-header"><h3 class="modal-title">👤 ${r.name}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+        <div class="modal-body">
+          <div class="detail-grid">
+            <div class="detail-box"><div class="lbl">الاسم</div><div class="val">${r.name}</div></div>
+            <div class="detail-box"><div class="lbl">الحالة</div><div class="val">${r.status}</div></div>
+            <div class="detail-box"><div class="lbl">الهاتف</div><div class="val">${r.phone||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">ولي الأمر</div><div class="val">${r.parentPhone||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">البريد</div><div class="val">${r.email||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">المرحلة</div><div class="val">${EduFlowConfig.educationLevels[r.stage]?.nameAr||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">الصف</div><div class="val">${r.grade||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">الكود المؤقت</div><div class="val">${r.tempCode||'-'}</div></div>
+          </div>
+          <h4 style="margin:16px 0 8px;">👥 المجموعات المطلوبة:</h4>
+          ${gs.length?gs.map(g=>`<div class="sub-row"><div><strong>${g.name}</strong><div class="text-xs text-muted">${DataService.getUserById(g.teacherId)?.name||'-'}</div></div></div>`).join(''):'<p class="text-muted">-</p>'}
+          ${r.status==='pending'?`<div style="display:flex;gap:8px;margin-top:16px;"><button class="btn btn-success" style="flex:1;" onclick="ThemeManager.closeModal();approvePending('${r.id}')">✅ موافقة</button><button class="btn btn-danger" style="flex:1;" onclick="ThemeManager.closeModal();rejectPending('${r.id}')">❌ رفض</button></div>`:''}
+        </div>
+      `,'modal-lg');
+    };
+
+    window.deletePending=async function(id){
+      ThemeManager.confirm('حذف هذا الطلب نهائياً؟',async()=>{
+        await DataService.deletePendingRegistration(id);
+        ThemeManager.toast('تم الحذف','success');
+        loadPending();
+      });
+    };
+
+    // ===== Workspace + Add Group =====
+    window.loadWorkspace=function(){
+      const sel=document.getElementById('wsTeacher');const ts=Ops.teachersInScope(currentUser.id);
+      if(!sel.options.length)sel.innerHTML=ts.length?ts.map(t=>`<option value="${t.id}">${t.name}</option>`).join(''):'<option value="">لا مدرسين</option>';
+      const tid=sel.value;if(!tid){document.getElementById('workspaceView').innerHTML='';return;}
+      const t=DataService.getUserById(tid);const gs=DataService.getGroupsByTeacher(tid);
+      document.getElementById('workspaceView').innerHTML=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><div style="display:flex;gap:12px;align-items:center;"><div class="user-avatar">${t.name.charAt(0)}</div><div><strong>${t.name}</strong><div class="text-sm text-muted">📚 ${t.subject}</div></div></div><button class="btn btn-primary btn-sm" onclick="openGroupModal(null,'${tid}')">+ مجموعة</button></div>${gs.map(g=>{const stageLabel=EduFlowConfig.educationLevels[g.stage]?.nameAr||'';const gradeLabel=g.grade||'';return `<div style="padding:10px;background:var(--surface-hover);border-radius:8px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;"><div><strong>${g.name}</strong>${stageLabel||gradeLabel?` <span class="badge badge-info">${stageLabel}${stageLabel&&gradeLabel?' - ':''}${gradeLabel}</span>`:''}<div class="text-xs text-muted">${dayAr(g.day)} ${T(g.time)} · 👥 ${DataService.getStudentsByGroup(g.id).length}</div></div><button class="btn btn-ghost btn-sm" onclick="openGroupModal('${g.id}')">✏️</button></div>`;}).join('')||'<p class="text-muted">لا مجموعات</p>'}</div>`;
+    };
+
+    // ===== موديل المجموعة — مع المرحلة والصف الدراسي =====
+    window.openGroupModal=function(editId,preTeacher){
+      const g=editId?DataService.getGroups().find(x=>x.id===editId):null;
+      const stageOptions=Object.entries(EduFlowConfig.educationLevels).map(([k,v])=>`<option value="${k}" ${g?.stage===k?'selected':''}>${v.nameAr}</option>`).join('');
+      const initialGrades=EduFlowConfig.educationLevels[g?.stage||'Primary']?.grades||[];
+      const gradeOptions=initialGrades.map(gr=>`<option ${g?.grade===gr?'selected':''}>${gr}</option>`).join('');
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${g?'✏️ تعديل':'👥 إضافة'} مجموعة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveGroup(event,'${editId||''}')">
+        <div class="form-group"><label>الاسم</label><input type="text" id="gName" class="form-input" value="${g?.name||''}" required></div>
+        <div class="form-group"><label>المدرس</label><select id="gTeacher" class="form-select">${Ops.teachersInScope(currentUser.id).map(t=>`<option value="${t.id}" ${g?.teacherId===t.id||preTeacher===t.id?'selected':''}>${t.name}</option>`).join('')}</select></div>
+        <div class="stage-grade-row">
+          <div class="form-group"><label>المرحلة (المرحلة الدراسية)</label><select id="gStage" class="form-select" onchange="updGroupGrades();"><option value="">-- اختر المرحلة --</option>${stageOptions}</select></div>
+          <div class="form-group"><label>الصف الدراسي (السنة)</label><select id="gGrade" class="form-select">${gradeOptions}</select></div>
+        </div>
+        <div class="filter-info">🎯 المرحلة والصف هيساعدوا في فلترة الطلاب المناسبين للمجموعة عند التسجيل</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>اليوم</label><select id="gDay" class="form-select">${DAYS.map(d=>`<option value="${d.en}" ${g?.day===d.en?'selected':''}>${d.ar}</option>`).join('')}</select></div>${UI.timeSelect('gTime',g?.time,'الوقت')}</div>
+        <div class="form-group"><label>المكان</label><input type="text" id="gLoc" class="form-input" value="${g?.location||''}"></div>
+        <div class="form-group"><label>ملاحظات</label><textarea id="gNotes" class="form-textarea" rows="2">${g?.notes||''}</textarea></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;"><div class="form-group"><label>مدة الحصة</label><input type="number" id="gDuration" class="form-input" value="${g?.duration||120}"></div><div class="form-group"><label>حصص/شهر</label><input type="number" id="gSessions" class="form-input" value="${g?.sessionsPerMonth||4}" oninput="calcSP()"></div><div class="form-group"><label>سعر الشهر</label><input type="number" id="gMonthly" class="form-input" value="${g?.monthlyFee||0}" oninput="calcSP()"></div></div>
+        <div class="form-group"><label>حصة الأستاذ/طالب</label><input type="number" id="gShare" class="form-input" value="${g?.teacherSharePerStudent||0}"></div>
+        <div class="card" style="background:var(--info-bg);border-color:var(--info-border);padding:12px;margin-bottom:12px;">سعر الحصة: <strong id="autoSessionPrice">0</strong> ج.م</div>
+        <button class="btn btn-primary w-full">💾 حفظ</button></form></div>`);
+      calcSP();
+    };
+
+    window.updGroupGrades=function(){
+      const stage=document.getElementById('gStage').value;
+      const grades=EduFlowConfig.educationLevels[stage]?.grades||[];
+      document.getElementById('gGrade').innerHTML=grades.map(g=>`<option>${g}</option>`).join('');
+    };
+
+    window.calcSP=function(){const m=parseInt(document.getElementById('gMonthly').value)||0;const s=parseInt(document.getElementById('gSessions').value)||1;const el=document.getElementById('autoSessionPrice');if(el)el.textContent=Math.round(m/s);};
+    window.saveGroup=async function(e,editId){
+      e.preventDefault();
+      const monthly=parseInt(document.getElementById('gMonthly').value)||0;
+      const sessions=parseInt(document.getElementById('gSessions').value)||4;
+      const data={
+        name:document.getElementById('gName').value,
+        teacherId:document.getElementById('gTeacher').value,
+        stage:document.getElementById('gStage').value,
+        grade:document.getElementById('gGrade').value,
+        day:document.getElementById('gDay').value,
+        time:document.getElementById('gTime').value,
+        duration:parseInt(document.getElementById('gDuration').value)||120,
+        monthlyFee:monthly,
+        sessionsPerMonth:sessions,
+        sessionFee:Math.round(monthly/sessions),
+        teacherSharePerStudent:parseInt(document.getElementById('gShare').value)||0,
+        location:document.getElementById('gLoc').value,
+        notes:document.getElementById('gNotes').value,
+        subject:DataService.getUserById(document.getElementById('gTeacher').value)?.subject||''
+      };
+      if(editId)await DataService.updateGroup(editId,data);
+      else await DataService.addGroup(data);
+      ThemeManager.closeModal();ThemeManager.toast('تم ✓','success');loadWorkspace();return false;
+    };
+
+    // ===== Students + Full Profile (6 tabs) =====
+    window.loadStudents=function(){
+      const q=(document.getElementById('stuSearch')?.value||'').toLowerCase();
+      let list=Ops.studentsInScope(currentUser.id);if(q)list=list.filter(s=>(s.name||'').toLowerCase().includes(q)||(s.code||'').toLowerCase().includes(q)||(s.phone||'').toLowerCase().includes(q));
+      document.getElementById('studentsList').innerHTML=list.length?list.map(s=>{
+        const stageLabel=EduFlowConfig.educationLevels[s.stage]?.nameAr||'-';
+        return `<div style="padding:12px;background:var(--surface-hover);border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;"><div><strong>${s.name}</strong><div class="text-xs text-muted">${s.code||''} · ${stageLabel} ${s.grade?'- '+s.grade:''} · ${s.phone||''}</div></div><button class="btn btn-primary btn-sm" onclick="openStudentProfile('${s.id}')">👁️ الملف الكامل</button></div>`;
+      }).join(''):'<p class="text-muted">لا طلاب</p>';
+    };
+
+    window.openStudentProfile=function(id){
+      const s=DataService.getUserById(id);if(!s)return;
+      const ts=DataService.getStudentTeachers(id);
+      const allAtt=DataService.getAttendance();
+      const att=allAtt.filter(a=>a.status==='approved'&&a.records.some(r=>r.studentId===id));
+      const pr=att.filter(a=>a.records.find(r=>r.studentId===id)?.status==='present').length;
+      const rate=att.length?Math.round(pr/att.length*100):0;
+      const billing=Ops.buildStudentBilling(id);
+      const totalDue=billing.reduce((a,x)=>a+x.billing.total,0);
+      const totalPaid=billing.reduce((a,x)=>a+x.payment.paidAmount,0);
+      const subs=DataService.getSubmissions({studentId:id});
+      const attempts=DataService.getExamAttempts({studentId:id});
+      const followups=Ops.getFollowUps({studentId:id});
+
+      const gradedHw=subs.filter(x=>x.status==='graded');
+      const avgHw=gradedHw.length?Math.round(gradedHw.reduce((a,x)=>a+(x.score||0),0)/gradedHw.length):0;
+      const gradedEx=attempts.filter(x=>x.status==='approved');
+      const avgEx=gradedEx.length?Math.round(gradedEx.reduce((a,x)=>a+(x.score||0),0)/gradedEx.length):0;
+
+      ThemeManager.openModal(`<div class="modal-header">
+        <div style="display:flex;gap:12px;align-items:center;">
+          <div class="user-avatar" style="width:48px;height:48px;font-size:18px;">${s.name.charAt(0)}</div>
+          <div><h3 class="modal-title" style="margin:0;">${s.name}</h3><div class="text-xs text-muted">${s.code||''} · ${EduFlowConfig.educationLevels[s.stage]?.nameAr||'-'} - ${s.grade||''} · ${s.phone||''}</div></div>
+        </div>
+        <button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="stat-mini">
+          <div class="stat-mini-box"><div class="stat-mini-value">${rate}%</div><div class="stat-mini-label">الحضور</div></div>
+          <div class="stat-mini-box"><div class="stat-mini-value">${avgHw}%</div><div class="stat-mini-label">متوسط الواجبات</div></div>
+          <div class="stat-mini-box"><div class="stat-mini-value">${avgEx}%</div><div class="stat-mini-label">متوسط الامتحانات</div></div>
+        </div>
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab(event,'info')">👤 البيانات</button>
+          <button class="tab-btn" onclick="switchTab(event,'att')">📋 الحضور</button>
+          <button class="tab-btn" onclick="switchTab(event,'hw')">📝 الواجبات</button>
+          <button class="tab-btn" onclick="switchTab(event,'ex')">🎓 الامتحانات</button>
+          <button class="tab-btn" onclick="switchTab(event,'pay')">💰 الدفعات</button>
+          <button class="tab-btn" onclick="switchTab(event,'fu')">📌 المتابعات</button>
+        </div>
+        <div id="tab-info" class="tab-content active">
+          <div class="detail-grid">
+            <div class="detail-box"><div class="lbl">الاسم</div><div class="val">${s.name}</div></div>
+            <div class="detail-box"><div class="lbl">الكود</div><div class="val">${s.code||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">المرحلة</div><div class="val">${EduFlowConfig.educationLevels[s.stage]?.nameAr||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">الصف</div><div class="val">${s.grade||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">الهاتف</div><div class="val">${s.phone||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">ولي الأمر</div><div class="val">${s.parentPhone||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">كود ولي الأمر</div><div class="val">${s.parentAccess||s.password||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">كلمة السر</div><div class="val">${s.password||'-'}</div></div>
+          </div>
+          <h4 class="text-sm" style="margin:16px 0 8px;">📚 الأساتذة والمجموعات:</h4>
+          ${ts.length?ts.map(t=>`<div class="sub-row"><div><strong>${t.teacher.name}</strong> — ${t.group.name}<div class="text-xs text-muted">${dayAr(t.group.day)} ${T(t.group.time)}</div></div></div>`).join(''):'<p class="text-muted">لا اشتراكات</p>'}
+        </div>
+        <div id="tab-att" class="tab-content">
+          ${att.length?att.slice().reverse().map(a=>{const r=a.records.find(r=>r.studentId===id);return `<div class="sub-row ${r?.status==='present'?'graded':'pending'}"><div><strong>${a.groupName}</strong><div class="text-xs text-muted">📅 ${a.date}</div></div><span class="badge ${r?.status==='present'?'badge-success':r?.status==='late'?'badge-warning':'badge-danger'}">${r?.status==='present'?'✓ حاضر':r?.status==='late'?'⏰ متأخر':'✗ غائب'}</span></div>`;}).join(''):'<p class="text-muted">لا سجلات حضور</p>'}
+        </div>
+        <div id="tab-hw" class="tab-content">
+          ${subs.length?subs.map(sub=>{const h=DataService.getHomeworkById(sub.homeworkId);const maxScore=sub.maxScore||h?.totalPoints||100;const pct=h&&h.totalPoints?Math.round(sub.score/h.totalPoints*100):(sub.score||0);return `<div class="sub-row ${sub.status==='graded'?'graded':'pending'}"><div><strong>${h?.title||'-'}</strong><div class="text-xs text-muted">${h?.deadline||''} ${h?.paper?'· 📝 ورقي':''}</div></div><div style="text-align:left;"><strong style="color:${sub.status==='graded'?'var(--success)':'var(--warning)'}">${sub.status==='graded'?pct+'%':'معلق'}</strong>${sub.status==='graded'?`<div class="text-xs text-muted">${sub.score}/${maxScore}</div>`:''}</div></div>`;}).join(''):'<p class="text-muted">لا واجبات مُسلّمة</p>'}
+        </div>
+        <div id="tab-ex" class="tab-content">
+          ${attempts.length?attempts.map(a=>{const e=DataService.getExamById(a.examId);const maxScore=a.maxScore||e?.totalPoints||100;const modeLabel=e?.mode==='home'?'🏠 منزلي':e?.mode==='class'?'🏫 حصة':'📝 ورقي';return `<div class="sub-row ${a.status==='approved'?'graded':'pending'}"><div><strong>${e?.title||'-'}</strong><div class="text-xs text-muted">${modeLabel}</div></div><div style="text-align:left;"><strong style="color:${a.status==='approved'?'var(--success)':'var(--warning)'}">${a.status==='approved'?Math.round((a.score/maxScore)*100)+'%':'معلق'}</strong>${a.status==='approved'?`<div class="text-xs text-muted">${a.score}/${maxScore}</div>`:''}</div></div>`;}).join(''):'<p class="text-muted">لا امتحانات</p>'}
+        </div>
+        <div id="tab-pay" class="tab-content">
+          ${billing.length?billing.map(x=>{const rem=Math.max(0,x.billing.total-x.payment.paidAmount);return `<div class="sub-row ${rem>0?'pending':'graded'}"><div><strong>${x.group.name}</strong><div class="text-xs text-muted">👨‍ ${DataService.getUserById(x.group.teacherId)?.name||''}</div></div><div style="text-align:left;"><strong>${x.payment.paidAmount}/${x.billing.total}</strong>${rem>0?`<div class="text-xs" style="color:var(--danger)">متبقي ${rem}</div>`:''}</div></div>`;}).join(''):'<p class="text-muted">لا مستحقات</p>'}
+        </div>
+        <div id="tab-fu" class="tab-content">
+          ${followups.length?followups.map(f=>`<div class="sub-row ${f.status==='resolved'?'graded':'pending'}"><div><strong>${f.title||f.reason}</strong><div class="text-xs text-muted">${f.auto?'🤖 أوتوماتيك':'✍️ يدوي'} · ${f.startDate||''}</div></div><span class="badge ${f.status==='resolved'?'badge-success':'badge-warning'}">${f.status}</span></div>`).join(''):'<p class="text-muted">لا متابعات</p>'}
+        </div>
+        ${s.parentPhone?`<div style="margin-top:14px;"><a class="btn btn-success btn-sm" href="https://wa.me/2${s.parentPhone.replace(/\D/g,'')}" target="_blank">💬 واتساب ولي الأمر</a></div>`:''}
+      </div>`,'modal-lg');
+    };
+
+    window.switchTab=function(ev,id){
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+      ev.target.classList.add('active');
+      document.getElementById('tab-'+id).classList.add('active');
+    };
+
+    // ===== Attendance =====
+    window.loadAttendance=function(){
+      const gOpts=Ops.groupsInScope(currentUser.id).map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
+      document.getElementById('attGroup').innerHTML='<option value="">--</option>'+gOpts;
+      document.getElementById('cancelGroup').innerHTML=gOpts;
+      document.getElementById('cancelDate').value=new Date().toISOString().split('T')[0];
+      renderManualAtt();
+      const pend=(db().attendance||[]).filter(a=>a.status==='pending'&&Ops.inScope(currentUser.id,{groupId:a.groupId}));
+      document.getElementById('pendingAtt').innerHTML=pend.length?pend.map(a=>`<div style="padding:12px;background:var(--surface-hover);border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;"><div><strong>${a.groupName}</strong><div class="text-xs text-muted">${a.date} · 👤 ${DataService.getUserById(a.submittedBy)?.name||'-'}</div></div><div style="display:flex;gap:6px;"><button class="btn btn-secondary btn-sm" onclick="viewAttDetail('${a.id}')">👁️ تفاصيل</button><button class="btn btn-success btn-sm" onclick="approveAtt('${a.id}')">✓</button><button class="btn btn-danger btn-sm" onclick="rejectAtt('${a.id}')">✗</button></div></div>`).join(''):'<p class="text-muted">لا معلق</p>';
+    };
+    window.viewAttDetail=function(id){
+      const a=(db().attendance||[]).find(x=>x.id===id);if(!a)return;
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📋 ${a.groupName}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">
+        <div class="text-sm text-muted" style="margin-bottom:12px;">📅 ${a.date} · أرسله: ${DataService.getUserById(a.submittedBy)?.name||'-'} · ${a.records.filter(r=>r.status==='present').length} حاضر / ${a.records.filter(r=>r.status!=='present').length} غائب</div>
+        ${a.records.map(r=>{const s=DataService.getUserById(r.studentId);return `<div style="display:flex;justify-content:space-between;padding:8px;background:var(--surface-hover);border-radius:6px;margin-bottom:4px;"><span>${s?.name||'-'}</span><span class="badge ${r.status==='present'?'badge-success':'badge-danger'}">${r.status==='present'?'✓ حاضر':'✗ غائب'}</span></div>`;}).join('')}
+      </div>`);
+    };
+    window.renderManualAtt=function(){
+      const gid=document.getElementById('attGroup').value;manualSel={};document.getElementById('qrBox').innerHTML='';
+      if(!gid){document.getElementById('manualAttList').innerHTML='';return;}
+      const sts=DataService.getStudentsByGroup(gid);sts.forEach(s=>manualSel[s.id]='present');
+      document.getElementById('manualAttList').innerHTML=sts.map(s=>`
+        <div style="padding:12px;background:var(--surface-hover);border-radius:8px;margin-bottom:8px;display:flex;gap:10px;align-items:center;">
+          <div class="user-avatar" style="width:32px;height:32px;font-size:13px;">${s.name.charAt(0)}</div>
+          <div style="flex:1;">${s.name}</div>
+          <div style="display:flex;gap:4px;">
+            <button class="btn btn-sm att-btn" style="background:var(--success);color:#fff;" onclick="setAttManual('${s.id}','present',this)">✓ حاضر</button>
+            <button class="btn btn-sm att-btn" style="background:var(--surface);color:var(--text-secondary);border:1px solid var(--border);" onclick="setAttManual('${s.id}','absent',this)">✗ غائب</button>
+          </div>
+        </div>`).join('')+`<button class="btn btn-primary w-full" onclick="submitManual('${gid}')">📤 إرسال</button>`;
+    };
+    window.setAttManual=function(sid,val,btn){
+      manualSel[sid]=val;
+      const wrap=btn.parentElement;
+      wrap.querySelectorAll('button').forEach(b=>{b.style.background='var(--surface)';b.style.color='var(--text-secondary)';b.style.border='1px solid var(--border)';});
+      if(val==='present'){btn.style.background='var(--success)';btn.style.color='#fff';btn.style.border='none';}
+      else{btn.style.background='var(--danger)';btn.style.color='#fff';btn.style.border='none';}
+    };
+    window.submitManual=async function(gid){const g=DataService.getGroups().find(x=>x.id===gid);await DataService.submitAttendance({groupId:gid,groupName:g.name,submittedBy:currentUser.id,records:Object.entries(manualSel).map(([sid,st])=>({studentId:sid,status:st}))});if(window.Ops)await Ops.runAutomations({type:'attendance_submitted'});ThemeManager.toast('تم ✓','success');loadAttendance();};
+    window.startQR=function(){const gid=document.getElementById('attGroup').value;if(!gid)return;const g=DataService.getGroups().find(x=>x.id===gid);const d=db();if(!d.qrSessions)d.qrSessions=[];const code='QR-'+Math.random().toString(36).slice(2,8).toUpperCase();d.qrSessions.push({id:'qr_'+Date.now(),groupId:gid,groupName:g.name,code,startedBy:currentUser.name,startedAt:new Date().toISOString(),active:true,checkIns:[]});save(d);document.getElementById('qrBox').innerHTML=`<div class="qr-box"><img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent('EDUFLOW-ATT:'+code)}" style="border-radius:12px;"><div class="qr-code">${code}</div></div>`;};
+    window.genCodeAtt=function(){const gid=document.getElementById('attGroup').value;if(!gid)return;const c=DataService.generateAttendanceCode(gid);document.getElementById('qrBox').innerHTML=`<div class="qr-box"><div class="qr-code">${c.code}</div><div class="text-sm">قول الكود للطلاب</div></div>`;};
+    window.approveAtt=async function(id){await DataService.approveAttendance(id,currentUser.id);ThemeManager.toast('تم ✓','success');loadAttendance();};
+    window.rejectAtt=function(id){const d=db();const a=(d.attendance||[]).find(x=>x.id===id);if(a){a.status='rejected';save(d);}ThemeManager.toast('تم الرفض','warning');loadAttendance();};
+    window.doCancelSession=async function(){const r=await DataService.cancelSession(document.getElementById('cancelGroup').value,document.getElementById('cancelDate').value,'إلغاء',currentUser.id);ThemeManager.toast(r.success?'تم ✓':r.message,r.success?'success':'warning');};
+
+    // ===== Accounting =====
+    window.loadAccounting=function(){
+      const gOpts=Ops.groupsInScope(currentUser.id).map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
+      document.getElementById('setGroup').innerHTML=gOpts;
+      document.getElementById('setMonth').value=new Date().toISOString().slice(0,7);
+      const cs=document.getElementById('calcStudent');cs.innerHTML=Ops.studentsInScope(currentUser.id).map(s=>`<option value="${s.id}">${s.name}</option>`).join('');UI.attachSearch(cs);
+    };
+    window.renderSettlement=function(){
+      const s=UI.settlement(document.getElementById('setGroup').value,document.getElementById('setMonth').value);if(!s)return;
+      document.getElementById('settlementView').innerHTML=`
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;">
+          <div class="settle-card"><div class="settle-value" style="color:var(--success)">${s.teacherDue}</div><div class="text-xs text-muted">المدرس يستلم</div></div>
+          <div class="settle-card"><div class="settle-value" style="color:var(--primary)">${s.collected}</div><div class="text-xs text-muted">المحصل</div></div>
+          <div class="settle-card"><div class="settle-value" style="color:var(--warning)">${s.centerNet}</div><div class="text-xs text-muted">صافي المركز</div></div>
+        </div>
+        <details><summary style="cursor:pointer;font-weight:700;margin-bottom:8px;">تفاصيل مين دفع</summary>${s.paidList.map(p=>`<div style="display:flex;justify-content:space-between;padding:8px;background:var(--surface-hover);border-radius:6px;margin-bottom:4px;font-size:13px;"><span>${p.student.name}</span><strong class="${p.paid>=p.due?'text-success':'text-danger'}">${p.paid}/${p.due}</strong></div>`).join('')}</details>
+        <div style="display:flex;gap:8px;margin-top:12px;"><button class="btn btn-success" onclick="recordTeacherPay('${s.group.id}','${document.getElementById('setMonth').value}',${s.teacherDue})">💵 دفع الأستاذ</button><button class="btn btn-secondary" onclick="recordCenter('${s.group.id}','${document.getElementById('setMonth').value}',${s.collected})">🏦 تحصيل السنتر</button></div>`;
+    };
+    window.recordTeacherPay=async function(gid,month,amt){await DataService.addPayment({studentId:'teacher_'+gid,month,amount:amt,paidAmount:amt,status:'paid',type:'teacher_settlement'});ThemeManager.toast('تم ✓','success');};
+    window.recordCenter=async function(gid,month,amt){await DataService.addPayment({studentId:'center_'+gid,month,amount:amt,paidAmount:amt,status:'paid',type:'center_collection'});ThemeManager.toast('تم ✓','success');};
+    window.calcStudentMonth=function(){
+      const sid=document.getElementById('calcStudent').value;const month=new Date().toISOString().slice(0,7);
+      const b=Ops.buildStudentBilling(sid)[0];
+      const att=DataService.getAttendance().filter(a=>a.status==='approved'&&a.records.some(r=>r.studentId===sid)&&a.date?.startsWith(month));
+      const attended=att.filter(a=>a.records.find(r=>r.studentId===sid)?.status==='present').length;
+      document.getElementById('calcView').innerHTML=b?`<div style="display:flex;justify-content:space-between;padding:8px;background:var(--surface-hover);border-radius:6px;margin-bottom:4px;"><span>حضر</span><strong>${attended}</strong></div><div style="display:flex;justify-content:space-between;padding:8px;background:var(--surface-hover);border-radius:6px;margin-bottom:4px;"><span>مكمل الشهر</span><strong>${b.billing.total}</strong></div><div style="display:flex;justify-content:space-between;padding:8px;background:var(--surface-hover);border-radius:6px;"><span>لو انسحب دلوقتي</span><strong>${attended*b.billing.sessionFee}</strong></div>`:'<p class="text-muted">لا اشتراكات</p>';
+    };
+
+    // ===== Paper Grades =====
+    window.loadPaperGrades=function(){
+      const gOpts=Ops.groupsInScope(currentUser.id).map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
+      document.getElementById('pgGroup').innerHTML='<option value="">-- اختر المجموعة --</option>'+gOpts;
+      pgGroupChanged();
+    };
+    window.pgGroupChanged=function(){
+      const gid=document.getElementById('pgGroup').value;
+      const refSel=document.getElementById('pgRef');
+      document.getElementById('pgStudents').innerHTML='';document.getElementById('pgSave').style.display='none';
+      document.getElementById('pgNewWrap').style.display='none';document.getElementById('pgTotalWrap').style.display='none';
+      pgCurrentRef=null;
+      if(!gid){refSel.innerHTML='';return;}
+      const hws=DataService.getHomework().filter(h=>h.groupId===gid);
+      const exs=DataService.getExams().filter(e=>e.groupId===gid&&e.mode==='offline');
+      refSel.innerHTML='<option value="">-- اختر أو أنشئ --</option>'+'<option value="__new__">➕ إنشاء واجب/امتحان ورقي جديد</option>'+hws.map(h=>`<option value="${h.id}">📝 ${h.title} (واجب ورقي)</option>`).join('')+exs.map(e=>`<option value="${e.id}">🎓 ${e.title} (امتحان ورقي)</option>`).join('');
+    };
+    window.pgRefChanged=function(){
+      const ref=document.getElementById('pgRef').value;
+      document.getElementById('pgNewWrap').style.display=ref==='__new__'?'block':'none';
+      if(ref==='__new__'){document.getElementById('pgStudents').innerHTML='';document.getElementById('pgSave').style.display='none';document.getElementById('pgTotalWrap').style.display='none';pgCurrentRef=null;return;}
+      if(!ref){document.getElementById('pgStudents').innerHTML='';document.getElementById('pgSave').style.display='none';document.getElementById('pgTotalWrap').style.display='none';pgCurrentRef=null;return;}
+      pgCurrentRef=ref;
+      const isHw=ref.startsWith('hw_');
+      const rec=isHw?DataService.getHomeworkById(ref):DataService.getExamById(ref);
+      document.getElementById('pgTotalWrap').style.display='block';
+      document.getElementById('pgTotal').value=rec?.totalPoints||10;
+      pgRenderStudents();
+    };
+    window.pgCreateNew=function(){
+      const gid=document.getElementById('pgGroup').value;
+      const title=document.getElementById('pgNewTitle').value.trim();
+      const type=document.getElementById('pgNewType').value;
+      const total=parseInt(document.getElementById('pgNewTotal').value)||10;
+      if(!title)return ThemeManager.toast('اكتب العنوان','error');
+      (async()=>{
+        let rec;
+        if(type==='hw')rec=await DataService.addHomework({title,groupId:gid,deadline:new Date().toISOString().split('T')[0],openDate:new Date().toISOString().split('T')[0],totalPoints:total,questions:[],maxAttempts:1,passingScore:50,showResults:true,subject:'ورقي',createdBy:currentUser.id,paper:true});
+        else rec=await DataService.addExam({title,groupId:gid,mode:'offline',duration:0,totalPoints:total,questions:[],maxAttempts:1,passingScore:50,subject:'ورقي',startTime:new Date().toISOString(),endTime:new Date(Date.now()+86400e3).toISOString(),createdBy:currentUser.id,paper:true});
+        ThemeManager.toast('تم ✓','success');
+        pgGroupChanged();
+        document.getElementById('pgRef').value=rec.id;
+        pgRefChanged();
+      })();
+    };
+    window.pgRenderStudents=function(){
+      const gid=document.getElementById('pgGroup').value;
+      if(!gid||!pgCurrentRef){document.getElementById('pgStudents').innerHTML='';document.getElementById('pgSave').style.display='none';return;}
+      const total=parseInt(document.getElementById('pgTotal').value)||10;
+      const sts=DataService.getStudentsByGroup(gid);
+      document.getElementById('pgStudents').innerHTML=sts.map(s=>`
+        <div style="display:flex;gap:10px;align-items:center;padding:10px;background:var(--surface-hover);border-radius:8px;margin-bottom:6px;">
+          <div class="user-avatar" style="width:32px;height:32px;font-size:13px;">${s.name.charAt(0)}</div>
+          <div style="flex:1;">${s.name}</div>
+          <div style="display:flex;gap:6px;align-items:center;"><input type="number" class="form-input" style="width:80px;" min="0" max="${total}" placeholder="0" data-stu="${s.id}"><span class="text-sm text-muted">من ${total}</span></div>
+        </div>`).join('')||'<p class="text-muted">لا طلاب</p>';
+      document.getElementById('pgSave').style.display=sts.length?'block':'none';
+    };
+    window.savePaperGrades=async function(){
+      if(!pgCurrentRef)return ThemeManager.toast('اختار واجب/امتحان','error');
+      const isHw=pgCurrentRef.startsWith('hw_');
+      const total=parseInt(document.getElementById('pgTotal').value)||10;
+      const inputs=document.querySelectorAll('#pgStudents input[data-stu]');
+      const d=db();let count=0;
+      if(isHw){const h=(d.homework||[]).find(x=>x.id===pgCurrentRef);if(h)h.totalPoints=total;}
+      else{const e=(d.exams||[]).find(x=>x.id===pgCurrentRef);if(e)e.totalPoints=total;}
+      for(const inp of inputs){
+        const sid=inp.dataset.stu;const val=inp.value.trim();
+        if(val==='')continue;
+        const score=parseFloat(val);
+        if(isHw){
+          d.submissions=d.submissions||[];
+          let sub=d.submissions.find(x=>x.homeworkId===pgCurrentRef&&x.studentId===sid);
+          if(sub){sub.score=score;sub.maxScore=total;sub.status='graded';sub.offline=true;sub.gradedBy=currentUser.id;}
+          else{const id='sub_'+Date.now()+'_'+Math.random().toString(36).slice(2,5);d.submissions.push({id,homeworkId:pgCurrentRef,studentId:sid,score,maxScore:total,status:'graded',offline:true,answers:[],gradedBy:currentUser.id,submittedAt:new Date().toISOString()});}
+        }else{
+          d.examAttempts=d.examAttempts||[];
+          let att=d.examAttempts.find(x=>x.examId===pgCurrentRef&&x.studentId===sid);
+          if(att){att.score=score;att.maxScore=total;att.status='approved';att.offline=true;att.gradedBy=currentUser.id;}
+          else{const id='eat_'+Date.now()+'_'+Math.random().toString(36).slice(2,5);d.examAttempts.push({id,examId:pgCurrentRef,studentId:sid,score,maxScore:total,status:'approved',offline:true,answers:[],gradedBy:currentUser.id,startTime:new Date().toISOString()});}
+        }
+        count++;
+      }
+      save(d);
+      ThemeManager.toast(`تم حفظ ${count} درجة (من ${total}) ✓`,'success');
+      document.querySelectorAll('#pgStudents input[data-stu]').forEach(i=>i.value='');
+    };
+
+    // ===== Monthly Collection =====
+    window.loadMonthly=function(){
+      document.getElementById('moMonth').value=new Date().toISOString().slice(0,7);
+      const gOpts=Ops.groupsInScope(currentUser.id).map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
+      document.getElementById('moGroup').innerHTML='<option value="">كل المجموعات</option>'+gOpts;
+      renderMonthly();
+    };
+    window.setMoFilter=function(f,btn){moFilter=f;document.querySelectorAll('#section-monthly .filter-btn').forEach(b=>b.classList.toggle('active',b===btn));renderMonthly();};
+    window.renderMonthly=function(){
+      const month=document.getElementById('moMonth').value||new Date().toISOString().slice(0,7);
+      const gFilter=document.getElementById('moGroup').value;
+      const monthName=new Date(month+'-01').toLocaleDateString('ar-EG',{month:'long',year:'numeric'});
+      const students=Ops.studentsInScope(currentUser.id);
+      const d=db();
+      let totalDue=0,totalPaid=0;let rows=[];
+      students.forEach(s=>{
+        let groups=DataService.getStudentTeachers(s.id).map(x=>x.group).filter(Boolean);
+        if(gFilter)groups=groups.filter(g=>g.id===gFilter);
+        groups.forEach(g=>{
+          const due=g.monthlyFee||0;
+          const pay=(d.payments||[]).find(p=>p.studentId===s.id&&p.groupId===g.id&&p.month===month);
+          const paid=pay?.paidAmount||0;
+          const status=paid>=due?'paid':paid>0?'partial':'unpaid';
+          totalDue+=due;totalPaid+=paid;
+          rows.push({s,g,due,paid,remaining:Math.max(0,due-paid),status});
+        });
+      });
+      document.getElementById('moSummary').innerHTML=`
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;">
+          <div class="settle-card"><div class="settle-value" style="color:var(--primary)">${totalDue}</div><div class="text-xs text-muted">إجمالي المطلوب</div></div>
+          <div class="settle-card"><div class="settle-value" style="color:var(--success)">${totalPaid}</div><div class="text-xs text-muted">المحصل</div></div>
+          <div class="settle-card"><div class="settle-value" style="color:var(--danger)">${totalDue-totalPaid}</div><div class="text-xs text-muted">المتبقي</div></div>
+        </div>
+        <div class="text-sm text-muted" style="margin-bottom:12px;">📅 شهر ${monthName} · الاستحقاق: 1 ${monthName.split(' ')[0]}</div>`;
+      let filtered=rows;
+      if(moFilter==='paid')filtered=rows.filter(r=>r.status==='paid');
+      else if(moFilter==='unpaid')filtered=rows.filter(r=>r.status!=='paid');
+      document.getElementById('moRows').innerHTML=filtered.length?filtered.map(r=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--surface-hover);border-radius:8px;margin-bottom:6px;">
+          <div><strong>${r.s.name}</strong><div class="text-xs text-muted">👥 ${r.g.name} · 👨‍ ${DataService.getUserById(r.g.teacherId)?.name||''}</div></div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span class="text-sm">${r.paid}/${r.due}</span>
+            <span class="badge ${r.status==='paid'?'badge-success':r.status==='partial'?'badge-warning':'badge-danger'}">${r.status==='paid'?'✅ دفع':r.status==='partial'?'🟡 جزئي':'⏳ لم يدفع'}</span>
+            ${r.status!=='paid'?`<button class="btn btn-success btn-sm" onclick="quickPay('${r.s.id}','${r.g.id}','${month}',${r.remaining})">💵</button>`:''}
+          </div>
+        </div>`).join(''):'<p class="text-muted">لا بيانات</p>';
+      const hist=(d.payments||[]).filter(p=>p.history&&p.history.length&&(Ops.studentsInScope(currentUser.id).some(s=>s.id===p.studentId))&&(!gFilter||p.groupId===gFilter));
+      let histRows=[];
+      hist.forEach(p=>{(p.history||[]).forEach(h=>{histRows.push({date:h.date,stu:DataService.getUserById(p.studentId)?.name||'-',amount:h.amount,method:h.method});});});
+      histRows.sort((a,b)=>new Date(b.date)-new Date(a.date));
+      document.getElementById('moHistory').innerHTML=histRows.length?histRows.slice(0,15).map(h=>`
+        <div style="display:flex;justify-content:space-between;padding:8px;background:var(--surface-hover);border-radius:6px;margin-bottom:4px;font-size:13px;">
+          <span>${h.stu}</span><span>${h.amount} ج.م · ${h.method==='vodafone'?'فودافون':'كاش'}</span><span class="text-xs text-muted">${new Date(h.date).toLocaleDateString('ar-EG')}</span>
+        </div>`).join(''):'<p class="text-muted">لا معاملات سابقة</p>';
+    };
+    window.quickPay=async function(sid,gid,month,remaining){
+      const amt=prompt('المبلغ المدفوع:',remaining);
+      if(amt===null)return;
+      const g=DataService.getGroups().find(x=>x.id===gid);
+      const d=db();d.payments=d.payments||[];
+      let pay=d.payments.find(p=>p.studentId===sid&&p.groupId===gid&&p.month===month);
+      if(!pay){const id='pay_'+Date.now();pay={id,studentId:sid,groupId:gid,teacherId:g?.teacherId,month,amount:g?.monthlyFee||0,paidAmount:0,status:'unpaid',history:[]};d.payments.push(pay);}
+      pay.paidAmount+=parseFloat(amt)||0;
+      pay.status=pay.paidAmount>=pay.amount?'paid':'partial';
+      pay.history=pay.history||[];pay.history.push({date:new Date().toISOString(),amount:parseFloat(amt)||0,method:'cash'});
+      save(d);
+      ThemeManager.toast('تم ✓','success');
+      renderMonthly();
+    };
+
+    // ===== Homework with Submissions Details =====
+    let hwQ=[];
+    window.loadHomework=function(){
+      const q=(document.getElementById('hwSearchBar')?.value||'').toLowerCase();
+      const d=db();const gids=Ops.groupsInScope(currentUser.id).map(g=>g.id);
+      let list=(d.homework||[]).filter(h=>gids.includes(h.groupId));
+      if(q)list=list.filter(h=>(h.title||'').toLowerCase().includes(q));
+      document.getElementById('hwList').innerHTML=list.length?list.map(h=>{
+        const group=DataService.getGroups().find(g=>g.id===h.groupId);
+        const totalStudents=group?DataService.getStudentsByGroup(group.id).length:0;
+        const subs=(d.submissions||[]).filter(s=>s.homeworkId===h.id);
+        const graded=subs.filter(s=>s.status==='graded');
+        const submissionRate=totalStudents?Math.round(subs.length/totalStudents*100):0;
+        const avgScore=graded.length?Math.round(graded.reduce((a,x)=>a+(x.score||0),0)/graded.length):0;
+        return `<div class="hw-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:200px;">
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">
+                <strong style="font-size:15px;">${h.title}</strong>
+                ${h.paper?'<span class="badge badge-muted">📝 ورقي</span>':''}
+                ${h.imageUrl?'<span class="badge badge-info">🖼️ صورة</span>':''}
+              </div>
+              <div class="text-xs text-muted">👥 ${group?.name||'-'} · 📅 ${h.deadline||'-'}</div>
+              <div class="stat-mini" style="margin-top:10px;">
+                <div class="stat-mini-box"><div class="stat-mini-value">${submissionRate}%</div><div class="stat-mini-label">نسبة التسليم</div></div>
+                <div class="stat-mini-box"><div class="stat-mini-value">${avgScore}%</div><div class="stat-mini-label">متوسط الدرجات</div></div>
+                <div class="stat-mini-box"><div class="stat-mini-value">${subs.length}/${totalStudents}</div><div class="stat-mini-label">مُسلَّم</div></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="btn btn-primary btn-sm" onclick="viewHwSubmissions('${h.id}')">📊 التسليمات (${subs.length})</button>
+              <button class="btn btn-danger btn-sm" onclick="delHw('${h.id}')">🗑️</button>
+            </div>
+          </div>
+        </div>`;
+      }).join(''):'<p class="text-muted">لا واجبات</p>';
+    };
+
+    window.viewHwSubmissions=function(hwId){
+      const h=DataService.getHomeworkById(hwId);if(!h)return;
+      const group=DataService.getGroups().find(g=>g.id===h.groupId);
+      const students=group?DataService.getStudentsByGroup(group.id):[];
+      const d=db();
+      const subs=(d.submissions||[]).filter(s=>s.homeworkId===hwId);
+      const graded=subs.filter(s=>s.status==='graded').map(s=>{
+        const st=DataService.getUserById(s.studentId);
+        const maxScore=s.maxScore||h.totalPoints||100;
+        const pct=h.totalPoints?Math.round(s.score/h.totalPoints*100):(s.score||0);
+        return {...s,student:st,maxScore,pct};
+      });
+      const pending=subs.filter(s=>s.status!=='graded').map(s=>({...s,student:DataService.getUserById(s.studentId)}));
+      const submittedIds=subs.map(s=>s.studentId);
+      const missing=students.filter(s=>!submittedIds.includes(s.id));
+      const avgScore=graded.length?Math.round(graded.reduce((a,x)=>a+(x.pct||0),0)/graded.length):0;
+
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📊 ${h.title}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body">
+        <div class="stat-mini">
+          <div class="stat-mini-box"><div class="stat-mini-value">${subs.length}/${students.length}</div><div class="stat-mini-label">مُسلَّم</div></div>
+          <div class="stat-mini-box"><div class="stat-mini-value">${graded.length}</div><div class="stat-mini-label">تم تصحيحه</div></div>
+          <div class="stat-mini-box"><div class="stat-mini-value">${avgScore}%</div><div class="stat-mini-label">المتوسط</div></div>
+        </div>
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab(event,'graded')">✓ تم التصحيح (${graded.length})</button>
+          <button class="tab-btn" onclick="switchTab(event,'pending')">⏳ بانتظار (${pending.length})</button>
+          <button class="tab-btn" onclick="switchTab(event,'missing')">✗ لم يسلّم (${missing.length})</button>
+        </div>
+        <div id="tab-graded" class="tab-content active">
+          ${graded.length?graded.sort((a,b)=>b.pct-a.pct).map(s=>`<div class="sub-row graded"><div><strong>${s.student?.name||'-'}</strong>${s.offline?'<span class="badge badge-muted" style="margin-inline-start:6px;">📝 ورقي</span>':''}<div class="text-xs text-muted">${s.student?.code||''}</div></div><div style="text-align:left;"><strong style="color:var(--success);font-size:18px;">${s.pct}%</strong><div class="text-xs text-muted">${s.score}/${s.maxScore}</div></div></div>`).join(''):'<p class="text-muted">لا درجات</p>'}
+        </div>
+        <div id="tab-pending" class="tab-content">
+          ${pending.length?pending.map(s=>`<div class="sub-row pending"><div><strong>${s.student?.name||'-'}</strong><div class="text-xs text-muted">${s.student?.code||''}</div></div><button class="btn btn-secondary btn-sm" onclick="gradeIt('hw','${s.id}')">✏️ صحّح</button></div>`).join(''):'<p class="text-muted">لا معلق ✓</p>'}
+        </div>
+        <div id="tab-missing" class="tab-content">
+          ${missing.length?missing.map(s=>`<div class="sub-row missing"><div><strong>${s.name||'-'}</strong><div class="text-xs text-muted">${s.code||''} · ${s.phone||''}</div></div>${s.parentPhone?`<a class="btn btn-success btn-sm" href="https://wa.me/2${s.parentPhone.replace(/\D/g,'')}" target="_blank">💬</a>`:''}</div>`).join(''):'<p class="text-muted">الكل سلّم ✓</p>'}
+        </div>
+      </div>`,'modal-lg');
+    };
+
+    window.openHwBuilder=function(){hwQ=[];ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📝 واجب</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>العنوان</label><input id="hwTitle" class="form-input" required></div><div class="form-group"><label>المجموعة</label><select id="hwGroup" class="form-select">${Ops.groupsInScope(currentUser.id).map(g=>`<option value="${g.id}">${g.name}</option>`).join('')}</select></div><div class="form-group"><label>الموعد</label><input type="date" id="hwDeadline" class="form-input" required></div><div class="form-group"><label>صورة الواجب (Drive)</label><input id="hwImage" class="form-input" placeholder="https://drive.google.com/..."></div><div id="hwQList"></div><div style="display:flex;gap:8px;margin:8px 0;"><button class="btn btn-secondary btn-sm" onclick="addHwQ('mcq')">+ MCQ</button><button class="btn btn-secondary btn-sm" onclick="addHwQ('truefalse')">+ صح/خطأ</button></div><button class="btn btn-primary w-full" onclick="saveHw()">💾</button></div>`);};
+    window.addHwQ=function(t){hwQ.push({id:'q'+Date.now(),type:t,text:'',options:t==='mcq'?['','','','']:[],correctAnswer:t==='mcq'?0:true,points:10,requiresManualReview:t==='short'});renderHwQ();};
+    window.renderHwQ=function(){document.getElementById('hwQList').innerHTML=hwQ.map((q,i)=>`<div style="background:var(--surface-hover);border-radius:8px;padding:12px;margin-bottom:8px;"><input type="text" class="form-input" placeholder="س${i+1}" onchange="hwQ[${i}].text=this.value">${q.type==='mcq'?q.options.map((o,oi)=>`<div style="display:flex;gap:8px;align-items:center;margin-top:6px;"><input type="radio" name="c${q.id}" ${q.correctAnswer===oi?'checked':''} onchange="hwQ[${i}].correctAnswer=${oi}"><input type="text" class="form-input" placeholder="خيار" onchange="hwQ[${i}].options[${oi}]=this.value"></div>`).join(''):''}</div>`).join('');};
+    window.saveHw=async function(){if(!document.getElementById('hwTitle').value||!hwQ.length)return ThemeManager.toast('أكمل','error');await DataService.addHomework({title:document.getElementById('hwTitle').value,groupId:document.getElementById('hwGroup').value,deadline:document.getElementById('hwDeadline').value,imageUrl:document.getElementById('hwImage').value,questions:hwQ,maxAttempts:2,passingScore:60,showResults:true,subject:'English',openDate:new Date().toISOString().split('T')[0],createdBy:currentUser.id,preparedBy:'assistant'});ThemeManager.closeModal();loadHomework();};
+    window.delHw=async function(id){if(!confirm('حذف؟'))return;await DataService.deleteHomework(id);loadHomework();};
+
+    // ===== Exams with Attempts Details =====
+    let exQ=[];
+    window.loadExams=function(){
+      const q=(document.getElementById('exSearchBar')?.value||'').toLowerCase();
+      const d=db();const gids=Ops.groupsInScope(currentUser.id).map(g=>g.id);
+      let list=(d.exams||[]).filter(e=>gids.includes(e.groupId));
+      if(q)list=list.filter(e=>(e.title||'').toLowerCase().includes(q));
+      document.getElementById('exList').innerHTML=list.length?list.map(e=>{
+        const group=DataService.getGroups().find(g=>g.id===e.groupId);
+        const totalStudents=group?DataService.getStudentsByGroup(group.id).length:0;
+        const att=(d.examAttempts||[]).filter(a=>a.examId===e.id);
+        const graded=att.filter(a=>a.status==='approved');
+        const attemptRate=totalStudents?Math.round(att.length/totalStudents*100):0;
+        const avgScore=graded.length?Math.round(graded.reduce((a,x)=>a+(x.score||0),0)/graded.length):0;
+        const modeLabel=e.mode==='home'?'🏠 منزلي':e.mode==='class'?'🏫 حصة':'📝 ورقي';
+        return `<div class="hw-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:200px;">
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">
+                <strong style="font-size:15px;">${e.title}</strong>
+                <span class="badge badge-info">${modeLabel}</span>
+              </div>
+              <div class="text-xs text-muted">👥 ${group?.name||'-'} · ⏱️ ${e.duration||60}د</div>
+              <div class="stat-mini" style="margin-top:10px;">
+                <div class="stat-mini-box"><div class="stat-mini-value">${attemptRate}%</div><div class="stat-mini-label">نسبة المحاولات</div></div>
+                <div class="stat-mini-box"><div class="stat-mini-value">${avgScore}%</div><div class="stat-mini-label">المتوسط</div></div>
+                <div class="stat-mini-box"><div class="stat-mini-value">${att.length}/${totalStudents}</div><div class="stat-mini-label">حاولوا</div></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="btn btn-primary btn-sm" onclick="viewExAttempts('${e.id}')">📊 المحاولات (${att.length})</button>
+              <button class="btn btn-danger btn-sm" onclick="delEx('${e.id}')">🗑️</button>
+            </div>
+          </div>
+        </div>`;
+      }).join(''):'<p class="text-muted">لا امتحانات</p>';
+    };
+
+    window.viewExAttempts=function(exId){
+      const e=DataService.getExamById(exId);if(!e)return;
+      const group=DataService.getGroups().find(g=>g.id===e.groupId);
+      const students=group?DataService.getStudentsByGroup(group.id):[];
+      const d=db();
+      const att=(d.examAttempts||[]).filter(a=>a.examId===exId);
+      const graded=att.filter(a=>a.status==='approved').map(a=>{
+        const st=DataService.getUserById(a.studentId);
+        const maxScore=a.maxScore||e.totalPoints||100;
+        const pct=e.totalPoints?Math.round(a.score/e.totalPoints*100):(maxScore?Math.round(a.score/maxScore*100):(a.score||0));
+        return {...a,student:st,maxScore,pct};
+      });
+      const pending=att.filter(a=>a.status!=='approved').map(a=>({...a,student:DataService.getUserById(a.studentId)}));
+      const attemptedIds=att.map(a=>a.studentId);
+      const notAttempted=students.filter(s=>!attemptedIds.includes(s.id));
+      const avgScore=graded.length?Math.round(graded.reduce((a,x)=>a+(x.pct||0),0)/graded.length):0;
+
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📊 ${e.title}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body">
+        <div class="stat-mini">
+          <div class="stat-mini-box"><div class="stat-mini-value">${att.length}/${students.length}</div><div class="stat-mini-label">حاولوا</div></div>
+          <div class="stat-mini-box"><div class="stat-mini-value">${avgScore}%</div><div class="stat-mini-label">المتوسط</div></div>
+          <div class="stat-mini-box"><div class="stat-mini-value">${graded.length}</div><div class="stat-mini-label">مُصحّح</div></div>
+        </div>
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab(event,'graded')">✓ تم التصحيح (${graded.length})</button>
+          <button class="tab-btn" onclick="switchTab(event,'pending')">⏳ بانتظار (${pending.length})</button>
+          <button class="tab-btn" onclick="switchTab(event,'notAttempted')">✗ لم يحاول (${notAttempted.length})</button>
+        </div>
+        <div id="tab-graded" class="tab-content active">
+          ${graded.length?graded.sort((a,b)=>b.pct-a.pct).map(a=>`<div class="sub-row graded"><div><strong>${a.student?.name||'-'}</strong>${a.offline?'<span class="badge badge-muted" style="margin-inline-start:6px;">📝 ورقي</span>':''}<div class="text-xs text-muted">${a.student?.code||''}</div></div><div style="display:flex;gap:8px;align-items:center;"><button class="btn btn-ghost btn-sm" onclick="viewExAnswers('${a.id}')">👁️</button><strong style="color:var(--success);font-size:18px;">${a.pct}%</strong><div class="text-xs text-muted">${a.score}/${a.maxScore}</div></div></div>`).join(''):'<p class="text-muted">لا درجات</p>'}
+        </div>
+        <div id="tab-pending" class="tab-content">
+          ${pending.length?pending.map(a=>`<div class="sub-row pending"><div><strong>${a.student?.name||'-'}</strong><div class="text-xs text-muted">${a.student?.code||''}</div></div><button class="btn btn-secondary btn-sm" onclick="gradeIt('ex','${a.id}')">✏️ صحّح</button></div>`).join(''):'<p class="text-muted">الكل مُصحّح ✓</p>'}
+        </div>
+        <div id="tab-notAttempted" class="tab-content">
+          ${notAttempted.length?notAttempted.map(s=>`<div class="sub-row missing"><div><strong>${s.name||'-'}</strong><div class="text-xs text-muted">${s.code||''} · ${s.phone||''}</div></div>${s.parentPhone?`<a class="btn btn-success btn-sm" href="https://wa.me/2${s.parentPhone.replace(/\D/g,'')}" target="_blank">💬</a>`:''}</div>`).join(''):'<p class="text-muted">الكل حاول ✓</p>'}
+        </div>
+      </div>`,'modal-lg');
+    };
+
+    window.viewExAnswers=function(attId){
+      const d=db();const a=(d.examAttempts||[]).find(x=>x.id===attId);if(!a)return;
+      const e=DataService.getExamById(a.examId);const st=DataService.getUserById(a.studentId);
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">👁️ إجابات ${st?.name||'-'}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body">
+        ${(e?.questions||[]).map((q,i)=>{const ans=(a.answers||[]).find(x=>x.questionId===q.id);const correct=q.correctAnswer;const isCorrect=ans&&ans.answer===correct;return `<div class="sub-row ${isCorrect?'graded':'pending'}"><div style="flex:1;"><strong>س${i+1}: ${q.text||''}</strong><div class="text-xs text-muted" style="margin-top:4px;">إجابة الطالب: <strong>${ans?.answer??'—'}</strong> · الصحيحة: <strong>${correct}</strong></div></div><span class="badge ${isCorrect?'badge-success':'badge-danger'}">${isCorrect?'✓':'✗'}</span></div>`;}).join('')||'<p class="text-muted">لا أسئلة</p>'}
+      </div>`);
+    };
+
+    window.openExBuilder=function(){exQ=[];ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🎓 امتحان</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>العنوان</label><input id="exTitle" class="form-input" required></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المجموعة</label><select id="exGroup" class="form-select">${Ops.groupsInScope(currentUser.id).map(g=>`<option value="${g.id}">${g.name}</option>`).join('')}</select></div><div class="form-group"><label>النوع</label><select id="exMode" class="form-select"><option value="home">منزلي</option><option value="class">حصة</option><option value="offline">ورقي</option></select></div></div><div id="exQList"></div><div style="display:flex;gap:8px;margin:8px 0;"><button class="btn btn-secondary btn-sm" onclick="addExQ('mcq')">+ MCQ</button><button class="btn btn-secondary btn-sm" onclick="addExQ('truefalse')">+ صح/خطأ</button></div><button class="btn btn-primary w-full" onclick="saveEx()">💾</button></div>`);};
+    window.addExQ=function(t){exQ.push({id:'q'+Date.now(),type:t,text:'',options:t==='mcq'?['','','','']:[],correctAnswer:t==='mcq'?0:true,points:10,requiresManualReview:t==='short'});renderExQ();};
+    window.renderExQ=function(){document.getElementById('exQList').innerHTML=exQ.map((q,i)=>`<div style="background:var(--surface-hover);border-radius:8px;padding:12px;margin-bottom:8px;"><input type="text" class="form-input" placeholder="س${i+1}" onchange="exQ[${i}].text=this.value">${q.type==='mcq'?q.options.map((o,oi)=>`<div style="display:flex;gap:8px;align-items:center;margin-top:6px;"><input type="radio" name="x${q.id}" ${q.correctAnswer===oi?'checked':''} onchange="exQ[${i}].correctAnswer=${oi}"><input type="text" class="form-input" placeholder="خيار" onchange="exQ[${i}].options[${oi}]=this.value"></div>`).join(''):''}</div>`).join('');};
+    window.saveEx=async function(){if(!document.getElementById('exTitle').value||!exQ.length)return ThemeManager.toast('أكمل','error');await DataService.addExam({title:document.getElementById('exTitle').value,groupId:document.getElementById('exGroup').value,mode:document.getElementById('exMode').value,duration:60,questions:exQ,maxAttempts:1,passingScore:50,randomizeQuestions:true,subject:'English',startTime:new Date().toISOString(),endTime:new Date(Date.now()+86400e3).toISOString(),createdBy:currentUser.id,preparedBy:'assistant'});ThemeManager.closeModal();loadExams();};
+    window.delEx=async function(id){if(!confirm('حذف؟'))return;await DataService.deleteExam(id);loadExams();};
+
+    // ===== Grades (Online) =====
+    window.setGrades=function(m,btn){gradesMode=m;document.querySelectorAll('#section-grades .filter-btn').forEach(b=>b.classList.toggle('active',b===btn));loadGrades();};
+    window.loadGrades=function(){
+      const d=db();const gids=Ops.groupsInScope(currentUser.id).map(g=>g.id);let html='';
+      if(gradesMode==='hw'){
+        const subs=(d.submissions||[]).filter(s=>{const h=(d.homework||[]).find(h=>h.id===s.homeworkId);return h&&gids.includes(h.groupId);});
+        html=subs.map(s=>{const h=DataService.getHomeworkById(s.homeworkId);const st=DataService.getUserById(s.studentId);const mx=s.maxScore||h?.totalPoints||'';return `<div style="padding:12px;background:var(--surface-hover);border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;"><div><strong>${st?.name||'-'}</strong><div class="text-xs text-muted">${h?.title||'-'}</div></div><div style="display:flex;gap:6px;align-items:center;"><span class="badge ${s.status==='graded'?'badge-success':'badge-warning'}">${s.status==='graded'?(s.score+(mx?' من '+mx:'')):'معلق'}</span><button class="btn btn-secondary btn-sm" onclick="gradeIt('hw','${s.id}')">✏️</button></div></div>`;}).join('')||'<p class="text-muted">لا تسليمات</p>';
+      }else{
+        const atts=(d.examAttempts||[]).filter(a=>{const e=(d.exams||[]).find(e=>e.id===a.examId);return e&&gids.includes(e.groupId);});
+        html=atts.map(a=>{const e=DataService.getExamById(a.examId);const st=DataService.getUserById(a.studentId);const mx=a.maxScore||e?.totalPoints||'';return `<div style="padding:12px;background:var(--surface-hover);border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;"><div><strong>${st?.name||'-'}</strong><div class="text-xs text-muted">${e?.title||'-'}</div></div><div style="display:flex;gap:6px;align-items:center;"><span class="badge ${a.status==='approved'?'badge-success':'badge-warning'}">${a.status==='approved'?(a.score+(mx?' من '+mx:'')):'معلق'}</span><button class="btn btn-secondary btn-sm" onclick="gradeIt('ex','${a.id}')">✏️</button></div></div>`;}).join('')||'<p class="text-muted">لا محاولات</p>';
+      }
+      document.getElementById('gradesList').innerHTML=html;
+    };
+    window.gradeIt=function(type,id){ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">✏️ إدخال درجة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>الدرجة</label><input type="number" id="gradeVal" class="form-input" min="0"></div><button class="btn btn-primary w-full" onclick="saveGrade('${type}','${id}')">💾 حفظ</button></div>`,'modal-sm');};
+    window.saveGrade=async function(type,id){
+      const score=parseInt(document.getElementById('gradeVal').value)||0;
+      if(type==='hw')await DataService.gradeSubmission(id,score,currentUser.id,'تصحيح يدوي');
+      else{const d=db();const a=(d.examAttempts||[]).find(x=>x.id===id);if(a){a.score=score;a.status='approved';a.gradedBy=currentUser.id;save(d);if(window.FirebaseService?.connected)FirebaseService.saveDoc('examAttempts',id,a);}}
+      ThemeManager.closeModal();ThemeManager.toast('تم ✓','success');loadGrades();
+    };
+
+    // ===== Followups =====
+    function generateAutoFollowups(){
+      const students=Ops.studentsInScope(currentUser.id);const d=db();const today=new Date().toISOString().split('T')[0];
+      students.forEach(s=>{
+        const open=Ops.getFollowUps({studentId:s.id}).filter(f=>f.status!=='resolved');
+        const abs=DataService.getAttendance().filter(a=>a.status==='approved'&&a.records.some(r=>r.studentId===s.id&&r.status==='absent')).length;
+        if(abs>=2&&!open.some(f=>f.reason==='absence'))Ops.addFollowUp({studentId:s.id,reason:'absence',title:`غياب متكرر (${abs})`,ownerAssistant:currentUser.id,status:'open',auto:true});
+        const hw=(d.homework||[]).filter(h=>h.groupId===s.groupId&&h.deadline<today);
+        const late=hw.some(h=>!(d.submissions||[]).some(x=>x.homeworkId===h.id&&x.studentId===s.id));
+        if(late&&!open.some(f=>f.reason==='homework'))Ops.addFollowUp({studentId:s.id,reason:'homework',title:'واجب متأخر',ownerAssistant:currentUser.id,status:'open',auto:true});
+        const pay=(d.payments||[]).find(p=>p.studentId===s.id&&p.status!=='paid');
+        if(pay&&!open.some(f=>f.reason==='payment'))Ops.addFollowUp({studentId:s.id,reason:'payment',title:'دفعة متأخرة',ownerAssistant:currentUser.id,status:'open',auto:true});
+      });
+    }
+    window.loadFollowups=function(){
+      const list=Ops.getFollowUps({ownerAssistant:currentUser.id});
+      document.getElementById('followupsList').innerHTML=list.length?list.map(f=>{const s=DataService.getUserById(f.studentId);return `<div class="card" style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;"><div><strong>${f.title||f.reason}</strong> ${f.auto?'<span class="badge badge-info">أوتوماتيك</span>':''}<div class="text-sm text-muted">👤 ${s?.name||'-'}</div></div><span class="badge ${f.status==='resolved'?'badge-success':'badge-warning'}">${f.status}</span></div><div style="display:flex;gap:6px;margin-top:8px;"><button class="btn btn-success btn-sm" onclick="waFollowup('${f.studentId}','${f.reason}')">💬 ولي الأمر</button><button class="btn btn-secondary btn-sm" onclick="openStudentProfile('${f.studentId}')">👁️ الملف</button>${f.status!=='resolved'?`<button class="btn btn-primary btn-sm" onclick="resolveFu('${f.id}')">✓ إغلاق</button>`:''}</div></div>`;}).join(''):'<p class="text-muted">لا متابعات ✓</p>';
+    };
+    window.openFollowupModal=function(){ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📌 متابعة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>الطالب</label><select id="fuStu" class="form-select">${Ops.studentsInScope(currentUser.id).map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div><div class="form-group"><label>السبب</label><select id="fuReason" class="form-select"><option value="absence">غياب</option><option value="homework">واجب</option><option value="payment">دفعة</option><option value="behavior">سلوك</option></select></div><button class="btn btn-primary w-full" onclick="saveFu()">💾</button></div>`);};
+    window.saveFu=async function(){await Ops.addFollowUp({studentId:document.getElementById('fuStu').value,reason:document.getElementById('fuReason').value,title:document.getElementById('fuReason').value,ownerAssistant:currentUser.id,status:'open'});ThemeManager.closeModal();loadFollowups();};
+    window.resolveFu=async function(id){await Ops.updateFollowUp(id,{status:'resolved'});loadFollowups();};
+    function getTemplates(){return JSON.parse(localStorage.getItem('eduflow_templates')||'null')||[{name:'غياب',content:'السلام عليكم، نفيدكم بأن الطالب {{name}} تغيب عن حصة {{group}}'},{name:'واجب',content:'تذكير: الطالب {{name}} عليه واجب'},{name:'دفعة',content:'نفيدكم بأن الطالب {{name}} عليه دفعة متأخرة'}];}
+    window.waFollowup=function(sid,reason){const s=DataService.getUserById(sid);const map={absence:0,homework:1,payment:2,behavior:2};const t=getTemplates()[map[reason]??0];const msg=t.content.replace('{{name}}',s.name).replace('{{group}}',DataService.getGroups().find(g=>g.id===s.groupId)?.name||'');const num=(s.parentPhone||s.phone||'').replace(/\D/g,'');window.open(`https://wa.me/2${num}?text=${encodeURIComponent(msg)}`,'_blank');Ops.addCommunicationLog({personType:'parent',personId:num,studentId:sid,channel:'whatsapp',summary:msg,by:currentUser.name,reason});};
+
+    // ===== Tasks / Payments / Calendar / Reports / Logs =====
+    window.loadTasks=function(){const d=db();let html='';(d.attendance||[]).filter(a=>a.status==='pending'&&Ops.inScope(currentUser.id,{groupId:a.groupId})).forEach(a=>{html+=`<div class="task-item"><div style="font-size:20px;">📋</div><div style="flex:1;"><div class="task-title">اعتماد: ${a.groupName}</div></div><button class="btn btn-primary btn-sm" onclick="showSection('attendance')">تنفيذ ←</button></div>`;});(d.submissions||[]).filter(s=>s.status==='pending_review').forEach(s=>{html+=`<div class="task-item"><div style="font-size:20px;">📝</div><div style="flex:1;"><div class="task-title">تصحيح: ${DataService.getUserById(s.studentId)?.name||''}</div></div><button class="btn btn-primary btn-sm" onclick="showSection('grades')">تنفيذ ←</button></div>`;});DataService.getTasks({assignedTo:currentUser.id}).forEach(t=>{html+=`<div class="task-item priority-${t.priority}"><div class="task-checkbox ${t.status==='completed'?'checked':''}" onclick="toggleTask('${t.id}')">${t.status==='completed'?'✓':''}</div><div style="flex:1;"><div class="task-title">${t.title}</div></div></div>`;});document.getElementById('tasksList').innerHTML=html||'<p class="text-muted">لا مهام ✓</p>';};
+    window.toggleTask=async function(id){const t=DataService.getTasks().find(x=>x.id===id);await DataService.updateTask(id,{status:t.status==='completed'?'open':'completed'});loadTasks();};
+    window.loadPayments=function(){
+      document.getElementById('paymentsList').innerHTML=DataService.getPayments().filter(p=>Ops.studentsInScope(currentUser.id).some(s=>s.id===p.studentId)||p.type).map(p=>{const g=p.groupId?DataService.getGroups().find(x=>x.id===p.groupId):null;return `<div style="padding:12px;background:var(--surface-hover);border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;"><div><strong>${DataService.getUserById(p.studentId)?.name||(p.type==='teacher_settlement'?'تسوية أستاذ':p.type==='center_collection'?'تحصيل سنتر':'-')}</strong><div class="text-xs text-muted">${p.month} · ${p.paidAmount}/${p.amount}${g?' · لـ '+g.name:''}</div></div>${p.status!=='paid'&&!p.type?`<button class="btn btn-success btn-sm" onclick="recordPay('${p.id}','${p.studentId}')">💵</button>`:`<span class="badge badge-success">مسدد</span>`}</div>`;}).join('')||'<p class="text-muted">لا مدفوعات</p>';
+    };
+    window.recordPay=function(id,sid){
+      const billing=Ops.buildStudentBilling(sid);
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">💵 دفع</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">
+        <div class="form-group"><label>الرسوم دي بتاعة:</label><select id="payGroup" class="form-select">${billing.map(x=>`<option value="${x.group.id}">${x.group.name} (متبقي ${Math.max(0,x.billing.total-x.payment.paidAmount)})</option>`).join('')}</select></div>
+        <div class="form-group"><label>المبلغ</label><input type="number" id="payAmt" class="form-input"></div>
+        <div class="form-group"><label>الطريقة</label><select id="payMethod" class="form-select"><option value="cash">كاش</option><option value="vodafone">فودافون كاش</option></select></div>
+        <button class="btn btn-success w-full" onclick="doRecordPay('${id}')">💵 تأكيد</button></div>`,'modal-sm');
+    };
+    window.doRecordPay=async function(id){
+      const gid=document.getElementById('payGroup').value;const g=DataService.getGroups().find(x=>x.id===gid);
+      const d=db();const p=(d.payments||[]).find(x=>x.id===id);if(p){p.groupId=gid;p.teacherId=g?.teacherId;}save(d);
+      await DataService.recordPayment(id,parseInt(document.getElementById('payAmt').value)||0,document.getElementById('payMethod').value);
+      ThemeManager.closeModal();ThemeManager.toast('تم ✓','success');loadPayments();
+    };
+    window.loadCalendar=function(){
+      const sel=document.getElementById('calGroup');
+      if(!sel.options.length)sel.innerHTML=Ops.groupsInScope(currentUser.id).map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
+      const g=DataService.getGroups().find(x=>x.id===sel.value);if(!g)return;
+      const now=new Date();const y=now.getFullYear(),m=now.getMonth();const daysInMonth=new Date(y,m+1,0).getDate();const wd=DAYS.map(d=>d.en);
+      let html='<div class="cal-grid">'+['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'].map(d=>`<div style="text-align:center;font-size:11px;font-weight:700;color:var(--text-muted);">${d}</div>`).join('');
+      for(let i=0;i<new Date(y,m,1).getDay();i++)html+='<div class="cal-day empty"></div>';
+      for(let d=1;d<=daysInMonth;d++){const date=new Date(y,m,d);const dateStr=date.toISOString().split('T')[0];let cls='',mark='';if(wd[date.getDay()]===g.day){if(DataService.isSessionCancelled(g.id,dateStr)){cls='cancel';mark='✗';}else if((db().attendance||[]).some(a=>a.groupId===g.id&&a.date===dateStr&&a.status==='approved')){cls='ok';mark='✓';}}html+=`<div class="cal-day ${cls}"><div class="num">${d}</div>${mark?`<div class="mark">${mark}</div>`:''}</div>`;}
+      document.getElementById('calendarView').innerHTML=html+'</div>';
+    };
+    window.loadReports=function(){const att=DataService.getAttendance().filter(a=>a.status==='approved');document.getElementById('reportView').innerHTML='<table class="table"><thead><tr><th>المجموعة</th><th>حاضر</th><th>غائب</th></tr></thead><tbody>'+Ops.groupsInScope(currentUser.id).map(g=>{const ga=att.filter(a=>a.groupId===g.id);const pr=ga.reduce((s,a)=>s+a.records.filter(x=>x.status==='present').length,0);const tot=ga.reduce((s,a)=>s+a.records.length,0);return `<tr><td>${g.name}</td><td>${pr}</td><td>${tot-pr}</td></tr>`;}).join('')+'</tbody></table>';};
+    window.loadLogs=function(){document.getElementById('logsList').innerHTML=DataService.getActivityLogs().filter(l=>l.userId===currentUser.id).map(l=>`<div class="activity-item"><div class="activity-dot"></div><div><div class="activity-title">${l.action}</div><div class="activity-meta"><span>🕐 ${new Date(l.timestamp).toLocaleString('ar-EG')}</span></div></div></div>`).join('')||'<p class="text-muted">لا سجل</p>';};
+
+    window.handleLogout=function(){if(confirm('خروج؟'))AuthService.logout();};
+  </script>
+</body>
+</html>

@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة الأدمن - EduFlow</title>
+  <link rel="stylesheet" href="css/eduflow-theme.css">
+  <style>
+    .workload-row{display:grid;grid-template-columns:1fr 70px 70px 70px 70px;gap:8px;align-items:center;padding:10px;background:var(--surface-hover);border-radius:8px;margin-bottom:6px;font-size:13px}
+    .ws{text-align:center;padding:4px;background:var(--surface);border-radius:6px}
+    .qr-box{text-align:center;padding:20px;background:var(--surface-hover);border-radius:var(--radius);margin:12px 0}
+    .qr-code{font-family:var(--font-en);font-size:26px;font-weight:800;letter-spacing:4px;color:var(--primary);margin:10px 0}
+    .search-results{position:absolute;top:100%;right:0;left:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;max-height:300px;overflow-y:auto;z-index:60}
+    .search-result{padding:10px;cursor:pointer;border-bottom:1px solid var(--border)}
+    .search-result:hover{background:var(--surface-hover)}
+    .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .detail-box{background:var(--surface-hover);border-radius:10px;padding:12px;cursor:pointer;transition:all var(--t)}
+    .detail-box:hover{border-color:var(--primary-border);background:var(--primary-soft)}
+    .detail-box .lbl{font-size:11px;color:var(--text-muted);margin-bottom:4px}
+    .detail-box .val{font-weight:700;font-size:13px}
+    .settle-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center}
+    .settle-value{font-size:26px;font-weight:800;font-family:var(--font-en)}
+    .stat-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+    .stat-mini-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
+    .stat-mini-value{font-size:18px;font-weight:800;color:var(--primary)}
+    .stat-mini-label{font-size:10px;color:var(--text-muted);margin-top:2px}
+    .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:16px;overflow-x:auto}
+    .tab-btn{padding:8px 14px;background:none;border:none;color:var(--text-secondary);cursor:pointer;font-weight:700;font-size:13px;border-bottom:2px solid transparent;white-space:nowrap}
+    .tab-btn.active{color:var(--primary);border-bottom-color:var(--primary)}
+    .tab-content{display:none}
+    .tab-content.active{display:block}
+    .sub-row{padding:10px;background:var(--surface-hover);border-radius:8px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+    .sub-row.graded{border-right:3px solid var(--success)}
+    .sub-row.pending{border-right:3px solid var(--warning)}
+    .sub-row.missing{border-right:3px solid var(--danger);opacity:.75}
+    .hw-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px}
+    .hw-card:hover{border-color:var(--primary-border)}
+    .progress-bar{height:6px;background:var(--surface-hover);border-radius:9999px;overflow:hidden;margin-top:6px}
+    .progress-fill{height:100%;background:var(--primary);border-radius:9999px;transition:width var(--t)}
+    .stage-grade-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .filter-info{background:var(--info-bg);border:1px solid var(--info-border);border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:12px;color:var(--info)}
+    @media(max-width:640px){.detail-grid{grid-template-columns:1fr}.stat-mini{grid-template-columns:1fr 1fr}.stage-grade-row{grid-template-columns:1fr}}
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header"><div class="sidebar-logo" data-logo></div><div><div class="sidebar-brand-name" data-brand-name>EduFlow</div><div class="sidebar-brand-tagline">Super Admin</div></div></div>
+      <nav class="sidebar-nav" id="sidebarNav"></nav>
+      <div class="sidebar-footer"><div class="sidebar-user"><div class="sidebar-user-avatar" id="userAvatar">A</div><div><div class="sidebar-user-name" id="userName">Admin</div><div class="sidebar-user-role">مدير النظام</div></div></div><button class="btn btn-ghost w-full" onclick="handleLogout()">🚪 خروج</button></div>
+    </aside>
+    <main class="main-content">
+      <header class="main-header">
+        <div class="main-header-right"><button class="menu-toggle" id="menuToggle"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button><div><h1 class="page-title" id="pageTitle">نظرة عامة</h1><p class="page-subtitle" id="pageSubtitle">لوحة تحكم الأدمن</p></div></div>
+        <div class="main-header-left"><div class="header-actions" style="position:relative;"><div class="search-bar" style="width:200px;"><input type="text" id="globalSearch" class="form-input" placeholder="بحث شامل..." oninput="doGlobalSearch(this.value)"></div><div id="searchResults" class="search-results" style="display:none;"></div><button class="icon-btn" id="themeToggle"></button></div></div>
+      </header>
+      <div class="content-area">
+
+        <section class="section active" id="section-overview">
+          <div class="stats-grid" id="ovStats"></div>
+          <div class="card" style="margin-bottom:16px;"><div class="card-header"><h3 class="card-title">⚡ إجراءات سريعة</h3></div><div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="openStudentModal()">🎓 طالب</button><button class="btn btn-primary" onclick="openTeacherModal()">👨‍ مدرس</button><button class="btn btn-secondary" onclick="openAssistantModal()">🧑‍ مساعد</button><button class="btn btn-secondary" onclick="openGroupModal()">👥 مجموعة</button><button class="btn btn-secondary" onclick="showSection('teacherLinks')">🔗 رابط مدرس</button><a href="activation-codes.html" class="btn btn-secondary">🎫 أكواد</a></div></div>
+          <div class="card" style="margin-bottom:16px;"><div class="card-header"><h3 class="card-title">📊 أعباء المساعدين</h3></div><div id="workloadView"></div></div>
+          <div class="card"><div class="card-header"><h3 class="card-title">📜 آخر النشاط</h3></div><div id="recentLogs"></div></div>
+        </section>
+
+        <section class="section" id="section-pending">
+          <div class="section-header">
+            <div><h2 class="section-title">⏳ طلبات التسجيل</h2><p class="text-sm text-muted">طلبات الطلاب في انتظار الموافقة</p></div>
+            <button class="btn btn-ghost btn-sm" onclick="loadPending()">🔄 تحديث</button>
+          </div>
+          <div class="stats-grid" id="pendingStats"></div>
+          <div class="card">
+            <div class="filter-bar">
+              <button class="filter-btn active" onclick="setPendingFilter('pending',this)">⏳ بانتظار</button>
+              <button class="filter-btn" onclick="setPendingFilter('approved',this)">✅ الموافق عليها</button>
+              <button class="filter-btn" onclick="setPendingFilter('rejected',this)">❌ المرفوضة</button>
+            </div>
+            <div id="pendingList"></div>
+          </div>
+        </section>
+
+        <section class="section" id="section-students">
+          <div class="section-header"><div><h2 class="section-title">🎓 الطلاب</h2></div><button class="btn btn-primary" onclick="openStudentModal()">+ طالب</button></div>
+          <div class="card"><div class="search-bar" style="margin-bottom:12px;"><input type="text" id="stuSearch" class="form-input" placeholder="بحث بالاسم أو الكود..." onkeyup="loadStudents()"></div>
+          <div class="table-container"><table class="table"><thead><tr><th>الكود</th><th>الاسم</th><th>المرحلة</th><th>الصف</th><th>الهاتف</th><th>إجراءات</th></tr></thead><tbody id="studentsTable"></tbody></table></div></div>
+        <button class="btn btn-primary" onclick="window.open('qr-scan.html','_blank')">📱 مسح باركود</button>
+<button class="btn btn-primary" onclick="window.open('print-qr.html','_blank')">🖨️ طباعة باركودات</button>
+        </section>
+
+        <section class="section" id="section-teachers">
+          <div class="section-header"><div><h2 class="section-title">👨 المدرسون</h2></div><button class="btn btn-primary" onclick="openTeacherModal()">+ مدرس</button></div>
+          <div class="card" style="margin-bottom:12px;"><div class="search-bar"><input type="text" id="tSearchBar" class="form-input" placeholder="بحث عن مدرس..." onkeyup="loadTeachers()"></div></div>
+          <div id="teachersList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;"></div>
+          <a href="teachers-operations.html" class="btn btn-secondary" style="margin-top:12px;">👨‍🏫 إدارة الأساتذة</a>
+        </section>
+
+        <section class="section" id="section-teacherLinks">
+          <div class="section-header"><div><h2 class="section-title">🔗 روابط تسجيل الأساتذة</h2></div></div>
+          <div class="card" style="margin-bottom:16px;"><div class="form-group"><label>المدة</label><select id="linkDuration" class="form-select"><option value="24">24س</option><option value="48" selected>48س</option><option value="72">72س</option><option value="168">أسبوع</option></select></div><button class="btn btn-primary" onclick="genTeacherLink()">+ توليد رابط</button></div>
+          <div id="teacherLinksList"></div>
+        </section>
+
+        <section class="section" id="section-assistants">
+          <div class="section-header"><div><h2 class="section-title">🧑‍ المساعدون</h2></div><button class="btn btn-primary" onclick="openAssistantModal()">+ مساعد</button></div>
+          <div id="assistantsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;"></div>
+        </section>
+
+        <section class="section" id="section-groups">
+          <div class="section-header"><div><h2 class="section-title">👥 المجموعات</h2></div><button class="btn btn-primary" onclick="openGroupModal()">+ مجموعة</button></div>
+          <div class="card" style="margin-bottom:12px;"><div class="search-bar"><input type="text" id="gSearchBar" class="form-input" placeholder="بحث عن مجموعة..." onkeyup="loadGroups()"></div></div>
+          <div id="groupsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;"></div>
+        </section>
+
+        <section class="section" id="section-attendance">
+          <div class="section-header"><div><h2 class="section-title">📋 الحضور</h2></div></div>
+          <div class="card" style="margin-bottom:16px;"><h3 class="card-title" style="margin-bottom:12px;">📱 جلسات QR</h3><div class="form-group"><label>المجموعة</label><select id="qrGroup" class="form-select"></select></div><button class="btn btn-primary" onclick="startQR()">▶️ بدء</button><div id="qrSessions" style="margin-top:16px;"></div></div>
+          <div class="card" style="margin-bottom:16px;"><h3 class="card-title" style="margin-bottom:12px;">🚫 إلغاء حصة</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المجموعة</label><select id="cancelGroup" class="form-select"></select></div><div class="form-group"><label>التاريخ</label><input type="date" id="cancelDate" class="form-input"></div></div><div class="form-group"><label>السبب</label><input type="text" id="cancelReason" class="form-input"></div><button class="btn btn-danger" onclick="doCancelSession()">🚫 إلغاء (متتحسبش)</button></div>
+          <div class="card"><h3 class="card-title" style="margin-bottom:12px;">⏳ بانتظار الاعتماد</h3><div id="pendingAtt"></div></div>
+        </section>
+
+        <section class="section" id="section-accounting">
+          <div class="section-header"><div><h2 class="section-title">🧮 المحاسبة والتسوية</h2></div></div>
+          <div class="card" style="margin-bottom:16px;"><h3 class="card-title" style="margin-bottom:12px;">📊 تسوية شهر (مبسّطة)</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المجموعة</label><select id="setGroup" class="form-select"></select></div><div class="form-group"><label>الشهر</label><input type="month" id="setMonth" class="form-input"></div></div><button class="btn btn-primary" onclick="renderSettlement()">عرض</button><div id="settlementView" style="margin-top:14px;"></div></div>
+          <div class="card"><h3 class="card-title" style="margin-bottom:12px;">🧾 حساب شهر طالب</h3><div class="form-group"><label>الطالب</label><select id="calcStudent" class="form-select"></select></div><button class="btn btn-secondary" onclick="calcStudentMonth()">احسب</button><div id="calcView" style="margin-top:12px;"></div></div>
+        </section>
+
+        <section class="section" id="section-homework">
+          <div class="section-header"><div><h2 class="section-title">📝 الواجبات</h2></div><button class="btn btn-primary" onclick="openHwBuilder()">+ واجب</button></div>
+          <div class="card" style="margin-bottom:12px;"><div class="search-bar"><input type="text" id="hwSearchBar" class="form-input" placeholder="بحث عن واجب..." onkeyup="loadHomework()"></div></div>
+          <div id="hwList"></div>
+        </section>
+
+        <section class="section" id="section-exams">
+          <div class="section-header"><div><h2 class="section-title">🎓 الامتحانات</h2></div><button class="btn btn-primary" onclick="openExBuilder()">+ امتحان</button></div>
+          <div class="card" style="margin-bottom:12px;"><div class="search-bar"><input type="text" id="exSearchBar" class="form-input" placeholder="بحث عن امتحان..." onkeyup="loadExams()"></div></div>
+          <div id="exList"></div>
+        </section>
+
+        <section class="section" id="section-vocabulary">
+          <div class="section-header"><div><h2 class="section-title">📚 المفردات</h2></div><button class="btn btn-primary" onclick="openVocabModal()">+ كلمة</button></div>
+          <div id="vocabList"></div>
+        </section>
+
+        <section class="section" id="section-tasks">
+          <div class="section-header"><div><h2 class="section-title">✅ المهام</h2></div><button class="btn btn-primary" onclick="openTaskModal()">+ مهمة</button></div>
+          <div class="card"><div id="tasksList"></div></div>
+        </section>
+
+        <section class="section" id="section-followups">
+          <div class="section-header"><div><h2 class="section-title">📌 المتابعات</h2></div></div>
+          <div id="followupsList"></div>
+        </section>
+
+        <section class="section" id="section-calendar">
+          <div class="section-header"><div><h2 class="section-title">📅 تقويم الحصص</h2></div></div>
+          <div class="card"><div class="form-group"><label>المجموعة</label><select id="calGroup" class="form-select" onchange="loadCalendar()"></select></div><div id="calendarView"></div></div>
+        </section>
+
+        <section class="section" id="section-materials">
+          <div class="section-header"><div><h2 class="section-title">📦 المواد</h2></div><button class="btn btn-primary" onclick="openMaterialModal()">+ مادة</button></div>
+          <div id="materialsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;"></div>
+        </section>
+
+        <section class="section" id="section-payments">
+          <div class="section-header"><div><h2 class="section-title">💰 المدفوعات</h2></div><button class="btn btn-primary" onclick="openPaymentModal()">+ دفعة</button></div>
+          <div class="stats-grid" id="payStats"></div>
+          <div class="card"><div id="paymentsList"></div></div>
+        </section>
+
+        <section class="section" id="section-notifications">
+          <div class="section-header"><div><h2 class="section-title">🔔 الإشعارات</h2></div><button class="btn btn-primary" onclick="openNotifyModal()">+ إشعار</button></div>
+          <div class="card"><div id="notificationsList"></div></div>
+        </section>
+
+        <section class="section" id="section-templates">
+          <div class="section-header"><div><h2 class="section-title">📄 قوالب واتساب</h2></div><button class="btn btn-primary" onclick="openTemplateModal()">+ قالب</button></div>
+          <div class="card"><div id="templatesList"></div></div>
+        </section>
+
+        <section class="section" id="section-whatsapp">
+          <div class="section-header"><div><h2 class="section-title">💬 إرسال واتساب</h2></div></div>
+          <div class="card"><div class="form-group"><label>القالب</label><select id="waTemplate" class="form-select" onchange="previewWA()"></select></div><div class="form-group"><label>الطالب</label><select id="waStudent" class="form-select" onchange="previewWA()"></select></div><div class="form-group"><label>معاينة</label><textarea id="waPreview" class="form-textarea" rows="4"></textarea></div><button class="btn btn-success" onclick="sendWA()">💬 فتح واتساب</button></div>
+        </section>
+
+        <section class="section" id="section-reports">
+          <div class="section-header"><div><h2 class="section-title">📊 التقارير</h2></div></div>
+          <div class="filter-bar"><button class="filter-btn active" onclick="setReport('attendance',this)">الحضور</button><button class="filter-btn" onclick="setReport('performance',this)">الأداء</button><button class="filter-btn" onclick="setReport('payments',this)">المالية</button></div>
+          <div class="card"><div id="reportView"></div></div>
+        </section>
+
+        <section class="section" id="section-achievements">
+          <div class="section-header"><div><h2 class="section-title">🏆 الشهادات</h2></div><button class="btn btn-primary" onclick="openCertModal()">+ شهادة</button></div>
+          <div id="certificatesList"></div>
+        </section>
+
+        <section class="section" id="section-branches">
+          <div class="section-header"><div><h2 class="section-title">🏫 الفروع</h2></div><button class="btn btn-primary" onclick="openBranchModal()">+ فرع</button></div>
+          <div id="branchesList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;"></div>
+        </section>
+
+        <section class="section" id="section-viewas">
+          <div class="section-header"><div><h2 class="section-title">👁️ View As</h2></div></div>
+          <div class="card"><div id="viewAsList"></div></div>
+        </section>
+
+        <section class="section" id="section-settings">
+          <div class="section-header"><div><h2 class="section-title">⚙️ الإعدادات والبراندنج</h2></div></div>
+          <div class="card" style="margin-bottom:16px;"><h3 class="card-title" style="margin-bottom:12px;">🎨 الهوية</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>الاسم</label><input type="text" id="bName" class="form-input"></div><div class="form-group"><label>Tagline</label><input type="text" id="bTagline" class="form-input"></div></div>
+            <div class="form-group"><label>اللوجو (رابط Drive أو رفع)</label><input type="text" id="bLogoUrl" class="form-input" placeholder="https://drive.google.com/...">
+              <div class="logo-upload" onclick="document.getElementById('logoInput').click()"><div class="logo-preview" id="logoPreview">🎓</div><div><strong>أو ارفع من الجهاز</strong></div></div><input type="file" id="logoInput" accept="image/*" style="display:none;" onchange="handleLogo(event)"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>اللون الأساسي</label><input type="color" id="bPrimary" class="form-input" style="height:44px;"></div><div class="form-group"><label>الثانوي</label><input type="color" id="bAccent" class="form-input" style="height:44px;"></div></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>رقم الدعم</label><input type="tel" id="bPhone" class="form-input"></div><div class="form-group"><label>واتساب</label><input type="tel" id="bWhatsapp" class="form-input"></div></div>
+            <button class="btn btn-primary" onclick="saveBranding()">💾 حفظ الهوية</button></div>
+          <div class="card" style="margin-bottom:16px;"><h3 class="card-title" style="margin-bottom:12px;">📚 محتوى منصة حصتك</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>العنوان</label><input type="text" id="hTitle" class="form-input"></div><div class="form-group"><label>الوصف</label><input type="text" id="hSubtitle" class="form-input"></div></div>
+            <div class="form-group"><label>الرابط</label><input type="text" id="hUrl" class="form-input"></div>
+            <div class="form-group"><label>لوجو حصتك (Drive)</label><input type="text" id="hLogo" class="form-input"></div>
+            <button class="btn btn-primary" onclick="saveHesetak()">💾 حفظ محتوى حصتك</button></div>
+          <div class="card"><div class="card-header"><h3 class="card-title">🚩 الخصائص</h3></div><div id="featuresList"></div></div>
+        </section>
+
+        <section class="section" id="section-backup">
+          <div class="section-header"><div><h2 class="section-title">💾 نسخ احتياطي</h2></div></div>
+          <div class="card"><div style="display:flex;gap:8px;"><button class="btn btn-primary" onclick="exportBackup()">📥 تصدير</button><label class="btn btn-secondary" style="cursor:pointer;">📂 استيراد<input type="file" id="importFile" accept=".json" style="display:none;" onchange="importBackup(event)"></label></div></div>
+        </section>
+
+        <section class="section" id="section-logs">
+          <div class="section-header"><div><h2 class="section-title">📜 السجل</h2></div></div>
+          <div class="card"><div id="logsList"></div></div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="js/config.js"></script><script src="js/firebase-service.js"></script><script src="js/data-service.js"></script><script src="js/operations-service.js"></script><script src="js/ui-helpers.js"></script><script src="js/drive-service.js"></script><script src="js/theme-manager.js"></script><script src="js/auth-service.js"></script>
+
+  <script>
+    const DAYS=[{en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},{en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'},{en:'Saturday',ar:'السبت'}];
+    const dayAr=en=>(DAYS.find(d=>d.en===en)||{}).ar||en;
+    const T=tm=>DataService.formatTime12(tm);
+    const db=()=>DataService._getData();const save=d=>DataService._saveData(d);
+    let currentUser=null,currentReport='attendance';
+
+    (async function boot(){
+      try{
+        await DataService.init(); if(window.Ops) await Ops.init();
+        if(!AuthService.requireRole(['super_admin'])) return;
+        currentUser=AuthService.getCurrentUser();
+        document.getElementById('userName').textContent=currentUser.name;
+        document.getElementById('userAvatar').textContent=currentUser.name.charAt(0);
+        buildMenu(); showSection('overview');
+      }catch(err){document.body.innerHTML='<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;"><div class="card">خطأ: '+err.message+'<br><a href="login.html" class="btn btn-primary" style="margin-top:12px;">العودة</a></div></div>';}
+    })();
+
+    function buildMenu(){
+      const menu=[{s:'نظرة عامة',items:[{id:'overview',l:'الرئيسية',i:'🏠'}]},{s:'الأشخاص',items:[{id:'students',l:'الطلاب',i:'🎓'},{id:'pending',l:'طلبات التسجيل',i:'⏳',badge:'<span id="pendingBadge" class="sidebar-item-badge" style="display:none;">0</span>'},{id:'teachers',l:'المدرسون',i:'👨‍🏫'},{id:'teacherLinks',l:'روابط التسجيل',i:'🔗'},{id:'assistants',l:'المساعدون',i:'🧑‍'}]},{s:'الأكاديمي',items:[{id:'groups',l:'المجموعات',i:'👥'},{id:'attendance',l:'الحضور',i:'📋'},{id:'homework',l:'الواجبات',i:'📝'},{id:'exams',l:'الامتحانات',i:'🎓'},{id:'vocabulary',l:'المفردات',i:'📚'}]},{s:'المالية',items:[{id:'accounting',l:'المحاسبة',i:'🧮'},{id:'payments',l:'المدفوعات',i:'💰'},{id:'materials',l:'المواد',i:'📦'}]},{s:'العمليات',items:[{id:'tasks',l:'المهام',i:'✅'},{id:'followups',l:'المتابعات',i:'📌'},{id:'calendar',l:'التقويم',i:'📅'}]},{s:'التواصل',items:[{id:'notifications',l:'الإشعارات',i:'🔔'},{id:'templates',l:'القوالب',i:'📄'},{id:'whatsapp',l:'واتساب',i:'💬'}]},{s:'تحليلات',items:[{id:'reports',l:'التقارير',i:'📊'},{id:'achievements',l:'الشهادات',i:'🏆'}]},{s:'إدارة',items:[{id:'branches',l:'الفروع',i:'🏫'},{id:'viewas',l:'View As',i:'👁️'},{id:'settings',l:'الإعدادات',i:'⚙️'},{id:'backup',l:'نسخ',i:'💾'},{id:'logs',l:'السجل',i:'📜'}]}];
+      document.getElementById('sidebarNav').innerHTML=menu.map(sec=>`<div class="sidebar-section"><div class="sidebar-section-title">${sec.s}</div>${sec.items.map(it=>`<div class="sidebar-item" data-section="${it.id}" onclick="showSection('${it.id}')"><span class="sidebar-item-icon">${it.i}</span><span class="sidebar-item-label">${it.l}</span>${it.badge||''}</div>`).join('')}</div>`).join('');
+    }
+
+    window.showSection=function(id){
+      document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+      document.getElementById('section-'+id)?.classList.add('active');
+      document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.toggle('active',i.dataset.section===id));
+      const L={overview:loadOverview,students:loadStudents,pending:loadPending,teachers:loadTeachers,teacherLinks:loadTeacherLinks,assistants:loadAssistants,groups:loadGroups,attendance:loadAttendance,accounting:loadAccounting,homework:loadHomework,exams:loadExams,vocabulary:loadVocabulary,tasks:loadTasks,followups:loadFollowups,calendar:loadCalendar,materials:loadMaterials,payments:loadPayments,notifications:loadNotifications,templates:loadTemplates,whatsapp:loadWA,reports:()=>renderReport(currentReport),achievements:loadCerts,branches:loadBranches,viewas:loadViewAs,settings:loadSettings,backup:()=>{},logs:loadLogs};
+      if(L[id])L[id]();
+      if(window.innerWidth<=1024){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('show');}
+    };
+
+    window.doGlobalSearch=function(q){const box=document.getElementById('searchResults');if(!q||q.length<2){box.style.display='none';return;}const res=Ops.globalSearch(q);box.style.display='block';box.innerHTML=res.length?res.map(r=>`<div class="search-result" onclick="openGlobalResult('${r.type}','${r.id}')">${r.label} <span class="badge badge-muted">${r.sub||r.type}</span></div>`).join(''):'<div class="search-result">لا نتائج</div>';};
+    window.openGlobalResult=function(type,id){document.getElementById('searchResults').style.display='none';const map={super_admin:'viewas',assistant:'assistants',teacher:'teachers',student:'students',group:'groups'};showSection(map[type]||'overview');if(type==='student')openStudentProfile(id);if(type==='teacher')openTeacherFile(id);if(type==='group'){setTimeout(()=>openGroupModal(id),100);}};
+
+    window.loadOverview=function(){
+      const d=db();
+      const hwCount=(d.homework||[]).length;
+      const exCount=(d.exams||[]).length;
+      const pendingHw=(d.submissions||[]).filter(s=>s.status==='pending_review').length;
+      document.getElementById('ovStats').innerHTML=`
+        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">الطلاب</span><span class="stat-card-icon">🎓</span></div><div class="stat-card-value">${DataService.getStudents().length}</div></div>
+        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">المدرسون</span><span class="stat-card-icon">👨‍</span></div><div class="stat-card-value">${DataService.getTeachers().length}</div></div>
+        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">المساعدون</span><span class="stat-card-icon">🧑‍</span></div><div class="stat-card-value">${DataService.getAssistants().length}</div></div>
+        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">المجموعات</span><span class="stat-card-icon">👥</span></div><div class="stat-card-value">${DataService.getGroups().length}</div></div>
+        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">الواجبات</span><span class="stat-card-icon">📝</span></div><div class="stat-card-value">${hwCount}</div></div>
+        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">الامتحانات</span><span class="stat-card-icon">🎓</span></div><div class="stat-card-value">${exCount}</div></div>`;
+      const wl=Ops.buildWorkload();
+      document.getElementById('workloadView').innerHTML=wl.length?`<div class="workload-row" style="background:var(--surface);font-weight:700;"><div>المساعد</div><div class="ws">مدرسين</div><div class="ws">مجموعات</div><div class="ws">مهام</div><div class="ws">متابعات</div></div>`+wl.map(w=>`<div class="workload-row"><div>${w.assistant.name}</div><div class="ws">${w.teachers}</div><div class="ws">${w.groups}</div><div class="ws">${w.openTasks}</div><div class="ws">${w.followUps}</div></div>`).join(''):'<p class="text-muted">لا مساعدون</p>';
+      document.getElementById('recentLogs').innerHTML=DataService.getActivityLogs().slice(0,6).map(l=>`<div class="activity-item"><div class="activity-dot"></div><div><div class="activity-title">${l.action}</div><div class="activity-meta"><span>👤 ${l.userName}</span><span>🎯 ${l.target}</span></div></div></div>`).join('')||'<p class="text-muted">لا نشاط</p>';
+    };
+
+    // ===== Students + Full Profile with Tabs =====
+    window.loadStudents=function(){
+      const q=(document.getElementById('stuSearch')?.value||'').toLowerCase();
+      let list=DataService.getStudents();if(q)list=list.filter(s=>(s.name||'').toLowerCase().includes(q)||(s.code||'').toLowerCase().includes(q)||(s.phone||'').toLowerCase().includes(q));
+      document.getElementById('studentsTable').innerHTML=list.map(s=>{
+        const stageLabel=EduFlowConfig.educationLevels[s.stage]?.nameAr||'-';
+        return `<tr><td><strong style="color:var(--primary)">${s.code||'—'}</strong></td><td>${s.name}</td><td>${stageLabel}</td><td>${s.grade||'-'}</td><td>${s.phone||'-'}</td><td><button class="btn btn-primary btn-sm" onclick="openStudentProfile('${s.id}')">👁️ الملف الكامل</button><button class="btn btn-ghost btn-sm" onclick="openStudentModal('${s.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="delUser('${s.id}')">🗑️</button></td></tr>`;
+      }).join('')||'<tr><td colspan="6" class="text-center text-muted">لا طلاب</td></tr>';
+    };
+
+    window.openStudentProfile=function(id){
+      const s=DataService.getUserById(id);if(!s)return;
+      const ts=DataService.getStudentTeachers(id);
+      const allAtt=DataService.getAttendance();
+      const att=allAtt.filter(a=>a.status==='approved'&&a.records.some(r=>r.studentId===id));
+      const pr=att.filter(a=>a.records.find(r=>r.studentId===id)?.status==='present').length;
+      const rate=att.length?Math.round(pr/att.length*100):0;
+      const billing=Ops.buildStudentBilling(id);
+      const totalDue=billing.reduce((a,x)=>a+x.billing.total,0);
+      const totalPaid=billing.reduce((a,x)=>a+x.payment.paidAmount,0);
+      const subs=DataService.getSubmissions({studentId:id});
+      const attempts=DataService.getExamAttempts({studentId:id});
+      const followups=Ops.getFollowUps({studentId:id});
+
+      const gradedHw=subs.filter(x=>x.status==='graded');
+      const avgHw=gradedHw.length?Math.round(gradedHw.reduce((a,x)=>a+(x.score||0),0)/gradedHw.length):0;
+      const gradedEx=attempts.filter(x=>x.status==='approved');
+      const avgEx=gradedEx.length?Math.round(gradedEx.reduce((a,x)=>a+(x.score||0),0)/gradedEx.length):0;
+
+      ThemeManager.openModal(`<div class="modal-header">
+        <div style="display:flex;gap:12px;align-items:center;">
+          <div class="user-avatar" style="width:48px;height:48px;font-size:18px;">${s.name.charAt(0)}</div>
+          <div><h3 class="modal-title" style="margin:0;">${s.name}</h3><div class="text-xs text-muted">${s.code||''} · ${s.grade||''} · ${s.phone||''}</div></div>
+        </div>
+        <button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="stat-mini">
+          <div class="stat-mini-box"><div class="stat-mini-value">${rate}%</div><div class="stat-mini-label">الحضور</div></div>
+          <div class="stat-mini-box"><div class="stat-mini-value">${avgHw}%</div><div class="stat-mini-label">متوسط الواجبات</div></div>
+          <div class="stat-mini-box"><div class="stat-mini-value">${avgEx}%</div><div class="stat-mini-label">متوسط الامتحانات</div></div>
+        </div>
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab(event,'info')">👤 البيانات</button>
+          <button class="tab-btn" onclick="switchTab(event,'att')">📋 الحضور</button>
+          <button class="tab-btn" onclick="switchTab(event,'hw')">📝 الواجبات</button>
+          <button class="tab-btn" onclick="switchTab(event,'ex')">🎓 الامتحانات</button>
+          <button class="tab-btn" onclick="switchTab(event,'pay')">💰 الدفعات</button>
+          <button class="tab-btn" onclick="switchTab(event,'fu')">📌 المتابعات</button>
+        </div>
+        <div id="tab-info" class="tab-content active">
+          <div class="detail-grid">
+            <div class="detail-box"><div class="lbl">الاسم الكامل</div><div class="val">${s.name}</div></div>
+            <div class="detail-box"><div class="lbl">الكود</div><div class="val">${s.code||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">المرحلة</div><div class="val">${EduFlowConfig.educationLevels[s.stage]?.nameAr||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">الصف</div><div class="val">${s.grade||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">الهاتف</div><div class="val">${s.phone||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">ولي الأمر</div><div class="val">${s.parentPhone||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">كود ولي الأمر</div><div class="val">${s.parentAccess||s.password||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">كلمة السر</div><div class="val">${s.password||'-'}</div></div>
+          </div>
+          <h4 class="text-sm" style="margin:16px 0 8px;">📚 الأساتذة والمجموعات:</h4>
+          ${ts.length?ts.map(t=>`<div class="sub-row"><div><strong>${t.teacher.name}</strong> — ${t.group.name}<div class="text-xs text-muted">${dayAr(t.group.day)} ${T(t.group.time)} · ${t.teacher.subject||''}</div></div><button class="btn btn-ghost btn-sm" onclick="ThemeManager.closeModal();showSection('groups');setTimeout(()=>openGroupModal('${t.group.id}'),100)">👁️</button></div>`).join(''):'<p class="text-muted">لا اشتراكات</p>'}
+        </div>
+        <div id="tab-att" class="tab-content">
+          ${att.length?att.slice().reverse().map(a=>{const r=a.records.find(r=>r.studentId===id);return `<div class="sub-row ${r?.status==='present'?'graded':'pending'}"><div><strong>${a.groupName}</strong><div class="text-xs text-muted">📅 ${a.date}</div></div><span class="badge ${r?.status==='present'?'badge-success':r?.status==='late'?'badge-warning':'badge-danger'}">${r?.status==='present'?'✓ حاضر':r?.status==='late'?'⏰ متأخر':'✗ غائب'}</span></div>`;}).join(''):'<p class="text-muted">لا سجلات حضور</p>'}
+        </div>
+        <div id="tab-hw" class="tab-content">
+          ${subs.length?subs.map(sub=>{const h=DataService.getHomeworkById(sub.homeworkId);const maxScore=sub.maxScore||h?.totalPoints||100;const pct=h&&h.totalPoints?Math.round(sub.score/h.totalPoints*100):(sub.score||0);return `<div class="sub-row ${sub.status==='graded'?'graded':'pending'}"><div><strong>${h?.title||'-'}</strong><div class="text-xs text-muted">${h?.deadline||''} ${h?.paper?'· 📝 ورقي':''}</div></div><div style="text-align:left;"><strong style="color:${sub.status==='graded'?'var(--success)':'var(--warning)'}">${sub.status==='graded'?pct+'%':'معلق'}</strong>${sub.status==='graded'?`<div class="text-xs text-muted">${sub.score}/${maxScore}</div>`:''}</div></div>`;}).join(''):'<p class="text-muted">لا واجبات مُسلّمة</p>'}
+        </div>
+        <div id="tab-ex" class="tab-content">
+          ${attempts.length?attempts.map(a=>{const e=DataService.getExamById(a.examId);const maxScore=a.maxScore||e?.totalPoints||100;const modeLabel=e?.mode==='home'?'🏠 منزلي':e?.mode==='class'?'🏫 حصة':'📝 ورقي';return `<div class="sub-row ${a.status==='approved'?'graded':'pending'}"><div><strong>${e?.title||'-'}</strong><div class="text-xs text-muted">${modeLabel}</div></div><div style="text-align:left;"><strong style="color:${a.status==='approved'?'var(--success)':'var(--warning)'}">${a.status==='approved'?Math.round((a.score/maxScore)*100)+'%':'معلق'}</strong>${a.status==='approved'?`<div class="text-xs text-muted">${a.score}/${maxScore}</div>`:''}</div></div>`;}).join(''):'<p class="text-muted">لا امتحانات</p>'}
+        </div>
+        <div id="tab-pay" class="tab-content">
+          ${billing.length?billing.map(x=>{const rem=Math.max(0,x.billing.total-x.payment.paidAmount);return `<div class="sub-row ${rem>0?'pending':'graded'}"><div><strong>${x.group.name}</strong><div class="text-xs text-muted">👨‍ ${DataService.getUserById(x.group.teacherId)?.name||''}</div></div><div style="text-align:left;"><strong>${x.payment.paidAmount}/${x.billing.total}</strong>${rem>0?`<div class="text-xs" style="color:var(--danger)">متبقي ${rem}</div>`:''}</div></div>`;}).join(''):'<p class="text-muted">لا مستحقات</p>'}
+        </div>
+        <div id="tab-fu" class="tab-content">
+          ${followups.length?followups.map(f=>`<div class="sub-row ${f.status==='resolved'?'graded':'pending'}"><div><strong>${f.title||f.reason}</strong><div class="text-xs text-muted">${f.auto?'🤖 أوتوماتيك':'✍️ يدوي'} · ${f.startDate||''}</div></div><span class="badge ${f.status==='resolved'?'badge-success':'badge-warning'}">${f.status}</span></div>`).join(''):'<p class="text-muted">لا متابعات</p>'}
+        </div>
+        ${s.parentPhone?`<div style="margin-top:14px;"><a class="btn btn-success btn-sm" href="https://wa.me/2${s.parentPhone.replace(/\D/g,'')}" target="_blank">💬 واتساب ولي الأمر</a></div>`:''}
+      </div>`,'modal-lg');
+    };
+
+    window.switchTab=function(ev,id){
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+      ev.target.classList.add('active');
+      document.getElementById('tab-'+id).classList.add('active');
+    };
+
+    // ===== موديل الطالب — مع فلترة المجموعات حسب (المرحلة + الصف + الأستاذ) =====
+    window.openStudentModal=function(editId){
+      const s=editId?DataService.getUserById(editId):null;
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${s?'✏️ تعديل':'🎓'} طالب</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveStudent(event,'${editId||''}')"><div class="form-group"><label>الاسم</label><input type="text" id="sName" class="form-input" value="${s?.name||''}" required></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>الهاتف</label><input type="tel" id="sPhone" class="form-input" value="${s?.phone||''}" required></div><div class="form-group"><label>ولي الأمر</label><input type="tel" id="sParent" class="form-input" value="${s?.parentPhone||''}"></div></div>
+        <div class="stage-grade-row">
+          <div class="form-group"><label>المرحلة</label><select id="sLevel" class="form-select" onchange="updStudentGrades();updStudentGroups();">${Object.entries(EduFlowConfig.educationLevels).map(([k,v])=>`<option value="${k}" ${s?.stage===k?'selected':''}>${v.nameAr}</option>`).join('')}</select></div>
+          <div class="form-group"><label>الصف الدراسي</label><select id="sGrade" class="form-select" onchange="updStudentGroups();"></select></div>
+        </div>
+        <div class="form-group"><label>الأستاذ</label><select id="sTeacher" class="form-select" onchange="updStudentGroups();"><option value="">-- اختر أستاذ --</option>${DataService.getTeachers().map(t=>`<option value="${t.id}">${t.name} (${t.subject||'-'})</option>`).join('')}</select></div>
+        <div class="filter-info">🎯 المجموعات اللي هتظهر هي المطابقة للمرحلة + الصف + الأستاذ</div>
+        <div class="form-group"><label>المجموعات</label><div id="sGroups"></div></div>
+        <div class="form-group"><label>كلمة المرور</label><input type="text" id="sPass" class="form-input" value="${s?.password||'12345678'}"></div>
+        <button class="btn btn-primary w-full">💾 حفظ</button></form></div>`);
+      updStudentGrades(s?.grade);
+      updStudentGroups();
+    };
+
+    window.updStudentGrades=function(sel){
+      const lvl=document.getElementById('sLevel').value;
+      const grades=EduFlowConfig.educationLevels[lvl]?.grades||[];
+      document.getElementById('sGrade').innerHTML=grades.map(g=>`<option ${sel===g?'selected':''}>${g}</option>`).join('');
+    };
+
+    // ✅ الفلترة الذكية: المجموعات بتظهر بس اللي بتطابق (المرحلة + الصف + الأستاذ)
+    window.updStudentGroups=function(){
+      const tid=document.getElementById('sTeacher').value;
+      const stage=document.getElementById('sLevel').value;
+      const grade=document.getElementById('sGrade').value;
+      const container=document.getElementById('sGroups');
+
+      if(!tid){
+        container.innerHTML='<p class="text-muted">اختر أستاذ الأول</p>';
+        return;
+      }
+
+      // فلتر: نفس الأستاذ + نفس المرحلة + نفس الصف
+      let groups=DataService.getGroupsByTeacher(tid);
+      groups=groups.filter(g=>{
+        const matchStage=!stage||!g.stage||g.stage===stage;
+        const matchGrade=!grade||!g.grade||g.grade===grade;
+        return matchStage && matchGrade;
+      });
+
+      if(!groups.length){
+        container.innerHTML=`<div class="filter-info" style="background:var(--warning-bg);border-color:var(--warning);color:var(--warning);">⚠️ لا توجد مجموعات مطابقة للأستاذ <strong>${DataService.getUserById(tid)?.name}</strong> في المرحلة <strong>${EduFlowConfig.educationLevels[stage]?.nameAr}</strong> - الصف <strong>${grade}</strong><br><span class="text-xs">تقدر تغير الأستاذ/المرحلة/الصف أو تضيف مجموعة جديدة</span></div>`;
+        return;
+      }
+
+      container.innerHTML=groups.map(g=>{
+        const count=DataService.getStudentsByGroup(g.id).length;
+        return `<label style="display:flex;gap:8px;align-items:center;margin-bottom:6px;padding:8px;background:var(--surface-hover);border-radius:6px;cursor:pointer;border:1px solid var(--border);">
+          <input type="checkbox" class="s-grp" value="${g.id}">
+          <span style="flex:1;"><strong>${g.name}</strong> <span class="text-xs text-muted">· ${dayAr(g.day)} ${T(g.time)} · 👥 ${count}</span></span>
+        </label>`;
+      }).join('');
+    };
+
+    window.updGrades=function(sel){updStudentGrades(sel);};
+    window.updGroups=function(){updStudentGroups();};
+
+    window.saveStudent=async function(e,editId){
+      e.preventDefault();
+      const data={name:document.getElementById('sName').value,phone:document.getElementById('sPhone').value,parentPhone:document.getElementById('sParent').value,stage:document.getElementById('sLevel').value,grade:document.getElementById('sGrade').value,password:document.getElementById('sPass').value};
+      if(editId){await DataService.updateUser(editId,data);}
+      else{const enr=[...document.querySelectorAll('.s-grp:checked')].map(c=>({groupId:c.value}));const r=await DataService.addStudentByAdmin({...data,enrollments:enr,teacherId:document.getElementById('sTeacher').value});ThemeManager.openModal(`<div class="modal-body" style="text-align:center;"><h3>🎉 تم</h3><div style="background:var(--grad);border-radius:10px;padding:20px;color:#fff;margin:16px 0;font-family:var(--font-en);font-size:30px;font-weight:800;letter-spacing:3px;">${r.code}</div><button class="btn btn-secondary w-full" onclick="navigator.clipboard.writeText('${r.code}')">📋 نسخ</button></div>`);}
+      ThemeManager.closeModal();loadStudents();return false;
+    };
+    window.delUser=async function(id){if(!confirm('حذف؟'))return;await DataService.deleteUser(id);loadStudents();loadTeachers();loadAssistants();};
+
+    // ===== Teachers + FULL Teacher File =====
+    window.loadTeachers=function(){
+      const q=(document.getElementById('tSearchBar')?.value||'').toLowerCase();
+      let list=DataService.getTeachers();
+      if(q)list=list.filter(t=>(t.name||'').toLowerCase().includes(q)||(t.subject||'').toLowerCase().includes(q));
+      document.getElementById('teachersList').innerHTML=list.map(t=>{const gs=DataService.getGroupsByTeacher(t.id);const st=gs.reduce((n,g)=>n+DataService.getStudentsByGroup(g.id).length,0);return `<div class="user-card"><div class="user-card-header"><div class="user-avatar">${t.name.charAt(0)}</div><div><div class="user-name">${t.name}</div><div class="user-meta"><span>📚 ${t.subject}</span></div></div></div><div class="user-stats"><div class="user-stat"><div class="user-stat-value">${gs.length}</div><div class="user-stat-label">مجموعة</div></div><div class="user-stat"><div class="user-stat-value">${st}</div><div class="user-stat-label">طالب</div></div></div><div class="user-actions"><button class="btn btn-primary btn-sm" onclick="openTeacherFile('${t.id}')">📁 الملف</button><button class="btn btn-secondary btn-sm" onclick="openTeacherEdit('${t.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="delUser('${t.id}')">🗑️</button></div></div>`;}).join('')||'<p class="text-muted">لا مدرسون</p>';};
+    window.openTeacherModal=function(){ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">👨‍🏫 مدرس</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveTeacher(event)"><div class="form-group"><label>الاسم</label><input type="text" id="tName" class="form-input" required></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المادة</label><input type="text" id="tSub" class="form-input" required></div><div class="form-group"><label>الهاتف</label><input type="tel" id="tPhone" class="form-input"></div></div><div class="form-group"><label>البريد</label><input type="email" id="tEmail" class="form-input" required></div><div class="form-group"><label>كلمة المرور</label><input type="text" id="tPass" class="form-input" value="12345678"></div><button class="btn btn-primary w-full">💾</button></form></div>`);};
+    window.saveTeacher=async function(e){e.preventDefault();await DataService.addUser({name:document.getElementById('tName').value,subject:document.getElementById('tSub').value,phone:document.getElementById('tPhone').value,email:document.getElementById('tEmail').value,password:document.getElementById('tPass').value,role:'teacher'});ThemeManager.closeModal();loadTeachers();return false;};
+    window.openTeacherEdit=function(id){const t=DataService.getUserById(id);ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">✏️ تعديل مدرس</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveTeacherEdit(event,'${id}')"><div class="form-group"><label>الاسم</label><input type="text" id="teName" class="form-input" value="${t.name}" required></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المادة</label><input type="text" id="teSub" class="form-input" value="${t.subject||''}"></div><div class="form-group"><label>الهاتف</label><input type="tel" id="tePhone" class="form-input" value="${t.phone||''}"></div></div><div class="form-group"><label>البريد</label><input type="email" id="teEmail" class="form-input" value="${t.email||''}"></div><div class="form-group"><label>المؤهل</label><input type="text" id="teQual" class="form-input" value="${t.qualification||''}"></div><div class="form-group"><label>الخبرة</label><input type="number" id="teExp" class="form-input" value="${t.experience||0}"></div><button class="btn btn-primary w-full">💾 حفظ</button></form></div>`);};
+    window.saveTeacherEdit=async function(e,id){e.preventDefault();await DataService.updateUser(id,{name:document.getElementById('teName').value,subject:document.getElementById('teSub').value,phone:document.getElementById('tePhone').value,email:document.getElementById('teEmail').value,qualification:document.getElementById('teQual').value,experience:parseInt(document.getElementById('teExp').value)||0});ThemeManager.closeModal();ThemeManager.toast('تم ✓','success');loadTeachers();return false;};
+
+    window.openTeacherFile=function(id){
+      const t=DataService.getUserById(id);
+      const gs=DataService.getGroupsByTeacher(id);
+      const gids=gs.map(g=>g.id);
+      const students=DataService.getStudents().filter(s=>gids.includes(s.groupId));
+      const att=DataService.getAttendance().filter(a=>a.status==='approved'&&gids.includes(a.groupId));
+      const tot=att.reduce((s,a)=>s+a.records.length,0);
+      const pr=att.reduce((s,a)=>s+a.records.filter(x=>x.status==='present').length,0);
+      const rate=tot?Math.round(pr/tot*100):0;
+      const pays=DataService.getPayments().filter(p=>p.teacherId===id);
+      const collected=pays.reduce((s,p)=>s+(p.paidAmount||0),0);
+      const hwCount=(db().homework||[]).filter(h=>gids.includes(h.groupId)).length;
+      const exCount=(db().exams||[]).filter(e=>gids.includes(e.groupId)).length;
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📁 ${t.name}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">
+        <div class="stat-mini">
+          <div class="stat-mini-box"><div class="stat-mini-value">${gs.length}</div><div class="stat-mini-label">مجموعات</div></div>
+          <div class="stat-mini-box"><div class="stat-mini-value">${students.length}</div><div class="stat-mini-label">طلاب</div></div>
+          <div class="stat-mini-box"><div class="stat-mini-value">${rate}%</div><div class="stat-mini-label">الحضور</div></div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-box"><div class="lbl">المادة</div><div class="val">${t.subject||'-'}</div></div>
+          <div class="detail-box"><div class="lbl">الهاتف</div><div class="val">${t.phone||'-'}</div></div>
+          <div class="detail-box"><div class="lbl">البريد</div><div class="val">${t.email||'-'}</div></div>
+          <div class="detail-box"><div class="lbl">الخبرة</div><div class="val">${t.experience||0} سنة</div></div>
+          <div class="detail-box"><div class="lbl">الواجبات</div><div class="val">${hwCount}</div></div>
+          <div class="detail-box"><div class="lbl">الامتحانات</div><div class="val">${exCount}</div></div>
+          <div class="detail-box"><div class="lbl">المحصل له</div><div class="val">${collected} ج.م</div></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:16px 0 8px;"><h4 class="text-sm" style="margin:0;">المجموعات (${gs.length}):</h4><button class="btn btn-primary btn-sm" onclick="ThemeManager.closeModal();openGroupModal(null,'${id}')">+ إضافة مجموعة</button></div>
+        ${gs.map(g=>{const stageLabel=EduFlowConfig.educationLevels[g.stage]?.nameAr||'';const gradeLabel=g.grade||'';return `<div style="padding:10px;background:var(--surface-hover);border-radius:8px;margin-bottom:6px;"><div style="display:flex;justify-content:space-between;align-items:center;"><div><strong>${g.name}</strong>${stageLabel||gradeLabel?` <span class="badge badge-info">${stageLabel}${stageLabel&&gradeLabel?' - ':''}${gradeLabel}</span>`:''}<div class="text-xs text-muted">${dayAr(g.day)} ${T(g.time)} · مدة ${g.duration||120}د · 💰 ${g.monthlyFee||0}/شهر · 👥 ${DataService.getStudentsByGroup(g.id).length}</div></div><button class="btn btn-ghost btn-sm" onclick="ThemeManager.closeModal();openGroupModal('${g.id}')">✏️</button></div></div>`;}).join('')||'<p class="text-muted">لا مجموعات</p>'}
+        <h4 class="text-sm" style="margin:14px 0 8px;">الطلاب (${students.length}):</h4>
+        ${students.slice(0,10).map(s=>`<div style="padding:8px;background:var(--surface-hover);border-radius:6px;margin-bottom:4px;display:flex;justify-content:space-between;"><span>${s.name}</span><span class="text-xs text-muted">${s.code||''}</span></div>`).join('')||'<p class="text-muted">لا طلاب</p>'}
+      </div>`,'modal-lg');
+    };
+
+    // ===== موديل المجموعة — مع إضافة المرحلة والصف الدراسي =====
+    window.openGroupModal=function(editId,preTeacher){
+      const g=editId?DataService.getGroups().find(x=>x.id===editId):null;
+      const stageOptions=Object.entries(EduFlowConfig.educationLevels).map(([k,v])=>`<option value="${k}" ${g?.stage===k?'selected':''}>${v.nameAr}</option>`).join('');
+      const initialGrades=EduFlowConfig.educationLevels[g?.stage||'Primary']?.grades||[];
+      const gradeOptions=initialGrades.map(gr=>`<option ${g?.grade===gr?'selected':''}>${gr}</option>`).join('');
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${g?'✏️ تعديل':'👥 إضافة'} مجموعة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveGroup(event,'${editId||''}')">
+        <div class="form-group"><label>الاسم</label><input type="text" id="gName" class="form-input" value="${g?.name||''}" required></div>
+        <div class="form-group"><label>المدرس</label><select id="gTeacher" class="form-select">${DataService.getTeachers().map(t=>`<option value="${t.id}" ${g?.teacherId===t.id||preTeacher===t.id?'selected':''}>${t.name}</option>`).join('')}</select></div>
+        <div class="stage-grade-row">
+          <div class="form-group"><label>المرحلة (المرحلة الدراسية)</label><select id="gStage" class="form-select" onchange="updGroupGrades();"><option value="">-- اختر المرحلة --</option>${stageOptions}</select></div>
+          <div class="form-group"><label>الصف الدراسي (السنة)</label><select id="gGrade" class="form-select">${gradeOptions}</select></div>
+        </div>
+        <div class="filter-info">🎯 المرحلة والصف هيساعدوا في فلترة الطلاب المناسبين للمجموعة عند التسجيل</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label>اليوم</label><select id="gDay" class="form-select">${DAYS.map(d=>`<option value="${d.en}" ${g?.day===d.en?'selected':''}>${d.ar}</option>`).join('')}</select></div>
+          ${UI.timeSelect('gTime', g?.time, 'الوقت')}
+        </div>
+        <div class="form-group"><label>المكان</label><input type="text" id="gLoc" class="form-input" value="${g?.location||''}"></div>
+        <div class="form-group"><label>ملاحظات</label><textarea id="gNotes" class="form-textarea" rows="2">${g?.notes||''}</textarea></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+          <div class="form-group"><label>مدة الحصة (د)</label><input type="number" id="gDuration" class="form-input" value="${g?.duration||120}"></div>
+          <div class="form-group"><label>حصص/شهر</label><input type="number" id="gSessions" class="form-input" value="${g?.sessionsPerMonth||4}" oninput="calcSessionPrice()"></div>
+          <div class="form-group"><label>سعر الشهر</label><input type="number" id="gMonthly" class="form-input" value="${g?.monthlyFee||0}" oninput="calcSessionPrice()"></div>
+        </div>
+        <div class="form-group"><label>حصة الأستاذ/طالب</label><input type="number" id="gShare" class="form-input" value="${g?.teacherSharePerStudent||0}"></div>
+        <div class="card" style="background:var(--info-bg);border-color:var(--info-border);padding:12px;margin-bottom:12px;">سعر الحصة الأوتوماتيك: <strong id="autoSessionPrice">0</strong> ج.م</div>
+        <button class="btn btn-primary w-full">💾 حفظ</button></form></div>`);
+      calcSessionPrice();
+    };
+
+    // تحديث قائمة الصفوف عند تغيير المرحلة في موديل المجموعة
+    window.updGroupGrades=function(){
+      const stage=document.getElementById('gStage').value;
+      const grades=EduFlowConfig.educationLevels[stage]?.grades||[];
+      document.getElementById('gGrade').innerHTML=grades.map(g=>`<option>${g}</option>`).join('');
+    };
+
+    window.calcSessionPrice=function(){const m=parseInt(document.getElementById('gMonthly').value)||0;const s=parseInt(document.getElementById('gSessions').value)||1;const el=document.getElementById('autoSessionPrice');if(el)el.textContent=Math.round(m/s);};
+    window.saveGroup=async function(e,editId){
+      e.preventDefault();
+      const monthly=parseInt(document.getElementById('gMonthly').value)||0;
+      const sessions=parseInt(document.getElementById('gSessions').value)||4;
+      const data={
+        name:document.getElementById('gName').value,
+        teacherId:document.getElementById('gTeacher').value,
+        stage:document.getElementById('gStage').value,
+        grade:document.getElementById('gGrade').value,
+        day:document.getElementById('gDay').value,
+        time:document.getElementById('gTime').value,
+        duration:parseInt(document.getElementById('gDuration').value)||120,
+        monthlyFee:monthly,
+        sessionsPerMonth:sessions,
+        sessionFee:Math.round(monthly/sessions),
+        teacherSharePerStudent:parseInt(document.getElementById('gShare').value)||0,
+        location:document.getElementById('gLoc').value,
+        notes:document.getElementById('gNotes').value,
+        subject:DataService.getUserById(document.getElementById('gTeacher').value)?.subject||''
+      };
+      if(editId)await DataService.updateGroup(editId,data);
+      else await DataService.addGroup(data);
+      ThemeManager.closeModal();ThemeManager.toast('تم حفظ المجموعة ✓','success');loadGroups();return false;
+    };
+    window.loadGroups=function(){
+      const q=(document.getElementById('gSearchBar')?.value||'').toLowerCase();
+      let list=DataService.getGroups();
+      if(q)list=list.filter(g=>(g.name||'').toLowerCase().includes(q));
+      document.getElementById('groupsList').innerHTML=list.map(g=>{
+        const t=DataService.getUserById(g.teacherId);
+        const stageLabel=EduFlowConfig.educationLevels[g.stage]?.nameAr||'';
+        const gradeLabel=g.grade||'';
+        return `<div class="user-card"><div class="user-card-header"><div class="user-avatar">👥</div><div><div class="user-name">${g.name}</div><div class="user-meta"><span>👨‍ ${t?.name||'-'}</span></div></div></div>
+          <div class="user-meta" style="margin-bottom:8px;">
+            ${stageLabel?`<span class="badge badge-info">📚 ${stageLabel}</span>`:''}
+            ${gradeLabel?`<span class="badge badge-info">🎓 ${gradeLabel}</span>`:''}
+          </div>
+          <div class="user-meta"><span>📅 ${dayAr(g.day)} ${T(g.time)}</span><span>⏱️ ${g.duration||120}د</span><span>💰 ${g.monthlyFee||0}/شهر</span><span>🎟️ ${g.sessionFee||0}/حصة</span></div>
+          <div class="user-actions"><button class="btn btn-secondary btn-sm" onclick="openGroupModal('${g.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="delGroup('${g.id}')">🗑️</button></div></div>`;
+      }).join('')||'<p class="text-muted">لا مجموعات</p>';
+    };
+    window.delGroup=async function(id){if(!confirm('حذف؟'))return;await DataService.deleteGroup(id);loadGroups();};
+
+    // ===== Attendance =====
+    window.loadAttendance=function(){const gOpts=DataService.getGroups().map(g=>`<option value="${g.id}">${g.name}</option>`).join('');document.getElementById('qrGroup').innerHTML=gOpts;document.getElementById('cancelGroup').innerHTML=gOpts;document.getElementById('cancelDate').value=new Date().toISOString().split('T')[0];renderQRSessions();const pend=(db().attendance||[]).filter(a=>a.status==='pending');document.getElementById('pendingAtt').innerHTML=pend.length?pend.map(a=>`<div style="padding:12px;background:var(--surface-hover);border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;"><div><strong>${a.groupName}</strong><div class="text-xs text-muted">${a.date}</div></div><div style="display:flex;gap:6px;"><button class="btn btn-success btn-sm" onclick="approveAtt('${a.id}')">✓</button><button class="btn btn-danger btn-sm" onclick="rejectAtt('${a.id}')">✗</button></div></div>`).join(''):'<p class="text-muted">لا معلق</p>';};
+    window.startQR=function(){const gid=document.getElementById('qrGroup').value;const g=DataService.getGroups().find(x=>x.id===gid);const d=db();if(!d.qrSessions)d.qrSessions=[];const code='QR-'+Math.random().toString(36).slice(2,8).toUpperCase();d.qrSessions.push({id:'qr_'+Date.now(),groupId:gid,groupName:g.name,code,startedBy:currentUser.name,startedAt:new Date().toISOString(),active:true,checkIns:[]});save(d);renderQRSessions();};
+    window.renderQRSessions=function(){const s=(db().qrSessions||[]).filter(x=>x.active);document.getElementById('qrSessions').innerHTML=s.length?s.map(x=>`<div class="qr-box"><div class="text-sm text-muted">${x.groupName}</div><img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent('EDUFLOW-ATT:'+x.code)}" style="border-radius:12px;margin:8px 0;"><div class="qr-code">${x.code}</div><button class="btn btn-danger btn-sm" onclick="endQR('${x.id}')">⏹️</button></div>`).join(''):'<p class="text-muted">لا جلسات</p>';};
+    window.endQR=function(id){const d=db();const s=(d.qrSessions||[]).find(x=>x.id===id);if(s)s.active=false;save(d);renderQRSessions();};
+    window.approveAtt=async function(id){await DataService.approveAttendance(id,currentUser.id);loadAttendance();};
+    window.rejectAtt=function(id){const d=db();const a=(d.attendance||[]).find(x=>x.id===id);if(a){a.status='rejected';save(d);}loadAttendance();};
+    window.doCancelSession=async function(){const r=await DataService.cancelSession(document.getElementById('cancelGroup').value,document.getElementById('cancelDate').value,document.getElementById('cancelReason').value||'إلغاء',currentUser.id);ThemeManager.toast(r.success?'تم الإلغاء ✓':r.message,r.success?'success':'warning');};
+
+    // ===== Accounting =====
+    window.loadAccounting=function(){const gOpts=DataService.getGroups().map(g=>`<option value="${g.id}">${g.name}</option>`).join('');document.getElementById('setGroup').innerHTML=gOpts;document.getElementById('setMonth').value=new Date().toISOString().slice(0,7);const cs=document.getElementById('calcStudent');cs.innerHTML=DataService.getStudents().map(s=>`<option value="${s.id}">${s.name}</option>`).join('');UI.attachSearch(cs);};
+    window.renderSettlement=function(){const s=UI.settlement(document.getElementById('setGroup').value,document.getElementById('setMonth').value);if(!s)return;document.getElementById('settlementView').innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;"><div class="settle-card"><div class="settle-value" style="color:var(--success)">${s.teacherDue}</div><div class="text-xs text-muted">المدرس يستلم</div></div><div class="settle-card"><div class="settle-value" style="color:var(--primary)">${s.collected}</div><div class="text-xs text-muted">المحصل</div></div><div class="settle-card"><div class="settle-value" style="color:var(--warning)">${s.centerNet}</div><div class="text-xs text-muted">صافي المركز</div></div></div><details><summary style="cursor:pointer;font-weight:700;margin-bottom:8px;">تفاصيل مين دفع</summary>${s.paidList.map(p=>`<div style="display:flex;justify-content:space-between;padding:8px;background:var(--surface-hover);border-radius:6px;margin-bottom:4px;font-size:13px;"><span>${p.student.name}</span><strong class="${p.paid>=p.due?'text-success':'text-danger'}">${p.paid}/${p.due}</strong></div>`).join('')}</details><div style="display:flex;gap:8px;margin-top:12px;"><button class="btn btn-success" onclick="recordTeacherPay('${s.group.id}','${document.getElementById('setMonth').value}',${s.teacherDue})">💵 دفع الأستاذ</button><button class="btn btn-secondary" onclick="recordCenter('${s.group.id}','${document.getElementById('setMonth').value}',${s.collected})">🏦 تحصيل السنتر</button></div>`;};
+    window.recordTeacherPay=async function(gid,month,amt){await DataService.addPayment({studentId:'teacher_'+gid,month,amount:amt,paidAmount:amt,status:'paid',type:'teacher_settlement'});ThemeManager.toast('تم ✓','success');};
+    window.recordCenter=async function(gid,month,amt){await DataService.addPayment({studentId:'center_'+gid,month,amount:amt,paidAmount:amt,status:'paid',type:'center_collection'});ThemeManager.toast('تم ✓','success');};
+    window.calcStudentMonth=function(){const sid=document.getElementById('calcStudent').value;const month=new Date().toISOString().slice(0,7);const b=Ops.buildStudentBilling(sid)[0];const att=DataService.getAttendance().filter(a=>a.status==='approved'&&a.records.some(r=>r.studentId===sid)&&a.date?.startsWith(month));const attended=att.filter(a=>a.records.find(r=>r.studentId===sid)?.status==='present').length;document.getElementById('calcView').innerHTML=b?`<div style="display:flex;justify-content:space-between;padding:8px;background:var(--surface-hover);border-radius:6px;margin-bottom:4px;"><span>حضر</span><strong>${attended}</strong></div><div style="display:flex;justify-content:space-between;padding:8px;background:var(--surface-hover);border-radius:6px;margin-bottom:4px;"><span>مكمل الشهر</span><strong>${b.billing.total}</strong></div><div style="display:flex;justify-content:space-between;padding:8px;background:var(--surface-hover);border-radius:6px;"><span>لو انسحب دلوقتي</span><strong>${attended*b.billing.sessionFee}</strong></div>`:'<p class="text-muted">لا اشتراكات</p>';};
+
+    // ===== Homework (with Submissions Details) =====
+    let hwQ=[];
+    window.loadHomework=function(){
+      const q=(document.getElementById('hwSearchBar')?.value||'').toLowerCase();
+      const d=db();
+      let list=d.homework||[];
+      if(q)list=list.filter(h=>(h.title||'').toLowerCase().includes(q));
+      document.getElementById('hwList').innerHTML=list.length?list.map(h=>{
+        const group=DataService.getGroups().find(g=>g.id===h.groupId);
+        const totalStudents=group?DataService.getStudentsByGroup(group.id).length:0;
+        const subs=(d.submissions||[]).filter(s=>s.homeworkId===h.id);
+        const graded=subs.filter(s=>s.status==='graded');
+        const pending=subs.filter(s=>s.status!=='graded');
+        const missing=totalStudents-subs.length;
+        const submissionRate=totalStudents?Math.round(subs.length/totalStudents*100):0;
+        const avgScore=graded.length?Math.round(graded.reduce((a,x)=>a+(x.score||0),0)/graded.length):0;
+        return `<div class="hw-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:200px;">
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">
+                <strong style="font-size:15px;">${h.title}</strong>
+                ${h.paper?'<span class="badge badge-muted">📝 ورقي</span>':''}
+                ${h.imageUrl?'<span class="badge badge-info">🖼️ صورة</span>':''}
+              </div>
+              <div class="text-xs text-muted">👥 ${group?.name||'-'} · 👨‍ ${DataService.getUserById(group?.teacherId)?.name||'-'} · 📅 ${h.deadline||'-'}</div>
+              <div class="stat-mini" style="margin-top:10px;">
+                <div class="stat-mini-box"><div class="stat-mini-value">${submissionRate}%</div><div class="stat-mini-label">نسبة التسليم</div></div>
+                <div class="stat-mini-box"><div class="stat-mini-value">${avgScore}%</div><div class="stat-mini-label">متوسط الدرجات</div></div>
+                <div class="stat-mini-box"><div class="stat-mini-value">${subs.length}/${totalStudents}</div><div class="stat-mini-label">مُسلَّم</div></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="btn btn-primary btn-sm" onclick="viewHwSubmissions('${h.id}')">📊 التسليمات (${subs.length})</button>
+              <button class="btn btn-ghost btn-sm" onclick="openHwBuilder('${h.id}')">✏️</button>
+              <button class="btn btn-danger btn-sm" onclick="delHw('${h.id}')">🗑️</button>
+            </div>
+          </div>
+        </div>`;
+      }).join(''):'<p class="text-muted">لا واجبات</p>';
+    };
+
+    window.viewHwSubmissions=function(hwId){
+      const h=DataService.getHomeworkById(hwId);
+      if(!h)return;
+      const group=DataService.getGroups().find(g=>g.id===h.groupId);
+      const students=group?DataService.getStudentsByGroup(group.id):[];
+      const d=db();
+      const subs=(d.submissions||[]).filter(s=>s.homeworkId===hwId);
+
+      const graded=subs.filter(s=>s.status==='graded').map(s=>{
+        const st=DataService.getUserById(s.studentId);
+        const maxScore=s.maxScore||h.totalPoints||100;
+        const pct=h.totalPoints?Math.round(s.score/h.totalPoints*100):(s.score||0);
+        return {...s,student:st,maxScore,pct};
+      });
+      const pending=subs.filter(s=>s.status!=='graded').map(s=>({...s,student:DataService.getUserById(s.studentId)}));
+      const submittedIds=subs.map(s=>s.studentId);
+      const missing=students.filter(s=>!submittedIds.includes(s.id));
+
+      const avgScore=graded.length?Math.round(graded.reduce((a,x)=>a+(x.pct||0),0)/graded.length):0;
+
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📊 ${h.title}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body">
+        <div class="stat-mini">
+          <div class="stat-mini-box"><div class="stat-mini-value">${subs.length}/${students.length}</div><div class="stat-mini-label">مُسلَّم</div></div>
+          <div class="stat-mini-box"><div class="stat-mini-value">${graded.length}</div><div class="stat-mini-label">تم تصحيحه</div></div>
+          <div class="stat-mini-box"><div class="stat-mini-value">${avgScore}%</div><div class="stat-mini-label">المتوسط</div></div>
+        </div>
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab(event,'graded')">✓ تم التصحيح (${graded.length})</button>
+          <button class="tab-btn" onclick="switchTab(event,'pending')">⏳ بانتظار التصحيح (${pending.length})</button>
+          <button class="tab-btn" onclick="switchTab(event,'missing')">✗ لم يسلّم (${missing.length})</button>
+        </div>
+        <div id="tab-graded" class="tab-content active">
+          ${graded.length?graded.sort((a,b)=>b.pct-a.pct).map(s=>`<div class="sub-row graded"><div><div class="user-avatar" style="width:30px;height:30px;font-size:12px;display:inline-flex;margin-inline-end:8px;vertical-align:middle;">${s.student?.name?.charAt(0)||'?'}</div><strong>${s.student?.name||'-'}</strong>${s.offline?'<span class="badge badge-muted" style="margin-inline-start:6px;">📝 ورقي</span>':''}<div class="text-xs text-muted">${s.student?.code||''}</div></div><div style="text-align:left;"><strong style="color:var(--success);font-size:18px;">${s.pct}%</strong><div class="text-xs text-muted">${s.score}/${s.maxScore}</div></div></div>`).join(''):'<p class="text-muted">لا درجات</p>'}
+        </div>
+        <div id="tab-pending" class="tab-content">
+          ${pending.length?pending.map(s=>`<div class="sub-row pending"><div><strong>${s.student?.name||'-'}</strong><div class="text-xs text-muted">${s.student?.code||''}</div></div><button class="btn btn-secondary btn-sm" onclick="ThemeManager.closeModal();showSection('homework');setTimeout(()=>{setGrades&&setGrades('hw');},100)">✏️ صحّح</button></div>`).join(''):'<p class="text-muted">لا معلق ✓</p>'}
+        </div>
+        <div id="tab-missing" class="tab-content">
+          ${missing.length?missing.map(s=>`<div class="sub-row missing"><div><strong>${s.name||'-'}</strong><div class="text-xs text-muted">${s.code||''} · ${s.phone||''}</div></div>${s.parentPhone?`<a class="btn btn-success btn-sm" href="https://wa.me/2${s.parentPhone.replace(/\D/g,'')}" target="_blank">💬</a>`:''}</div>`).join(''):'<p class="text-muted">الكل سلّم ✓</p>'}
+        </div>
+      </div>`,'modal-lg');
+    };
+
+    window.openHwBuilder=function(editId){
+      hwQ=[];
+      const h=editId?DataService.getHomeworkById(editId):null;
+      if(h&&h.questions)hwQ=[...h.questions];
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${h?'✏️ تعديل':'📝'} واجب</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>العنوان</label><input id="hwTitle" class="form-input" value="${h?.title||''}" required></div><div class="form-group"><label>المجموعة</label><select id="hwGroup" class="form-select">${DataService.getGroups().map(g=>`<option value="${g.id}" ${h?.groupId===g.id?'selected':''}>${g.name}</option>`).join('')}</select></div><div class="form-group"><label>الموعد</label><input type="date" id="hwDeadline" class="form-input" value="${h?.deadline||''}" required></div><div class="form-group"><label>صورة الواجب (Drive)</label><input id="hwImage" class="form-input" value="${h?.imageUrl||''}" placeholder="https://drive.google.com/..."></div><div id="hwQList"></div><div style="display:flex;gap:8px;margin:8px 0;"><button class="btn btn-secondary btn-sm" onclick="addHwQ('mcq')">+ MCQ</button><button class="btn btn-secondary btn-sm" onclick="addHwQ('truefalse')">+ صح/خطأ</button></div><button class="btn btn-primary w-full" onclick="saveHw('${editId||''}')">💾</button></div>`);
+      renderHwQ();
+    };
+    window.addHwQ=function(t){hwQ.push({id:'q'+Date.now(),type:t,text:'',options:t==='mcq'?['','','','']:[],correctAnswer:t==='mcq'?0:true,points:10,requiresManualReview:t==='short'});renderHwQ();};
+    window.renderHwQ=function(){document.getElementById('hwQList').innerHTML=hwQ.map((q,i)=>`<div style="background:var(--surface-hover);border-radius:8px;padding:12px;margin-bottom:8px;"><input type="text" class="form-input" placeholder="س${i+1}" value="${q.text||''}" onchange="hwQ[${i}].text=this.value">${q.type==='mcq'?q.options.map((o,oi)=>`<div style="display:flex;gap:8px;align-items:center;margin-top:6px;"><input type="radio" name="c${q.id}" ${q.correctAnswer===oi?'checked':''} onchange="hwQ[${i}].correctAnswer=${oi}"><input type="text" class="form-input" placeholder="خيار" value="${o||''}" onchange="hwQ[${i}].options[${oi}]=this.value"></div>`).join(''):''}</div>`).join('');};
+    window.saveHw=async function(editId){if(!document.getElementById('hwTitle').value)return ThemeManager.toast('أكمل','error');const data={title:document.getElementById('hwTitle').value,groupId:document.getElementById('hwGroup').value,deadline:document.getElementById('hwDeadline').value,imageUrl:document.getElementById('hwImage').value,questions:hwQ,maxAttempts:2,passingScore:60,showResults:true,subject:'English',openDate:new Date().toISOString().split('T')[0],createdBy:currentUser.id};if(editId)await DataService.updateHomework(editId,data);else await DataService.addHomework(data);ThemeManager.closeModal();loadHomework();};
+    window.delHw=async function(id){if(!confirm('حذف؟'))return;await DataService.deleteHomework(id);loadHomework();};
+
+    // ===== Exams (with Attempts Details) =====
+    let exQ=[];
+    window.loadExams=function(){
+      const q=(document.getElementById('exSearchBar')?.value||'').toLowerCase();
+      const d=db();
+      let list=d.exams||[];
+      if(q)list=list.filter(e=>(e.title||'').toLowerCase().includes(q));
+      document.getElementById('exList').innerHTML=list.length?list.map(e=>{
+        const group=DataService.getGroups().find(g=>g.id===e.groupId);
+        const totalStudents=group?DataService.getStudentsByGroup(group.id).length:0;
+        const att=(d.examAttempts||[]).filter(a=>a.examId===e.id);
+        const graded=att.filter(a=>a.status==='approved');
+        const pending=att.filter(a=>a.status!=='approved');
+        const attemptRate=totalStudents?Math.round(att.length/totalStudents*100):0;
+        const avgScore=graded.length?Math.round(graded.reduce((a,x)=>a+(x.score||0),0)/graded.length):0;
+        const modeLabel=e.mode==='home'?'🏠 منزلي':e.mode==='class'?'🏫 حصة':'📝 ورقي';
+        const statusLabel=e.status==='live'?'<span class="badge badge-danger">🔴 لايف</span>':e.status==='published'?'<span class="badge badge-success">منشور</span>':'<span class="badge badge-muted">مسودة</span>';
+        return `<div class="hw-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:200px;">
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">
+                <strong style="font-size:15px;">${e.title}</strong>
+                <span class="badge badge-info">${modeLabel}</span>
+                ${statusLabel}
+              </div>
+              <div class="text-xs text-muted">👥 ${group?.name||'-'} · 👨‍ ${DataService.getUserById(group?.teacherId)?.name||'-'} · ⏱️ ${e.duration||60}د</div>
+              <div class="stat-mini" style="margin-top:10px;">
+                <div class="stat-mini-box"><div class="stat-mini-value">${attemptRate}%</div><div class="stat-mini-label">نسبة المحاولات</div></div>
+                <div class="stat-mini-box"><div class="stat-mini-value">${avgScore}%</div><div class="stat-mini-label">المتوسط</div></div>
+                <div class="stat-mini-box"><div class="stat-mini-value">${att.length}/${totalStudents}</div><div class="stat-mini-label">حاولوا</div></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="btn btn-primary btn-sm" onclick="viewExAttempts('${e.id}')">📊 المحاولات (${att.length})</button>
+              <button class="btn btn-ghost btn-sm" onclick="openExBuilder('${e.id}')">✏️</button>
+              <button class="btn btn-danger btn-sm" onclick="delEx('${e.id}')">🗑️</button>
+            </div>
+          </div>
+        </div>`;
+      }).join(''):'<p class="text-muted">لا امتحانات</p>';
+    };
+
+    window.viewExAttempts=function(exId){
+      const e=DataService.getExamById(exId);
+      if(!e)return;
+      const group=DataService.getGroups().find(g=>g.id===e.groupId);
+      const students=group?DataService.getStudentsByGroup(group.id):[];
+      const d=db();
+      const att=(d.examAttempts||[]).filter(a=>a.examId===exId);
+
+      const graded=att.filter(a=>a.status==='approved').map(a=>{
+        const st=DataService.getUserById(a.studentId);
+        const maxScore=a.maxScore||e.totalPoints||100;
+        const pct=e.totalPoints?Math.round(a.score/e.totalPoints*100):(maxScore?Math.round(a.score/maxScore*100):(a.score||0));
+        return {...a,student:st,maxScore,pct};
+      });
+      const pending=att.filter(a=>a.status!=='approved').map(a=>({...a,student:DataService.getUserById(a.studentId)}));
+      const attemptedIds=att.map(a=>a.studentId);
+      const notAttempted=students.filter(s=>!attemptedIds.includes(s.id));
+
+      const avgScore=graded.length?Math.round(graded.reduce((a,x)=>a+(x.pct||0),0)/graded.length):0;
+      const maxScore=graded.length?Math.max(...graded.map(a=>a.pct||0)):0;
+      const minScore=graded.length?Math.min(...graded.map(a=>a.pct||0)):0;
+
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📊 ${e.title}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body">
+        <div class="stat-mini">
+          <div class="stat-mini-box"><div class="stat-mini-value">${att.length}/${students.length}</div><div class="stat-mini-label">حاولوا</div></div>
+          <div class="stat-mini-box"><div class="stat-mini-value">${avgScore}%</div><div class="stat-mini-label">المتوسط</div></div>
+          <div class="stat-mini-box"><div class="stat-mini-value">${maxScore}%/${minScore}%</div><div class="stat-mini-label">أعلى/أقل</div></div>
+        </div>
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab(event,'graded')">✓ تم التصحيح (${graded.length})</button>
+          <button class="tab-btn" onclick="switchTab(event,'pending')">⏳ بانتظار (${pending.length})</button>
+          <button class="tab-btn" onclick="switchTab(event,'notAttempted')">✗ لم يحاول (${notAttempted.length})</button>
+        </div>
+        <div id="tab-graded" class="tab-content active">
+          ${graded.length?graded.sort((a,b)=>b.pct-a.pct).map(a=>`<div class="sub-row graded"><div><div class="user-avatar" style="width:30px;height:30px;font-size:12px;display:inline-flex;margin-inline-end:8px;vertical-align:middle;">${a.student?.name?.charAt(0)||'?'}</div><strong>${a.student?.name||'-'}</strong>${a.offline?'<span class="badge badge-muted" style="margin-inline-start:6px;">📝 ورقي</span>':''}<div class="text-xs text-muted">${a.student?.code||''}</div></div><div style="display:flex;gap:8px;align-items:center;"><button class="btn btn-ghost btn-sm" onclick="viewExAnswers('${a.id}')">👁️</button><strong style="color:var(--success);font-size:18px;">${a.pct}%</strong><div class="text-xs text-muted">${a.score}/${a.maxScore}</div></div></div>`).join(''):'<p class="text-muted">لا درجات</p>'}
+        </div>
+        <div id="tab-pending" class="tab-content">
+          ${pending.length?pending.map(a=>`<div class="sub-row pending"><div><strong>${a.student?.name||'-'}</strong><div class="text-xs text-muted">${a.student?.code||''}</div></div><button class="btn btn-secondary btn-sm" onclick="gradeExAttempt('${a.id}')">✏️ صحّح</button></div>`).join(''):'<p class="text-muted">الكل مُصحّح ✓</p>'}
+        </div>
+        <div id="tab-notAttempted" class="tab-content">
+          ${notAttempted.length?notAttempted.map(s=>`<div class="sub-row missing"><div><strong>${s.name||'-'}</strong><div class="text-xs text-muted">${s.code||''} · ${s.phone||''}</div></div>${s.parentPhone?`<a class="btn btn-success btn-sm" href="https://wa.me/2${s.parentPhone.replace(/\D/g,'')}" target="_blank">💬</a>`:''}</div>`).join(''):'<p class="text-muted">الكل حاول ✓</p>'}
+        </div>
+      </div>`,'modal-lg');
+    };
+
+    window.viewExAnswers=function(attId){
+      const d=db();
+      const a=(d.examAttempts||[]).find(x=>x.id===attId);
+      if(!a)return;
+      const e=DataService.getExamById(a.examId);
+      const st=DataService.getUserById(a.studentId);
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">👁️ إجابات ${st?.name||'-'}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body">
+        ${(e?.questions||[]).map((q,i)=>{
+          const ans=(a.answers||[]).find(x=>x.questionId===q.id);
+          const correct=q.correctAnswer;
+          const isCorrect=ans&&ans.answer===correct;
+          return `<div class="sub-row ${isCorrect?'graded':'pending'}"><div style="flex:1;"><strong>س${i+1}: ${q.text||''}</strong><div class="text-xs text-muted" style="margin-top:4px;">إجابة الطالب: <strong>${ans?.answer??'—'}</strong> ${ans?'· الإجابة الصحيحة: <strong>'+correct+'</strong>':''}</div></div><span class="badge ${isCorrect?'badge-success':'badge-danger'}">${isCorrect?'✓':'✗'}</span></div>`;
+        }).join('')||'<p class="text-muted">لا أسئلة</p>'}
+      </div>`);
+    };
+
+    window.gradeExAttempt=function(id){
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">✏️ درجة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body">
+        <div class="form-group"><label>الدرجة</label><input type="number" id="gradeVal" class="form-input" min="0"></div>
+        <button class="btn btn-primary w-full" onclick="saveExGrade('${id}')">💾 حفظ</button>
+      </div>`,'modal-sm');
+    };
+    window.saveExGrade=async function(id){
+      const score=parseInt(document.getElementById('gradeVal').value)||0;
+      const d=db();const a=(d.examAttempts||[]).find(x=>x.id===id);
+      if(a){a.score=score;a.status='approved';a.gradedBy=currentUser.id;save(d);if(window.FirebaseService?.connected)FirebaseService.saveDoc('examAttempts',id,a);}
+      ThemeManager.closeModal();ThemeManager.toast('تم ✓','success');loadExams();
+    };
+
+    window.openExBuilder=function(editId){
+      exQ=[];
+      const e=editId?DataService.getExamById(editId):null;
+      if(e&&e.questions)exQ=[...e.questions];
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${e?'✏️':'🎓'} امتحان</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>العنوان</label><input id="exTitle" class="form-input" value="${e?.title||''}" required></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المجموعة</label><select id="exGroup" class="form-select">${DataService.getGroups().map(g=>`<option value="${g.id}" ${e?.groupId===g.id?'selected':''}>${g.name}</option>`).join('')}</select></div><div class="form-group"><label>النوع</label><select id="exMode" class="form-select"><option value="home" ${e?.mode==='home'?'selected':''}>منزلي</option><option value="class" ${e?.mode==='class'?'selected':''}>حصة</option><option value="offline" ${e?.mode==='offline'?'selected':''}>ورقي</option></select></div></div><div id="exQList"></div><div style="display:flex;gap:8px;margin:8px 0;"><button class="btn btn-secondary btn-sm" onclick="addExQ('mcq')">+ MCQ</button><button class="btn btn-secondary btn-sm" onclick="addExQ('truefalse')">+ صح/خطأ</button></div><button class="btn btn-primary w-full" onclick="saveEx('${editId||''}')">💾</button></div>`);
+      renderExQ();
+    };
+    window.addExQ=function(t){exQ.push({id:'q'+Date.now(),type:t,text:'',options:t==='mcq'?['','','','']:[],correctAnswer:t==='mcq'?0:true,points:10,requiresManualReview:t==='short'});renderExQ();};
+    window.renderExQ=function(){document.getElementById('exQList').innerHTML=exQ.map((q,i)=>`<div style="background:var(--surface-hover);border-radius:8px;padding:12px;margin-bottom:8px;"><input type="text" class="form-input" placeholder="س${i+1}" value="${q.text||''}" onchange="exQ[${i}].text=this.value">${q.type==='mcq'?q.options.map((o,oi)=>`<div style="display:flex;gap:8px;align-items:center;margin-top:6px;"><input type="radio" name="x${q.id}" ${q.correctAnswer===oi?'checked':''} onchange="exQ[${i}].correctAnswer=${oi}"><input type="text" class="form-input" placeholder="خيار" value="${o||''}" onchange="exQ[${i}].options[${oi}]=this.value"></div>`).join(''):''}</div>`).join('');};
+    window.saveEx=async function(editId){if(!document.getElementById('exTitle').value)return ThemeManager.toast('أكمل','error');const data={title:document.getElementById('exTitle').value,groupId:document.getElementById('exGroup').value,mode:document.getElementById('exMode').value,duration:60,questions:exQ,maxAttempts:1,passingScore:50,randomizeQuestions:true,subject:'English',startTime:new Date().toISOString(),endTime:new Date(Date.now()+86400e3).toISOString(),createdBy:currentUser.id};if(editId)await DataService.updateExam(editId,data);else await DataService.addExam(data);ThemeManager.closeModal();loadExams();};
+    window.delEx=async function(id){if(!confirm('حذف؟'))return;await DataService.deleteExam(id);loadExams();};
+
+    window.loadVocabulary=function(){document.getElementById('vocabList').innerHTML=DataService.getVocabulary().map(v=>`<div class="card" style="margin-bottom:8px;display:flex;justify-content:space-between;"><div><strong style="color:var(--primary);font-family:var(--font-en);">${v.word}</strong> <span class="text-sm">${v.meaning||''}</span></div><button class="btn btn-danger btn-sm" onclick="delVocab('${v.id}')">🗑️</button></div>`).join('')||'<p class="text-muted">لا مفردات</p>';};
+    window.openVocabModal=function(){ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📚 كلمة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveVocab(event)"><div class="form-group"><label>الكلمة</label><input type="text" id="vWord" class="form-input" required></div><div class="form-group"><label>المعنى</label><input type="text" id="vMean" class="form-input" required></div><button class="btn btn-primary w-full">💾</button></form></div>`);};
+    window.saveVocab=async function(e){e.preventDefault();await DataService.addVocabulary({word:document.getElementById('vWord').value,meaning:document.getElementById('vMean').value,subject:'English',createdBy:currentUser.id});ThemeManager.closeModal();loadVocabulary();return false;};
+    window.delVocab=async function(id){await DataService.deleteVocabulary(id);loadVocabulary();};
+
+    // ===== Tasks / Followups / Calendar =====
+    window.loadTasks=function(){const d=db();let html='';(d.attendance||[]).filter(a=>a.status==='pending').forEach(a=>{html+=`<div class="task-item"><div style="font-size:20px;">📋</div><div style="flex:1;"><div class="task-title">اعتماد: ${a.groupName}</div></div><button class="btn btn-primary btn-sm" onclick="showSection('attendance')">تنفيذ ←</button></div>`;});DataService.getTasks({type:'task'}).forEach(t=>{html+=`<div class="task-item priority-${t.priority}"><div class="task-checkbox ${t.status==='completed'?'checked':''}" onclick="toggleTask('${t.id}')">${t.status==='completed'?'✓':''}</div><div style="flex:1;"><div class="task-title">${t.title}</div></div></div>`;});document.getElementById('tasksList').innerHTML=html||'<p class="text-muted">لا مهام ✓</p>';};
+    window.openTaskModal=function(){ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">✅ مهمة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveTask(event)"><div class="form-group"><label>العنوان</label><input id="tkT" class="form-input" required></div><div class="form-group"><label>الأولوية</label><select id="tkP" class="form-select"><option value="low">منخفضة</option><option value="medium" selected>متوسطة</option><option value="high">عالية</option></select></div><button class="btn btn-primary w-full">💾</button></form></div>`);};
+    window.saveTask=async function(e){e.preventDefault();await DataService.addTask({title:document.getElementById('tkT').value,assignedTo:currentUser.id,priority:document.getElementById('tkP').value,status:'open',type:'task'});ThemeManager.closeModal();loadTasks();return false;};
+    window.toggleTask=async function(id){const t=DataService.getTasks().find(x=>x.id===id);await DataService.updateTask(id,{status:t.status==='completed'?'open':'completed'});loadTasks();};
+    window.loadFollowups=function(){const list=Ops.getFollowUps({});document.getElementById('followupsList').innerHTML=list.length?list.map(f=>`<div class="card" style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;"><div><strong>${f.title||f.reason}</strong><div class="text-sm text-muted">👤 ${DataService.getUserById(f.studentId)?.name||'-'}</div></div><span class="badge ${f.status==='resolved'?'badge-success':'badge-warning'}">${f.status}</span></div></div>`).join(''):'<p class="text-muted">لا متابعات</p>';};
+    window.loadCalendar=function(){const sel=document.getElementById('calGroup');if(!sel.options.length)sel.innerHTML=DataService.getGroups().map(g=>`<option value="${g.id}">${g.name}</option>`).join('');const g=DataService.getGroups().find(x=>x.id===sel.value);if(!g)return;const now=new Date();const y=now.getFullYear(),m=now.getMonth();const daysInMonth=new Date(y,m+1,0).getDate();const wd=DAYS.map(d=>d.en);let html='<div class="cal-grid">'+['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'].map(d=>`<div style="text-align:center;font-size:11px;font-weight:700;color:var(--text-muted);">${d}</div>`).join('');for(let i=0;i<new Date(y,m,1).getDay();i++)html+='<div class="cal-day empty"></div>';for(let d=1;d<=daysInMonth;d++){const date=new Date(y,m,d);const dateStr=date.toISOString().split('T')[0];let cls='',mark='';if(wd[date.getDay()]===g.day){if(DataService.isSessionCancelled(g.id,dateStr)){cls='cancel';mark='✗';}else if((db().attendance||[]).some(a=>a.groupId===g.id&&a.date===dateStr&&a.status==='approved')){cls='ok';mark='✓';}}html+=`<div class="cal-day ${cls}"><div class="num">${d}</div>${mark?`<div class="mark">${mark}</div>`:''}</div>`;}document.getElementById('calendarView').innerHTML=html+'</div>';};
+
+    // ===== Materials / Payments =====
+    window.loadMaterials=function(){document.getElementById('materialsList').innerHTML=DataService.getMaterials().length?DataService.getMaterials().map(m=>`<div class="user-card"><div class="user-card-header"><div class="user-avatar">📦</div><div><div class="user-name">${m.name}</div><div class="user-meta"><span>💰 ${m.price}</span></div></div></div><div class="user-actions"><button class="btn btn-danger btn-sm" onclick="delMat('${m.id}')">🗑️</button></div></div>`).join(''):'<p class="text-muted">لا مواد</p>';};
+    window.openMaterialModal=function(){ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📦 مادة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveMat(event)"><div class="form-group"><label>الاسم</label><input id="mName" class="form-input" required></div><div class="form-group"><label>السعر</label><input type="number" id="mPrice" class="form-input" required></div><button class="btn btn-primary w-full">💾</button></form></div>`);};
+    window.saveMat=async function(e){e.preventDefault();await DataService.addMaterial({name:document.getElementById('mName').value,price:parseInt(document.getElementById('mPrice').value)});ThemeManager.closeModal();loadMaterials();return false;};
+    window.delMat=async function(id){if(!confirm('حذف؟'))return;await DataService.deleteMaterial(id);loadMaterials();};
+    window.loadPayments=function(){const s=DataService.getPaymentSummary();document.getElementById('payStats').innerHTML=`<div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">المطلوب</span></div><div class="stat-card-value">${s.total}</div></div><div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">المدفوع</span></div><div class="stat-card-value" style="color:var(--success)">${s.paid}</div></div><div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">المتبقي</span></div><div class="stat-card-value" style="color:var(--warning)">${s.remaining}</div></div>`;document.getElementById('paymentsList').innerHTML=DataService.getPayments().map(p=>`<div style="padding:12px;background:var(--surface-hover);border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;"><div><strong>${DataService.getUserById(p.studentId)?.name||(p.type==='teacher_settlement'?'تسوية أستاذ':p.type==='center_collection'?'تحصيل سنتر':'-')}</strong><div class="text-xs text-muted">${p.month} · ${p.paidAmount}/${p.amount}</div></div>${p.status!=='paid'&&!p.type?`<button class="btn btn-success btn-sm" onclick="recordPay('${p.id}')">💵</button>`:`<span class="badge badge-success">مسدد</span>`}</div>`).join('')||'<p class="text-muted">لا مدفوعات</p>';};
+    window.openPaymentModal=function(){ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">💰 دفعة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return savePay(event)"><div class="form-group"><label>الطالب</label><select id="pStu" class="form-select">${DataService.getStudents().map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>الشهر</label><input type="month" id="pMonth" class="form-input" required></div><div class="form-group"><label>المبلغ</label><input type="number" id="pAmt" class="form-input" required></div></div><button class="btn btn-primary w-full">💾</button></form></div>`);UI.attachSearch(document.getElementById('pStu'));};
+    window.savePay=async function(e){e.preventDefault();await DataService.addPayment({studentId:document.getElementById('pStu').value,month:document.getElementById('pMonth').value,amount:parseInt(document.getElementById('pAmt').value),paidAmount:0,status:'unpaid'});ThemeManager.closeModal();loadPayments();return false;};
+    window.recordPay=function(id){ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">💵 دفع</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>المبلغ</label><input type="number" id="payAmt" class="form-input"></div><div class="form-group"><label>الطريقة</label><select id="payMethod" class="form-select"><option value="cash">كاش</option><option value="vodafone">فودافون كاش</option></select></div><button class="btn btn-success w-full" onclick="doRecordPay('${id}')">💵 تأكيد</button></div>`,'modal-sm');};
+    window.doRecordPay=async function(id){await DataService.recordPayment(id,parseInt(document.getElementById('payAmt').value)||0,document.getElementById('payMethod').value);ThemeManager.closeModal();loadPayments();};
+
+    // ===== Notifications / Templates / WhatsApp =====
+    window.loadNotifications=function(){document.getElementById('notificationsList').innerHTML=DataService.getNotifications({}).map(n=>`<div style="padding:10px;background:var(--surface-hover);border-radius:8px;margin-bottom:6px;"><strong>${n.title}</strong><div class="text-sm">${n.message}</div></div>`).join('')||'<p class="text-muted">لا إشعارات</p>';};
+    window.openNotifyModal=function(){ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🔔 إشعار</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return sendNotify(event)"><div class="form-group"><label>المستلم</label><select id="nTarget" class="form-select"><option value="all">الكل</option><option value="students">الطلاب</option><option value="parents">أولياء الأمور</option><option value="teachers">المدرسون</option></select></div><div class="form-group"><label>العنوان</label><input id="nTitle" class="form-input" required></div><div class="form-group"><label>الرسالة</label><textarea id="nMsg" class="form-textarea" required></textarea></div><button class="btn btn-primary w-full">📤</button></form></div>`);};
+    window.sendNotify=async function(e){e.preventDefault();await DataService.addNotification({title:document.getElementById('nTitle').value,message:document.getElementById('nMsg').value,targetUserId:document.getElementById('nTarget').value,priority:'medium',type:'general'});ThemeManager.closeModal();loadNotifications();return false;};
+    function getTemplates(){return JSON.parse(localStorage.getItem('eduflow_templates')||'null')||[{name:'غياب',content:'السلام عليكم، نفيدكم بأن الطالب {{name}} تغيب عن حصة {{group}}'},{name:'واجب',content:'تذكير: الطالب {{name}} عليه واجب'},{name:'دفعة',content:'نفيدكم بأن الطالب {{name}} عليه دفعة متأخرة'}];}
+    function saveTemplates(t){localStorage.setItem('eduflow_templates',JSON.stringify(t));}
+    window.loadTemplates=function(){document.getElementById('templatesList').innerHTML=getTemplates().map((t,i)=>`<div style="padding:12px;background:var(--surface-hover);border-radius:8px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;"><strong>${t.name}</strong><button class="btn btn-danger btn-sm" onclick="delTemplate(${i})">🗑️</button></div><div class="text-sm" style="margin-top:6px;">${t.content}</div></div>`).join('');};
+    window.openTemplateModal=function(){ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📄 قالب</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveTpl(event)"><div class="form-group"><label>الاسم</label><input id="tpName" class="form-input" required></div><div class="form-group"><label>المحتوى</label><textarea id="tpContent" class="form-textarea" rows="3" required></textarea></div><button class="btn btn-primary w-full">💾</button></form></div>`);};
+    window.saveTpl=function(e){e.preventDefault();const t=getTemplates();t.push({name:document.getElementById('tpName').value,content:document.getElementById('tpContent').value});saveTemplates(t);ThemeManager.closeModal();loadTemplates();return false;};
+    window.delTemplate=function(i){const t=getTemplates();t.splice(i,1);saveTemplates(t);loadTemplates();};
+    window.loadWA=function(){document.getElementById('waTemplate').innerHTML=getTemplates().map((t,i)=>`<option value="${i}">${t.name}</option>`).join('');const sel=document.getElementById('waStudent');sel.innerHTML=DataService.getStudents().map(s=>`<option value="${s.id}">${s.name} (${s.code||''})</option>`).join('');UI.attachSearch(sel);previewWA();};
+    window.previewWA=function(){const t=getTemplates()[parseInt(document.getElementById('waTemplate').value)||0];const s=DataService.getUserById(document.getElementById('waStudent').value);if(!t||!s)return;document.getElementById('waPreview').value=t.content.replace('{{name}}',s.name).replace('{{group}}',DataService.getGroups().find(g=>g.id===s.groupId)?.name||'');};
+    window.sendWA=function(){const s=DataService.getUserById(document.getElementById('waStudent').value);const num=(s.parentPhone||s.phone||'').replace(/\D/g,'');window.open(`https://wa.me/2${num}?text=${encodeURIComponent(document.getElementById('waPreview').value)}`,'_blank');};
+
+    // ===== Reports / Certs / Branches / ViewAs / Settings =====
+    window.setReport=function(r,btn){currentReport=r;document.querySelectorAll('#section-reports .filter-btn').forEach(b=>b.classList.toggle('active',b===btn));renderReport(r);};
+    window.renderReport=function(r){const att=DataService.getAttendance().filter(a=>a.status==='approved');let html='';if(r==='attendance'){html='<table class="table"><thead><tr><th>المجموعة</th><th>حاضر</th><th>غائب</th></tr></thead><tbody>'+DataService.getGroups().map(g=>{const ga=att.filter(a=>a.groupId===g.id);const pr=ga.reduce((s,a)=>s+a.records.filter(x=>x.status==='present').length,0);const tot=ga.reduce((s,a)=>s+a.records.length,0);return `<tr><td>${g.name}</td><td>${pr}</td><td>${tot-pr}</td></tr>`;}).join('')+'</tbody></table>';}else if(r==='performance'){html='<table class="table"><thead><tr><th>الطالب</th><th>الواجبات (%)</th><th>الامتحانات (%)</th></tr></thead><tbody>'+DataService.getStudents().map(s=>{const hwSubs=DataService.getSubmissions({studentId:s.id}).filter(x=>x.status==='graded');const hwAvg=hwSubs.length?Math.round(hwSubs.reduce((a,x)=>a+(x.score||0),0)/hwSubs.length):0;const exAtts=DataService.getExamAttempts({studentId:s.id}).filter(x=>x.status==='approved');const exAvg=exAtts.length?Math.round(exAtts.reduce((a,x)=>a+(x.score||0),0)/exAtts.length):0;return `<tr><td>${s.name}</td><td>${hwAvg}%</td><td>${exAvg}%</td></tr>`;}).join('')+'</tbody></table>';}else{html='<table class="table"><thead><tr><th>الطالب</th><th>المطلوب</th><th>المدفوع</th></tr></thead><tbody>'+DataService.getPayments().map(p=>`<tr><td>${DataService.getUserById(p.studentId)?.name||'-'}</td><td>${p.amount}</td><td>${p.paidAmount}</td></tr>`).join('')+'</tbody></table>';}document.getElementById('reportView').innerHTML=html;};
+    window.loadCerts=function(){const c=JSON.parse(localStorage.getItem('eduflow_certificates')||'[]');document.getElementById('certificatesList').innerHTML=c.length?c.map((x,i)=>`<div class="card" style="margin-bottom:10px;background:var(--grad);color:#fff;"><h3 style="margin:0;">🏆 ${x.type}</h3><p style="margin:4px 0;">${x.studentName}</p><button class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;" onclick="delCert(${i})">🗑️</button></div>`).join(''):'<p class="text-muted">لا شهادات</p>';};
+    window.openCertModal=function(){ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📜 شهادة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveCert(event)"><div class="form-group"><label>الطالب</label><select id="ceStu" class="form-select">${DataService.getStudents().map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div><div class="form-group"><label>النوع</label><select id="ceType" class="form-select"><option>تميز</option><option>حضور</option><option>تفوق</option></select></div><button class="btn btn-primary w-full">📜</button></form></div>`);};
+    window.saveCert=function(e){e.preventDefault();const s=DataService.getUserById(document.getElementById('ceStu').value);const c=JSON.parse(localStorage.getItem('eduflow_certificates')||'[]');c.push({studentName:s.name,type:document.getElementById('ceType').value,date:new Date().toISOString(),code:'CERT-'+Date.now().toString().slice(-6)});localStorage.setItem('eduflow_certificates',JSON.stringify(c));ThemeManager.closeModal();loadCerts();return false;};
+    window.delCert=function(i){const c=JSON.parse(localStorage.getItem('eduflow_certificates')||'[]');c.splice(i,1);localStorage.setItem('eduflow_certificates',JSON.stringify(c));loadCerts();};
+    window.loadBranches=function(){document.getElementById('branchesList').innerHTML=DataService.getBranches().length?DataService.getBranches().map(b=>`<div class="user-card"><div class="user-card-header"><div class="user-avatar">🏫</div><div><div class="user-name">${b.name}</div></div></div><div class="user-actions"><button class="btn btn-danger btn-sm" onclick="delBranch('${b.id}')">🗑️</button></div></div>`).join(''):'<p class="text-muted">لا فروع</p>';};
+    window.openBranchModal=function(){ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🏫 فرع</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveBranch(event)"><div class="form-group"><label>الاسم</label><input id="brN" class="form-input" required></div><div class="form-group"><label>العنوان</label><input id="brA" class="form-input" required></div><button class="btn btn-primary w-full">💾</button></form></div>`);};
+    window.saveBranch=async function(e){e.preventDefault();await DataService.addBranch({name:document.getElementById('brN').value,address:document.getElementById('brA').value});ThemeManager.closeModal();loadBranches();return false;};
+    window.delBranch=async function(id){if(!confirm('حذف؟'))return;await DataService.deleteBranch(id);loadBranches();};
+    window.loadViewAs=function(){const all=[...DataService.getTeachers(),...DataService.getAssistants(),...DataService.getStudents()];document.getElementById('viewAsList').innerHTML=all.map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--surface-hover);border-radius:8px;margin-bottom:6px;"><div><strong>${u.name}</strong> <span class="badge badge-muted">${u.role}</span></div><button class="btn btn-secondary btn-sm" onclick="viewAs('${u.id}')">👁️</button></div>`).join('');};
+    window.viewAs=function(id){const u=DataService.getUserById(id);AuthService.setViewAs(u);AuthService.redirectToDashboard(u.role);};
+    window.loadSettings=function(){const b=DataService.getBranding();document.getElementById('bName').value=b.name||'';document.getElementById('bTagline').value=b.tagline||'';document.getElementById('bLogoUrl').value=b.logo&&b.logo.startsWith('http')?b.logo:'';document.getElementById('bPrimary').value=b.primaryColor||'#6366f1';document.getElementById('bAccent').value=b.accentColor||'#8b5cf6';document.getElementById('bPhone').value=b.supportPhone||'';document.getElementById('bWhatsapp').value=b.whatsappSupport||'';document.getElementById('logoPreview').innerHTML=b.logo?UI.driveImg(b.logo):'🎓';const h=DataService.getHesetak?DataService.getHesetak():EduFlowConfig.hesetak;document.getElementById('hTitle').value=h.title||'';document.getElementById('hSubtitle').value=h.subtitle||'';document.getElementById('hUrl').value=h.url||'';document.getElementById('hLogo').value=h.logo||'';document.getElementById('featuresList').innerHTML=Object.entries(DataService.getFeatureFlags()).map(([k,v])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--surface-hover);border-radius:8px;margin-bottom:6px;"><div><strong>${v.name}</strong></div><div class="toggle ${v.enabled?'active':''}" onclick="toggleFeature('${k}',this)"></div></div>`).join('');};
+    window.saveBranding=async function(){await DataService.updateBranding({name:document.getElementById('bName').value,tagline:document.getElementById('bTagline').value,logo:document.getElementById('bLogoUrl').value.trim(),primaryColor:document.getElementById('bPrimary').value,accentColor:document.getElementById('bAccent').value,supportPhone:document.getElementById('bPhone').value,whatsappSupport:document.getElementById('bWhatsapp').value});ThemeManager.applyBranding();ThemeManager.toast('تم ✓','success');};
+    window.saveHesetak=async function(){await DataService.updateHesetak({title:document.getElementById('hTitle').value,subtitle:document.getElementById('hSubtitle').value,url:document.getElementById('hUrl').value,logo:document.getElementById('hLogo').value});ThemeManager.toast('تم ✓','success');};
+    window.handleLogo=function(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{DataService.updateBranding({logo:ev.target.result});document.getElementById('logoPreview').innerHTML=`<img src="${ev.target.result}" style="width:100%;height:100%;object-fit:cover;">`;};r.readAsDataURL(f);};
+    window.toggleFeature=async function(k,el){const f=DataService.getFeatureFlags();await DataService.updateFeatureFlag(k,{enabled:!f[k].enabled});loadSettings();};
+    window.exportBackup=function(){const data={version:'3.0',data:db()};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`eduflow_${Date.now()}.json`;a.click();};
+    window.importBackup=function(e){const f=e.target.files[0];if(!f)return;if(!confirm('استبدال؟'))return;const r=new FileReader();r.onload=ev=>{try{save(JSON.parse(ev.target.result).data);location.reload();}catch{ThemeManager.toast('ملف غير صالح','error');}};r.readAsText(f);};
+    window.loadLogs=function(){document.getElementById('logsList').innerHTML=DataService.getActivityLogs().map(l=>`<div class="activity-item"><div class="activity-dot"></div><div><div class="activity-title">${l.action}</div><div class="activity-meta"><span>👤 ${l.userName}</span><span>🕐 ${new Date(l.timestamp).toLocaleString('ar-EG')}</span></div></div></div>`).join('')||'<p class="text-muted">لا سجل</p>';};
+
+    // ===== Assistants =====
+    window.loadAssistants=function(){document.getElementById('assistantsList').innerHTML=DataService.getAssistants().map(a=>{const scope=Ops.getScope(a.id)||{teacherIds:[],groupIds:[]};return `<div class="user-card"><div class="user-card-header"><div class="user-avatar">${a.name.charAt(0)}</div><div><div class="user-name">${a.name}</div><div class="user-meta"><span>${Ops.getLevel(a.id)==='primary'?'أساسي':'احتياطي'}</span></div></div></div><div class="user-meta"><span>👨‍ ${scope.teacherIds.length}</span><span>👥 ${scope.groupIds.length}</span></div><div class="user-actions"><button class="btn btn-primary btn-sm" onclick="openAssign('${a.id}')">🔗</button><button class="btn btn-secondary btn-sm" onclick="openPerms('${a.id}')">🔐</button><button class="btn btn-danger btn-sm" onclick="delUser('${a.id}')">🗑️</button></div></div>`;}).join('')||'<p class="text-muted">لا مساعدون</p>';};
+    window.openAssistantModal=function(){ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🧑‍ مساعد</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return saveAssistant(event)"><div class="form-group"><label>الاسم</label><input type="text" id="aName" class="form-input" required></div><div class="form-group"><label>البريد</label><input type="email" id="aEmail" class="form-input" required></div><div class="form-group"><label>المستوى</label><select id="aLevel" class="form-select"><option value="primary">أساسي</option><option value="backup">احتياطي</option></select></div><div class="form-group"><label>كلمة المرور</label><input type="text" id="aPass" class="form-input" value="12345678"></div><button class="btn btn-primary w-full">💾</button></form></div>`);};
+    window.saveAssistant=async function(e){e.preventDefault();const u=await DataService.addUser({name:document.getElementById('aName').value,email:document.getElementById('aEmail').value,password:document.getElementById('aPass').value,role:'assistant',assignedTeacherIds:[]});await Ops.setAssignment(u.id,{level:document.getElementById('aLevel').value,teacherIds:[],groupIds:[],branchIds:[]});ThemeManager.closeModal();loadAssistants();return false;};
+    window.openAssign=function(id){const scope=Ops.getScope(id)||{teacherIds:[],groupIds:[]};ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🔗 تعيين</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>المدرسون</label><div style="max-height:160px;overflow-y:auto;">${DataService.getTeachers().map(t=>`<label style="display:flex;gap:8px;margin-bottom:4px;"><input type="checkbox" class="asg-t" value="${t.id}" ${scope.teacherIds.includes(t.id)?'checked':''}> ${t.name}</label>`).join('')}</div></div><div class="form-group"><label>المجموعات</label><div style="max-height:160px;overflow-y:auto;">${DataService.getGroups().map(g=>`<label style="display:flex;gap:8px;margin-bottom:4px;"><input type="checkbox" class="asg-g" value="${g.id}" ${scope.groupIds.includes(g.id)?'checked':''}> ${g.name}</label>`).join('')}</div></div><button class="btn btn-primary w-full" onclick="saveAssign('${id}')">💾</button></div>`);};
+    window.saveAssign=async function(id){await Ops.setAssignment(id,{level:Ops.getLevel(id),teacherIds:[...document.querySelectorAll('.asg-t:checked')].map(c=>c.value),groupIds:[...document.querySelectorAll('.asg-g:checked')].map(c=>c.value),branchIds:[]});ThemeManager.closeModal();loadAssistants();};
+    window.openPerms=function(id){const p=DataService.getUserById(id).permissions||{};const mods=['students','attendance','homework','exams','payments','reports'];const acts=['view','create','edit','delete'];ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🔐 صلاحيات</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div style="overflow-x:auto;"><table class="table"><thead><tr><th>الوحدة</th>${acts.map(a=>`<th>${a}</th>`).join('')}</tr></thead><tbody>${mods.map(m=>`<tr><td>${m}</td>${acts.map(a=>`<td><input type="checkbox" data-m="${m}" data-a="${a}" ${(p[m]&&p[m][a])?'checked':''}></td>`).join('')}</tr>`).join('')}</tbody></table></div><button class="btn btn-primary w-full" style="margin-top:12px;" onclick="savePerms('${id}')">💾</button></div>`);};
+    window.savePerms=async function(id){const perms={};document.querySelectorAll('[data-m]').forEach(c=>{(perms[c.dataset.m]=perms[c.dataset.m]||{})[c.dataset.a]=c.checked;});await DataService.updateUser(id,{permissions:perms});ThemeManager.closeModal();};
+
+    window.loadTeacherLinks=function(){document.getElementById('teacherLinksList').innerHTML=DataService.getTeacherRegisterLinks().slice().reverse().map(l=>{const expired=new Date(l.expiresAt)<new Date();const url=location.origin+location.pathname.replace('admin-dashboard.html','teacher-register.html')+'?code='+l.code;return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px;background:var(--surface-hover);border-radius:8px;margin-bottom:8px;flex-wrap:wrap;"><div><span style="font-family:var(--font-en);font-weight:800;color:var(--primary);">${l.code}</span> <span class="badge ${expired||!l.active?'badge-danger':l.usedBy?'badge-muted':'badge-success'}">${expired?'منتهي':l.usedBy?'مستخدم':'نشط'}</span></div><div style="display:flex;gap:6px;"><button class="btn btn-secondary btn-sm" onclick="navigator.clipboard.writeText('${url}')">📋 نسخ</button>${!l.usedBy&&!expired?`<button class="btn btn-danger btn-sm" onclick="deactivateLink('${l.code}')">⏹️</button>`:''}</div></div>`;}).join('')||'<p class="text-muted">لا روابط</p>';};
+    window.genTeacherLink=function(){const l=DataService.generateTeacherRegisterLink(parseInt(document.getElementById('linkDuration').value));ThemeManager.toast('تم: '+l.code,'success');loadTeacherLinks();};
+    window.deactivateLink=function(c){DataService.deactivateTeacherRegisterLink(c);loadTeacherLinks();};
+
+    window.handleLogout=function(){if(confirm('خروج؟'))AuthService.logout();};
+
+    // ===== PENDING REGISTRATIONS =====
+    let pendingFilter='pending';
+    window.setPendingFilter=function(f,btn){
+      pendingFilter=f;
+      document.querySelectorAll('#section-pending .filter-btn').forEach(b=>b.classList.toggle('active',b===btn));
+      loadPending();
+    };
+
+    window.loadPending=function(){
+      const all=DataService.getPendingRegistrations();
+      const pending=all.filter(r=>r.status==='pending');
+      const approved=all.filter(r=>r.status==='approved');
+      const rejected=all.filter(r=>r.status==='rejected');
+
+      const badge=document.getElementById('pendingBadge');
+      if(badge){
+        if(pending.length>0){badge.style.display='inline-block';badge.textContent=pending.length;}
+        else badge.style.display='none';
+      }
+
+      document.getElementById('pendingStats').innerHTML=`
+        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">بانتظار الموافقة</span><span class="stat-card-icon">⏳</span></div><div class="stat-card-value" style="color:var(--warning);">${pending.length}</div></div>
+        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">موافق عليها</span><span class="stat-card-icon">✅</span></div><div class="stat-card-value" style="color:var(--success);">${approved.length}</div></div>
+        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">مرفوضة</span><span class="stat-card-icon">❌</span></div><div class="stat-card-value" style="color:var(--danger);">${rejected.length}</div></div>
+        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">إجمالي الطلبات</span><span class="stat-card-icon">📋</span></div><div class="stat-card-value">${all.length}</div></div>
+      `;
+
+      let list=pending;
+      if(pendingFilter==='approved')list=approved;
+      else if(pendingFilter==='rejected')list=rejected;
+      list=list.slice().reverse();
+
+      document.getElementById('pendingList').innerHTML=list.length?list.map(r=>{
+        const gs=(r.groupIds||[]).map(gid=>DataService.getGroups().find(g=>g.id===gid)).filter(Boolean);
+        const groupNames=gs.map(g=>g.name).join('، ')||'-';
+        const stageLabel=EduFlowConfig.educationLevels[r.stage]?.nameAr||'-';
+        return `<div class="sub-row" style="border-right:4px solid ${r.status==='pending'?'var(--warning)':r.status==='approved'?'var(--success)':'var(--danger)'};">
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">
+              <strong style="font-size:15px;">${r.name}</strong>
+              <span class="badge ${r.status==='pending'?'badge-warning':r.status==='approved'?'badge-success':'badge-danger'}">${r.status==='pending'?'⏳ بانتظار':r.status==='approved'?'✅ موافق':'❌ مرفوض'}</span>
+              <span class="badge badge-muted">${r.tempCode||'-'}</span>
+            </div>
+            <div class="text-xs text-muted" style="line-height:1.7;">
+              📱 ${r.phone||'-'} · 👨‍👩 ${r.parentPhone||'-'}<br>
+              📚 ${stageLabel} - ${r.grade||'-'}<br>
+              👥 <strong>المجموعات:</strong> ${groupNames}<br>
+              📅 تاريخ الطلب: ${new Date(r.createdAt).toLocaleString('ar-EG')}
+              ${r.approvedBy?'<br>✅ وافق عليه: '+DataService.getUserById(r.approvedBy)?.name:''}
+              ${r.rejectedBy?'<br>❌ رفضه: '+DataService.getUserById(r.rejectedBy)?.name+(r.rejectReason?' ('+r.rejectReason+')':''):''}
+              ${r.finalCode?'<br>🎟️ الكود النهائي: <strong style="color:var(--primary);">'+r.finalCode+'</strong>':''}
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            ${r.status==='pending'?`
+              <button class="btn btn-success btn-sm" onclick="approvePending('${r.id}')">✅ موافقة</button>
+              <button class="btn btn-danger btn-sm" onclick="rejectPending('${r.id}')">❌ رفض</button>
+            `:''}
+            <button class="btn btn-ghost btn-sm" onclick="viewPendingDetail('${r.id}')">👁️ تفاصيل</button>
+            <button class="btn btn-ghost btn-sm" onclick="deletePending('${r.id}')">🗑️</button>
+          </div>
+        </div>`;
+      }).join(''):`<div class="empty-state"><div class="empty-state-icon">📭</div><h3 class="empty-state-title">لا توجد طلبات ${pendingFilter==='pending'?'بانتظار':pendingFilter==='approved'?'موافق عليها':'مرفوضة'}</h3></div>`;
+    };
+
+    window.approvePending=async function(id){
+      const r=DataService.getPendingRegistrationById(id);
+      if(!r)return;
+      ThemeManager.confirm(
+        `هل تريد الموافقة على تسجيل <strong>${r.name}</strong>؟<br>سيتم إنشاء حساب رسمي وكود طالب دائم.`,
+        async ()=>{
+          try{
+            const res=await DataService.approvePendingRegistration(id,currentUser.id);
+            if(res.success){
+              ThemeManager.toast(`✅ تم إنشاء حساب ${res.user.name} بالكود ${res.code}`,'success');
+              ThemeManager.openModal(`
+                <div class="modal-header"><h3 class="modal-title">✅ تم الموافقة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+                <div class="modal-body" style="text-align:center;">
+                  <p class="text-sm text-muted">تم إنشاء حساب الطالب بنجاح</p>
+                  <div style="background:var(--grad);border-radius:10px;padding:20px;color:#fff;margin:16px 0;">
+                    <div class="text-xs" style="opacity:.9;">اسم الطالب</div>
+                    <div style="font-size:20px;font-weight:700;margin-bottom:10px;">${res.user.name}</div>
+                    <div class="text-xs" style="opacity:.9;">الكود الرسمي (سلّمه للطالب)</div>
+                    <div style="font-family:var(--font-en);font-size:28px;font-weight:800;letter-spacing:3px;margin-top:6px;">${res.code}</div>
+                  </div>
+                  <p class="text-sm text-muted">أطبع الباركود من "طباعة باركودات" وسلّمه للطالب</p>
+                  <div style="display:flex;gap:8px;margin-top:12px;">
+                    <button class="btn btn-secondary" style="flex:1;" onclick="navigator.clipboard.writeText('${res.code}');ThemeManager.toast('تم النسخ','success');">📋 نسخ الكود</button>
+                    <a class="btn btn-primary" style="flex:1;" href="print-qr.html?search=${res.code}" target="_blank">🖨️ طباعة الباركود</a>
+                  </div>
+                </div>
+              `,'modal-lg');
+              loadPending();
+              loadStudents();
+            }
+          }catch(err){ThemeManager.toast('خطأ: '+err.message,'error');}
+        }
+      );
+    };
+
+    window.rejectPending=async function(id){
+      const r=DataService.getPendingRegistrationById(id);
+      if(!r)return;
+      ThemeManager.openModal(`
+        <div class="modal-header"><h3 class="modal-title">❌ رفض الطلب</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+        <div class="modal-body">
+          <p class="text-sm text-muted" style="margin-bottom:12px;">رفض طلب <strong>${r.name}</strong></p>
+          <div class="form-group"><label>السبب (اختياري)</label><textarea id="rejectReason" class="form-textarea" rows="2" placeholder="مثال: البيانات غير مكتملة"></textarea></div>
+          <button class="btn btn-danger w-full" onclick="doReject('${id}')">❌ تأكيد الرفض</button>
+        </div>
+      `);
+    };
+    window.doReject=async function(id){
+      const reason=document.getElementById('rejectReason').value.trim();
+      await DataService.rejectPendingRegistration(id,reason,currentUser.id);
+      ThemeManager.closeModal();
+      ThemeManager.toast('تم رفض الطلب','warning');
+      loadPending();
+    };
+
+    window.viewPendingDetail=function(id){
+      const r=DataService.getPendingRegistrationById(id);
+      if(!r)return;
+      const gs=(r.groupIds||[]).map(gid=>DataService.getGroups().find(g=>g.id===gid)).filter(Boolean);
+      ThemeManager.openModal(`
+        <div class="modal-header"><h3 class="modal-title">👤 ${r.name}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+        <div class="modal-body">
+          <div class="detail-grid">
+            <div class="detail-box"><div class="lbl">الاسم</div><div class="val">${r.name}</div></div>
+            <div class="detail-box"><div class="lbl">الحالة</div><div class="val">${r.status}</div></div>
+            <div class="detail-box"><div class="lbl">الهاتف</div><div class="val">${r.phone||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">ولي الأمر</div><div class="val">${r.parentPhone||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">البريد</div><div class="val">${r.email||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">المرحلة</div><div class="val">${EduFlowConfig.educationLevels[r.stage]?.nameAr||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">الصف</div><div class="val">${r.grade||'-'}</div></div>
+            <div class="detail-box"><div class="lbl">الكود المؤقت</div><div class="val">${r.tempCode||'-'}</div></div>
+          </div>
+          <h4 style="margin:16px 0 8px;">👥 المجموعات المطلوبة:</h4>
+          ${gs.length?gs.map(g=>`<div class="sub-row"><div><strong>${g.name}</strong><div class="text-xs text-muted">${DataService.getUserById(g.teacherId)?.name||'-'}</div></div></div>`).join(''):'<p class="text-muted">-</p>'}
+          ${r.status==='pending'?`<div style="display:flex;gap:8px;margin-top:16px;"><button class="btn btn-success" style="flex:1;" onclick="ThemeManager.closeModal();approvePending('${r.id}')">✅ موافقة</button><button class="btn btn-danger" style="flex:1;" onclick="ThemeManager.closeModal();rejectPending('${r.id}')">❌ رفض</button></div>`:''}
+        </div>
+      `,'modal-lg');
+    };
+
+    window.deletePending=async function(id){
+      ThemeManager.confirm('حذف هذا الطلب نهائياً؟',async()=>{
+        await DataService.deletePendingRegistration(id);
+        ThemeManager.toast('تم الحذف','success');
+        loadPending();
+      });
+    };
+
+    setInterval(()=>{
+      const pending=DataService.getPendingRegistrations().filter(r=>r.status==='pending').length;
+      const badge=document.getElementById('pendingBadge');
+      if(badge){
+        if(pending>0){badge.style.display='inline-block';badge.textContent=pending;}
+        else badge.style.display='none';
+      }
+    },30000);
+
+    (function initPendingBadge(){
+      try{
+        const pending=DataService.getPendingRegistrations().filter(r=>r.status==='pending').length;
+        const badge=document.getElementById('pendingBadge');
+        if(badge&&pending>0){badge.style.display='inline-block';badge.textContent=pending;}
+      }catch(e){}
+    })();
+  </script>
+</body>
+</html>

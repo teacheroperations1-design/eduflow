@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تسجيل الدخول - EduFlow</title>
+  <link rel="stylesheet" href="css/eduflow-theme.css">
+  <style>
+    .auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;padding:16px}
+    .auth-card{background:color-mix(in srgb,var(--surface) 90%,transparent);backdrop-filter:blur(20px);border:1px solid var(--border-strong);border-radius:var(--radius-xl);padding:32px;max-width:480px;width:100%;box-shadow:var(--shadow-lg)}
+    .brand-logo{width:72px;height:72px;border-radius:20px;background:var(--grad);display:flex;align-items:center;justify-content:center;color:#fff;margin:0 auto 16px;font-size:32px;box-shadow:var(--glow);overflow:hidden}
+    .brand-logo img{width:100%;height:100%;object-fit:cover}
+    .hesetak-banner{margin-top:20px;padding:14px;border-radius:12px;background:linear-gradient(135deg,rgba(56,189,248,.1),rgba(99,102,241,.1));border:1px solid var(--info-border);display:flex;align-items:center;gap:12px;text-decoration:none;transition:all var(--t)}
+    .hesetak-banner:hover{transform:translateY(-2px);border-color:var(--info)}
+    .support-box{background:var(--info-bg);border:1px solid var(--info-border);border-radius:12px;padding:20px;text-align:center}
+    .support-phone{font-family:var(--font-en);font-size:26px;font-weight:800;color:var(--info);margin:10px 0;letter-spacing:1px}
+    .theme-float{position:fixed;top:20px;left:20px;z-index:100}
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
+  <button class="icon-btn theme-float" id="themeToggle"></button>
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div class="brand-logo" id="brandLogo">🎓</div>
+        <div style="font-size:24px;font-weight:900;color:var(--primary);" id="brandName">EduFlow</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">منصة إدارة المراكز التعليمية</div>
+      </div>
+      <div class="tabs">
+        <button class="tab active" onclick="tab('main',this)">🔐 دخول عام</button>
+        <button class="tab" onclick="tab('parent',this)">👨‍👩‍ ولي أمر</button>
+      </div>
+      <form id="mainForm" onsubmit="return doMainLogin(event)">
+        <div class="form-group"><label>البريد / كود الطالب</label><input type="text" id="mainId" class="form-input" placeholder="mail أو EDU-XXXX" required></div>
+        <div class="form-group"><label>كلمة المرور</label><input type="password" id="mainPass" class="form-input" required></div>
+        <button class="btn btn-primary w-full btn-lg">دخول</button>
+        <div style="text-align:center;margin-top:12px;display:flex;gap:12px;justify-content:center;">
+          <a href="register.html" class="text-sm" style="color:var(--primary);font-weight:700;">تسجيل طالب</a>
+          <a href="#" onclick="openRecovery();return false;" class="text-sm" style="color:var(--text-muted);">نسيت كلمة المرور؟</a>
+        </div>
+      </form>
+      <form id="parentForm" style="display:none" onsubmit="return doParentLogin(event)">
+        <div class="form-group"><label>كود الابن</label><input type="text" id="parentCode" class="form-input" placeholder="EDU-1001" required></div>
+        <div class="form-group"><label>كلمة المرور (نفس كلمة الابن)</label><input type="password" id="parentPass" class="form-input" required></div>
+        <button class="btn btn-primary w-full btn-lg">متابعة الابن</button>
+      </form>
+      <a href="hesetak.html" class="hesetak-banner">
+        <div style="width:40px;height:40px;border-radius:10px;background:var(--info);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;flex-shrink:0;">📚</div>
+        <div><strong style="display:block;font-size:13px;">منصة حصتك</strong><span style="font-size:11px;color:var(--text-muted);">منصتنا التعليمية الشاملة</span></div>
+        <span style="color:var(--text-muted);">←</span>
+      </a>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="js/config.js"></script><script src="js/firebase-service.js"></script><script src="js/data-service.js"></script><script src="js/theme-manager.js"></script><script src="js/auth-service.js"></script>
+  <script>
+    (async function(){await DataService.init();ThemeManager.applyBranding();const u=AuthService.getCurrentUser();if(u)AuthService.redirectToDashboard(u.role);})();
+    function tab(t,btn){document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('mainForm').style.display=t==='main'?'block':'none';document.getElementById('parentForm').style.display=t==='parent'?'block':'none';}
+    function enter(u,tag){sessionStorage.setItem('eduflow_user',JSON.stringify(u));ThemeManager.toast('أهلاً '+u.name,'success');setTimeout(()=>AuthService.redirectToDashboard(u.role),500);}
+    async function doMainLogin(e){e.preventDefault();const id=document.getElementById('mainId').value.trim();const pass=document.getElementById('mainPass').value;
+      if(id.toUpperCase().startsWith('EDU-')){const r=await AuthService.loginStudent(id,pass);if(r.success){enter(r.user);return false;}ThemeManager.toast(r.message,'error');return false;}
+      const r=await AuthService.login(id,pass);if(r.success){enter(r.user);return false;}ThemeManager.toast(r.message,'error');return false;}
+    async function doParentLogin(e){e.preventDefault();const code=document.getElementById('parentCode').value.trim();const pass=document.getElementById('parentPass').value;
+      // ولي الأمر يدخل بنفس كلمة مرور الابن
+      const s=DataService.findStudentByCode(code);
+      if(!s){ThemeManager.toast('كود الابن غير صحيح','error');return false;}
+      if(s.password!==pass){ThemeManager.toast('كلمة المرور غير صحيحة','error');return false;}
+      const parent={id:'parent_'+s.id,role:'parent',name:'ولي أمر '+s.name,phone:s.parentPhone,studentIds:[s.studentId],viaChildCode:true};
+      enter(parent,'ولي أمر');return false;}
+    function openRecovery(){
+      const b=DataService.getBranding();
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🔑 استرجاع كلمة المرور</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body"><div class="support-box"><div style="font-size:36px;">📞</div><p style="margin:8px 0 0;">تواصل مع الدعم لإعادة التعيين</p><div class="support-phone">${b.supportPhone||b.whatsappSupport||'غير محدد'}</div>${b.whatsappSupport?`<a class="btn btn-success w-full" href="https://wa.me/2${b.whatsappSupport.replace(/\D/g,'')}" target="_blank">💬 واتساب الدعم</a>`:''}</div></div>`,'modal-sm');
+    }
+  </script>
+</body>
+</html>

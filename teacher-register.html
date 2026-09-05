@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>انضم كمدرس - EduFlow</title>
+  <link rel="stylesheet" href="css/eduflow-theme.css">
+  <style>
+    .reg-card{background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(20px);border:1px solid var(--border-strong);border-radius:var(--radius-xl);padding:32px;max-width:920px;width:100%;box-shadow:var(--shadow-lg)}
+    .hero{background:var(--grad-soft);border:1px solid var(--primary-border);border-radius:var(--radius);padding:24px;margin-bottom:24px;text-align:center}
+    .benefit{display:flex;gap:12px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;transition:all var(--t)}
+    .benefit:hover{border-color:var(--primary-border);transform:translateY(-2px)}
+    .benefit-icon{width:44px;height:44px;border-radius:12px;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+    .grp-item{display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--surface-hover);border-radius:8px;margin-bottom:6px}
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;padding:16px;">
+    <div id="mainContent"></div>
+  </div>
+  <script src="js/config.js"></script><script src="js/firebase-service.js"></script><script src="js/data-service.js"></script><script src="js/theme-manager.js"></script><script src="js/auth-service.js"></script>
+  <script>
+    let linkCode=null,myGroups=[];
+    (async function(){
+      await DataService.init();ThemeManager.applyBranding();
+      const b=DataService.getBranding();
+      linkCode=new URLSearchParams(location.search).get('code');
+      if(!linkCode){return showError('لا يوجد رابط','استخدم الرابط الذي أرسله المركز.');}
+      const v=DataService.validateTeacherRegisterLink(linkCode);
+      if(!v.valid){return showError('رابط غير صالح',v.message);}
+      const remaining=Math.max(0,Math.round((new Date(v.link.expiresAt)-new Date())/3600e3));
+      document.getElementById('mainContent').innerHTML=`
+      <div class="reg-card">
+        <div style="text-align:center;"><div style="width:64px;height:64px;border-radius:18px;background:var(--grad);display:flex;align-items:center;justify-content:center;color:#fff;margin:0 auto 14px;font-size:28px;">🎓</div><div style="font-size:22px;font-weight:900;color:var(--primary);">${b.name}</div><div class="text-sm text-muted">بوابة انضمام المدرسين</div></div>
+        <div class="hero" style="margin-top:20px;"><h2 style="margin:0 0 6px;">ركّز في تدريِسك.. وإحنا نتحمّل الباقي 🤝</h2><p style="margin:0;font-size:13px;color:var(--text-secondary);">منصة متكاملة بتشيل عنك كل العبء الإداري والمتابعة</p></div>
+        <h3 style="margin-bottom:12px;font-size:15px;">🌟 إزاي هترتاح معانا؟</h3>
+        <div class="benefit"><div class="benefit-icon">🧑‍💼</div><div><strong>مساعد خاص بيك</strong><div class="text-sm text-muted">بيتابع حضور طلابك، واجباتهم، دفعاتهم، ويتواصل مع أولياء الأمور نيابة عنك</div></div></div>
+        <div class="benefit"><div class="benefit-icon">🏫</div><div><strong>تواجد فعلي عند الحاجة</strong><div class="text-sm text-muted">مساعدنا متواجد في السنتر معاك، ومستقبلاً معاك طول اليوم</div></div></div>
+        <div class="benefit"><div class="benefit-icon">📢</div><div><strong>تسويق وحملات دعائية</strong><div class="text-muted text-sm">بوسترات وحملات إعلانية بتجبلك طلاب أكتر من غير ما تدفع جهد</div></div></div>
+        <div class="benefit"><div class="benefit-icon">📞</div><div><strong>متابعة أولياء الأمور</strong><div class="text-sm text-muted">فريقنا بيتابع الأهالي وبيزيل عنك عبء المكالمات والرسائل</div></div></div>
+        <div class="benefit"><div class="benefit-icon">⏱️</div><div><strong>توفير وقتك</strong><div class="text-sm text-muted">حضور بـ QR، تصحيح تلقائي، تقارير جاهزة — بدون أوراق</div></div></div>
+        <div class="card" style="background:var(--info-bg);border-color:var(--info-border);margin:16px 0;"><div style="display:flex;gap:10px;"><span style="font-size:20px;">⏳</span><div><strong style="color:var(--info);">الرابط صالح لـ ${remaining} ساعة</strong><div class="text-xs text-muted">بعد كده هيتلغى تلقائياً</div></div></div></div>
+        <h3 style="margin-bottom:12px;font-size:15px;">📝 بيانات الانضمام</h3>
+        <form onsubmit="return submitReg(event)">
+          <div class="form-group"><label>الاسم الكامل *</label><input type="text" id="tName" class="form-input" required></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>البريد الإلكتروني *</label><input type="email" id="tEmail" class="form-input" required></div><div class="form-group"><label>رقم الهاتف *</label><input type="tel" id="tPhone" class="form-input" required></div></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المادة / التخصص (بالعربي) *</label><input type="text" id="tSubject" class="form-input" placeholder="مثال: لغة إنجليزية" required></div><div class="form-group"><label>سنوات الخبرة</label><input type="number" id="tExp" class="form-input" value="0"></div></div>
+          <div class="form-group"><label>المؤهل</label><input type="text" id="tQual" class="form-input"></div>
+          <h4 style="margin:16px 0 8px;font-size:14px;">👥 مجموعاتك</h4>
+          <label class="grp-chk" style="display:flex;gap:8px;align-items:center;padding:10px;background:var(--surface-hover);border-radius:8px;margin-bottom:10px;cursor:pointer;"><input type="checkbox" id="contactAdmin" onchange="toggleGroups()"> <span>هتواصل معايا الإدارة لتحديد المجموعات (مش هضيفها بنفسي)</span></label>
+          <div id="groupsArea">
+            <div id="groupsList"></div>
+            <button type="button" class="btn btn-secondary" onclick="openGroupModal()">+ إضافة مجموعة</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;"><div class="form-group"><label>كلمة المرور (٨+) *</label><input type="password" id="tPass" class="form-input" minlength="8" required></div><div class="form-group"><label>تأكيد *</label><input type="password" id="tPass2" class="form-input" minlength="8" required></div></div>
+          <button class="btn btn-primary w-full btn-lg">✓ إنشاء الحساب</button>
+        </form>
+      </div>`;
+    })();
+    function toggleGroups(){document.getElementById('groupsArea').style.display=document.getElementById('contactAdmin').checked?'none':'block';}
+    function openGroupModal(){
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">👥 إضافة مجموعة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body"><div class="form-group"><label>المكان</label><input id="gLoc" class="form-input"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>الوقت</label><input type="time" id="gTime" class="form-input"></div><div class="form-group"><label>عدد الطلاب التقريبي</label><input type="number" id="gCount" class="form-input" value="10"></div></div><button class="btn btn-primary w-full" onclick="addGroup()">💾 إضافة</button></div>`,'modal-sm');
+    }
+    function addGroup(){
+      myGroups.push({location:document.getElementById('gLoc').value,time:document.getElementById('gTime').value,approx:parseInt(document.getElementById('gCount').value)||10});
+      ThemeManager.closeModal();renderGroups();
+    }
+    function renderGroups(){document.getElementById('groupsList').innerHTML=myGroups.map((g,i)=>`<div class="grp-item"><div>📍 ${g.location||'-'} · ⏰ ${DataService.formatTime12(g.time)} · 👥 ${g.approx}</div><button type="button" class="btn btn-danger btn-sm" onclick="myGroups.splice(${i},1);renderGroups()">🗑️</button></div>`).join('');}
+    function showError(t,m){document.getElementById('mainContent').innerHTML=`<div class="reg-card"><div style="text-align:center;padding:20px;"><div style="font-size:48px;">⚠️</div><h2>${t}</h2><p class="text-secondary">${m}</p><a href="login.html" class="btn btn-primary" style="margin-top:16px;">العودة</a></div></div>`;}
+    async function submitReg(e){
+      e.preventDefault();
+      const pass=document.getElementById('tPass').value,pass2=document.getElementById('tPass2').value;
+      if(pass!==pass2){ThemeManager.toast('كلمتا المرور غير متطابقتين','error');return false;}
+      const contactAdmin=document.getElementById('contactAdmin').checked;
+      if(!contactAdmin&&!myGroups.length){ThemeManager.toast('ضيف مجموعة أو فعّل خيار تواصل الإدارة','error');return false;}
+      const r=await AuthService.registerTeacherViaLink(linkCode,{
+        name:document.getElementById('tName').value,email:document.getElementById('tEmail').value,phone:document.getElementById('tPhone').value,
+        subject:document.getElementById('tSubject').value,experience:parseInt(document.getElementById('tExp').value)||0,qualification:document.getElementById('tQual').value,password:pass,
+        groupsByAdmin:contactAdmin,groups:myGroups
+      });
+      if(!r.success){ThemeManager.toast(r.message,'error');return false;}
+      const code='EDU-T-'+Math.random().toString(36).slice(2,8).toUpperCase();
+      await DataService.updateUser(r.user.id,{code});
+      document.getElementById('mainContent').innerHTML=`<div class="reg-card"><div style="text-align:center;"><div style="font-size:64px;">🎉</div><h2>تم انضمامك بنجاح!</h2><div style="background:var(--grad);border-radius:10px;padding:20px;color:#fff;margin:16px 0;"><div style="font-family:var(--font-en);font-size:30px;font-weight:800;letter-spacing:3px;">${code}</div></div><a href="teacher-dashboard.html" class="btn btn-primary w-full btn-lg">🚀 داكبورد المدرس</a></div></div>`;
+      return false;
+    }
+  </script>
+</body>
+</html>

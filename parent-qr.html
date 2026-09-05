@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>متابعة الطالب - ولي الأمر</title>
+  <link rel="stylesheet" href="css/eduflow-theme.css">
+  <style>
+    .student-hero{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-radius:var(--radius);padding:24px;text-align:center;margin-bottom:20px}
+    .student-hero h2{margin:0 0 8px;font-size:24px}
+    .student-hero .code{font-family:var(--font-en);font-size:16px;opacity:.8}
+    .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
+    .stat-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center}
+    .stat-value{font-size:28px;font-weight:800;color:var(--primary)}
+    .stat-label{font-size:12px;color:var(--text-muted);margin-top:4px}
+    .timeline-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+    .timeline-item:last-child{border-bottom:none}
+    .timeline-dot{width:10px;height:10px;border-radius:50%;background:var(--primary);margin-top:6px;flex-shrink:0}
+    .timeline-dot.success{background:var(--success)}
+    .timeline-dot.warning{background:var(--warning)}
+    .timeline-dot.danger{background:var(--danger)}
+    .login-cta{background:var(--primary-soft);border:1px solid var(--primary-border);border-radius:var(--radius);padding:20px;text-align:center;margin-top:20px}
+    @media(max-width:640px){.stat-grid{grid-template-columns:1fr 1fr}}
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div>
+  <div style="max-width:600px;margin:0 auto;padding:20px;position:relative;z-index:1;">
+    <div style="text-align:center;margin-bottom:20px;">
+      <div class="sidebar-logo" data-logo style="margin:0 auto;width:60px;height:60px;"></div>
+      <h1 style="margin-top:10px;font-size:20px;">EduFlow</h1>
+    </div>
+
+    <div id="studentData"></div>
+
+    <div class="login-cta">
+      <p style="margin-bottom:12px;">عايز تتفاعل مع الداشبورد الكامل؟</p>
+      <a href="login.html" class="btn btn-primary w-full">🔐 تسجيل الدخول للداشبورد الكامل</a>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/firebase-service.js"></script>
+  <script src="js/data-service.js"></script>
+  <script src="js/operations-service.js"></script>
+  <script src="js/ui-helpers.js"></script>
+  <script src="js/theme-manager.js"></script>
+
+  <script>
+    const DAYS=[{en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},{en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'},{en:'Saturday',ar:'السبت'}];
+    const dayAr=en=>(DAYS.find(d=>d.en===en)||{}).ar||en;
+    const T=tm=>DataService.formatTime12(tm);
+    const db=()=>DataService._getData();
+    let student=null;
+
+    (async function boot(){
+      try{
+        await DataService.init();
+        const code=new URLSearchParams(location.search).get('code');
+        if(!code){
+          document.getElementById('studentData').innerHTML='<div class="card"><p class="text-muted">لا يوجد كود طالب</p></div>';
+          return;
+        }
+        student=DataService.findStudentByCode(code);
+        if(!student){
+          document.getElementById('studentData').innerHTML='<div class="card"><p class="text-muted">الطالب غير موجود</p></div>';
+          return;
+        }
+        loadStudentData();
+      }catch(err){
+        document.getElementById('studentData').innerHTML='<div class="card"><p class="text-muted">خطأ: '+err.message+'</p></div>';
+      }
+    })();
+
+    window.loadStudentData=function(){
+      const subs=DataService.getSubmissions({studentId:student.id});
+      const attempts=DataService.getExamAttempts({studentId:student.id});
+      const gradedHw=subs.filter(s=>s.status==='graded');
+      const gradedEx=attempts.filter(a=>a.status==='approved');
+      const avgHw=gradedHw.length?Math.round(gradedHw.reduce((a,x)=>a+(x.score||0),0)/gradedHw.length):0;
+      const avgEx=gradedEx.length?Math.round(gradedEx.reduce((a,x)=>a+(x.score||0),0)/gradedEx.length):0;
+      
+      const allAtt=DataService.getAttendance();
+      const att=allAtt.filter(a=>a.status==='approved'&&a.records.some(r=>r.studentId===student.id));
+      const pr=att.filter(a=>a.records.find(r=>r.studentId===student.id)?.status==='present').length;
+      const attRate=att.length?Math.round(pr/att.length*100):0;
+
+      const g=DataService.getGroups().find(x=>x.id===student.groupId);
+      const teacher=DataService.getUserById(g?.teacherId);
+
+      let html=`
+        <div class="student-hero">
+          <h2>${student.name||'-'}</h2>
+          <div class="code">الكود: ${student.code||'-'}</div>
+        </div>
+
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-header"><h3 class="card-title">👤 بيانات الطالب</h3></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div style="background:var(--surface-hover);border-radius:8px;padding:12px;"><div style="font-size:11px;color:var(--text-muted);">المجموعة</div><div style="font-weight:700;">${g?.name||'-'}</div></div>
+            <div style="background:var(--surface-hover);border-radius:8px;padding:12px;"><div style="font-size:11px;color:var(--text-muted);">المدرس</div><div style="font-weight:700;">${teacher?.name||'-'}</div></div>
+            <div style="background:var(--surface-hover);border-radius:8px;padding:12px;"><div style="font-size:11px;color:var(--text-muted);">المرحلة</div><div style="font-weight:700;">${student.stage||'-'}</div></div>
+            <div style="background:var(--surface-hover);border-radius:8px;padding:12px;"><div style="font-size:11px;color:var(--text-muted);">الصف</div><div style="font-weight:700;">${student.grade||'-'}</div></div>
+          </div>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-box"><div class="stat-value">${attRate}%</div><div class="stat-label">الحضور</div></div>
+          <div class="stat-box"><div class="stat-value">${avgHw}%</div><div class="stat-label">متوسط الواجبات</div></div>
+          <div class="stat-box"><div class="stat-value">${avgEx}%</div><div class="stat-label">متوسط الامتحانات</div></div>
+          <div class="stat-box"><div class="stat-value">${subs.length}</div><div class="stat-label">واجبات مُسلّمة</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">📜 آخر المستجدات</h3></div>
+          ${(() => {
+            const timeline=[];
+            subs.slice(-3).reverse().forEach(s=>{
+              const h=DataService.getHomeworkById(s.homeworkId);
+              if(h)timeline.push({icon:'📝',title:`واجب: ${h.title}`,status:s.status==='graded'?'تم التصحيح':'بانتظار التصحيح',cls:s.status==='graded'?'success':'warning',date:s.submittedAt||s.gradedAt});
+            });
+            attempts.slice(-3).reverse().forEach(a=>{
+              const e=DataService.getExamById(a.examId);
+              if(e)timeline.push({icon:'🎓',title:`امتحان: ${e.title}`,status:a.status==='approved'?'تم الرصد':'بانتظار الرصد',cls:a.status==='approved'?'success':'warning',date:a.submittedAt||a.gradedAt});
+            });
+            att.slice(-3).reverse().forEach(a=>{
+              const r=a.records.find(r=>r.studentId===student.id);
+              timeline.push({icon:'📋',title:`حضور: ${a.groupName}`,status:r?.status==='present'?'حاضر':'غائب',cls:r?.status==='present'?'success':'danger',date:a.date});
+            });
+            return timeline.length?timeline.map(t=>`
+              <div class="timeline-item">
+                <div class="timeline-dot ${t.cls}"></div>
+                <div style="flex:1;">
+                  <strong>${t.title}</strong>
+                  <div class="text-xs text-muted">${t.status} · ${t.date?new Date(t.date).toLocaleDateString('ar-EG'):''}</div>
+                </div>
+              </div>`).join(''):'<p class="text-muted">لا أنشطة</p>';
+          })()}
+        </div>
+      `;
+
+      document.getElementById('studentData').innerHTML=html;
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>الامتحان - EduFlow</title>
+  <link rel="stylesheet" href="css/eduflow-theme.css">
+  <style>
+    .timer{position:sticky;top:10px;z-index:50;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;box-shadow:var(--shadow)}
+    .timer-value{font-family:var(--font-en);font-size:22px;font-weight:800;color:var(--primary)}
+    .timer-value.danger{color:var(--danger);animation:blink 1s infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+    .q-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:14px}
+    .opt-btn{display:block;width:100%;text-align:right;padding:12px 16px;background:var(--surface-hover);border:2px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;font-size:14px;transition:all var(--t)}
+    .opt-btn.selected{border-color:var(--primary);background:var(--primary-soft);color:var(--primary);font-weight:700}
+    .warn-banner{background:var(--danger-bg);border:1px solid var(--danger-border);color:var(--danger);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;font-weight:700}
+    #camPreview{position:fixed;bottom:14px;left:14px;width:120px;border-radius:10px;border:2px solid var(--success);z-index:60;opacity:.9}
+    .result-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:40px;text-align:center}
+    .result-score{font-size:56px;font-weight:800;color:var(--primary);font-family:var(--font-en)}
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div>
+  <div style="max-width:760px;margin:0 auto;padding:20px;position:relative;z-index:1;">
+    <div class="timer"><span id="exTitle">الامتحان</span><span class="timer-value" id="timerVal">--:--</span></div>
+    <div id="warnBanner" class="warn-banner" style="display:none;">⚠️ تم رصد محاولة غش! (<span id="warnCount">0</span>)</div>
+    <div id="questionsWrap"></div>
+    <button class="btn btn-primary w-full btn-lg" id="submitBtn" onclick="submitExam()">📤 تسليم الامتحان</button>
+    <div id="resultWrap" style="display:none;"></div>
+  </div>
+  <video id="camPreview" autoplay playsinline muted style="display:none;"></video>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="js/config.js"></script><script src="js/firebase-service.js"></script><script src="js/data-service.js"></script><script src="js/operations-service.js"></script><script src="js/theme-manager.js"></script><script src="js/auth-service.js"></script>
+
+  <script>
+    const AC=EduFlowConfig.settings.examAntiCheat;
+    let currentUser=null,exam=null,questions=[],answers={},timeLeft=0,timerInt=null,violations=0,suspicious=[],camStream=null,snapInt=null,submitted=false,startTime=null;
+
+    (async function boot(){
+      await DataService.init();
+      if(!AuthService.requireRole(['student'])) return;
+      currentUser=AuthService.getCurrentUser();
+      const id=new URLSearchParams(location.search).get('exam');
+      exam=DataService.getExamById(id);
+      if(!exam){document.getElementById('questionsWrap').innerHTML='<div class="card">الامتحان غير موجود</div>';document.getElementById('submitBtn').style.display='none';return;}
+      document.getElementById('exTitle').textContent=exam.title;
+
+      // Randomize
+      questions=[...exam.questions];
+      if(AC.randomizeQuestions)questions.sort(()=>Math.random()-0.5);
+
+      startTime=new Date().toISOString();
+      timeLeft=(exam.duration||60)*60;
+      startTimer();
+      setupAntiCheat();
+      renderQuestions();
+    })();
+
+    function startTimer(){
+      updateTimer();
+      timerInt=setInterval(()=>{
+        timeLeft--;updateTimer();
+        if(timeLeft<=0){clearInterval(timerInt);submitExam(true);}
+      },1000);
+    }
+    function updateTimer(){
+      const m=Math.floor(timeLeft/60),s=timeLeft%60;
+      const el=document.getElementById('timerVal');
+      el.textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+      el.classList.toggle('danger',timeLeft<60);
+    }
+
+    function renderQuestions(){
+      document.getElementById('questionsWrap').innerHTML=questions.map((q,i)=>{
+        let opts=q.options||[];
+        if(AC.randomizeOptions&&q.type==='mcq')opts=[...opts].sort(()=>Math.random()-0.5);
+        let body='';
+        if(q.type==='mcq'){body=opts.map(o=>`<button type="button" class="opt-btn" onclick="pick('${q.id}','${o.replace(/'/g,"\\'")}',this)">${o}</button>`).join('');}
+        else if(q.type==='truefalse'){body=`<div style="display:flex;gap:8px;"><button type="button" class="opt-btn" style="flex:1" onclick="pick('${q.id}',true,this)">✓ صح</button><button type="button" class="opt-btn" style="flex:1" onclick="pick('${q.id}',false,this)">✗ خطأ</button></div>`;}
+        else{body=`<textarea class="form-textarea" rows="4" oninput="answers['${q.id}']=this.value"></textarea>`;}
+        return `<div class="q-card"><div style="display:flex;justify-content:space-between;margin-bottom:10px;"><strong>س${i+1}</strong><span class="badge badge-muted">${q.points} نقطة</span></div><p style="margin-bottom:12px;">${q.text}</p>${body}</div>`;
+      }).join('');
+    }
+    window.pick=function(qid,val,btn){answers[qid]=val;btn.parentElement.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');};
+
+    // ===== Anti-Cheat =====
+    function setupAntiCheat(){
+      // Screen lock (fullscreen)
+      if(AC.enableScreenLock){try{document.documentElement.requestFullscreen?.();}catch(e){}}
+      // منع كليك يمين + نسخ
+      document.addEventListener('contextmenu',e=>{e.preventDefault();logViolation('right_click');});
+      document.addEventListener('copy',e=>{e.preventDefault();logViolation('copy');});
+      // Tab switch / blur
+      if(AC.enableTabSwitch){
+        document.addEventListener('visibilitychange',()=>{if(document.hidden)logViolation('tab_switch');});
+        window.addEventListener('blur',()=>logViolation('window_blur'));
+      }
+      // Camera
+      if(AC.enableCamera&&navigator.mediaDevices){
+        navigator.mediaDevices.getUserMedia({video:true}).then(st=>{
+          camStream=st;
+          const v=document.getElementById('camPreview');v.srcObject=st;v.style.display='block';
+          snapInt=setInterval(()=>{ /* snapshot placeholder */ },AC.snapshotInterval);
+        }).catch(()=>{});
+      }
+    }
+    function logViolation(type){
+      if(submitted)return;
+      violations++;
+      suspicious.push({type,at:new Date().toISOString()});
+      document.getElementById('warnBanner').style.display='block';
+      document.getElementById('warnCount').textContent=violations;
+      if(violations>=3)ThemeManager.toast('تحذير أخير! سيتم رصد محاولتك','error');
+    }
+
+    window.submitExam=async function(auto=false){
+      if(submitted)return;submitted=true;
+      clearInterval(timerInt);if(snapInt)clearInterval(snapInt);
+      if(camStream)camStream.getTracks().forEach(t=>t.stop());
+      const ansList=questions.map(q=>({questionId:q.id,answer:answers[q.id]}));
+      const att=await DataService.submitExamAttempt({examId:exam.id,studentId:currentUser.id,answers:ansList,startTime,suspiciousActivities:suspicious});
+      document.getElementById('submitBtn').style.display='none';
+      document.getElementById('questionsWrap').style.display='none';
+      document.getElementById('warnBanner').style.display='none';
+      document.getElementById('camPreview').style.display='none';
+      const rw=document.getElementById('resultWrap');rw.style.display='block';
+      rw.innerHTML=`<div class="result-box"><div style="font-size:48px;">${att.score>=50?'🎉':''}</div><div class="result-score">${att.score}%</div><p class="text-muted">${auto?'انتهى الوقت — تم التسليم تلقائياً':'تم تسليم امتحانك'}</p><a href="student-dashboard.html" class="btn btn-primary">العودة</a></div>`;
+    };
+  </script>
+</body>
+</html>
