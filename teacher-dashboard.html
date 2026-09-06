@@ -1,242 +1,461 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>لوحة المدرس - EduFlow</title>
-  <link rel="stylesheet" href="css/eduflow-theme.css">
-  <style>
-    .stat-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
-    .stat-mini-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
-    .stat-mini-value{font-size:18px;font-weight:800;color:var(--primary)}
-    .stat-mini-label{font-size:10px;color:var(--text-muted);margin-top:2px}
-    .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:16px;overflow-x:auto}
-    .tab-btn{padding:8px 14px;background:none;border:none;color:var(--text-secondary);cursor:pointer;font-weight:700;font-size:13px;border-bottom:2px solid transparent;white-space:nowrap}
-    .tab-btn.active{color:var(--primary);border-bottom-color:var(--primary)}
-    .tab-content{display:none}
-    .tab-content.active{display:block}
-    .sub-row{padding:10px;background:var(--surface-hover);border-radius:8px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-    .sub-row.graded{border-right:3px solid var(--success)}
-    .sub-row.pending{border-right:3px solid var(--warning)}
-    .sub-row.missing{border-right:3px solid var(--danger);opacity:.75}
-    .hw-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px}
-    .hw-card:hover{border-color:var(--primary-border)}
-    .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .detail-box{background:var(--surface-hover);border-radius:10px;padding:12px}
-    .detail-box .lbl{font-size:11px;color:var(--text-muted);margin-bottom:4px}
-    .detail-box .val{font-weight:700;font-size:13px}
-    .group-chip{display:inline-block;padding:4px 10px;background:var(--primary-soft);color:var(--primary);border-radius:9999px;font-size:11px;font-weight:700;margin-inline-end:4px;margin-bottom:4px}
-    .qr-box{text-align:center;padding:20px;background:var(--surface-hover);border-radius:var(--radius);margin:12px 0}
-    .qr-code{font-family:var(--font-en);font-size:26px;font-weight:800;letter-spacing:4px;color:var(--primary);margin:10px 0}
-    @media(max-width:640px){.detail-grid{grid-template-columns:1fr}.stat-mini{grid-template-columns:1fr 1fr}}
-  </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة المدرس - EduFlow</title>
+<link rel="stylesheet" href="css/eduflow-theme.css">
+<style>
+/* ✅ إصلاح الأوفرلاي */
+.sidebar{z-index:1200!important}
+.sidebar-overlay{z-index:1100!important;pointer-events:none!important}
+
+.stat-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.stat-mini-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
+.stat-mini-value{font-size:18px;font-weight:800;color:var(--primary)}
+.stat-mini-label{font-size:10px;color:var(--text-muted);margin-top:2px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:16px;overflow-x:auto}
+.tab-btn{padding:8px 14px;background:none;border:none;color:var(--text-secondary);cursor:pointer;font-weight:700;font-size:13px;border-bottom:2px solid transparent;white-space:nowrap}
+.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.sub-row{padding:10px;background:var(--surface-hover);border-radius:8px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.sub-row.graded{border-right:3px solid var(--success)}
+.sub-row.pending{border-right:3px solid var(--warning)}
+.sub-row.missing{border-right:3px solid var(--danger);opacity:.75}
+.hw-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px}
+.hw-card:hover{border-color:var(--primary-border)}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.detail-box{background:var(--surface-hover);border-radius:10px;padding:12px}
+.detail-box .lbl{font-size:11px;color:var(--text-muted);margin-bottom:4px}
+.detail-box .val{font-weight:700;font-size:13px}
+.group-chip{display:inline-block;padding:4px 10px;background:var(--primary-soft);color:var(--primary);border-radius:9999px;font-size:11px;font-weight:700;margin-inline-end:4px;margin-bottom:4px}
+.qr-box{text-align:center;padding:20px;background:var(--surface-hover);border-radius:var(--radius);margin:12px 0}
+.qr-code{font-family:var(--font-en);font-size:26px;font-weight:800;letter-spacing:4px;color:var(--primary);margin:10px 0}
+.filter-info{background:var(--info-bg);border:1px solid var(--info-border);border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:12px;color:var(--info)}
+.stage-grade-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* ===== الفيديوهات ===== */
+.content-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;transition:all var(--t)}
+.content-card:hover{border-color:var(--primary-border)}
+.video-platform{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:9999px;font-size:10px;font-weight:700;color:#fff}
+.platform-youtube{background:#ff0000}.platform-facebook{background:#1877f2}.platform-tiktok{background:#000}.platform-other{background:var(--text-muted)}
+.video-iframe-wrap{position:relative;padding-bottom:56.25%;height:0;border-radius:10px;overflow:hidden;margin-top:10px;background:#000}
+.video-iframe-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}
+
+/* ===== بوستات الحصة ===== */
+.post-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;border-right:3px solid var(--info)}
+.post-image{width:100%;max-height:260px;object-fit:cover;border-radius:8px;margin:8px 0;background:var(--surface-hover)}
+
+/* ===== المسابقات ===== */
+.challenge-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;border-right:3px solid var(--primary)}
+.challenge-card.closed{opacity:.7}
+.q-builder{background:var(--surface-hover);border-radius:8px;padding:12px;margin-bottom:8px}
+.q-opt-row{display:flex;gap:6px;align-items:center;margin-top:4px}
+
+/* ===== واتساب ===== */
+.wa-group-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.wa-group-card.has-link{border-right:3px solid #25d366}
+.wa-btn{background:#25d366;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;transition:all var(--t);display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.wa-btn:hover{background:#1ebe5a;transform:translateY(-1px)}
+
+@media(max-width:640px){.detail-grid{grid-template-columns:1fr}.stat-mini{grid-template-columns:1fr 1fr}.stage-grade-row{grid-template-columns:1fr}}
+</style>
 </head>
 <body data-theme="dark">
-  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div>
-  <div class="app-layout">
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-header"><div class="sidebar-logo" data-logo></div><div><div class="sidebar-brand-name" data-brand-name>EduFlow</div><div class="sidebar-brand-tagline">Teacher</div></div></div>
-      <nav class="sidebar-nav" id="sidebarNav"></nav>
-      <div class="sidebar-footer"><div class="sidebar-user"><div class="sidebar-user-avatar" id="userAvatar">T</div><div><div class="sidebar-user-name" id="userName">Teacher</div><div class="sidebar-user-role">مدرس</div></div></div><button class="btn btn-ghost w-full" onclick="handleLogout()">🚪 خروج</button></div>
-    </aside>
-    <main class="main-content">
-      <header class="main-header">
-        <div class="main-header-right"><button class="menu-toggle" id="menuToggle"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button><div><h1 class="page-title" id="pageTitle">لوحة المدرس</h1><p class="page-subtitle" id="pageSubtitle">إدارة مجموعاتي وطلابي</p></div></div>
-        <div class="main-header-left"><div class="header-actions"><button class="icon-btn" id="themeToggle"></button></div></div>
-      </header>
-      <div class="content-area">
+<div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<div class="app-layout">
+<aside class="sidebar" id="sidebar">
+<div class="sidebar-header"><div class="sidebar-logo" data-logo></div><div><div class="sidebar-brand-name" data-brand-name>EduFlow</div><div class="sidebar-brand-tagline">Teacher</div></div></div>
+<nav class="sidebar-nav" id="sidebarNav"></nav>
+<div class="sidebar-footer"><div class="sidebar-user"><div class="sidebar-user-avatar" id="userAvatar">T</div><div><div class="sidebar-user-name" id="userName">Teacher</div><div class="sidebar-user-role">مدرس</div></div></div><button class="btn btn-ghost w-full" onclick="window.handleLogout()">🚪 خروج</button></div>
+</aside>
+<main class="main-content">
+<header class="main-header">
+<div class="main-header-right"><button class="menu-toggle" id="menuToggle"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button><div><h1 class="page-title" id="pageTitle">لوحة المدرس</h1><p class="page-subtitle" id="pageSubtitle">إدارة مجموعاتي وطلابي</p></div></div>
+<div class="main-header-left"><div class="header-actions"><button class="icon-btn" id="themeToggle"></button></div></div>
+</header>
+<div class="content-area">
 
-        <section class="section active" id="section-overview">
-          <div class="stats-grid" id="ovStats"></div>
-          <div class="card"><div class="card-header"><h3 class="card-title">📋 آخر النشاط</h3></div><div id="recentActivity"></div></div>
-        </section>
+<section class="section active" id="section-overview">
+<div class="stats-grid" id="ovStats"></div>
+<div class="card"><div class="card-header"><h3 class="card-title">📋 آخر النشاط</h3></div><div id="recentActivity"></div></div>
+</section>
 
-        <section class="section" id="section-groups">
-          <div class="section-header"><div><h2 class="section-title">👥 مجموعاتي</h2></div></div>
-          <div class="card" style="margin-bottom:12px;"><div class="search-bar"><input type="text" id="gSearchBar" class="form-input" placeholder="بحث عن مجموعة..." onkeyup="loadGroups()"></div></div>
-          <div id="groupsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;"></div>
-        </section>
+<section class="section" id="section-groups">
+<div class="section-header"><div><h2 class="section-title">👥 مجموعاتي</h2></div><button class="btn btn-primary btn-sm" onclick="window.openGroupModal()">+ مجموعة</button></div>
+<div class="card" style="margin-bottom:12px;"><div class="search-bar"><input type="text" id="gSearchBar" class="form-input" placeholder="بحث عن مجموعة..." onkeyup="window.loadGroups()"></div></div>
+<div id="groupsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;"></div>
+</section>
 
-        <section class="section" id="section-students">
-          <div class="section-header"><div><h2 class="section-title">🎓 طلابي</h2></div></div>
-          <div class="card" style="margin-bottom:12px;"><div class="search-bar"><input type="text" id="sSearchBar" class="form-input" placeholder="بحث بالاسم أو الكود..." onkeyup="loadStudents()"></div></div>
-          <div id="studentsList"></div>
-        </section>
+<section class="section" id="section-students">
+<div class="section-header"><div><h2 class="section-title">🎓 طلابي</h2></div></div>
+<div class="card" style="margin-bottom:12px;"><div class="search-bar"><input type="text" id="sSearchBar" class="form-input" placeholder="بحث بالاسم أو الكود..." onkeyup="window.loadStudents()"></div></div>
+<div id="studentsList"></div>
+</section>
 
-        <section class="section" id="section-homework">
-          <div class="section-header"><div><h2 class="section-title">📝 الواجبات</h2></div></div>
-          <div class="card" style="margin-bottom:12px;"><div class="search-bar"><input type="text" id="hwSearchBar" class="form-input" placeholder="بحث عن واجب..." onkeyup="loadHomework()"></div></div>
-          <div id="hwList"></div>
-        </section>
+<section class="section" id="section-homework">
+<div class="section-header"><div><h2 class="section-title">📝 الواجبات</h2></div><button class="btn btn-primary btn-sm" onclick="window.openHwBuilder()">+ واجب</button></div>
+<div class="card" style="margin-bottom:12px;"><div class="search-bar"><input type="text" id="hwSearchBar" class="form-input" placeholder="بحث عن واجب..." onkeyup="window.loadHomework()"></div></div>
+<div id="hwList"></div>
+</section>
 
-        <section class="section" id="section-exams">
-          <div class="section-header"><div><h2 class="section-title">🎓 الامتحانات</h2></div></div>
-          <div class="card" style="margin-bottom:12px;"><div class="search-bar"><input type="text" id="exSearchBar" class="form-input" placeholder="بحث عن امتحان..." onkeyup="loadExams()"></div></div>
-          <div id="exList"></div>
-        </section>
+<section class="section" id="section-exams">
+<div class="section-header"><div><h2 class="section-title">🎓 الامتحانات</h2></div><button class="btn btn-primary btn-sm" onclick="window.openExBuilder()">+ امتحان</button></div>
+<div class="card" style="margin-bottom:12px;"><div class="search-bar"><input type="text" id="exSearchBar" class="form-input" placeholder="بحث عن امتحان..." onkeyup="window.loadExams()"></div></div>
+<div id="exList"></div>
+</section>
 
-        <!-- ====== جديد: تقرير الدرجات الشامل ====== -->
-        <section class="section" id="section-grades-report">
-          <div class="section-header"><div><h2 class="section-title">📊 تقرير الدرجات الشامل</h2><p class="text-sm text-muted">درجات طلابي في الواجبات والامتحانات</p></div></div>
-          
-          <div class="card" style="margin-bottom:16px;">
-            <h3 class="card-title" style="margin-bottom:12px;">📈 إحصائيات عامة</h3>
-            <div id="overallStats"></div>
-          </div>
+<!-- ====== تقرير الدرجات الشامل ====== -->
+<section class="section" id="section-grades-report">
+<div class="section-header"><div><h2 class="section-title">📊 تقرير الدرجات الشامل</h2><p class="text-sm text-muted">درجات طلابي في الواجبات والامتحانات</p></div></div>
+<div class="card" style="margin-bottom:16px;"><h3 class="card-title" style="margin-bottom:12px;">📈 إحصائيات عامة</h3><div id="overallStats"></div></div>
+<div class="tabs">
+<button class="tab-btn active" onclick="window.switchReportTab(event,'hw')">📝 الواجبات</button>
+<button class="tab-btn" onclick="window.switchReportTab(event,'ex')">🎓 الامتحانات</button>
+<button class="tab-btn" onclick="window.switchReportTab(event,'students')">👤 حسب الطالب</button>
+</div>
+<div id="tab-hw" class="tab-content active"><div id="hwReportContent"></div></div>
+<div id="tab-ex" class="tab-content"><div id="exReportContent"></div></div>
+<div id="tab-students" class="tab-content"><div id="studentsReportContent"></div></div>
+</section>
 
-          <div class="tabs">
-            <button class="tab-btn active" onclick="switchReportTab(event,'hw')">📝 الواجبات</button>
-            <button class="tab-btn" onclick="switchReportTab(event,'ex')">🎓 الامتحانات</button>
-            <button class="tab-btn" onclick="switchReportTab(event,'students')">👤 حسب الطالب</button>
-          </div>
+<section class="section" id="section-attendance">
+<div class="section-header"><div><h2 class="section-title">📋 الحضور</h2></div></div>
+<div class="card" style="margin-bottom:16px;"><h3 class="card-title" style="margin-bottom:12px;">✋ تسجيل حضور</h3>
+<div class="form-group"><label>المجموعة</label><select id="attGroup" class="form-select" onchange="window.renderManualAtt()"></select></div>
+<div style="display:flex;gap:8px;margin-bottom:12px;"><button class="btn btn-primary" onclick="window.startQR()">📱 QR</button><button class="btn btn-secondary" onclick="window.genCodeAtt()">🎟️ كود</button></div>
+<div id="qrBox"></div><div id="manualAttList"></div>
+</div>
+<div class="card" style="margin-bottom:16px;"><h3 class="card-title" style="margin-bottom:12px;">🚫 إلغاء حصة</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المجموعة</label><select id="cancelGroup" class="form-select"></select></div><div class="form-group"><label>التاريخ</label><input type="date" id="cancelDate" class="form-input"></div></div><button class="btn btn-danger" onclick="window.doCancelSession()">🚫 إلغاء (متتحسبش)</button></div>
+<div class="card"><h3 class="card-title" style="margin-bottom:12px;">📜 سجل الحضور</h3><div id="attHistory"></div></div>
+</section>
 
-          <div id="tab-hw" class="tab-content active">
-            <div id="hwReportContent"></div>
-          </div>
-          <div id="tab-ex" class="tab-content">
-            <div id="exReportContent"></div>
-          </div>
-          <div id="tab-students" class="tab-content">
-            <div id="studentsReportContent"></div>
-          </div>
-        </section>
+<section class="section" id="section-calendar">
+<div class="section-header"><div><h2 class="section-title">📅 تقويم الحصص</h2></div></div>
+<div class="card"><div class="form-group"><label>المجموعة</label><select id="calGroup" class="form-select" onchange="window.loadCalendar()"></select></div><div id="calendarView"></div></div>
+</section>
 
-        <section class="section" id="section-attendance">
-          <div class="section-header"><div><h2 class="section-title">📋 الحضور</h2></div></div>
-          <div class="card" style="margin-bottom:16px;"><h3 class="card-title" style="margin-bottom:12px;">✋ تسجيل حضور</h3>
-            <div class="form-group"><label>المجموعة</label><select id="attGroup" class="form-select" onchange="renderManualAtt()"></select></div>
-            <div style="display:flex;gap:8px;margin-bottom:12px;"><button class="btn btn-primary" onclick="startQR()">📱 QR</button><button class="btn btn-secondary" onclick="genCodeAtt()">🎟️ كود</button></div>
-            <div id="qrBox"></div><div id="manualAttList"></div>
-          </div>
-          <div class="card"><h3 class="card-title" style="margin-bottom:12px;">📜 سجل الحضور</h3><div id="attHistory"></div></div>
-        </section>
+<!-- ====== جديد: الفيديوهات ====== -->
+<section class="section" id="section-videos">
+<div class="section-header"><div><h2 class="section-title">🎬 الفيديوهات التعليمية</h2><p class="text-sm text-muted">إضافة فيديوهات يوتيوب/فيسبوك/تيك توك لطلابك</p></div><button class="btn btn-primary" onclick="window.openVideoBuilder()">+ فيديو جديد</button></div>
+<div class="card" style="margin-bottom:12px;">
+<div class="filter-bar">
+<button class="filter-btn active" onclick="window.setVideoFilter('all',this)">📺 الكل</button>
+<button class="filter-btn" onclick="window.setVideoFilter('شرح',this)">📖 شرح</button>
+<button class="filter-btn" onclick="window.setVideoFilter('مراجعة',this)">🔁 مراجعة</button>
+<button class="filter-btn" onclick="window.setVideoFilter('مفردات',this)">📚 مفردات</button>
+<button class="filter-btn" onclick="window.setVideoFilter('واجبات',this)">📝 واجبات</button>
+<button class="filter-btn" onclick="window.setVideoFilter('عام',this)">📢 عام</button>
+</div>
+</div>
+<div id="videosList"></div>
+</section>
 
-        <section class="section" id="section-calendar">
-          <div class="section-header"><div><h2 class="section-title">📅 تقويم الحصص</h2></div></div>
-          <div class="card"><div class="form-group"><label>المجموعة</label><select id="calGroup" class="form-select" onchange="loadCalendar()"></select></div><div id="calendarView"></div></div>
-        </section>
+<!-- ====== جديد: بوستات الحصة ====== -->
+<section class="section" id="section-classPosts">
+<div class="section-header"><div><h2 class="section-title">📰 إيه اللي اتاخد في الحصة</h2><p class="text-sm text-muted">ملخص الدروس والواجبات للطلاب الغايبين</p></div><button class="btn btn-primary" onclick="window.openClassPostBuilder()">+ منشور جديد</button></div>
+<div id="classPostsList"></div>
+</section>
 
-        <section class="section" id="section-materials">
-          <div class="section-header"><div><h2 class="section-title">📦 المواد</h2></div></div>
-          <div id="materialsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;"></div>
-        </section>
+<!-- ====== جديد: المسابقات ====== -->
+<section class="section" id="section-challenges">
+<div class="section-header"><div><h2 class="section-title">🏆 المسابقات والتحديات</h2><p class="text-sm text-muted">أسئلة للنقاط والترتيب — تحفّز طلابك</p></div><button class="btn btn-primary" onclick="window.openChallengeBuilder()">+ تحدي جديد</button></div>
+<div class="card" style="margin-bottom:12px;">
+<div class="filter-bar">
+<button class="filter-btn active" onclick="window.setChallengeFilter('all',this)">الكل</button>
+<button class="filter-btn" onclick="window.setChallengeFilter('active',this)">✅ نشط</button>
+<button class="filter-btn" onclick="window.setChallengeFilter('closed',this)">⛔ مغلق</button>
+</div>
+</div>
+<div id="challengesList"></div>
+</section>
 
-        <section class="section" id="section-vocabulary">
-          <div class="section-header"><div><h2 class="section-title">📚 المفردات</h2></div></div>
-          <div id="vocabList"></div>
-        </section>
+<!-- ====== جديد: مجموعات الواتساب ====== -->
+<section class="section" id="section-whatsappGroups">
+<div class="section-header"><div><h2 class="section-title">📱 مجموعات الواتساب</h2><p class="text-sm text-muted">روابط جروبات واتساب لكل مجموعة</p></div></div>
+<div class="filter-info" style="margin-bottom:12px;">💡 يتم إضافة رابط الواتساب من مودال المجموعة (✏️)</div>
+<div id="whatsappGroupsList"></div>
+</section>
 
-      </div>
-    </main>
-  </div>
+<section class="section" id="section-materials">
+<div class="section-header"><div><h2 class="section-title">📦 المواد</h2></div></div>
+<div id="materialsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;"></div>
+</section>
 
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-  <script src="js/config.js"></script><script src="js/firebase-service.js"></script><script src="js/data-service.js"></script><script src="js/operations-service.js"></script><script src="js/ui-helpers.js"></script><script src="js/drive-service.js"></script><script src="js/theme-manager.js"></script><script src="js/auth-service.js"></script>
+<section class="section" id="section-vocabulary">
+<div class="section-header"><div><h2 class="section-title">📚 المفردات</h2></div></div>
+<div id="vocabList"></div>
+</section>
 
-  <script>
-    const DAYS=[{en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},{en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'},{en:'Saturday',ar:'السبت'}];
-    const dayAr=en=>(DAYS.find(d=>d.en===en)||{}).ar||en;
-    const T=tm=>DataService.formatTime12(tm);
-    const db=()=>DataService._getData();
-    let currentUser=null,manualSel={};
+</div>
+</main>
+</div>
 
-    (async function boot(){
-      try{
-        await DataService.init();
-        if(!AuthService.requireRole(['teacher','super_admin'])) return;
-        currentUser=AuthService.getCurrentUser();
-        document.getElementById('userName').textContent=currentUser.name;
-        document.getElementById('userAvatar').textContent=currentUser.name.charAt(0);
-        buildMenu(); showSection('overview');
-      }catch(err){document.body.innerHTML='<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;"><div class="card">خطأ: '+err.message+'<br><a href="login.html" class="btn btn-primary" style="margin-top:12px;">العودة</a></div></div>';}
-    })();
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="js/config.js"></script>
+<script src="js/firebase-service.js"></script>
+<script src="js/data-service.js"></script>
+<script src="js/operations-service.js"></script>
+<script src="js/ui-helpers.js"></script>
+<script src="js/drive-service.js"></script>
+<script src="js/theme-manager.js"></script>
+<script src="js/auth-service.js"></script>
 
-    function buildMenu(){
-      const menu=[{s:'الرئيسية',items:[{id:'overview',l:'نظرة عامة',i:'🏠'},{id:'groups',l:'مجموعاتي',i:'👥'},{id:'students',l:'طلابي',i:'🎓'}]},{s:'الأكاديمي',items:[{id:'homework',l:'الواجبات',i:'📝'},{id:'exams',l:'الامتحانات',i:'🎓'},{id:'grades-report',l:'تقرير الدرجات',i:'📊'},{id:'attendance',l:'الحضور',i:'📋'}]},{s:'الأدوات',items:[{id:'calendar',l:'التقويم',i:'📅'},{id:'materials',l:'المواد',i:'📦'},{id:'vocabulary',l:'المفردات',i:'📚'}]}];
-      document.getElementById('sidebarNav').innerHTML=menu.map(sec=>`<div class="sidebar-section"><div class="sidebar-section-title">${sec.s}</div>${sec.items.map(it=>`<div class="sidebar-item" data-section="${it.id}" onclick="showSection('${it.id}')"><span class="sidebar-item-icon">${it.i}</span><span class="sidebar-item-label">${it.l}</span></div>`).join('')}</div>`).join('');
+<script>
+const DAYS=[{en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},{en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'},{en:'Saturday',ar:'السبت'}];
+const dayAr=en=>(DAYS.find(d=>d.en===en)||{}).ar||en;
+const T=tm=>DataService?.formatTime12 ? DataService.formatTime12(tm) : tm;
+const db=()=>DataService?._getData() || {};
+const save=d=>DataService?._saveData(d);
+
+// ✅ إصلاح صور Drive: نستخرج الـ ID ونبني رابط thumbnail نظيف
+window.driveThumb=function(url){
+  try{
+    if(!url) return '';
+    const u=String(url);
+    const m=u.match(/\/d\/([\w-]+)/)||u.match(/[?&]id=([\w-]+)/)||u.match(/^([\w-]{20,})$/);
+    return m ? ('https://drive.google.com/thumbnail?id='+m[1]+'&sz=w1600') : u;
+  }catch(e){ return url||''; }
+};
+// ✅ استخراج ID يوتيوب محلياً
+window.ytId=function(url){
+  try{ const m=String(url||'').match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([\w-]{6,})/); return m?m[1]:null; }catch(e){ return null; }
+};
+
+let currentUser=null, manualSel={}, videoFilter='all', challengeFilter='all', challengeQuestions=[];
+
+(async function boot(){
+  try{
+    if(typeof DataService?.init === 'function') await DataService.init();
+    if(typeof AuthService?.requireRole === 'function' && !AuthService.requireRole(['teacher','super_admin'])) return;
+    currentUser = AuthService?.getCurrentUser ? AuthService.getCurrentUser() : null;
+    if(!currentUser){ window.location.href='login.html'; return; }
+    const nameEl = document.getElementById('userName');
+    const avatarEl = document.getElementById('userAvatar');
+    if(nameEl) nameEl.textContent = currentUser.name || 'مدرس';
+    if(avatarEl) avatarEl.textContent = (currentUser.name || 'T').charAt(0);
+
+    // ✅ إصلاح الأوفرلاي (JS fix)
+    const sb=document.getElementById('sidebar'), ov=document.getElementById('sidebarOverlay'), main=document.querySelector('.main-content');
+    try{
+      if(ov){ ov.style.pointerEvents='none'; ov.style.zIndex='1100'; }
+      if(sb){ sb.style.zIndex='1200'; }
+      if(main && !main.dataset.sbBound){
+        main.dataset.sbBound='1';
+        main.addEventListener('click',()=>{
+          if(window.innerWidth<=1024){ sb?.classList.remove('open'); ov?.classList.remove('show'); }
+        });
+      }
+    }catch(e){}
+
+    window.buildMenu();
+    window.showSection('overview');
+  }catch(err){
+    console.error('Boot error:', err);
+    document.body.innerHTML='<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;"><div class="card">خطأ: '+err.message+'<br><a href="login.html" class="btn btn-primary" style="margin-top:12px;">العودة</a></div></div>';
+  }
+})();
+
+window.buildMenu=function(){
+  try{
+    const menu=[
+      {s:'الرئيسية',items:[{id:'overview',l:'نظرة عامة',i:'🏠'},{id:'groups',l:'مجموعاتي',i:'👥'},{id:'students',l:'طلابي',i:'🎓'}]},
+      {s:'الأكاديمي',items:[{id:'homework',l:'الواجبات',i:'📝'},{id:'exams',l:'الامتحانات',i:'🎓'},{id:'grades-report',l:'تقرير الدرجات',i:'📊'},{id:'attendance',l:'الحضور',i:'📋'}]},
+      {s:'المحتوى',items:[{id:'videos',l:'الفيديوهات',i:'🎬'},{id:'classPosts',l:'بوستات الحصة',i:'📰'},{id:'challenges',l:'المسابقات',i:'🏆'}]},
+      {s:'الروابط',items:[{id:'whatsappGroups',l:'مجموعات الواتساب',i:'📱'}]},
+      {s:'الأدوات',items:[{id:'calendar',l:'التقويم',i:'📅'},{id:'materials',l:'المواد',i:'📦'},{id:'vocabulary',l:'المفردات',i:'📚'}]}
+    ];
+    const nav = document.getElementById('sidebarNav');
+    if(nav) nav.innerHTML=menu.map(sec=>`<div class="sidebar-section"><div class="sidebar-section-title">${sec.s}</div>${sec.items.map(it=>`<div class="sidebar-item" data-section="${it.id}" onclick="window.showSection('${it.id}')"><span class="sidebar-item-icon">${it.i}</span><span class="sidebar-item-label">${it.l}</span></div>`).join('')}</div>`).join('');
+  }catch(e){console.error('buildMenu error',e);}
+};
+
+window.showSection=function(id){
+  try{
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    document.getElementById('section-'+id)?.classList.add('active');
+    document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.toggle('active',i.dataset.section===id));
+    const L={
+      overview:window.loadOverview, groups:window.loadGroups, students:window.loadStudents,
+      homework:window.loadHomework, exams:window.loadExams, 'grades-report':window.loadGradesReport,
+      attendance:window.loadAttendance, calendar:window.loadCalendar,
+      videos:window.loadVideos, classPosts:window.loadClassPosts, challenges:window.loadChallenges,
+      whatsappGroups:window.loadWhatsappGroups,
+      materials:window.loadMaterials, vocabulary:window.loadVocabulary
+    };
+    if(L[id]) L[id]();
+    if(window.innerWidth<=1024){
+      document.getElementById('sidebar')?.classList.remove('open');
+      document.getElementById('sidebarOverlay')?.classList.remove('show');
     }
+  }catch(e){console.error('showSection error',e);}
+};
 
-    window.showSection=function(id){
-      document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-      document.getElementById('section-'+id)?.classList.add('active');
-      document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.toggle('active',i.dataset.section===id));
-      const L={overview:loadOverview,groups:loadGroups,students:loadStudents,homework:loadHomework,exams:loadExams,'grades-report':loadGradesReport,attendance:loadAttendance,calendar:loadCalendar,materials:loadMaterials,vocabulary:loadVocabulary};
-      if(L[id])L[id]();
-      if(window.innerWidth<=1024){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('show');}
-    };
+// ===== Overview =====
+window.loadOverview=function(){
+  try{
+    const gs=DataService?.getGroupsByTeacher ? DataService.getGroupsByTeacher(currentUser.id) : [];
+    const gids=gs.map(g=>g.id);
+    const sts=DataService?.getStudents ? DataService.getStudents().filter(s=>gids.includes(s.groupId)) : [];
+    const hw=(db().homework||[]).filter(h=>gids.includes(h.groupId));
+    const ex=(db().exams||[]).filter(e=>gids.includes(e.groupId));
+    const ovEl=document.getElementById('ovStats');
+    if(ovEl) ovEl.innerHTML=`
+      <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">المجموعات</span><span class="stat-card-icon">👥</span></div><div class="stat-card-value">${gs.length}</div></div>
+      <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">الطلاب</span><span class="stat-card-icon">🎓</span></div><div class="stat-card-value">${sts.length}</div></div>
+      <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">الواجبات</span><span class="stat-card-icon">📝</span></div><div class="stat-card-value">${hw.length}</div></div>
+      <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">الامتحانات</span><span class="stat-card-icon">🎓</span></div><div class="stat-card-value">${ex.length}</div></div>`;
+    const recentEl=document.getElementById('recentActivity');
+    const logs = DataService?.getActivityLogs ? DataService.getActivityLogs().filter(l=>l.userId===currentUser.id) : [];
+    if(recentEl) recentEl.innerHTML=logs.length ? logs.slice(0,5).map(l=>`<div class="activity-item"><div class="activity-dot"></div><div><div class="activity-title">${l.action}</div><div class="activity-meta"><span>🕐 ${new Date(l.timestamp).toLocaleString('ar-EG')}</span></div></div></div>`).join('') : '<p class="text-muted">لا نشاط</p>';
+  }catch(e){console.error('loadOverview error',e);}
+};
 
-    // ===== Overview =====
-    window.loadOverview=function(){
-      const gs=DataService.getGroupsByTeacher(currentUser.id);
-      const gids=gs.map(g=>g.id);
-      const sts=DataService.getStudents().filter(s=>gids.includes(s.groupId));
-      const hw=(db().homework||[]).filter(h=>gids.includes(h.groupId));
-      const ex=(db().exams||[]).filter(e=>gids.includes(e.groupId));
-      
-      document.getElementById('ovStats').innerHTML=`
-        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">المجموعات</span><span class="stat-card-icon">👥</span></div><div class="stat-card-value">${gs.length}</div></div>
-        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">الطلاب</span><span class="stat-card-icon">🎓</span></div><div class="stat-card-value">${sts.length}</div></div>
-        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">الواجبات</span><span class="stat-card-icon">📝</span></div><div class="stat-card-value">${hw.length}</div></div>
-        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">الامتحانات</span><span class="stat-card-icon">🎓</span></div><div class="stat-card-value">${ex.length}</div></div>`;
-      
-      document.getElementById('recentActivity').innerHTML=DataService.getActivityLogs().filter(l=>l.userId===currentUser.id).slice(0,5).map(l=>`<div class="activity-item"><div class="activity-dot"></div><div><div class="activity-title">${l.action}</div><div class="activity-meta"><span>🕐 ${new Date(l.timestamp).toLocaleString('ar-EG')}</span></div></div></div>`).join('')||'<p class="text-muted">لا نشاط</p>';
-    };
+// ===== Groups =====
+window.loadGroups=function(){
+  try{
+    const q=(document.getElementById('gSearchBar')?.value||'').toLowerCase();
+    let list=DataService?.getGroupsByTeacher ? DataService.getGroupsByTeacher(currentUser.id) : [];
+    if(q) list=list.filter(g=>(g.name||'').toLowerCase().includes(q));
+    const el=document.getElementById('groupsList');
+    if(!el) return;
+    el.innerHTML=list.length ? list.map(g=>{
+      const students=DataService?.getStudentsByGroup ? DataService.getStudentsByGroup(g.id) : [];
+      const stageLabel=EduFlowConfig?.educationLevels?.[g.stage]?.nameAr||'';
+      return `<div class="user-card"><div class="user-card-header"><div class="user-avatar">👥</div><div><div class="user-name">${g.name}</div><div class="user-meta"><span>📅 ${dayAr(g.day)} ${T(g.time)}</span>${g.center?`<span style="margin-inline-start:6px;">🏢 ${g.center}</span>`:''}</div></div></div>
+      <div class="user-meta"><span>⏱️ ${g.duration||120}د</span><span>📍 ${g.location||'-'}</span><span>👨‍🎓 ${students.length} طالب</span>${g.whatsappLink?'<span>📱</span>':''}</div>
+      <div class="user-actions">
+        <button class="btn btn-secondary btn-sm" onclick="window.showGroupStudents('${g.id}')">👁️ الطلاب</button>
+        <button class="btn btn-ghost btn-sm" onclick="window.openGroupModal('${g.id}')">✏️</button>
+      </div></div>`;
+    }).join('') : '<p class="text-muted">لا مجموعات</p>';
+  }catch(e){console.error('loadGroups error',e);}
+};
 
-    // ===== Groups =====
-    window.loadGroups=function(){
-      const q=(document.getElementById('gSearchBar')?.value||'').toLowerCase();
-      let list=DataService.getGroupsByTeacher(currentUser.id);
-      if(q)list=list.filter(g=>(g.name||'').toLowerCase().includes(q));
-      document.getElementById('groupsList').innerHTML=list.length?list.map(g=>{
-        const students=DataService.getStudentsByGroup(g.id);
-        return `<div class="user-card"><div class="user-card-header"><div class="user-avatar">👥</div><div><div class="user-name">${g.name}</div><div class="user-meta"><span>📅 ${dayAr(g.day)} ${T(g.time)}</span></div></div></div>
-        <div class="user-meta"><span>⏱️ ${g.duration||120}د</span><span>📍 ${g.location||'-'}</span><span>👨‍🎓 ${students.length} طالب</span></div>
-        <div class="user-actions"><button class="btn btn-secondary btn-sm" onclick="showGroupStudents('${g.id}')">👁️ الطلاب</button></div></div>`;
-      }).join(''):'<p class="text-muted">لا مجموعات</p>';
-    };
-
-    window.showGroupStudents=function(gid){
-      const g=DataService.getGroups().find(x=>x.id===gid);
-      const students=DataService.getStudentsByGroup(gid);
+window.showGroupStudents=function(gid){
+  try{
+    const g=DataService?.getGroups ? DataService.getGroups().find(x=>x.id===gid) : null;
+    const students=DataService?.getStudentsByGroup ? DataService.getStudentsByGroup(gid) : [];
+    if(typeof ThemeManager?.openModal === 'function'){
       ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">👥 ${g?.name||'-'}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
-      <div class="modal-body">${students.length?students.map(s=>`<div class="sub-row"><div><strong>${s.name}</strong><div class="text-xs text-muted">${s.code||''} · ${s.phone||''}</div></div><button class="btn btn-ghost btn-sm" onclick="ThemeManager.closeModal();openStudentProfile('${s.id}')">👁️</button></div>`).join(''):'<p class="text-muted">لا طلاب</p>'}</div>`);
+      <div class="modal-body">${students.length ? students.map(s=>`<div class="sub-row"><div><strong>${s.name}</strong><div class="text-xs text-muted">${s.code||''} · ${s.phone||''}</div></div><button class="btn btn-ghost btn-sm" onclick="ThemeManager.closeModal();window.openStudentProfile('${s.id}')">👁️</button></div>`).join('') : '<p class="text-muted">لا طلاب</p>'}</div>`);
+    }
+  }catch(e){console.error('showGroupStudents error',e);}
+};
+
+// ===== Group Modal (وقت 12س + سنتر + واتساب) =====
+window.getAllCenters=function(){
+  try{
+    const set=new Set();
+    (DataService?.getGroups?DataService.getGroups():[]).forEach(g=>{ if(g.center) set.add(g.center); });
+    return [...set];
+  }catch(e){ return []; }
+};
+
+window.openGroupModal=function(editId){
+  try{
+    const g=editId ? (DataService?.getGroups ? DataService.getGroups().find(x=>x.id===editId) : null) : null;
+    const stageOptions=Object.entries(EduFlowConfig?.educationLevels||{}).map(([k,v])=>`<option value="${k}" ${g?.stage===k?'selected':''}>${v.nameAr}</option>`).join('');
+    const initialGrades=EduFlowConfig?.educationLevels?.[g?.stage||'Primary']?.grades||[];
+    if(typeof ThemeManager?.openModal === 'function'){
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${g?'✏️ تعديل':'👥 إضافة'} مجموعة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return window.saveGroup(event,'${editId||''}')">
+        <div class="form-group"><label>الاسم</label><input type="text" id="gName" class="form-input" value="${g?.name||''}" required></div>
+        <div class="stage-grade-row">
+          <div class="form-group"><label>المرحلة</label><select id="gStage" class="form-select" onchange="window.updGroupGrades();"><option value="">-- اختر --</option>${stageOptions}</select></div>
+          <div class="form-group"><label>الصف</label><select id="gGrade" class="form-select">${initialGrades.map(gr=>`<option ${g?.grade===gr?'selected':''}>${gr}</option>`).join('')}</select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label>اليوم</label><select id="gDay" class="form-select">${DAYS.map(d=>`<option value="${d.en}" ${g?.day===d.en?'selected':''}>${d.ar}</option>`).join('')}</select></div>
+          <!-- ⏰ وقت بنظام 12ساعة (native) -->
+          <div class="form-group"><label>الوقت (12س)</label><input type="time" id="gTime" class="form-input" value="${g?.time||''}" required></div>
+        </div>
+        <div class="filter-info">⏰ الوقت بيتخزن 24س ويعرض للطلاب تلقائياً بصيغة ص/م</div>
+        <div class="form-group"><label>🏢 السنتر / الفرع</label><input type="text" id="gCenter" class="form-input" list="centersList" value="${g?.center||''}" placeholder="مثال: كومبلال / العباقره"><datalist id="centersList">${window.getAllCenters().map(c=>`<option value="${c}">`).join('')}</datalist></div>
+        <div class="form-group"><label>المكان</label><input type="text" id="gLoc" class="form-input" value="${g?.location||''}"></div>
+        <div class="form-group"><label>📱 رابط واتساب المجموعة</label><input type="url" id="gWhatsapp" class="form-input" value="${g?.whatsappLink||''}" placeholder="https://chat.whatsapp.com/..."></div>
+        <div class="form-group"><label>ملاحظات</label><textarea id="gNotes" class="form-textarea" rows="2">${g?.notes||''}</textarea></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;"><div class="form-group"><label>مدة الحصة</label><input type="number" id="gDuration" class="form-input" value="${g?.duration||120}"></div><div class="form-group"><label>حصص/شهر</label><input type="number" id="gSessions" class="form-input" value="${g?.sessionsPerMonth||4}" oninput="window.calcSP()"></div><div class="form-group"><label>سعر الشهر</label><input type="number" id="gMonthly" class="form-input" value="${g?.monthlyFee||0}" oninput="window.calcSP()"></div></div>
+        <div class="form-group"><label>حصة الأستاذ/طالب</label><input type="number" id="gShare" class="form-input" value="${g?.teacherSharePerStudent||0}"></div>
+        <div class="card" style="background:var(--info-bg);border-color:var(--info-border);padding:12px;margin-bottom:12px;">سعر الحصة: <strong id="autoSessionPrice">0</strong> ج.م</div>
+        <button class="btn btn-primary w-full">💾 حفظ</button></form></div>`);
+    }
+    window.calcSP();
+  }catch(e){console.error('openGroupModal error',e);}
+};
+window.updGroupGrades=function(){ try{ const stage=document.getElementById('gStage')?.value; const grades=EduFlowConfig?.educationLevels?.[stage]?.grades||[]; const el=document.getElementById('gGrade'); if(el) el.innerHTML=grades.map(g=>`<option>${g}</option>`).join(''); }catch(e){} };
+window.calcSP=function(){ try{ const m=parseInt(document.getElementById('gMonthly')?.value)||0; const s=parseInt(document.getElementById('gSessions')?.value)||1; const el=document.getElementById('autoSessionPrice'); if(el) el.textContent=Math.round(m/s); }catch(e){} };
+window.saveGroup=async function(e,editId){
+  try{
+    e.preventDefault();
+    const monthly=parseInt(document.getElementById('gMonthly')?.value)||0;
+    const sessions=parseInt(document.getElementById('gSessions')?.value)||4;
+    const data={
+      name:document.getElementById('gName')?.value||'',
+      teacherId:currentUser?.id||'',
+      stage:document.getElementById('gStage')?.value||'',
+      grade:document.getElementById('gGrade')?.value||'',
+      day:document.getElementById('gDay')?.value||'',
+      time:document.getElementById('gTime')?.value||'',
+      duration:parseInt(document.getElementById('gDuration')?.value)||120,
+      monthlyFee:monthly, sessionsPerMonth:sessions, sessionFee:Math.round(monthly/sessions),
+      teacherSharePerStudent:parseInt(document.getElementById('gShare')?.value)||0,
+      location:document.getElementById('gLoc')?.value||'',
+      center:document.getElementById('gCenter')?.value||'',
+      whatsappLink:document.getElementById('gWhatsapp')?.value||'',
+      notes:document.getElementById('gNotes')?.value||'',
+      subject:currentUser?.subject||''
     };
+    if(editId){ if(typeof DataService?.updateGroup==='function') await DataService.updateGroup(editId,data); }
+    else{ if(typeof DataService?.addGroup==='function') await DataService.addGroup(data); }
+    if(typeof ThemeManager?.closeModal==='function') ThemeManager.closeModal();
+    if(typeof ThemeManager?.toast==='function') ThemeManager.toast('تم ✓','success');
+    window.loadGroups(); window.loadWhatsappGroups();
+    return false;
+  }catch(e){ return false; }
+};
 
-    // ===== Students =====
-    window.loadStudents=function(){
-      const q=(document.getElementById('sSearchBar')?.value||'').toLowerCase();
-      const gids=DataService.getGroupsByTeacher(currentUser.id).map(g=>g.id);
-      let list=DataService.getStudents().filter(s=>gids.includes(s.groupId));
-      if(q)list=list.filter(s=>(s.name||'').toLowerCase().includes(q)||(s.code||'').toLowerCase().includes(q));
-      
-      document.getElementById('studentsList').innerHTML=list.length?list.map(s=>{
-        const g=DataService.getGroups().find(x=>x.id===s.groupId);
-        const subs=DataService.getSubmissions({studentId:s.id});
-        const graded=subs.filter(x=>x.status==='graded');
-        const avg=graded.length?Math.round(graded.reduce((a,x)=>a+(x.score||0),0)/graded.length):0;
-        return `<div class="sub-row"><div><strong>${s.name}</strong><div class="text-xs text-muted">${s.code||''} · 👥 ${g?.name||'-'} · 📞 ${s.phone||'-'}</div></div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <span class="badge ${avg>=60?'badge-success':avg>=40?'badge-warning':'badge-danger'}">${avg}%</span>
-          <button class="btn btn-primary btn-sm" onclick="openStudentProfile('${s.id}')">👁️ الملف</button>
-        </div></div>`;
-      }).join(''):'<p class="text-muted">لا طلاب</p>';
-    };
+// ===== Students =====
+window.loadStudents=function(){
+  try{
+    const q=(document.getElementById('sSearchBar')?.value||'').toLowerCase();
+    const gids=DataService?.getGroupsByTeacher ? DataService.getGroupsByTeacher(currentUser.id).map(g=>g.id) : [];
+    let list=DataService?.getStudents ? DataService.getStudents().filter(s=>gids.includes(s.groupId)) : [];
+    if(q) list=list.filter(s=>(s.name||'').toLowerCase().includes(q)||(s.code||'').toLowerCase().includes(q));
+    const el=document.getElementById('studentsList');
+    if(!el) return;
+    el.innerHTML=list.length ? list.map(s=>{
+      const g=DataService?.getGroups ? DataService.getGroups().find(x=>x.id===s.groupId) : null;
+      const subs=DataService?.getSubmissions ? DataService.getSubmissions({studentId:s.id}) : [];
+      const graded=subs.filter(x=>x.status==='graded');
+      const avg=graded.length ? Math.round(graded.reduce((a,x)=>a+(x.score||0),0)/graded.length) : 0;
+      return `<div class="sub-row"><div><strong>${s.name}</strong><div class="text-xs text-muted">${s.code||''} · 👥 ${g?.name||'-'} · 📞 ${s.phone||'-'}</div></div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="badge ${avg>=60?'badge-success':avg>=40?'badge-warning':'badge-danger'}">${avg}%</span>
+        <button class="btn btn-primary btn-sm" onclick="window.openStudentProfile('${s.id}')">👁️ الملف</button>
+      </div></div>`;
+    }).join('') : '<p class="text-muted">لا طلاب</p>';
+  }catch(e){console.error('loadStudents error',e);}
+};
 
-    window.openStudentProfile=function(id){
-      const s=DataService.getUserById(id);if(!s)return;
-      const g=DataService.getGroups().find(x=>x.id===s.groupId);
-      const allAtt=DataService.getAttendance();
-      const att=allAtt.filter(a=>a.status==='approved'&&a.records.some(r=>r.studentId===id));
-      const pr=att.filter(a=>a.records.find(r=>r.studentId===id)?.status==='present').length;
-      const rate=att.length?Math.round(pr/att.length*100):0;
-      const subs=DataService.getSubmissions({studentId:id});
-      const attempts=DataService.getExamAttempts({studentId:id});
-      const gradedHw=subs.filter(x=>x.status==='graded');
-      const avgHw=gradedHw.length?Math.round(gradedHw.reduce((a,x)=>a+(x.score||0),0)/gradedHw.length):0;
-      const gradedEx=attempts.filter(x=>x.status==='approved');
-      const avgEx=gradedEx.length?Math.round(gradedEx.reduce((a,x)=>a+(x.score||0),0)/gradedEx.length):0;
+window.openStudentProfile=function(id){
+  try{
+    const s=DataService?.getUserById ? DataService.getUserById(id) : null; if(!s)return;
+    const g=DataService?.getGroups ? DataService.getGroups().find(x=>x.id===s.groupId) : null;
+    const allAtt=DataService?.getAttendance ? DataService.getAttendance() : [];
+    const att=allAtt.filter(a=>a.status==='approved'&&a.records.some(r=>r.studentId===id));
+    const pr=att.filter(a=>a.records.find(r=>r.studentId===id)?.status==='present').length;
+    const rate=att.length ? Math.round(pr/att.length*100) : 0;
+    const subs=DataService?.getSubmissions ? DataService.getSubmissions({studentId:id}) : [];
+    const attempts=DataService?.getExamAttempts ? DataService.getExamAttempts({studentId:id}) : [];
+    const gradedHw=subs.filter(x=>x.status==='graded');
+    const avgHw=gradedHw.length ? Math.round(gradedHw.reduce((a,x)=>a+(x.score||0),0)/gradedHw.length) : 0;
+    const gradedEx=attempts.filter(x=>x.status==='approved');
+    const avgEx=gradedEx.length ? Math.round(gradedEx.reduce((a,x)=>a+(x.score||0),0)/gradedEx.length) : 0;
 
+    if(typeof ThemeManager?.openModal === 'function'){
       ThemeManager.openModal(`<div class="modal-header">
         <div style="display:flex;gap:12px;align-items:center;">
           <div class="user-avatar" style="width:48px;height:48px;font-size:18px;">${s.name.charAt(0)}</div>
@@ -251,79 +470,90 @@
           <div class="stat-mini-box"><div class="stat-mini-value">${avgEx}%</div><div class="stat-mini-label">متوسط الامتحانات</div></div>
         </div>
         <div class="tabs">
-          <button class="tab-btn active" onclick="switchTab(event,'att')">📋 الحضور</button>
-          <button class="tab-btn" onclick="switchTab(event,'hw')">📝 الواجبات</button>
-          <button class="tab-btn" onclick="switchTab(event,'ex')">🎓 الامتحانات</button>
+          <button class="tab-btn active" onclick="window.switchTab(event,'att')">📋 الحضور</button>
+          <button class="tab-btn" onclick="window.switchTab(event,'hw')">📝 الواجبات</button>
+          <button class="tab-btn" onclick="window.switchTab(event,'ex')">🎓 الامتحانات</button>
         </div>
         <div id="tab-att" class="tab-content active">
-          ${att.length?att.slice().reverse().map(a=>{const r=a.records.find(r=>r.studentId===id);return `<div class="sub-row ${r?.status==='present'?'graded':'pending'}"><div><strong>${a.groupName}</strong><div class="text-xs text-muted">📅 ${a.date}</div></div><span class="badge ${r?.status==='present'?'badge-success':'badge-danger'}">${r?.status==='present'?'✓ حاضر':'✗ غائب'}</span></div>`;}).join(''):'<p class="text-muted">لا سجلات</p>'}
+          ${att.length ? att.slice().reverse().map(a=>{const r=a.records.find(r=>r.studentId===id);return `<div class="sub-row ${r?.status==='present'?'graded':'pending'}"><div><strong>${a.groupName}</strong><div class="text-xs text-muted">📅 ${a.date}</div></div><span class="badge ${r?.status==='present'?'badge-success':'badge-danger'}">${r?.status==='present'?'✓ حاضر':'✗ غائب'}</span></div>`;}).join('') : '<p class="text-muted">لا سجلات</p>'}
         </div>
         <div id="tab-hw" class="tab-content">
-          ${subs.length?subs.map(sub=>{const h=DataService.getHomeworkById(sub.homeworkId);const maxScore=sub.maxScore||h?.totalPoints||100;const pct=h&&h.totalPoints?Math.round(sub.score/h.totalPoints*100):(sub.score||0);return `<div class="sub-row ${sub.status==='graded'?'graded':'pending'}"><div><strong>${h?.title||'-'}</strong><div class="text-xs text-muted">${h?.deadline||''}</div></div><div style="text-align:left;"><strong style="color:${sub.status==='graded'?'var(--success)':'var(--warning)'}">${sub.status==='graded'?pct+'%':'معلق'}</strong><div class="text-xs text-muted">${sub.score}/${maxScore}</div></div></div>`;}).join(''):'<p class="text-muted">لا واجبات</p>'}
+          ${subs.length ? subs.map(sub=>{const h=DataService?.getHomeworkById ? DataService.getHomeworkById(sub.homeworkId) : null;const maxScore=sub.maxScore||h?.totalPoints||100;const pct=h&&h.totalPoints?Math.round(sub.score/h.totalPoints*100):(sub.score||0);return `<div class="sub-row ${sub.status==='graded'?'graded':'pending'}"><div><strong>${h?.title||'-'}</strong><div class="text-xs text-muted">${h?.deadline||''}</div></div><div style="text-align:left;"><strong style="color:${sub.status==='graded'?'var(--success)':'var(--warning)'}">${sub.status==='graded'?pct+'%':'معلق'}</strong><div class="text-xs text-muted">${sub.score}/${maxScore}</div></div></div>`;}).join('') : '<p class="text-muted">لا واجبات</p>'}
         </div>
         <div id="tab-ex" class="tab-content">
-          ${attempts.length?attempts.map(a=>{const e=DataService.getExamById(a.examId);const maxScore=a.maxScore||e?.totalPoints||100;return `<div class="sub-row ${a.status==='approved'?'graded':'pending'}"><div><strong>${e?.title||'-'}</strong></div><div style="text-align:left;"><strong style="color:${a.status==='approved'?'var(--success)':'var(--warning)'}">${a.status==='approved'?Math.round((a.score/maxScore)*100)+'%':'معلق'}</strong><div class="text-xs text-muted">${a.score}/${maxScore}</div></div></div>`;}).join(''):'<p class="text-muted">لا امتحانات</p>'}
+          ${attempts.length ? attempts.map(a=>{const e=DataService?.getExamById ? DataService.getExamById(a.examId) : null;const maxScore=a.maxScore||e?.totalPoints||100;return `<div class="sub-row ${a.status==='approved'?'graded':'pending'}"><div><strong>${e?.title||'-'}</strong></div><div style="text-align:left;"><strong style="color:${a.status==='approved'?'var(--success)':'var(--warning)'}">${a.status==='approved'?Math.round((a.score/maxScore)*100)+'%':'معلق'}</strong><div class="text-xs text-muted">${a.score}/${maxScore}</div></div></div>`;}).join('') : '<p class="text-muted">لا امتحانات</p>'}
         </div>
       </div>`,'modal-lg');
-    };
+    }
+  }catch(e){console.error('openStudentProfile error',e);}
+};
 
-    window.switchTab=function(ev,id){
-      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-      ev.target.classList.add('active');
-      document.getElementById('tab-'+id).classList.add('active');
-    };
+window.switchTab=function(ev,id){
+  try{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+    ev?.target?.classList.add('active');
+    document.getElementById('tab-'+id)?.classList.add('active');
+  }catch(e){console.error('switchTab error',e);}
+};
 
-    // ===== Homework =====
-    window.loadHomework=function(){
-      const q=(document.getElementById('hwSearchBar')?.value||'').toLowerCase();
-      const d=db();const gids=DataService.getGroupsByTeacher(currentUser.id).map(g=>g.id);
-      let list=(d.homework||[]).filter(h=>gids.includes(h.groupId));
-      if(q)list=list.filter(h=>(h.title||'').toLowerCase().includes(q));
-      document.getElementById('hwList').innerHTML=list.length?list.map(h=>{
-        const group=DataService.getGroups().find(g=>g.id===h.groupId);
-        const totalStudents=group?DataService.getStudentsByGroup(group.id).length:0;
-        const subs=(d.submissions||[]).filter(s=>s.homeworkId===h.id);
-        const graded=subs.filter(s=>s.status==='graded');
-        const submissionRate=totalStudents?Math.round(subs.length/totalStudents*100):0;
-        const avgScore=graded.length?Math.round(graded.reduce((a,x)=>a+(x.score||0),0)/graded.length):0;
-        return `<div class="hw-card">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
-            <div style="flex:1;min-width:200px;">
-              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">
-                <strong style="font-size:15px;">${h.title}</strong>
-                ${h.paper?'<span class="badge badge-muted">📝 ورقي</span>':''}
-              </div>
-              <div class="text-xs text-muted">👥 ${group?.name||'-'} · 📅 ${h.deadline||'-'}</div>
-              <div class="stat-mini" style="margin-top:10px;">
-                <div class="stat-mini-box"><div class="stat-mini-value">${submissionRate}%</div><div class="stat-mini-label">نسبة التسليم</div></div>
-                <div class="stat-mini-box"><div class="stat-mini-value">${avgScore}%</div><div class="stat-mini-label">المتوسط</div></div>
-                <div class="stat-mini-box"><div class="stat-mini-value">${subs.length}/${totalStudents}</div><div class="stat-mini-label">مُسلَّم</div></div>
-              </div>
+// ===== Homework =====
+let hwQ=[];
+window.loadHomework=function(){
+  try{
+    const q=(document.getElementById('hwSearchBar')?.value||'').toLowerCase();
+    const d=db();const gids=DataService?.getGroupsByTeacher ? DataService.getGroupsByTeacher(currentUser.id).map(g=>g.id) : [];
+    let list=(d.homework||[]).filter(h=>gids.includes(h.groupId));
+    if(q) list=list.filter(h=>(h.title||'').toLowerCase().includes(q));
+    const el=document.getElementById('hwList');
+    if(!el) return;
+    el.innerHTML=list.length ? list.map(h=>{
+      const group=DataService?.getGroups ? DataService.getGroups().find(g=>g.id===h.groupId) : null;
+      const totalStudents=group ? (DataService?.getStudentsByGroup ? DataService.getStudentsByGroup(group.id).length : 0) : 0;
+      const subs=(d.submissions||[]).filter(s=>s.homeworkId===h.id);
+      const graded=subs.filter(s=>s.status==='graded');
+      const submissionRate=totalStudents ? Math.round(subs.length/totalStudents*100) : 0;
+      const avgScore=graded.length ? Math.round(graded.reduce((a,x)=>a+(x.score||0),0)/graded.length) : 0;
+      return `<div class="hw-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:200px;">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">
+              <strong style="font-size:15px;">${h.title}</strong>
+              ${h.paper?'<span class="badge badge-muted">📝 ورقي</span>':''}
             </div>
-            <button class="btn btn-primary btn-sm" onclick="viewHwSubmissions('${h.id}')">📊 التسليمات</button>
+            <div class="text-xs text-muted">👥 ${group?.name||'-'} · 📅 ${h.deadline||'-'}</div>
+            <div class="stat-mini" style="margin-top:10px;">
+              <div class="stat-mini-box"><div class="stat-mini-value">${submissionRate}%</div><div class="stat-mini-label">نسبة التسليم</div></div>
+              <div class="stat-mini-box"><div class="stat-mini-value">${avgScore}%</div><div class="stat-mini-label">المتوسط</div></div>
+              <div class="stat-mini-box"><div class="stat-mini-value">${subs.length}/${totalStudents}</div><div class="stat-mini-label">مُسلَّم</div></div>
+            </div>
           </div>
-        </div>`;
-      }).join(''):'<p class="text-muted">لا واجبات</p>';
-    };
+          <button class="btn btn-primary btn-sm" onclick="window.viewHwSubmissions('${h.id}')">📊 التسليمات</button>
+        </div>
+      </div>`;
+    }).join('') : '<p class="text-muted">لا واجبات</p>';
+  }catch(e){console.error('loadHomework error',e);}
+};
 
-    window.viewHwSubmissions=function(hwId){
-      const h=DataService.getHomeworkById(hwId);if(!h)return;
-      const group=DataService.getGroups().find(g=>g.id===h.groupId);
-      const students=group?DataService.getStudentsByGroup(group.id):[];
-      const d=db();
-      const subs=(d.submissions||[]).filter(s=>s.homeworkId===hwId);
-      const graded=subs.filter(s=>s.status==='graded').map(s=>{
-        const st=DataService.getUserById(s.studentId);
-        const maxScore=s.maxScore||h.totalPoints||100;
-        const pct=h.totalPoints?Math.round(s.score/h.totalPoints*100):(s.score||0);
-        return {...s,student:st,maxScore,pct};
-      });
-      const pending=subs.filter(s=>s.status!=='graded').map(s=>({...s,student:DataService.getUserById(s.studentId)}));
-      const submittedIds=subs.map(s=>s.studentId);
-      const missing=students.filter(s=>!submittedIds.includes(s.id));
-      const avgScore=graded.length?Math.round(graded.reduce((a,x)=>a+(x.pct||0),0)/graded.length):0;
+window.viewHwSubmissions=function(hwId){
+  try{
+    const h=DataService?.getHomeworkById ? DataService.getHomeworkById(hwId) : null; if(!h)return;
+    const group=DataService?.getGroups ? DataService.getGroups().find(g=>g.id===h.groupId) : null;
+    const students=group ? (DataService?.getStudentsByGroup ? DataService.getStudentsByGroup(group.id) : []) : [];
+    const d=db();
+    const subs=(d.submissions||[]).filter(s=>s.homeworkId===hwId);
+    const graded=subs.filter(s=>s.status==='graded').map(s=>{
+      const st=DataService?.getUserById ? DataService.getUserById(s.studentId) : null;
+      const maxScore=s.maxScore||h.totalPoints||100;
+      const pct=h.totalPoints?Math.round(s.score/h.totalPoints*100):(s.score||0);
+      return {...s,student:st,maxScore,pct};
+    });
+    const pending=subs.filter(s=>s.status!=='graded').map(s=>({...s,student:DataService?.getUserById ? DataService.getUserById(s.studentId) : null}));
+    const submittedIds=subs.map(s=>s.studentId);
+    const missing=students.filter(s=>!submittedIds.includes(s.id));
+    const avgScore=graded.length?Math.round(graded.reduce((a,x)=>a+(x.pct||0),0)/graded.length):0;
 
+    if(typeof ThemeManager?.openModal === 'function'){
       ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📊 ${h.title}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
       <div class="modal-body">
         <div class="stat-mini">
@@ -332,292 +562,531 @@
           <div class="stat-mini-box"><div class="stat-mini-value">${avgScore}%</div><div class="stat-mini-label">المتوسط</div></div>
         </div>
         <div class="tabs">
-          <button class="tab-btn active" onclick="switchTab(event,'graded')">✓ تم التصحيح (${graded.length})</button>
-          <button class="tab-btn" onclick="switchTab(event,'pending')">⏳ بانتظار (${pending.length})</button>
-          <button class="tab-btn" onclick="switchTab(event,'missing')">✗ لم يسلّم (${missing.length})</button>
+          <button class="tab-btn active" onclick="window.switchTab(event,'graded')">✓ تم التصحيح (${graded.length})</button>
+          <button class="tab-btn" onclick="window.switchTab(event,'pending')">⏳ بانتظار (${pending.length})</button>
+          <button class="tab-btn" onclick="window.switchTab(event,'missing')">✗ لم يسلّم (${missing.length})</button>
         </div>
         <div id="tab-graded" class="tab-content active">
-          ${graded.length?graded.sort((a,b)=>b.pct-a.pct).map(s=>`<div class="sub-row graded"><div><strong>${s.student?.name||'-'}</strong>${s.offline?'<span class="badge badge-muted">📝 ورقي</span>':''}<div class="text-xs text-muted">${s.student?.code||''}</div></div><div style="text-align:left;"><strong style="color:var(--success);font-size:18px;">${s.pct}%</strong><div class="text-xs text-muted">${s.score}/${s.maxScore}</div></div></div>`).join(''):'<p class="text-muted">لا درجات</p>'}
+          ${graded.length ? graded.sort((a,b)=>b.pct-a.pct).map(s=>`<div class="sub-row graded"><div><strong>${s.student?.name||'-'}</strong>${s.offline?'<span class="badge badge-muted">📝 ورقي</span>':''}<div class="text-xs text-muted">${s.student?.code||''}</div></div><div style="text-align:left;"><strong style="color:var(--success);font-size:18px;">${s.pct}%</strong><div class="text-xs text-muted">${s.score}/${s.maxScore}</div></div></div>`).join('') : '<p class="text-muted">لا درجات</p>'}
         </div>
         <div id="tab-pending" class="tab-content">
-          ${pending.length?pending.map(s=>`<div class="sub-row pending"><div><strong>${s.student?.name||'-'}</strong></div><span class="badge badge-warning">معلق</span></div>`).join(''):'<p class="text-muted">لا معلق ✓</p>'}
+          ${pending.length ? pending.map(s=>`<div class="sub-row pending"><div><strong>${s.student?.name||'-'}</strong></div><span class="badge badge-warning">معلق</span></div>`).join('') : '<p class="text-muted">لا معلق ✓</p>'}
         </div>
         <div id="tab-missing" class="tab-content">
-          ${missing.length?missing.map(s=>`<div class="sub-row missing"><div><strong>${s.name||'-'}</strong><div class="text-xs text-muted">${s.code||''} · ${s.phone||''}</div></div></div>`).join(''):'<p class="text-muted">الكل سلّم ✓</p>'}
+          ${missing.length ? missing.map(s=>`<div class="sub-row missing"><div><strong>${s.name||'-'}</strong><div class="text-xs text-muted">${s.code||''} · ${s.phone||''}</div></div></div>`).join('') : '<p class="text-muted">الكل سلّم ✓</p>'}
         </div>
       </div>`,'modal-lg');
-    };
+    }
+  }catch(e){console.error('viewHwSubmissions error',e);}
+};
 
-    // ===== Exams =====
-    window.loadExams=function(){
-      const q=(document.getElementById('exSearchBar')?.value||'').toLowerCase();
-      const d=db();const gids=DataService.getGroupsByTeacher(currentUser.id).map(g=>g.id);
-      let list=(d.exams||[]).filter(e=>gids.includes(e.groupId));
-      if(q)list=list.filter(e=>(e.title||'').toLowerCase().includes(q));
-      document.getElementById('exList').innerHTML=list.length?list.map(e=>{
-        const group=DataService.getGroups().find(g=>g.id===e.groupId);
-        const totalStudents=group?DataService.getStudentsByGroup(group.id).length:0;
-        const att=(d.examAttempts||[]).filter(a=>a.examId===e.id);
-        const graded=att.filter(a=>a.status==='approved');
-        const attemptRate=totalStudents?Math.round(att.length/totalStudents*100):0;
-        const avgScore=graded.length?Math.round(graded.reduce((a,x)=>a+(x.score||0),0)/graded.length):0;
-        const modeLabel=e.mode==='home'?'🏠 منزلي':e.mode==='class'?'🏫 حصة':'📝 ورقي';
-        return `<div class="hw-card">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
-            <div style="flex:1;min-width:200px;">
-              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">
-                <strong style="font-size:15px;">${e.title}</strong>
-                <span class="badge badge-info">${modeLabel}</span>
-              </div>
-              <div class="text-xs text-muted">👥 ${group?.name||'-'} · ⏱️ ${e.duration||60}د</div>
-              <div class="stat-mini" style="margin-top:10px;">
-                <div class="stat-mini-box"><div class="stat-mini-value">${attemptRate}%</div><div class="stat-mini-label">نسبة المحاولات</div></div>
-                <div class="stat-mini-box"><div class="stat-mini-value">${avgScore}%</div><div class="stat-mini-label">المتوسط</div></div>
-                <div class="stat-mini-box"><div class="stat-mini-value">${att.length}/${totalStudents}</div><div class="stat-mini-label">حاولوا</div></div>
-              </div>
+window.openHwBuilder=function(){
+  try{
+    hwQ=[];
+    if(typeof ThemeManager?.openModal === 'function'){
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📝 واجب</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>العنوان</label><input id="hwTitle" class="form-input" required></div><div class="form-group"><label>المجموعة</label><select id="hwGroup" class="form-select">${(DataService?.getGroupsByTeacher?DataService.getGroupsByTeacher(currentUser.id):[]).map(g=>`<option value="${g.id}">${g.name}</option>`).join('')}</select></div><div class="form-group"><label>الموعد</label><input type="date" id="hwDeadline" class="form-input" required></div><div class="form-group"><label>صورة الواجب (Drive)</label><input id="hwImage" class="form-input" placeholder="https://drive.google.com/..."></div><div id="hwQList"></div><div style="display:flex;gap:8px;margin:8px 0;"><button class="btn btn-secondary btn-sm" onclick="window.addHwQ('mcq')">+ MCQ</button><button class="btn btn-secondary btn-sm" onclick="window.addHwQ('truefalse')">+ صح/خطأ</button></div><button class="btn btn-primary w-full" onclick="window.saveHw()">💾</button></div>`);
+    }
+  }catch(e){console.error('openHwBuilder error',e);}
+};
+window.addHwQ=function(t){ try{ hwQ.push({id:'q'+Date.now(),type:t,text:'',options:t==='mcq'?['','','','']:[],correctAnswer:t==='mcq'?0:true,points:10}); window.renderHwQ(); }catch(e){} };
+window.renderHwQ=function(){ try{ const el=document.getElementById('hwQList'); if(!el) return; el.innerHTML=hwQ.map((q,i)=>`<div style="background:var(--surface-hover);border-radius:8px;padding:12px;margin-bottom:8px;"><input type="text" class="form-input" placeholder="س${i+1}" onchange="hwQ[${i}].text=this.value">${q.type==='mcq'?q.options.map((o,oi)=>`<div style="display:flex;gap:8px;align-items:center;margin-top:6px;"><input type="radio" name="c${q.id}" ${q.correctAnswer===oi?'checked':''} onchange="hwQ[${i}].correctAnswer=${oi}"><input type="text" class="form-input" placeholder="خيار" onchange="hwQ[${i}].options[${oi}]=this.value"></div>`).join(''):''}</div>`).join(''); }catch(e){} };
+window.saveHw=async function(){
+  try{
+    if(!document.getElementById('hwTitle')?.value||!hwQ.length){ if(typeof ThemeManager?.toast==='function') ThemeManager.toast('أكمل البيانات','error'); return; }
+    if(typeof DataService?.addHomework==='function') await DataService.addHomework({title:document.getElementById('hwTitle').value,groupId:document.getElementById('hwGroup').value,deadline:document.getElementById('hwDeadline').value,imageUrl:document.getElementById('hwImage').value,questions:hwQ,maxAttempts:2,passingScore:60,showResults:true,subject:currentUser?.subject||'English',openDate:new Date().toISOString().split('T')[0],createdBy:currentUser.id});
+    if(typeof ThemeManager?.closeModal==='function') ThemeManager.closeModal();
+    window.loadHomework();
+  }catch(e){console.error('saveHw error',e);}
+};
+
+// ===== Exams =====
+let exQ=[];
+window.loadExams=function(){
+  try{
+    const q=(document.getElementById('exSearchBar')?.value||'').toLowerCase();
+    const d=db();const gids=DataService?.getGroupsByTeacher ? DataService.getGroupsByTeacher(currentUser.id).map(g=>g.id) : [];
+    let list=(d.exams||[]).filter(e=>gids.includes(e.groupId));
+    if(q) list=list.filter(e=>(e.title||'').toLowerCase().includes(q));
+    const el=document.getElementById('exList');
+    if(!el) return;
+    el.innerHTML=list.length ? list.map(e=>{
+      const group=DataService?.getGroups ? DataService.getGroups().find(g=>g.id===e.groupId) : null;
+      const totalStudents=group ? (DataService?.getStudentsByGroup ? DataService.getStudentsByGroup(group.id).length : 0) : 0;
+      const att=(d.examAttempts||[]).filter(a=>a.examId===e.id);
+      const graded=att.filter(a=>a.status==='approved');
+      const attemptRate=totalStudents ? Math.round(att.length/totalStudents*100) : 0;
+      const avgScore=graded.length ? Math.round(graded.reduce((a,x)=>a+(x.score||0),0)/graded.length) : 0;
+      const modeLabel=e.mode==='home'?'🏠 منزلي':e.mode==='class'?'🏫 حصة':'📝 ورقي';
+      return `<div class="hw-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:200px;">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">
+              <strong style="font-size:15px;">${e.title}</strong>
+              <span class="badge badge-info">${modeLabel}</span>
             </div>
-            <button class="btn btn-primary btn-sm" onclick="viewExAttempts('${e.id}')">📊 المحاولات</button>
+            <div class="text-xs text-muted">👥 ${group?.name||'-'} · ⏱️ ${e.duration||60}د</div>
+            <div class="stat-mini" style="margin-top:10px;">
+              <div class="stat-mini-box"><div class="stat-mini-value">${attemptRate}%</div><div class="stat-mini-label">نسبة المحاولات</div></div>
+              <div class="stat-mini-box"><div class="stat-mini-value">${avgScore}%</div><div class="stat-mini-label">المتوسط</div></div>
+              <div class="stat-mini-box"><div class="stat-mini-value">${att.length}/${totalStudents}</div><div class="stat-mini-label">حاولوا</div></div>
+            </div>
           </div>
-        </div>`;
-      }).join(''):'<p class="text-muted">لا امتحانات</p>';
-    };
+          <button class="btn btn-primary btn-sm" onclick="window.viewExAttempts('${e.id}')">📊 المحاولات</button>
+        </div>
+      </div>`;
+    }).join('') : '<p class="text-muted">لا امتحانات</p>';
+  }catch(e){console.error('loadExams error',e);}
+};
 
-    window.viewExAttempts=function(exId){
-      const e=DataService.getExamById(exId);if(!e)return;
-      const group=DataService.getGroups().find(g=>g.id===e.groupId);
-      const students=group?DataService.getStudentsByGroup(group.id):[];
-      const d=db();
-      const att=(d.examAttempts||[]).filter(a=>a.examId===exId);
-      const graded=att.filter(a=>a.status==='approved').map(a=>{
-        const st=DataService.getUserById(a.studentId);
-        const maxScore=a.maxScore||e.totalPoints||100;
-        const pct=e.totalPoints?Math.round(a.score/e.totalPoints*100):(maxScore?Math.round(a.score/maxScore*100):(a.score||0));
-        return {...a,student:st,maxScore,pct};
-      });
-      const pending=att.filter(a=>a.status!=='approved').map(a=>({...a,student:DataService.getUserById(a.studentId)}));
-      const attemptedIds=att.map(a=>a.studentId);
-      const notAttempted=students.filter(s=>!attemptedIds.includes(s.id));
-      const avgScore=graded.length?Math.round(graded.reduce((a,x)=>a+(x.pct||0),0)/graded.length):0;
-      const maxPct=graded.length?Math.max(...graded.map(a=>a.pct||0)):0;
-      const minPct=graded.length?Math.min(...graded.map(a=>a.pct||0)):0;
+window.viewExAttempts=function(exId){
+  try{
+    const e=DataService?.getExamById ? DataService.getExamById(exId) : null; if(!e)return;
+    const group=DataService?.getGroups ? DataService.getGroups().find(g=>g.id===e.groupId) : null;
+    const students=group ? (DataService?.getStudentsByGroup ? DataService.getStudentsByGroup(group.id) : []) : [];
+    const d=db();
+    const att=(d.examAttempts||[]).filter(a=>a.examId===exId);
+    const graded=att.filter(a=>a.status==='approved').map(a=>{
+      const st=DataService?.getUserById ? DataService.getUserById(a.studentId) : null;
+      const maxScore=a.maxScore||e.totalPoints||100;
+      const pct=e.totalPoints?Math.round(a.score/e.totalPoints*100):(maxScore?Math.round(a.score/maxScore*100):(a.score||0));
+      return {...a,student:st,maxScore,pct};
+    });
+    const pending=att.filter(a=>a.status!=='approved').map(a=>({...a,student:DataService?.getUserById ? DataService.getUserById(a.studentId) : null}));
+    const attemptedIds=att.map(a=>a.studentId);
+    const notAttempted=students.filter(s=>!attemptedIds.includes(s.id));
+    const avgScore=graded.length?Math.round(graded.reduce((a,x)=>a+(x.pct||0),0)/graded.length):0;
 
+    if(typeof ThemeManager?.openModal === 'function'){
       ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📊 ${e.title}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
       <div class="modal-body">
         <div class="stat-mini">
           <div class="stat-mini-box"><div class="stat-mini-value">${att.length}/${students.length}</div><div class="stat-mini-label">حاولوا</div></div>
           <div class="stat-mini-box"><div class="stat-mini-value">${avgScore}%</div><div class="stat-mini-label">المتوسط</div></div>
-          <div class="stat-mini-box"><div class="stat-mini-value">${maxPct}%/${minPct}%</div><div class="stat-mini-label">أعلى/أقل</div></div>
+          <div class="stat-mini-box"><div class="stat-mini-value">${graded.length}</div><div class="stat-mini-label">مُصحّح</div></div>
         </div>
         <div class="tabs">
-          <button class="tab-btn active" onclick="switchTab(event,'graded')">✓ تم التصحيح (${graded.length})</button>
-          <button class="tab-btn" onclick="switchTab(event,'pending')">⏳ بانتظار (${pending.length})</button>
-          <button class="tab-btn" onclick="switchTab(event,'notAttempted')">✗ لم يحاول (${notAttempted.length})</button>
+          <button class="tab-btn active" onclick="window.switchTab(event,'graded')">✓ تم التصحيح (${graded.length})</button>
+          <button class="tab-btn" onclick="window.switchTab(event,'pending')">⏳ بانتظار (${pending.length})</button>
+          <button class="tab-btn" onclick="window.switchTab(event,'notAttempted')">✗ لم يحاول (${notAttempted.length})</button>
         </div>
         <div id="tab-graded" class="tab-content active">
-          ${graded.length?graded.sort((a,b)=>b.pct-a.pct).map(a=>`<div class="sub-row graded"><div><strong>${a.student?.name||'-'}</strong>${a.offline?'<span class="badge badge-muted">📝 ورقي</span>':''}<div class="text-xs text-muted">${a.student?.code||''}</div></div><div style="display:flex;gap:8px;align-items:center;"><button class="btn btn-ghost btn-sm" onclick="viewExAnswers('${a.id}')">👁️ الإجابات</button><strong style="color:var(--success);font-size:18px;">${a.pct}%</strong></div></div>`).join(''):'<p class="text-muted">لا درجات</p>'}
+          ${graded.length ? graded.sort((a,b)=>b.pct-a.pct).map(a=>`<div class="sub-row graded"><div><strong>${a.student?.name||'-'}</strong>${a.offline?'<span class="badge badge-muted">📝 ورقي</span>':''}<div class="text-xs text-muted">${a.student?.code||''}</div></div><div style="display:flex;gap:8px;align-items:center;"><button class="btn btn-ghost btn-sm" onclick="window.viewExAnswers('${a.id}')">👁️</button><strong style="color:var(--success);font-size:18px;">${a.pct}%</strong></div></div>`).join('') : '<p class="text-muted">لا درجات</p>'}
         </div>
         <div id="tab-pending" class="tab-content">
-          ${pending.length?pending.map(a=>`<div class="sub-row pending"><div><strong>${a.student?.name||'-'}</strong></div><span class="badge badge-warning">معلق</span></div>`).join(''):'<p class="text-muted">الكل مُصحّح ✓</p>'}
+          ${pending.length ? pending.map(a=>`<div class="sub-row pending"><div><strong>${a.student?.name||'-'}</strong></div><span class="badge badge-warning">معلق</span></div>`).join('') : '<p class="text-muted">الكل مُصحّح ✓</p>'}
         </div>
         <div id="tab-notAttempted" class="tab-content">
-          ${notAttempted.length?notAttempted.map(s=>`<div class="sub-row missing"><div><strong>${s.name||'-'}</strong><div class="text-xs text-muted">${s.code||''}</div></div></div>`).join(''):'<p class="text-muted">الكل حاول ✓</p>'}
+          ${notAttempted.length ? notAttempted.map(s=>`<div class="sub-row missing"><div><strong>${s.name||'-'}</strong><div class="text-xs text-muted">${s.code||''}</div></div></div>`).join('') : '<p class="text-muted">الكل حاول ✓</p>'}
         </div>
       </div>`,'modal-lg');
-    };
+    }
+  }catch(e){console.error('viewExAttempts error',e);}
+};
 
-    window.viewExAnswers=function(attId){
-      const d=db();const a=(d.examAttempts||[]).find(x=>x.id===attId);if(!a)return;
-      const e=DataService.getExamById(a.examId);const st=DataService.getUserById(a.studentId);
+window.viewExAnswers=function(attId){
+  try{
+    const d=db();const a=(d.examAttempts||[]).find(x=>x.id===attId);if(!a)return;
+    const e=DataService?.getExamById ? DataService.getExamById(a.examId) : null;
+    const st=DataService?.getUserById ? DataService.getUserById(a.studentId) : null;
+    if(typeof ThemeManager?.openModal === 'function'){
       ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">👁️ إجابات ${st?.name||'-'}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
       <div class="modal-body">
         ${(e?.questions||[]).map((q,i)=>{const ans=(a.answers||[]).find(x=>x.questionId===q.id);const correct=q.correctAnswer;const isCorrect=ans&&ans.answer===correct;return `<div class="sub-row ${isCorrect?'graded':'pending'}"><div style="flex:1;"><strong>س${i+1}: ${q.text||''}</strong><div class="text-xs text-muted" style="margin-top:4px;">إجابة الطالب: <strong>${ans?.answer??'—'}</strong> · الصحيحة: <strong>${correct}</strong></div></div><span class="badge ${isCorrect?'badge-success':'badge-danger'}">${isCorrect?'✓':'✗'}</span></div>`;}).join('')||'<p class="text-muted">لا أسئلة</p>'}
       </div>`);
-    };
+    }
+  }catch(e){console.error('viewExAnswers error',e);}
+};
 
-    // ===== جديد: تقرير الدرجات الشامل =====
-    window.loadGradesReport=function(){
-      const gids=DataService.getGroupsByTeacher(currentUser.id).map(g=>g.id);
-      const d=db();
-      const hws=(d.homework||[]).filter(h=>gids.includes(h.groupId));
-      const exs=(d.exams||[]).filter(e=>gids.includes(e.groupId));
-      const allSubs=(d.submissions||[]).filter(s=>hws.some(h=>h.id===s.homeworkId));
-      const allAtts=(d.examAttempts||[]).filter(a=>exs.some(e=>e.id===a.examId));
-      const gradedHw=allSubs.filter(s=>s.status==='graded');
-      const gradedEx=allAtts.filter(a=>a.status==='approved');
-      const avgHw=gradedHw.length?Math.round(gradedHw.reduce((a,x)=>a+(x.score||0),0)/gradedHw.length):0;
-      const avgEx=gradedEx.length?Math.round(gradedEx.reduce((a,x)=>a+(x.score||0),0)/gradedEx.length):0;
+window.openExBuilder=function(){
+  try{
+    exQ=[];
+    if(typeof ThemeManager?.openModal === 'function'){
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🎓 امتحان</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>العنوان</label><input id="exTitle" class="form-input" required></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المجموعة</label><select id="exGroup" class="form-select">${(DataService?.getGroupsByTeacher?DataService.getGroupsByTeacher(currentUser.id):[]).map(g=>`<option value="${g.id}">${g.name}</option>`).join('')}</select></div><div class="form-group"><label>النوع</label><select id="exMode" class="form-select"><option value="home">منزلي</option><option value="class">حصة</option><option value="offline">ورقي</option></select></div></div><div id="exQList"></div><div style="display:flex;gap:8px;margin:8px 0;"><button class="btn btn-secondary btn-sm" onclick="window.addExQ('mcq')">+ MCQ</button><button class="btn btn-secondary btn-sm" onclick="window.addExQ('truefalse')">+ صح/خطأ</button></div><button class="btn btn-primary w-full" onclick="window.saveEx()">💾</button></div>`);
+    }
+  }catch(e){console.error('openExBuilder error',e);}
+};
+window.addExQ=function(t){ try{ exQ.push({id:'q'+Date.now(),type:t,text:'',options:t==='mcq'?['','','','']:[],correctAnswer:t==='mcq'?0:true,points:10}); window.renderExQ(); }catch(e){} };
+window.renderExQ=function(){ try{ const el=document.getElementById('exQList'); if(!el) return; el.innerHTML=exQ.map((q,i)=>`<div style="background:var(--surface-hover);border-radius:8px;padding:12px;margin-bottom:8px;"><input type="text" class="form-input" placeholder="س${i+1}" onchange="exQ[${i}].text=this.value">${q.type==='mcq'?q.options.map((o,oi)=>`<div style="display:flex;gap:8px;align-items:center;margin-top:6px;"><input type="radio" name="x${q.id}" ${q.correctAnswer===oi?'checked':''} onchange="exQ[${i}].correctAnswer=${oi}"><input type="text" class="form-input" placeholder="خيار" onchange="exQ[${i}].options[${oi}]=this.value"></div>`).join(''):''}</div>`).join(''); }catch(e){} };
+window.saveEx=async function(){
+  try{
+    if(!document.getElementById('exTitle')?.value||!exQ.length){ if(typeof ThemeManager?.toast==='function') ThemeManager.toast('أكمل البيانات','error'); return; }
+    if(typeof DataService?.addExam==='function') await DataService.addExam({title:document.getElementById('exTitle').value,groupId:document.getElementById('exGroup').value,mode:document.getElementById('exMode').value,duration:60,questions:exQ,maxAttempts:1,passingScore:50,randomizeQuestions:true,subject:currentUser?.subject||'English',startTime:new Date().toISOString(),endTime:new Date(Date.now()+86400e3).toISOString(),createdBy:currentUser.id});
+    if(typeof ThemeManager?.closeModal==='function') ThemeManager.closeModal();
+    window.loadExams();
+  }catch(e){console.error('saveEx error',e);}
+};
 
-      document.getElementById('overallStats').innerHTML=`
-        <div class="stat-mini">
-          <div class="stat-mini-box"><div class="stat-mini-value">${hws.length}</div><div class="stat-mini-label">واجبات</div></div>
-          <div class="stat-mini-box"><div class="stat-mini-value">${exs.length}</div><div class="stat-mini-label">امتحانات</div></div>
-          <div class="stat-mini-box"><div class="stat-mini-value">${avgHw}%</div><div class="stat-mini-label">متوسط الواجبات</div></div>
-          <div class="stat-mini-box"><div class="stat-mini-value">${avgEx}%</div><div class="stat-mini-label">متوسط الامتحانات</div></div>
-          <div class="stat-mini-box"><div class="stat-mini-value">${gradedHw.length}</div><div class="stat-mini-label">واجبات مُصحّحة</div></div>
-          <div class="stat-mini-box"><div class="stat-mini-value">${gradedEx.length}</div><div class="stat-mini-label">امتحانات مُصحّحة</div></div>
-        </div>`;
+// ===== تقرير الدرجات =====
+window.loadGradesReport=function(){
+  try{
+    const gids=DataService?.getGroupsByTeacher ? DataService.getGroupsByTeacher(currentUser.id).map(g=>g.id) : [];
+    const d=db();
+    const hws=(d.homework||[]).filter(h=>gids.includes(h.groupId));
+    const exs=(d.exams||[]).filter(e=>gids.includes(e.groupId));
+    const allSubs=(d.submissions||[]).filter(s=>hws.some(h=>h.id===s.homeworkId));
+    const allAtts=(d.examAttempts||[]).filter(a=>exs.some(e=>e.id===a.examId));
+    const gradedHw=allSubs.filter(s=>s.status==='graded');
+    const gradedEx=allAtts.filter(a=>a.status==='approved');
+    const avgHw=gradedHw.length?Math.round(gradedHw.reduce((a,x)=>a+(x.score||0),0)/gradedHw.length):0;
+    const avgEx=gradedEx.length?Math.round(gradedEx.reduce((a,x)=>a+(x.score||0),0)/gradedEx.length):0;
+    const ovEl=document.getElementById('overallStats');
+    if(ovEl) ovEl.innerHTML=`<div class="stat-mini"><div class="stat-mini-box"><div class="stat-mini-value">${hws.length}</div><div class="stat-mini-label">واجبات</div></div><div class="stat-mini-box"><div class="stat-mini-value">${exs.length}</div><div class="stat-mini-label">امتحانات</div></div><div class="stat-mini-box"><div class="stat-mini-value">${avgHw}%</div><div class="stat-mini-label">متوسط الواجبات</div></div><div class="stat-mini-box"><div class="stat-mini-value">${avgEx}%</div><div class="stat-mini-label">متوسط الامتحانات</div></div><div class="stat-mini-box"><div class="stat-mini-value">${gradedHw.length}</div><div class="stat-mini-label">واجبات مُصحّحة</div></div><div class="stat-mini-box"><div class="stat-mini-value">${gradedEx.length}</div><div class="stat-mini-label">امتحانات مُصحّحة</div></div></div>`;
 
-      // تبويب الواجبات
-      document.getElementById('hwReportContent').innerHTML=hws.length?hws.map(h=>{
-        const group=DataService.getGroups().find(g=>g.id===h.groupId);
-        const subs=allSubs.filter(s=>s.homeworkId===h.id);
-        const graded=subs.filter(s=>s.status==='graded');
-        const avg=graded.length?Math.round(graded.reduce((a,x)=>a+(x.score||0),0)/graded.length):0;
-        return `<div class="hw-card">
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-            <div><strong>${h.title}</strong><div class="text-xs text-muted">👥 ${group?.name||'-'} · 📅 ${h.deadline||'-'}</div></div>
-            <button class="btn btn-primary btn-sm" onclick="viewHwSubmissions('${h.id}')">📊 التفاصيل</button>
-          </div>
-          <div class="stat-mini" style="margin-top:10px;">
-            <div class="stat-mini-box"><div class="stat-mini-value">${subs.length}</div><div class="stat-mini-label">مُسلَّم</div></div>
-            <div class="stat-mini-box"><div class="stat-mini-value">${graded.length}</div><div class="stat-mini-label">مُصحّح</div></div>
-            <div class="stat-mini-box"><div class="stat-mini-value">${avg}%</div><div class="stat-mini-label">المتوسط</div></div>
-          </div>
-        </div>`;
-      }).join(''):'<p class="text-muted">لا واجبات</p>';
+    const hwEl=document.getElementById('hwReportContent');
+    if(hwEl) hwEl.innerHTML=hws.length ? hws.map(h=>{
+      const group=DataService?.getGroups ? DataService.getGroups().find(g=>g.id===h.groupId) : null;
+      const subs=allSubs.filter(s=>s.homeworkId===h.id);
+      const graded=subs.filter(s=>s.status==='graded');
+      const avg=graded.length?Math.round(graded.reduce((a,x)=>a+(x.score||0),0)/graded.length):0;
+      return `<div class="hw-card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;"><div><strong>${h.title}</strong><div class="text-xs text-muted">👥 ${group?.name||'-'} · 📅 ${h.deadline||'-'}</div></div><button class="btn btn-primary btn-sm" onclick="window.viewHwSubmissions('${h.id}')">📊 التفاصيل</button></div><div class="stat-mini" style="margin-top:10px;"><div class="stat-mini-box"><div class="stat-mini-value">${subs.length}</div><div class="stat-mini-label">مُسلَّم</div></div><div class="stat-mini-box"><div class="stat-mini-value">${graded.length}</div><div class="stat-mini-label">مُصحّح</div></div><div class="stat-mini-box"><div class="stat-mini-value">${avg}%</div><div class="stat-mini-label">المتوسط</div></div></div></div>`;
+    }).join('') : '<p class="text-muted">لا واجبات</p>';
 
-      // تبويب الامتحانات
-      document.getElementById('exReportContent').innerHTML=exs.length?exs.map(e=>{
-        const group=DataService.getGroups().find(g=>g.id===e.groupId);
-        const atts=allAtts.filter(a=>a.examId===e.id);
-        const graded=atts.filter(a=>a.status==='approved');
-        const avg=graded.length?Math.round(graded.reduce((a,x)=>a+(x.score||0),0)/graded.length):0;
-        return `<div class="hw-card">
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-            <div><strong>${e.title}</strong><div class="text-xs text-muted">👥 ${group?.name||'-'} · ⏱️ ${e.duration||60}د</div></div>
-            <button class="btn btn-primary btn-sm" onclick="viewExAttempts('${e.id}')">📊 التفاصيل</button>
-          </div>
-          <div class="stat-mini" style="margin-top:10px;">
-            <div class="stat-mini-box"><div class="stat-mini-value">${atts.length}</div><div class="stat-mini-label">حاولوا</div></div>
-            <div class="stat-mini-box"><div class="stat-mini-value">${graded.length}</div><div class="stat-mini-label">مُصحّح</div></div>
-            <div class="stat-mini-box"><div class="stat-mini-value">${avg}%</div><div class="stat-mini-label">المتوسط</div></div>
-          </div>
-        </div>`;
-      }).join(''):'<p class="text-muted">لا امتحانات</p>';
+    const exEl=document.getElementById('exReportContent');
+    if(exEl) exEl.innerHTML=exs.length ? exs.map(e=>{
+      const group=DataService?.getGroups ? DataService.getGroups().find(g=>g.id===e.groupId) : null;
+      const atts=allAtts.filter(a=>a.examId===e.id);
+      const graded=atts.filter(a=>a.status==='approved');
+      const avg=graded.length?Math.round(graded.reduce((a,x)=>a+(x.score||0),0)/graded.length):0;
+      return `<div class="hw-card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;"><div><strong>${e.title}</strong><div class="text-xs text-muted">👥 ${group?.name||'-'} · ⏱️ ${e.duration||60}د</div></div><button class="btn btn-primary btn-sm" onclick="window.viewExAttempts('${e.id}')">📊 التفاصيل</button></div><div class="stat-mini" style="margin-top:10px;"><div class="stat-mini-box"><div class="stat-mini-value">${atts.length}</div><div class="stat-mini-label">حاولوا</div></div><div class="stat-mini-box"><div class="stat-mini-value">${graded.length}</div><div class="stat-mini-label">مُصحّح</div></div><div class="stat-mini-box"><div class="stat-mini-value">${avg}%</div><div class="stat-mini-label">المتوسط</div></div></div></div>`;
+    }).join('') : '<p class="text-muted">لا امتحانات</p>';
 
-      // تبويب الطلاب
-      const gids2=DataService.getGroupsByTeacher(currentUser.id).map(g=>g.id);
-      const students=DataService.getStudents().filter(s=>gids2.includes(s.groupId));
-      document.getElementById('studentsReportContent').innerHTML=students.length?students.map(s=>{
-        const subs=allSubs.filter(x=>x.studentId===s.id&&x.status==='graded');
-        const atts=allAtts.filter(x=>x.studentId===s.id&&x.status==='approved');
-        const avgHw=subs.length?Math.round(subs.reduce((a,x)=>a+(x.score||0),0)/subs.length):0;
-        const avgEx=atts.length?Math.round(atts.reduce((a,x)=>a+(x.score||0),0)/atts.length):0;
-        const overall=subs.length||atts.length?Math.round(((avgHw*subs.length)+(avgEx*atts.length))/(subs.length+atts.length)):0;
-        return `<div class="sub-row">
-          <div><strong>${s.name}</strong><div class="text-xs text-muted">${s.code||''} · ${DataService.getGroups().find(g=>g.id===s.groupId)?.name||''}</div></div>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <span class="badge badge-muted">واجبات: ${avgHw}%</span>
-            <span class="badge badge-muted">امتحانات: ${avgEx}%</span>
-            <span class="badge ${overall>=60?'badge-success':overall>=40?'badge-warning':'badge-danger'}">${overall}%</span>
-            <button class="btn btn-ghost btn-sm" onclick="openStudentProfile('${s.id}')">👁️</button>
-          </div>
-        </div>`;
-      }).join(''):'<p class="text-muted">لا طلاب</p>';
-    };
+    const students=DataService?.getStudents ? DataService.getStudents().filter(s=>gids.includes(s.groupId)) : [];
+    const stEl=document.getElementById('studentsReportContent');
+    if(stEl) stEl.innerHTML=students.length ? students.map(s=>{
+      const subs=allSubs.filter(x=>x.studentId===s.id&&x.status==='graded');
+      const atts=allAtts.filter(x=>x.studentId===s.id&&x.status==='approved');
+      const avgHw=subs.length?Math.round(subs.reduce((a,x)=>a+(x.score||0),0)/subs.length):0;
+      const avgEx=atts.length?Math.round(atts.reduce((a,x)=>a+(x.score||0),0)/atts.length):0;
+      const overall=subs.length||atts.length?Math.round(((avgHw*subs.length)+(avgEx*atts.length))/(subs.length+atts.length)):0;
+      return `<div class="sub-row"><div><strong>${s.name}</strong><div class="text-xs text-muted">${s.code||''} · ${DataService?.getGroups?DataService.getGroups().find(g=>g.id===s.groupId)?.name||'':''}</div></div><div style="display:flex;gap:8px;align-items:center;"><span class="badge badge-muted">واجبات: ${avgHw}%</span><span class="badge badge-muted">امتحانات: ${avgEx}%</span><span class="badge ${overall>=60?'badge-success':overall>=40?'badge-warning':'badge-danger'}">${overall}%</span><button class="btn btn-ghost btn-sm" onclick="window.openStudentProfile('${s.id}')">👁️</button></div></div>`;
+    }).join('') : '<p class="text-muted">لا طلاب</p>';
+  }catch(e){console.error('loadGradesReport error',e);}
+};
 
-    window.switchReportTab=function(ev,id){
-      document.querySelectorAll('#section-grades-report .tab-btn').forEach(b=>b.classList.remove('active'));
-      document.querySelectorAll('#section-grades-report .tab-content').forEach(c=>c.classList.remove('active'));
-      ev.target.classList.add('active');
-      document.getElementById('tab-'+id).classList.add('active');
-    };
+window.switchReportTab=function(ev,id){
+  try{
+    document.querySelectorAll('#section-grades-report .tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('#section-grades-report .tab-content').forEach(c=>c.classList.remove('active'));
+    ev?.target?.classList.add('active');
+    document.getElementById('tab-'+id)?.classList.add('active');
+  }catch(e){}
+};
 
-    // ===== Attendance =====
-    window.loadAttendance=function(){
-      const gOpts=DataService.getGroupsByTeacher(currentUser.id).map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
-      document.getElementById('attGroup').innerHTML='<option value="">--</option>'+gOpts;
-      renderManualAtt();
-      const gids=DataService.getGroupsByTeacher(currentUser.id).map(g=>g.id);
-      const att=(db().attendance||[]).filter(a=>gids.includes(a.groupId));
-      document.getElementById('attHistory').innerHTML=att.length?att.slice().reverse().slice(0,10).map(a=>{
-        const pr=a.records.filter(r=>r.status==='present').length;
-        const tot=a.records.length;
-        return `<div class="sub-row ${a.status==='approved'?'graded':'pending'}">
-          <div><strong>${a.groupName}</strong><div class="text-xs text-muted">📅 ${a.date} · ${a.status==='approved'?'✓ معتمد':'⏳ معلق'}</div></div>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <span class="badge badge-muted">${pr}/${tot}</span>
-            <button class="btn btn-ghost btn-sm" onclick="viewAttDetail('${a.id}')">👁️</button>
-          </div>
-        </div>`;
-      }).join(''):'<p class="text-muted">لا سجلات</p>';
-    };
+// ===== Attendance =====
+window.loadAttendance=function(){
+  try{
+    const gs=DataService?.getGroupsByTeacher ? DataService.getGroupsByTeacher(currentUser.id) : [];
+    const gOpts=gs.map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
+    const attGroupEl=document.getElementById('attGroup');
+    const cancelGroupEl=document.getElementById('cancelGroup');
+    const cancelDateEl=document.getElementById('cancelDate');
+    if(attGroupEl) attGroupEl.innerHTML='<option value="">--</option>'+gOpts;
+    if(cancelGroupEl) cancelGroupEl.innerHTML=gOpts;
+    if(cancelDateEl) cancelDateEl.value=new Date().toISOString().split('T')[0];
+    window.renderManualAtt();
+    const gids=gs.map(g=>g.id);
+    const att=(db().attendance||[]).filter(a=>gids.includes(a.groupId));
+    const histEl=document.getElementById('attHistory');
+    if(histEl) histEl.innerHTML=att.length ? att.slice().reverse().slice(0,10).map(a=>{
+      const pr=a.records.filter(r=>r.status==='present').length;
+      const tot=a.records.length;
+      return `<div class="sub-row ${a.status==='approved'?'graded':'pending'}"><div><strong>${a.groupName}</strong><div class="text-xs text-muted">📅 ${a.date} · ${a.status==='approved'?'✓ معتمد':'⏳ معلق'}</div></div><div style="display:flex;gap:8px;align-items:center;"><span class="badge badge-muted">${pr}/${tot}</span><button class="btn btn-ghost btn-sm" onclick="window.viewAttDetail('${a.id}')">👁️</button></div></div>`;
+    }).join('') : '<p class="text-muted">لا سجلات</p>';
+  }catch(e){console.error('loadAttendance error',e);}
+};
 
-    window.viewAttDetail=function(id){
-      const a=(db().attendance||[]).find(x=>x.id===id);if(!a)return;
+window.viewAttDetail=function(id){
+  try{
+    const a=(db().attendance||[]).find(x=>x.id===id);if(!a)return;
+    if(typeof ThemeManager?.openModal === 'function'){
       ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📋 ${a.groupName}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
       <div class="modal-body">
         <div class="text-sm text-muted" style="margin-bottom:12px;">📅 ${a.date} · ${a.records.filter(r=>r.status==='present').length} حاضر / ${a.records.filter(r=>r.status!=='present').length} غائب</div>
-        ${a.records.map(r=>{const s=DataService.getUserById(r.studentId);return `<div class="sub-row ${r.status==='present'?'graded':'pending'}"><span>${s?.name||'-'}</span><span class="badge ${r.status==='present'?'badge-success':'badge-danger'}">${r.status==='present'?'✓ حاضر':'✗ غائب'}</span></div>`;}).join('')}
+        ${a.records.map(r=>{const s=DataService?.getUserById ? DataService.getUserById(r.studentId) : null;return `<div class="sub-row ${r.status==='present'?'graded':'pending'}"><span>${s?.name||'-'}</span><span class="badge ${r.status==='present'?'badge-success':'badge-danger'}">${r.status==='present'?'✓ حاضر':'✗ غائب'}</span></div>`;}).join('')}
       </div>`);
-    };
+    }
+  }catch(e){console.error('viewAttDetail error',e);}
+};
 
-    window.renderManualAtt=function(){
-      const gid=document.getElementById('attGroup').value;manualSel={};document.getElementById('qrBox').innerHTML='';
-      if(!gid){document.getElementById('manualAttList').innerHTML='';return;}
-      const sts=DataService.getStudentsByGroup(gid);sts.forEach(s=>manualSel[s.id]='present');
-      document.getElementById('manualAttList').innerHTML=sts.map(s=>`
-        <div class="sub-row">
-          <div class="user-avatar" style="width:32px;height:32px;font-size:13px;">${s.name.charAt(0)}</div>
-          <div style="flex:1;">${s.name}</div>
-          <div style="display:flex;gap:4px;">
-            <button class="btn btn-sm att-btn" style="background:var(--success);color:#fff;" onclick="setAttManual('${s.id}','present',this)">✓ حاضر</button>
-            <button class="btn btn-sm att-btn" style="background:var(--surface);color:var(--text-secondary);border:1px solid var(--border);" onclick="setAttManual('${s.id}','absent',this)">✗ غائب</button>
-          </div>
-        </div>`).join('')+`<button class="btn btn-primary w-full" onclick="submitManual('${gid}')">📤 إرسال</button>`;
-    };
+window.renderManualAtt=function(){
+  try{
+    const gid=document.getElementById('attGroup')?.value;
+    manualSel={};
+    const qrBox=document.getElementById('qrBox');
+    if(qrBox) qrBox.innerHTML='';
+    const listEl=document.getElementById('manualAttList');
+    if(!gid||!listEl){ if(listEl) listEl.innerHTML=''; return; }
+    const sts=DataService?.getStudentsByGroup ? DataService.getStudentsByGroup(gid) : [];
+    sts.forEach(s=>manualSel[s.id]='present');
+    listEl.innerHTML=sts.map(s=>`<div class="sub-row"><div class="user-avatar" style="width:32px;height:32px;font-size:13px;">${s.name.charAt(0)}</div><div style="flex:1;">${s.name}</div><div style="display:flex;gap:4px;"><button class="btn btn-sm att-btn" style="background:var(--success);color:#fff;" onclick="window.setAttManual('${s.id}','present',this)">✓ حاضر</button><button class="btn btn-sm att-btn" style="background:var(--surface);color:var(--text-secondary);border:1px solid var(--border);" onclick="window.setAttManual('${s.id}','absent',this)">✗ غائب</button></div></div>`).join('')+`<button class="btn btn-primary w-full" onclick="window.submitManual('${gid}')">📤 إرسال</button>`;
+  }catch(e){console.error('renderManualAtt error',e);}
+};
 
-    window.setAttManual=function(sid,val,btn){
-      manualSel[sid]=val;
-      const wrap=btn.parentElement;
-      wrap.querySelectorAll('button').forEach(b=>{b.style.background='var(--surface)';b.style.color='var(--text-secondary)';b.style.border='1px solid var(--border)';});
-      if(val==='present'){btn.style.background='var(--success)';btn.style.color='#fff';btn.style.border='none';}
-      else{btn.style.background='var(--danger)';btn.style.color='#fff';btn.style.border='none';}
-    };
+window.setAttManual=function(sid,val,btn){
+  try{
+    manualSel[sid]=val;
+    const wrap=btn.parentElement;
+    wrap.querySelectorAll('button').forEach(b=>{b.style.background='var(--surface)';b.style.color='var(--text-secondary)';b.style.border='1px solid var(--border)';});
+    if(val==='present'){btn.style.background='var(--success)';btn.style.color='#fff';btn.style.border='none';}
+    else{btn.style.background='var(--danger)';btn.style.color='#fff';btn.style.border='none';}
+  }catch(e){}
+};
 
-    window.submitManual=async function(gid){
-      const g=DataService.getGroups().find(x=>x.id===gid);
-      await DataService.submitAttendance({groupId:gid,groupName:g.name,submittedBy:currentUser.id,records:Object.entries(manualSel).map(([sid,st])=>({studentId:sid,status:st}))});
-      ThemeManager.toast('تم الإرسال ✓','success');loadAttendance();
-    };
+window.submitManual=async function(gid){
+  try{
+    const g=DataService?.getGroups ? DataService.getGroups().find(x=>x.id===gid) : null;
+    if(typeof DataService?.submitAttendance === 'function') await DataService.submitAttendance({groupId:gid,groupName:g?.name||'',submittedBy:currentUser.id,records:Object.entries(manualSel).map(([sid,st])=>({studentId:sid,status:st}))});
+    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('تم ✓','success');
+    window.loadAttendance();
+  }catch(e){console.error('submitManual error',e);}
+};
 
-    window.startQR=function(){
-      const gid=document.getElementById('attGroup').value;if(!gid)return;
-      const g=DataService.getGroups().find(x=>x.id===gid);
-      const d=db();if(!d.qrSessions)d.qrSessions=[];
-      const code='QR-'+Math.random().toString(36).slice(2,8).toUpperCase();
-      d.qrSessions.push({id:'qr_'+Date.now(),groupId:gid,groupName:g.name,code,startedBy:currentUser.name,startedAt:new Date().toISOString(),active:true,checkIns:[]});
-      DataService._saveData(d);
-      document.getElementById('qrBox').innerHTML=`<div class="qr-box"><img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent('EDUFLOW-ATT:'+code)}" style="border-radius:12px;"><div class="qr-code">${code}</div></div>`;
-    };
+window.startQR=function(){
+  try{
+    const gid=document.getElementById('attGroup')?.value;if(!gid)return;
+    const g=DataService?.getGroups ? DataService.getGroups().find(x=>x.id===gid) : null;
+    const d=db();if(!d.qrSessions) d.qrSessions=[];
+    const code='QR-'+Math.random().toString(36).slice(2,8).toUpperCase();
+    d.qrSessions.push({id:'qr_'+Date.now(),groupId:gid,groupName:g?.name||'',code,startedBy:currentUser.name,startedAt:new Date().toISOString(),active:true,checkIns:[]});
+    save(d);
+    const qrBox=document.getElementById('qrBox');
+    if(qrBox) qrBox.innerHTML=`<div class="qr-box"><img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent('EDUFLOW-ATT:'+code)}" style="border-radius:12px;"><div class="qr-code">${code}</div></div>`;
+  }catch(e){console.error('startQR error',e);}
+};
 
-    window.genCodeAtt=function(){
-      const gid=document.getElementById('attGroup').value;if(!gid)return;
-      const c=DataService.generateAttendanceCode(gid);
-      document.getElementById('qrBox').innerHTML=`<div class="qr-box"><div class="qr-code">${c.code}</div><div class="text-sm">قول الكود للطلاب</div></div>`;
-    };
+window.genCodeAtt=function(){
+  try{
+    const gid=document.getElementById('attGroup')?.value;if(!gid)return;
+    const c = typeof DataService?.generateAttendanceCode === 'function' ? DataService.generateAttendanceCode(gid) : {code:'ERR'};
+    const qrBox=document.getElementById('qrBox');
+    if(qrBox) qrBox.innerHTML=`<div class="qr-box"><div class="qr-code">${c.code}</div><div class="text-sm">قول الكود للطلاب</div></div>`;
+  }catch(e){console.error('genCodeAtt error',e);}
+};
 
-    // ===== Calendar / Materials / Vocabulary =====
-    window.loadCalendar=function(){
-      const sel=document.getElementById('calGroup');
-      if(!sel.options.length)sel.innerHTML=DataService.getGroupsByTeacher(currentUser.id).map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
-      const g=DataService.getGroups().find(x=>x.id===sel.value);if(!g)return;
-      const now=new Date();const y=now.getFullYear(),m=now.getMonth();const daysInMonth=new Date(y,m+1,0).getDate();const wd=DAYS.map(d=>d.en);
-      let html='<div class="cal-grid">'+['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'].map(d=>`<div style="text-align:center;font-size:11px;font-weight:700;color:var(--text-muted);">${d}</div>`).join('');
-      for(let i=0;i<new Date(y,m,1).getDay();i++)html+='<div class="cal-day empty"></div>';
-      for(let d=1;d<=daysInMonth;d++){const date=new Date(y,m,d);const dateStr=date.toISOString().split('T')[0];let cls='',mark='';if(wd[date.getDay()]===g.day){if(DataService.isSessionCancelled(g.id,dateStr)){cls='cancel';mark='✗';}else if((db().attendance||[]).some(a=>a.groupId===g.id&&a.date===dateStr&&a.status==='approved')){cls='ok';mark='✓';}}html+=`<div class="cal-day ${cls}"><div class="num">${d}</div>${mark?`<div class="mark">${mark}</div>`:''}</div>`;}
-      document.getElementById('calendarView').innerHTML=html+'</div>';
-    };
+window.doCancelSession=async function(){
+  try{
+    const r=await DataService.cancelSession(document.getElementById('cancelGroup')?.value||'',document.getElementById('cancelDate')?.value||'','إلغاء',currentUser?.id||'');
+    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast(r.success?'تم ✓':r.message, r.success?'success':'warning');
+  }catch(e){console.error('doCancelSession error',e);}
+};
 
-    window.loadMaterials=function(){
-      document.getElementById('materialsList').innerHTML=DataService.getMaterials().map(m=>`<div class="user-card"><div class="user-card-header"><div class="user-avatar">📦</div><div><div class="user-name">${m.name}</div><div class="user-meta"><span>💰 ${m.price}</span></div></div></div></div>`).join('')||'<p class="text-muted">لا مواد</p>';
-    };
+// ===== Calendar =====
+window.loadCalendar=function(){
+  try{
+    const sel=document.getElementById('calGroup');
+    if(sel && !sel.options.length) sel.innerHTML=(DataService?.getGroupsByTeacher ? DataService.getGroupsByTeacher(currentUser.id) : []).map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
+    const g=DataService?.getGroups ? DataService.getGroups().find(x=>x.id===sel?.value) : null;
+    const viewEl=document.getElementById('calendarView');
+    if(!g || !viewEl) return;
+    const now=new Date();const y=now.getFullYear(),m=now.getMonth();const daysInMonth=new Date(y,m+1,0).getDate();const wd=DAYS.map(d=>d.en);
+    let html='<div class="cal-grid">'+['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'].map(d=>`<div style="text-align:center;font-size:11px;font-weight:700;color:var(--text-muted);">${d}</div>`).join('');
+    for(let i=0;i<new Date(y,m,1).getDay();i++) html+='<div class="cal-day empty"></div>';
+    for(let d=1;d<=daysInMonth;d++){
+      const date=new Date(y,m,d);const dateStr=date.toISOString().split('T')[0];let cls='',mark='';
+      if(wd[date.getDay()]===g.day){
+        if(typeof DataService?.isSessionCancelled === 'function' && DataService.isSessionCancelled(g.id,dateStr)){cls='cancel';mark='✗';}
+        else if((db().attendance||[]).some(a=>a.groupId===g.id&&a.date===dateStr&&a.status==='approved')){cls='ok';mark='✓';}
+      }
+      html+=`<div class="cal-day ${cls}"><div class="num">${d}</div>${mark?`<div class="mark">${mark}</div>`:''}</div>`;
+    }
+    viewEl.innerHTML=html+'</div>';
+  }catch(e){console.error('loadCalendar error',e);}
+};
 
-    window.loadVocabulary=function(){
-      document.getElementById('vocabList').innerHTML=DataService.getVocabulary().map(v=>`<div class="card" style="margin-bottom:8px;display:flex;justify-content:space-between;"><div><strong style="color:var(--primary);font-family:var(--font-en);">${v.word}</strong> <span class="text-sm">${v.meaning||''}</span></div></div>`).join('')||'<p class="text-muted">لا مفردات</p>';
-    };
+// ===== 🎬 Videos =====
+window.setVideoFilter=function(f,btn){ videoFilter=f; document.querySelectorAll('#section-videos .filter-btn').forEach(b=>b.classList.toggle('active',b===btn)); window.loadVideos(); };
+window.loadVideos=function(){
+  try{
+    let videos = typeof DataService?.getVideos === 'function' ? DataService.getVideos({createdBy:currentUser.id}) : [];
+    if(videoFilter!=='all') videos=videos.filter(v=>v.category===videoFilter);
+    const el=document.getElementById('videosList');
+    if(!el) return;
+    if(!videos.length){ el.innerHTML='<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">🎬</div><strong>لا توجد فيديوهات</strong></div>'; return; }
+    el.innerHTML=videos.map(v=>{
+      const platform=v.platform||(DataService?.detectVideoPlatform?DataService.detectVideoPlatform(v.url):'other');
+      const platformLabel={youtube:'YouTube',facebook:'Facebook',tiktok:'TikTok',other:'رابط'}[platform]||platform;
+      const group=v.targetType==='group'?(DataService?.getGroups?DataService.getGroups().find(g=>g.id===v.targetValue):null):null;
+      const targetLabel=!v.targetType||v.targetType==='all'?'🌍 الكل':v.targetType==='grade'?`🎓 ${v.targetValue}`:`👥 ${group?.name||'مجموعة'}`;
+      const yId=platform==='youtube'?window.ytId(v.url):null;
+      const embed=yId?`<div class="video-iframe-wrap"><iframe src="https://www.youtube.com/embed/${yId}" allowfullscreen></iframe></div>`:'';
+      return `<div class="content-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:0;"><span class="video-platform platform-${platform}">${platformLabel}</span><strong style="display:block;font-size:15px;margin-top:6px;">${v.title||'-'}</strong><div class="text-xs text-muted" style="margin-top:4px;">📁 ${v.category||'عام'} · ${targetLabel}</div>${v.description?`<div class="text-sm" style="margin-top:6px;">${v.description}</div>`:''}<div class="text-xs text-muted" style="margin-top:4px;">🔗 <a href="${v.url||'#'}" target="_blank" rel="noopener" style="color:var(--primary);">${v.url||'-'}</a></div></div>
+          <div style="display:flex;gap:6px;"><button class="btn btn-ghost btn-sm" onclick="window.openVideoBuilder('${v.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="window.deleteVideo('${v.id}')">🗑️</button></div>
+        </div>${embed}</div>`;
+    }).join('');
+  }catch(e){console.error('loadVideos error',e);}
+};
+window.openVideoBuilder=function(editId){
+  try{
+    const v=editId&&DataService?.getVideoById?DataService.getVideoById(editId):null;
+    const cats=['شرح','مراجعة','مفردات','واجبات','عام'];
+    const groups=DataService?.getGroupsByTeacher?DataService.getGroupsByTeacher(currentUser.id):[];
+    if(typeof ThemeManager?.openModal === 'function'){
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${v?'✏️ تعديل':'➕ إضافة'} فيديو</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>العنوان *</label><input type="text" id="vTitle" class="form-input" value="${v?.title||''}" required></div><div class="form-group"><label>رابط الفيديو *</label><input type="url" id="vUrl" class="form-input" value="${v?.url||''}" placeholder="YouTube / Facebook / TikTok" required></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>التصنيف</label><select id="vCategory" class="form-select">${cats.map(c=>`<option ${v?.category===c?'selected':''}>${c}</option>`).join('')}</select></div><div class="form-group"><label>الاستهداف</label><select id="vTarget" class="form-select" onchange="window.updateVideoTarget()"><option value="all" ${!v?.targetType||v?.targetType==='all'?'selected':''}>🌍 كل الطلاب</option><option value="grade" ${v?.targetType==='grade'?'selected':''}>🎓 صف معين</option><option value="group" ${v?.targetType==='group'?'selected':''}>👥 مجموعة معينة</option></select></div></div><div id="vTargetGradeWrap" style="display:${v?.targetType==='grade'?'block':'none'};" class="form-group"><label>الصف</label><select id="vTargetGrade" class="form-select">${Object.entries(EduFlowConfig?.educationLevels||{}).flatMap(([k,val])=>(val.grades||[]).map(g=>`<option ${v?.targetValue===g?'selected':''}>${g}</option>`)).join('')}</select></div><div id="vTargetGroupWrap" style="display:${v?.targetType==='group'?'block':'none'};" class="form-group"><label>المجموعة</label><select id="vTargetGroup" class="form-select">${groups.map(g=>`<option value="${g.id}" ${v?.targetValue===g.id?'selected':''}>${g.name}</option>`).join('')}</select></div><div class="form-group"><label>وصف</label><textarea id="vDesc" class="form-textarea" rows="2">${v?.description||''}</textarea></div><button class="btn btn-primary w-full" onclick="window.saveVideo('${editId||''}')">💾 حفظ</button></div>`,'modal-md');
+    }
+  }catch(e){console.error('openVideoBuilder error',e);}
+};
+window.updateVideoTarget=function(){ try{ const t=document.getElementById('vTarget')?.value||'all'; const gw=document.getElementById('vTargetGradeWrap'); const grw=document.getElementById('vTargetGroupWrap'); if(gw) gw.style.display=t==='grade'?'block':'none'; if(grw) grw.style.display=t==='group'?'block':'none'; }catch(e){} };
+window.saveVideo=async function(editId){
+  try{
+    if(!document.getElementById('vTitle')?.value||!document.getElementById('vUrl')?.value){ if(typeof ThemeManager?.toast==='function') ThemeManager.toast('أكمل العنوان والرابط','error'); return; }
+    const targetType=document.getElementById('vTarget')?.value||'all';
+    const data={title:document.getElementById('vTitle').value,url:document.getElementById('vUrl').value,category:document.getElementById('vCategory')?.value||'عام',description:document.getElementById('vDesc')?.value||'',targetType,targetValue:targetType==='grade'?(document.getElementById('vTargetGrade')?.value||''):targetType==='group'?(document.getElementById('vTargetGroup')?.value||''):'',platform:DataService?.detectVideoPlatform?DataService.detectVideoPlatform(document.getElementById('vUrl').value):'other',createdBy:currentUser?.id||''};
+    if(editId&&typeof DataService?.updateVideo==='function') await DataService.updateVideo(editId,data);
+    else if(typeof DataService?.addVideo==='function') await DataService.addVideo(data);
+    if(typeof ThemeManager?.closeModal==='function') ThemeManager.closeModal();
+    if(typeof ThemeManager?.toast==='function') ThemeManager.toast('تم ✓','success');
+    window.loadVideos();
+  }catch(e){console.error('saveVideo error',e);}
+};
+window.deleteVideo=async function(id){ try{ if(!confirm('حذف؟'))return; await DataService.deleteVideo(id); window.loadVideos(); }catch(e){} };
 
-    window.handleLogout=function(){if(confirm('خروج؟'))AuthService.logout();};
-  </script>
+// ===== 📰 Class Posts =====
+window.loadClassPosts=function(){
+  try{
+    const posts = (typeof DataService?.getClassPosts === 'function') ? DataService.getClassPosts({createdBy:currentUser.id}) : [];
+    const el=document.getElementById('classPostsList');
+    if(!el) return;
+    if(!posts.length){ el.innerHTML='<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">📰</div><strong>لا توجد بوستات</strong></div>'; return; }
+    el.innerHTML=posts.map(p=>{
+      const group=DataService?.getGroups?DataService.getGroups().find(g=>g.id===p.groupId):null;
+      const imgHtml=p.imageUrl?`<img src="${window.driveThumb(p.imageUrl)}" class="post-image" onerror="this.style.display='none'">`:'';
+      return `<div class="post-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;"><div style="flex:1;"><strong>${p.title||'ملخص حصة'}</strong><div class="text-xs text-muted" style="margin-top:4px;">📅 ${p.date||''} · 👥 ${group?.name||'-'}</div>${p.summary?`<div class="text-sm" style="margin-top:6px;">${p.summary}</div>`:''}${p.homeworkText?`<div class="text-sm" style="margin-top:6px;padding:8px;background:var(--warning-bg);border-radius:6px;"><strong>📋 الواجب:</strong> ${p.homeworkText}</div>`:''}</div><div style="display:flex;gap:6px;"><button class="btn btn-ghost btn-sm" onclick="window.openClassPostBuilder('${p.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="window.deleteClassPost('${p.id}')">🗑️</button></div></div>${imgHtml}</div>`;
+    }).join('');
+  }catch(e){console.error('loadClassPosts error',e);}
+};
+window.openClassPostBuilder=function(editId){
+  try{
+    const p=editId&&DataService?.getClassPostById?DataService.getClassPostById(editId):null;
+    const groups=DataService?.getGroupsByTeacher?DataService.getGroupsByTeacher(currentUser.id):[];
+    if(typeof ThemeManager?.openModal === 'function'){
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${p?'✏️ تعديل':'➕ إضافة'} ملخص حصة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>العنوان *</label><input type="text" id="cpTitle" class="form-input" value="${p?.title||'ملخص حصة'}" required></div><div class="form-group"><label>المجموعة *</label><select id="cpGroup" class="form-select">${groups.map(g=>`<option value="${g.id}" ${p?.groupId===g.id?'selected':''}>${g.name}</option>`).join('')}</select></div><div class="form-group"><label>التاريخ</label><input type="date" id="cpDate" class="form-input" value="${p?.date||new Date().toISOString().split('T')[0]}"></div><div class="form-group"><label>ملخص الدرس</label><textarea id="cpSummary" class="form-textarea" rows="3">${p?.summary||''}</textarea></div><div class="form-group"><label>الواجب المطلوب</label><textarea id="cpHomework" class="form-textarea" rows="2">${p?.homeworkText||''}</textarea></div><div class="form-group"><label>صورة السبورة (Drive)</label><input type="url" id="cpImage" class="form-input" value="${p?.imageUrl||''}" placeholder="https://drive.google.com/file/d/..."></div><button class="btn btn-primary w-full" onclick="window.saveClassPost('${editId||''}')">💾 حفظ ونشر</button></div>`,'modal-md');
+    }
+  }catch(e){console.error('openClassPostBuilder error',e);}
+};
+window.saveClassPost=async function(editId){
+  try{
+    if(!document.getElementById('cpTitle')?.value||!document.getElementById('cpGroup')?.value){ if(typeof ThemeManager?.toast==='function') ThemeManager.toast('أكمل العنوان والمجموعة','error'); return; }
+    const data={title:document.getElementById('cpTitle').value,groupId:document.getElementById('cpGroup').value,date:document.getElementById('cpDate')?.value||new Date().toISOString().split('T')[0],summary:document.getElementById('cpSummary')?.value||'',homeworkText:document.getElementById('cpHomework')?.value||'',imageUrl:document.getElementById('cpImage')?.value||'',createdBy:currentUser?.id||'',creatorName:currentUser?.name||''};
+    if(editId&&typeof DataService?.updateClassPost==='function') await DataService.updateClassPost(editId,data);
+    else if(typeof DataService?.addClassPost==='function') await DataService.addClassPost(data);
+    if(typeof ThemeManager?.closeModal==='function') ThemeManager.closeModal();
+    if(typeof ThemeManager?.toast==='function') ThemeManager.toast('✅ تم النشر','success');
+    window.loadClassPosts();
+  }catch(e){console.error('saveClassPost error',e);}
+};
+window.deleteClassPost=async function(id){ try{ if(!confirm('حذف؟'))return; await DataService.deleteClassPost(id); window.loadClassPosts(); }catch(e){} };
+
+// ===== 🏆 Challenges =====
+window.setChallengeFilter=function(f,btn){ challengeFilter=f; document.querySelectorAll('#section-challenges .filter-btn').forEach(b=>b.classList.toggle('active',b===btn)); window.loadChallenges(); };
+window.loadChallenges=function(){
+  try{
+    let challenges = (typeof DataService?.getChallenges === 'function') ? DataService.getChallenges({createdBy:currentUser.id}) : [];
+    if(challengeFilter!=='all') challenges=challenges.filter(c=>c.status===challengeFilter);
+    const el=document.getElementById('challengesList');
+    if(!el) return;
+    const attempts = (typeof DataService?.getChallengeAttempts === 'function') ? DataService.getChallengeAttempts({}) : [];
+    if(!challenges.length){ el.innerHTML='<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">🏆</div><strong>لا توجد تحديات</strong></div>'; return; }
+    el.innerHTML=challenges.map(c=>{
+      const chAtt=attempts.filter(a=>a.challengeId===c.id);
+      const targetLabel=!c.targetType||c.targetType==='all'?'🌍 الكل':c.targetType==='grade'?`🎓 ${c.targetValue}`:'👥 مجموعة';
+      return `<div class="challenge-card ${c.status==='closed'?'closed':''}"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;"><div style="flex:1;"><strong>${c.title||'تحدي'}</strong><div class="text-xs text-muted" style="margin-top:6px;">❓ ${(c.questions||[]).length} سؤال · ⭐ ${c.basePoints||1} نقطة ${c.timeBonusMultiplier>1?`· ⚡ ×${c.timeBonusMultiplier} خلال ${c.timeBonusHours||1} ساعة`:''} · ${targetLabel} · ${chAtt.length} مشارك</div><span class="badge ${c.status==='active'?'badge-success':'badge-muted'}" style="margin-top:6px;">${c.status==='active'?'✅ نشط':'⛔ مغلق'}</span></div><div style="display:flex;gap:6px;flex-wrap:wrap;"><button class="btn btn-secondary btn-sm" onclick="window.viewChallengeResults('${c.id}')">📊</button><button class="btn btn-ghost btn-sm" onclick="window.openChallengeBuilder('${c.id}')">✏️</button><button class="btn btn-warning btn-sm" onclick="window.toggleChallengeStatus('${c.id}')">${c.status==='active'?'⛔':'▶️'}</button><button class="btn btn-danger btn-sm" onclick="window.deleteChallenge('${c.id}')">🗑️</button></div></div></div>`;
+    }).join('');
+  }catch(e){console.error('loadChallenges error',e);}
+};
+window.openChallengeBuilder=function(editId){
+  try{
+    const c=editId&&DataService?.getChallengeById?DataService.getChallengeById(editId):null;
+    challengeQuestions=c?[...(c.questions||[])]:[];
+    const groups=DataService?.getGroupsByTeacher?DataService.getGroupsByTeacher(currentUser.id):[];
+    if(typeof ThemeManager?.openModal === 'function'){
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${c?'✏️ تعديل':'➕ إضافة'} تحدي</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>العنوان *</label><input type="text" id="chTitle" class="form-input" value="${c?.title||''}" required></div><div class="form-group"><label>الوصف</label><textarea id="chDesc" class="form-textarea" rows="2">${c?.description||''}</textarea></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>نقطة لكل إجابة صحيحة</label><input type="number" id="chBase" class="form-input" value="${c?.basePoints||1}" min="1"></div><div class="form-group"><label>معامل مضاعف الوقت ⚡</label><input type="number" id="chMult" class="form-input" value="${c?.timeBonusMultiplier||3}" min="1" step="0.5"></div></div><div class="form-group"><label>خلال كم ساعة؟</label><input type="number" id="chHours" class="form-input" value="${c?.timeBonusHours||1}" min="0.5" step="0.5"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>الاستهداف</label><select id="chTarget" class="form-select" onchange="window.updateChallengeTarget()"><option value="all" ${!c?.targetType||c?.targetType==='all'?'selected':''}>🌍 كل الطلاب</option><option value="grade" ${c?.targetType==='grade'?'selected':''}>🎓 صف معين</option><option value="group" ${c?.targetType==='group'?'selected':''}>👥 مجموعة معينة</option></select></div><div id="chTargetValueWrap" class="form-group" style="display:${c?.targetType==='all'?'none':'block'};"><label id="chTargetValueLabel">القيمة</label><select id="chTargetValue" class="form-select"></select></div></div><h4 style="margin:16px 0 8px;">❓ الأسئلة</h4><div id="chQList"></div><div style="display:flex;gap:6px;margin:8px 0;"><button class="btn btn-secondary btn-sm" onclick="window.addChallengeQ('mcq')">+ اختيار من متعدد</button><button class="btn btn-secondary btn-sm" onclick="window.addChallengeQ('truefalse')">+ صح/خطأ</button></div><button class="btn btn-primary w-full" onclick="window.saveChallenge('${editId||''}')">💾 حفظ</button></div>`,'modal-lg');
+      window.renderChallengeQuestions();
+      window.updateChallengeTarget(c);
+    }
+  }catch(e){console.error('openChallengeBuilder error',e);}
+};
+window.updateChallengeTarget=function(c){
+  try{
+    const t=document.getElementById('chTarget')?.value||'all';
+    const wrap=document.getElementById('chTargetValueWrap'); const sel=document.getElementById('chTargetValue'); const lbl=document.getElementById('chTargetValueLabel');
+    if(!wrap||!sel) return;
+    if(t==='all'){ wrap.style.display='none'; return; }
+    wrap.style.display='block';
+    if(t==='grade'){ if(lbl) lbl.textContent='الصف'; sel.innerHTML=Object.entries(EduFlowConfig?.educationLevels||{}).flatMap(([k,v])=>(v.grades||[]).map(g=>`<option ${c?.targetValue===g?'selected':''}>${g}</option>`)).join(''); }
+    else{ if(lbl) lbl.textContent='المجموعة'; const groups=DataService?.getGroupsByTeacher?DataService.getGroupsByTeacher(currentUser.id):[]; sel.innerHTML=groups.map(g=>`<option value="${g.id}" ${c?.targetValue===g.id?'selected':''}>${g.name}</option>`).join(''); }
+  }catch(e){}
+};
+window.addChallengeQ=function(type){ challengeQuestions.push({id:'q'+Date.now(),type,text:'',options:type==='mcq'?['','','','']:['صح','خطأ'],correctAnswer:0,points:1}); window.renderChallengeQuestions(); };
+window.renderChallengeQuestions=function(){ try{ const el=document.getElementById('chQList'); if(!el) return; el.innerHTML=challengeQuestions.map((q,i)=>`<div class="q-builder"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px;"><strong>س${i+1} · ${q.type==='mcq'?'اختياري':'صح/خطأ'}</strong><button class="btn btn-danger btn-sm" onclick="window.removeChallengeQ(${i})">✕</button></div><input type="text" class="form-input" placeholder="نص السؤال" value="${(q.text||'').replace(/"/g,'&quot;')}" onchange="challengeQuestions[${i}].text=this.value">${(q.options||[]).map((o,oi)=>`<div class="q-opt-row"><input type="radio" name="cq_${i}" ${q.correctAnswer===oi?'checked':''} onchange="challengeQuestions[${i}].correctAnswer=${oi}"><input type="text" class="form-input" style="flex:1;" placeholder="خيار ${oi+1}" value="${(o||'').replace(/"/g,'&quot;')}" onchange="challengeQuestions[${i}].options[${oi}]=this.value"></div>`).join('')}</div>`).join(''); }catch(e){} };
+window.removeChallengeQ=function(i){ challengeQuestions.splice(i,1); window.renderChallengeQuestions(); };
+window.saveChallenge=async function(editId){
+  try{
+    if(!document.getElementById('chTitle')?.value){ if(typeof ThemeManager?.toast==='function') ThemeManager.toast('اكتب العنوان','error'); return; }
+    if(!challengeQuestions.length){ if(typeof ThemeManager?.toast==='function') ThemeManager.toast('أضف سؤال على الأقل','error'); return; }
+    const targetType=document.getElementById('chTarget')?.value||'all';
+    const data={title:document.getElementById('chTitle').value,description:document.getElementById('chDesc')?.value||'',basePoints:parseInt(document.getElementById('chBase')?.value)||1,timeBonusMultiplier:parseFloat(document.getElementById('chMult')?.value)||1,timeBonusHours:parseFloat(document.getElementById('chHours')?.value)||1,targetType,targetValue:targetType==='all'?'':(document.getElementById('chTargetValue')?.value||''),questions:challengeQuestions,createdBy:currentUser?.id||''};
+    if(editId&&typeof DataService?.updateChallenge==='function') await DataService.updateChallenge(editId,data);
+    else if(typeof DataService?.addChallenge==='function') await DataService.addChallenge(data);
+    if(typeof ThemeManager?.closeModal==='function') ThemeManager.closeModal();
+    if(typeof ThemeManager?.toast==='function') ThemeManager.toast('✅ تم','success');
+    window.loadChallenges();
+  }catch(e){console.error('saveChallenge error',e);}
+};
+window.toggleChallengeStatus=async function(id){ try{ const c=DataService?.getChallengeById?DataService.getChallengeById(id):null; if(!c)return; await DataService.updateChallenge(id,{status:c.status==='active'?'closed':'active'}); window.loadChallenges(); }catch(e){} };
+window.deleteChallenge=async function(id){ try{ if(!confirm('حذف؟'))return; await DataService.deleteChallenge(id); window.loadChallenges(); }catch(e){} };
+window.viewChallengeResults=function(id){
+  try{
+    const c=DataService?.getChallengeById?DataService.getChallengeById(id):null; if(!c)return;
+    const attempts=(DataService?.getChallengeAttempts?DataService.getChallengeAttempts({challengeId:id}):[]).sort((a,b)=>b.points-a.points);
+    if(typeof ThemeManager?.openModal === 'function'){
+      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📊 نتائج: ${c.title}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+      <div class="modal-body">${attempts.length?attempts.map((a,i)=>{const s=DataService?.getUserById?DataService.getUserById(a.studentId):null;return `<div class="sub-row ${i<3?'graded':''}"><div><strong>${i+1}. ${s?.name||'-'}</strong><div class="text-xs text-muted">${s?.code||''}</div></div><div style="font-family:var(--font-en);font-weight:900;color:var(--primary);">${a.points} ${a.timeBonusApplied?'⚡':''}</div></div>`;}).join(''):'<p class="text-muted">لم يشارك أحد</p>'}</div>`,'modal-lg');
+    }
+  }catch(e){console.error('viewChallengeResults error',e);}
+};
+
+// ===== 📱 WhatsApp =====
+window.loadWhatsappGroups=function(){
+  try{
+    const groups = DataService?.getGroupsByTeacher ? DataService.getGroupsByTeacher(currentUser.id) : [];
+    const el=document.getElementById('whatsappGroupsList');
+    if(!el) return;
+    if(!groups.length){ el.innerHTML='<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">📱</div><strong>لا مجموعات</strong></div>'; return; }
+    el.innerHTML=groups.map(g=>{
+      const count=DataService?.getStudentsByGroup?DataService.getStudentsByGroup(g.id).length:0;
+      const hasLink=!!g.whatsappLink;
+      return `<div class="wa-group-card ${hasLink?'has-link':''}"><div style="flex:1;min-width:0;"><strong>${g.name}</strong>${g.center?` <span class="badge badge-success">🏢 ${g.center}</span>`:''}<div class="text-xs text-muted" style="margin-top:4px;">👥 ${count} طالب · 📅 ${dayAr(g.day)} ${T(g.time)}</div>${hasLink?'<div class="text-xs" style="margin-top:4px;color:#25d366;">✅ الرابط مضاف</div>':'<div class="text-xs" style="margin-top:4px;color:var(--warning);">⚠️ مفيش رابط</div>'}</div><div style="display:flex;gap:6px;">${hasLink?`<a href="${g.whatsappLink}" target="_blank" rel="noopener" class="wa-btn">💬 افتح الجروب</a>`:''}<button class="btn btn-ghost btn-sm" onclick="window.openGroupModal('${g.id}')">⚙️</button></div></div>`;
+    }).join('');
+  }catch(e){console.error('loadWhatsappGroups error',e);}
+};
+
+// ===== Materials / Vocabulary =====
+window.loadMaterials=function(){
+  try{
+    const el=document.getElementById('materialsList');
+    const mats=DataService?.getMaterials ? DataService.getMaterials() : [];
+    if(el) el.innerHTML=mats.length ? mats.map(m=>`<div class="user-card"><div class="user-card-header"><div class="user-avatar">📦</div><div><div class="user-name">${m.name}</div><div class="user-meta"><span>💰 ${m.price}</span></div></div></div></div>`).join('') : '<p class="text-muted">لا مواد</p>';
+  }catch(e){console.error('loadMaterials error',e);}
+};
+
+window.loadVocabulary=function(){
+  try{
+    const el=document.getElementById('vocabList');
+    const vocab=DataService?.getVocabulary ? DataService.getVocabulary() : [];
+    if(el) el.innerHTML=vocab.length ? vocab.map(v=>`<div class="card" style="margin-bottom:8px;display:flex;justify-content:space-between;"><div><strong style="color:var(--primary);font-family:var(--font-en);">${v.word}</strong> <span class="text-sm">${v.meaning||''}</span></div></div>`).join('') : '<p class="text-muted">لا مفردات</p>';
+  }catch(e){console.error('loadVocabulary error',e);}
+};
+
+window.handleLogout=function(){
+  try{
+    if(confirm('خروج؟')){
+      if(typeof AuthService?.logout === 'function') AuthService.logout();
+    }
+  }catch(e){console.error('handleLogout error',e);}
+};
+</script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}</script>
 </body>
 </html>

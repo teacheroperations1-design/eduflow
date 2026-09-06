@@ -1,169 +1,168 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>طباعة باركودات الطلاب - EduFlow</title>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>طباعة باركودات - EduFlow</title>
   <link rel="stylesheet" href="css/eduflow-theme.css">
   <style>
-    .qr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
-    .qr-item{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
-    .qr-item img{width:100%;max-width:150px;height:auto}
-    .qr-item .name{font-weight:700;margin-top:8px;font-size:13px}
-    .qr-item .code{font-family:var(--font-en);font-size:11px;color:var(--text-muted);margin-top:4px}
-    .qr-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;justify-content:center}
-    .qr-actions button{font-size:11px;padding:4px 8px}
-
-    /* منطقة الطباعة الفردية (مخفية على الشاشة) */
-    #printArea{display:none}
-
+    .print-controls{max-width:900px;margin:20px auto;padding:16px;position:relative;z-index:1}
+    .qr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:900px;margin:0 auto;padding:0 16px 30px}
+    .qr-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 6px;text-align:center;break-inside:avoid}
+    .qr-card img{width:100%;max-width:130px;border-radius:6px;background:#fff;padding:4px}
+    .qr-name{font-weight:800;font-size:11px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .qr-codeline{font-family:var(--font-en);font-weight:800;font-size:12px;color:var(--primary);margin-top:4px;letter-spacing:1px}
+    .qr-brand{font-size:9px;color:var(--text-muted);margin-top:2px}
+    .card-actions{display:flex;gap:4px;justify-content:center;margin-top:6px}
+    .card-actions button{flex:1;max-width:80px}
     @media print{
-      body{background:#fff;color:#000}
-      .no-print{display:none!important}
-      .qr-grid{grid-template-columns:repeat(4,1fr)}
-      .qr-item{page-break-inside:avoid;border:1px solid #ddd}
-      .qr-actions{display:none}
-      .qr-grid{page-break-after:always}
-      /* عند طباعة باركود واحد */
-      body.printing-single .qr-grid{display:none!important}
-      body.printing-single #printArea{display:block;text-align:center;padding:40px}
-      #printArea .box{display:inline-block;border:2px solid #ddd;border-radius:12px;padding:20px}
-      #printArea .n{font-size:18px;font-weight:bold;margin-top:12px}
-      #printArea .k{font-size:14px;color:#666;margin-top:4px}
+      .print-controls,.bg-grid,.orb,.card-actions{display:none!important}
+      body{background:#fff!important}
+      .qr-grid{grid-template-columns:repeat(4,1fr);gap:3mm;padding:0;max-width:100%}
+      .qr-card{border:1px solid #999;border-radius:6px;background:#fff;padding:2mm 1mm;height:6.2cm;display:flex;flex-direction:column;justify-content:center;align-items:center}
+      .qr-card img{max-width:3.2cm}
+      .qr-name{font-size:9pt;color:#000}
+      .qr-codeline{font-size:10pt;color:#000}
+      .qr-brand{display:none}
     }
-    @media print and (max-width:1000px){.qr-grid{grid-template-columns:repeat(2,1fr)}}
-    @media(max-width:768px){.qr-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:640px){.qr-grid{grid-template-columns:repeat(2,1fr)}}
   </style>
 </head>
 <body data-theme="dark">
-  <div class="bg-grid no-print"></div>
-  <div class="orb orb-1 no-print"></div>
-  <div class="orb orb-2 no-print"></div>
-
-  <div style="max-width:1000px;margin:0 auto;padding:20px;position:relative;z-index:1;">
-    <div class="no-print" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-      <h1 style="font-size:20px;">🖨️ طباعة باركودات الطلاب</h1>
-      <a href="javascript:history.back()" class="btn btn-ghost btn-sm">→ رجوع</a>
-    </div>
-
-    <div class="card no-print" style="margin-bottom:20px;">
-      <div class="form-group">
-        <label class="form-label">اختر المجموعة</label>
-        <select id="groupSelect" class="form-select" onchange="loadStudents()">
-          <option value="">-- اختر المجموعة --</option>
-        </select>
+  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div>
+  <div class="print-controls">
+    <div class="card">
+      <h2 style="margin-bottom:4px;">🖨️ طباعة باركودات الطلاب</h2>
+      <p class="text-sm text-muted" style="margin-bottom:14px;">كل باركود بيفتح بطاقة الطالب على الموقع المنشور — اطبع صفحة كاملة أو كارت واحد من الأزرار تحت كل كارت</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group"><label>المجموعة</label><select id="prGroup" class="form-select" onchange="window.renderGrid()"></select></div>
+        <div class="form-group"><label>بحث (اسم/كود)</label><input type="text" id="prSearch" class="form-input" onkeyup="window.renderGrid()"></div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-primary" onclick="printAll()">🖨️ طباعة كل الباركودات</button>
+        <button class="btn btn-primary" onclick="window.print()">🖨️ طباعة الصفحة (16/A4)</button>
+        <span class="text-sm text-muted" id="countLabel" style="align-self:center;"></span>
       </div>
     </div>
-
-    <div id="qrGrid" class="qr-grid"></div>
-
-    <!-- منطقة الطباعة الفردية -->
-    <div id="printArea"></div>
   </div>
+  <div class="qr-grid" id="qrGrid"></div>
 
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <script src="js/config.js"></script>
   <script src="js/firebase-service.js"></script>
   <script src="js/data-service.js"></script>
+  <script src="js/operations-service.js"></script>
   <script src="js/ui-helpers.js"></script>
+  <script src="js/drive-service.js"></script>
   <script src="js/theme-manager.js"></script>
   <script src="js/auth-service.js"></script>
+  <script src="js/admin-patch.js"></script>
 
   <script>
-    var currentUser=null;
+    // ✅ الرابط المنشور ثابت — الباركود مش هيشاور على IP محلي أبداً
+    const SITE_BASE = 'https://eduflow-nine-dusky.vercel.app/';
+    const qrData = code => SITE_BASE + 'student-qr.html?code=' + encodeURIComponent(code);
+    const qrImg = (code,size) => 'https://api.qrserver.com/v1/create-qr-code/?size=' + size + 'x' + size + '&data=' + encodeURIComponent(qrData(code));
 
-    // الباركود بيودي لصفحة الطالب مباشرة (بيستخدم الدومين الحالي)
-    function studentQRData(code){
-      return location.origin+'/student-qr.html?code='+encodeURIComponent(code);
-    }
-    function qrImg(code,size){
-      return 'https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data='+encodeURIComponent(studentQRData(code));
-    }
+    let currentUser = null;
 
     (async function boot(){
       try{
-        await DataService.init();
-        if(!AuthService.requireRole(['super_admin','assistant'])) return;
-        currentUser=AuthService.getCurrentUser();
-        var groups=DataService.getGroups();
-        var sel=document.getElementById('groupSelect');
-        var opts='<option value="">-- اختر المجموعة --</option>';
-        groups.forEach(function(g){
-          opts+='<option value="'+g.id+'">'+g.name+'</option>';
-        });
-        sel.innerHTML=opts;
-        var gid=new URLSearchParams(location.search).get('group');
-        if(gid){sel.value=gid;loadStudents();}
+        if(typeof DataService?.init === 'function') await DataService.init();
+        currentUser = AuthService?.getCurrentUser ? AuthService.getCurrentUser() : null;
+        window.buildGroupSelect();
+        const s = new URLSearchParams(location.search).get('search');
+        if(s){ const el = document.getElementById('prSearch'); if(el) el.value = s; }
+        window.renderGrid();
       }catch(err){
-        document.getElementById('qrGrid').innerHTML='<div class="card" style="grid-column:1/-1;"><p class="text-muted">خطأ: '+err.message+'</p></div>';
+        console.error('Boot error', err);
+        const grid = document.getElementById('qrGrid');
+        if(grid) grid.innerHTML = '<div class="card" style="grid-column:1/-1;">خطأ: ' + err.message + '</div>';
       }
     })();
 
-    window.loadStudents=function(){
-      var groupId=document.getElementById('groupSelect').value;
-      var grid=document.getElementById('qrGrid');
-      if(!groupId){grid.innerHTML='';return;}
-      var students=DataService.getStudentsByGroup(groupId);
-      if(!students.length){
-        grid.innerHTML='<div class="card" style="grid-column:1/-1;"><p class="text-muted">لا يوجد طلاب في هذه المجموعة</p></div>';
-        return;
+    window.buildGroupSelect = function(){
+      try{
+        const sel = document.getElementById('prGroup');
+        if(!sel) return;
+        let groups = [];
+        if(currentUser && typeof Ops?.groupsInScope === 'function') groups = Ops.groupsInScope(currentUser.id) || [];
+        if(!groups.length) groups = typeof DataService?.getGroups === 'function' ? DataService.getGroups() : [];
+        sel.innerHTML = '<option value="all">🌍 كل الطلاب</option>' + groups.map(g => '<option value="' + g.id + '">' + g.name + '</option>').join('');
+      }catch(e){ console.error('buildGroupSelect error', e); }
+    };
+
+    window.renderGrid = function(){
+      try{
+        const sel = document.getElementById('prGroup');
+        const q = (document.getElementById('prSearch')?.value || '').toLowerCase();
+        const gid = sel ? sel.value : 'all';
+        let students = gid === 'all'
+          ? (DataService?.getStudents ? DataService.getStudents() : [])
+          : (DataService?.getStudentsByGroup ? DataService.getStudentsByGroup(gid) : []);
+        if(q) students = students.filter(s => (s.name||'').toLowerCase().includes(q) || (s.code||'').toLowerCase().includes(q));
+        students = students.filter(s => s.code);
+        const label = document.getElementById('countLabel');
+        if(label) label.textContent = students.length + ' طالب';
+        const grid = document.getElementById('qrGrid');
+        if(!grid) return;
+        if(!students.length){ grid.innerHTML = '<div class="card" style="grid-column:1/-1;text-align:center;">لا طلاب مطابقين</div>'; return; }
+        grid.innerHTML = students.map(s => {
+          const safeName = (s.name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+          return '<div class="qr-card">' +
+            '<div class="qr-name">' + safeName + '</div>' +
+            '<img src="' + qrImg(s.code,140) + '" alt="' + s.code + '">' +
+            '<div class="qr-codeline">' + s.code + '</div>' +
+            '<div class="qr-brand">EduFlow</div>' +
+            '<div class="card-actions">' +
+              '<button class="btn btn-secondary btn-sm" title="طباعة ده بس" onclick="window.printSingle(\'' + s.code + '\',\'' + (s.name||'').replace(/'/g,'') + '\')">🖨️ طباعة</button>' +
+              '<button class="btn btn-ghost btn-sm" title="تحميل PNG" onclick="window.downloadQR(\'' + s.code + '\')">⬇️ تحميل</button>' +
+            '</div></div>';
+        }).join('');
+      }catch(e){
+        console.error('renderGrid error', e);
+        const grid = document.getElementById('qrGrid');
+        if(grid) grid.innerHTML = '<div class="card" style="grid-column:1/-1;">خطأ في التحميل</div>';
       }
-      var html='';
-      students.forEach(function(s){
-        var code=s.code||s.id;
-        var name=(s.name||'-');
-        html+='<div class="qr-item">';
-        html+='<img src="'+qrImg(code,150)+'" alt="QR">';
-        html+='<div class="name">'+name+'</div>';
-        html+='<div class="code">'+code+'</div>';
-        html+='<div class="qr-actions">';
-        html+='<button class="btn btn-secondary btn-sm" data-print="'+code+'" data-name="'+name+'">🖨️ طباعة</button>';
-        html+='<button class="btn btn-secondary btn-sm" data-down="'+code+'">⬇️ تحميل</button>';
-        html+='</div>';
-        html+='</div>';
-      });
-      grid.innerHTML=html;
-
-      // ربط الأزرار (تجنب الـ inline onclick المعقد)
-      grid.querySelectorAll('[data-print]').forEach(function(btn){
-        btn.addEventListener('click',function(){
-          printSingle(btn.getAttribute('data-print'),btn.getAttribute('data-name'));
-        });
-      });
-      grid.querySelectorAll('[data-down]').forEach(function(btn){
-        btn.addEventListener('click',function(){
-          downloadQR(btn.getAttribute('data-down'));
-        });
-      });
     };
 
-    window.printAll=function(){window.print();};
-
-    // طباعة باركود واحد — منطقة مخفية + window.print (بدون نوافذ منبثقة)
-    window.printSingle=function(code,name){
-      var area=document.getElementById('printArea');
-      var html='';
-      html+='<div class="box">';
-      html+='<img src="'+qrImg(code,300)+'" width="200" height="200">';
-      html+='<div class="n">'+name+'</div>';
-      html+='<div class="k">'+code+'</div>';
-      html+='</div>';
-      area.innerHTML=html;
-      document.body.classList.add('printing-single');
-      window.print();
-      setTimeout(function(){
-        document.body.classList.remove('printing-single');
-      },500);
+    // 🖨️ طباعة كارت واحد — بناء DOM مباشر (بدون document.write عشان ميحصلش كسر)
+    window.printSingle = function(code, name){
+      try{
+        const w = window.open('', '_blank', 'width=480,height=700');
+        if(!w){ if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('اسمح بالنوافذ المنبثقة','warning'); return; }
+        const d = w.document;
+        d.documentElement.setAttribute('dir','rtl');
+        d.title = code;
+        const st = d.createElement('style');
+        st.textContent = 'body{font-family:Cairo,Arial,sans-serif;text-align:center;padding:24px;color:#000}img{width:260px;height:260px;margin:12px auto;display:block}.n{font-weight:800;font-size:20px}.c{font-family:monospace;font-size:22px;letter-spacing:3px;margin-top:8px}.b{font-size:12px;color:#555;margin-top:6px}';
+        d.head.appendChild(st);
+        const n = d.createElement('div'); n.className = 'n'; n.textContent = name || 'طالب';
+        const img = d.createElement('img'); img.src = qrImg(code, 300);
+        const c = d.createElement('div'); c.className = 'c'; c.textContent = code;
+        const b = d.createElement('div'); b.className = 'b'; b.textContent = 'EduFlow — بطاقة طالب';
+        d.body.appendChild(n); d.body.appendChild(img); d.body.appendChild(c); d.body.appendChild(b);
+        img.onload = function(){ setTimeout(function(){ w.focus(); w.print(); }, 250); };
+        setTimeout(function(){ w.focus(); w.print(); }, 1500); // احتياطي لو الصورة اتأخرت
+      }catch(e){ console.error('printSingle error', e); }
     };
 
-    window.downloadQR=function(code){
-      var a=document.createElement('a');
-      a.href=qrImg(code,300);
-      a.download='qr-'+code+'.png';
-      a.click();
+    // ⬇️ تحميل PNG
+    window.downloadQR = async function(code){
+      try{
+        const r = await fetch(qrImg(code, 300));
+        const b = await r.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(b);
+        a.download = 'QR_' + code + '.png';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+        if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('تم تحميل الباركود','success');
+      }catch(e){
+        window.open(qrImg(code, 300), '_blank');
+      }
     };
   </script>
+  <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
 </body>
 </html>
