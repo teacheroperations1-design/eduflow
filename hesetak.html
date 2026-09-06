@@ -59,5 +59,6 @@
       document.getElementById('hFeatures').innerHTML=(h.features||[]).map(f=>`<div class="feature-pill"><div class="feature-pill-icon">${f.i}</div><div class="feature-pill-title">${f.t}</div><div class="feature-pill-desc">${f.d}</div></div>`).join('');
     })();
   </script>
+  <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}</script>
 </body>
 </html>
