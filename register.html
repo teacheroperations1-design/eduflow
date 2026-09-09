@@ -1,398 +1,378 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>تسجيل طالب جديد - EduFlow</title>
-  <link rel="stylesheet" href="css/eduflow-theme.css">
-  <style>
-    .step-chip{display:inline-flex;padding:6px 14px;border-radius:9999px;font-size:12px;font-weight:700;background:var(--surface-hover);color:var(--text-muted);margin-inline-end:6px}
-    .step-chip.active{background:var(--grad);color:#fff}
-    .grp-chk{display:flex;gap:8px;align-items:center;padding:10px;background:var(--surface-hover);border-radius:8px;margin-bottom:6px;cursor:pointer;border:1px solid var(--border);transition:all var(--t)}
-    .grp-chk:hover{border-color:var(--primary);background:var(--primary-bg)}
-    .grp-chk .info{flex:1;min-width:0}
-    .grp-chk .name{font-weight:700;font-size:14px}
-    .grp-chk .meta{font-size:11px;color:var(--text-muted);margin-top:2px}
-    .info-banner{background:linear-gradient(135deg,var(--warning-bg),var(--info-bg));border:2px solid var(--warning);border-radius:var(--radius);padding:18px;margin-bottom:16px}
-    .pending-hero{background:var(--grad);color:#fff;border-radius:var(--radius);padding:32px 24px;text-align:center;margin:16px 0}
-    .pending-hero h2{margin-bottom:10px;font-size:22px}
-    .temp-code{display:inline-block;background:rgba(255,255,255,.2);padding:10px 20px;border-radius:10px;font-family:var(--font-en);font-size:20px;font-weight:800;letter-spacing:3px;margin-top:10px}
-    .stage-grade-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .filter-info{background:var(--info-bg);border:1px solid var(--info-border);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:var(--info)}
-    .filter-warning{background:var(--warning-bg);border:1px solid var(--warning);border-radius:8px;padding:12px;margin-bottom:12px;font-size:13px;color:var(--warning);line-height:1.7}
-    .teacher-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;cursor:pointer;transition:all var(--t)}
-    .teacher-card.selected{border-color:var(--primary);background:var(--primary-bg)}
-    .teacher-card .name{font-weight:700;font-size:14px}
-    .teacher-card .subject{font-size:12px;color:var(--text-muted);margin-top:2px}
-    .info-note{background:var(--info-bg);border:1px solid var(--info-border);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--info);margin-bottom:12px;line-height:1.7}
-    @media(max-width:640px){.stage-grade-row{grid-template-columns:1fr}}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>تسجيل طالب جديد - EduFlow</title>
+<link rel="stylesheet" href="css/eduflow-theme.css">
+<style>
+.step-chip{display:inline-flex;padding:6px 14px;border-radius:9999px;font-size:12px;font-weight:700;background:var(--surface-hover);color:var(--text-muted);margin-inline-end:6px;transition:all .2s}
+.step-chip.active{background:var(--grad);color:#fff}
+.grp-chk{display:flex;gap:8px;align-items:center;padding:10px;background:var(--surface);border-radius:8px;margin-bottom:6px;cursor:pointer;border:1px solid var(--border);transition:all .2s}
+.grp-chk:hover{border-color:var(--primary);background:var(--primary-bg)}
+.grp-chk input[type="checkbox"]{width:18px;height:18px;accent-color:var(--primary);flex-shrink:0}
+.grp-chk .info{flex:1;min-width:0}
+.grp-chk .name{font-weight:700;font-size:14px}
+.grp-chk .meta{font-size:11px;color:var(--text-muted);margin-top:2px}
+.info-banner{background:linear-gradient(135deg,var(--warning-bg),var(--info-bg));border:1px solid var(--warning);border-radius:var(--radius);padding:16px;margin-bottom:20px;display:flex;gap:12px;align-items:flex-start}
+.pending-hero{background:var(--grad);color:#fff;border-radius:var(--radius);padding:32px 24px;text-align:center;margin:16px 0}
+.temp-code{display:inline-block;background:rgba(255,255,255,.2);padding:10px 20px;border-radius:10px;font-family:var(--font-en);font-size:20px;font-weight:800;letter-spacing:3px;margin-top:10px}
+.stage-grade-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.filter-info{background:var(--info-bg);border:1px solid var(--info-border);border-radius:8px;padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--info);line-height:1.5}
+.filter-warning{background:var(--warning-bg);border:1px solid var(--warning);border-radius:8px;padding:12px;margin-bottom:12px;font-size:13px;color:var(--warning);line-height:1.6}
+.teacher-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:10px}
+.teacher-card:hover{border-color:var(--primary-border)}
+.teacher-card.selected{border-color:var(--primary);background:var(--primary-bg)}
+.teacher-card .avatar{width:40px;height:40px;border-radius:50%;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0}
+.teacher-card .info{flex:1}
+.teacher-card .name{font-weight:700;font-size:14px}
+.teacher-card .subject{font-size:12px;color:var(--text-muted);margin-top:2px}
+.teacher-section{margin-bottom:20px}
+.teacher-section-title{font-weight:700;color:var(--primary);margin-bottom:10px;display:flex;align-items:center;gap:6px;font-size:15px}
+@media(max-width:640px){
+  .stage-grade-row{grid-template-columns:1fr}
+  .auth-card{padding:24px 16px}
+}
+</style>
 </head>
 <body data-theme="dark">
-  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div>
-  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;padding:16px;">
-    <div class="card" style="max-width:600px;width:100%;max-height:94vh;overflow-y:auto;">
-      <div style="text-align:center;margin-bottom:16px;">
-        <div class="sidebar-logo" data-logo style="margin:0 auto;width:60px;height:60px;"></div>
-        <h2 style="margin:10px 0 6px;">طلب تسجيل طالب جديد</h2>
-        <div>
-          <span class="step-chip active" id="c1">1 البيانات</span>
-          <span class="step-chip" id="c2">2 الأساتذة</span>
-          <span class="step-chip" id="c3">3 الحساب</span>
-        </div>
-      </div>
-
-      <!-- تنبيه مهم -->
-      <div class="info-banner" id="infoBanner">
-        <div style="display:flex;gap:12px;align-items:flex-start;">
-          <div style="font-size:28px;">ℹ️</div>
-          <div>
-            <strong style="font-size:14px;">معلومة مهمة!</strong>
-            <p class="text-sm" style="margin-top:4px;line-height:1.7;">
-              التسجيل الرسمي بيتم عادةً عن طريق <strong>الإدارة أثناء الحصة</strong> وبيتم تسليمك <strong>باركود خاص</strong> بيك.
-              <br>لو سجّلت نفسك أونلاين، طلبك هيوصل للإدارة للمراجعة والموافقة، وبعدها تستلم الباركود بتاعك.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- الخطوة 1: البيانات -->
-      <div id="step1">
-        <div class="form-group"><label>الاسم الكامل *</label><input type="text" id="rName" class="form-input" placeholder="مثال: أحمد محمد"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div class="form-group"><label>رقمك *</label><input type="tel" id="rPhone" class="form-input" placeholder="01xxxxxxxxx"></div>
-          <div class="form-group"><label>رقم ولي الأمر *</label><input type="tel" id="rParent" class="form-input" placeholder="01xxxxxxxxx"></div>
-        </div>
-        <div class="stage-grade-row">
-          <div class="form-group"><label>المرحلة *</label><select id="rLevel" class="form-select" onchange="window.buildGradeSelect();window.renderGroupsPick();"></select></div>
-          <div class="form-group"><label>الصف الدراسي *</label><select id="rGrade" class="form-select" onchange="window.renderGroupsPick();"></select></div>
-        </div>
-        <div class="form-group"><label>البريد الإلكتروني (اختياري)</label><input type="email" id="rEmail" class="form-input" placeholder="example@mail.com"></div>
-        <button class="btn btn-primary btn-lg w-full" onclick="window.next(1)">التالي ←</button>
-        <a href="login.html" class="btn btn-ghost w-full" style="margin-top:8px;">عندي حساب بالفعل</a>
-      </div>
-
-      <!-- الخطوة 2: الأساتذة والمجموعات -->
-      <div id="step2" style="display:none;">
-        <div class="filter-info">🎯 اختار الأساتذة اللي عايز تسجل معهم — <strong>هتظهرلك بس المجموعات المطابقة للمرحلة والصف اللي اخترتهم</strong></div>
-
-        <h4 class="text-sm" style="margin-bottom:8px;">👨‍🏫 اختار أستاذ أو أكتر:</h4>
-        <div id="teachersPick" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-bottom:16px;"></div>
-
-        <h4 class="text-sm" style="margin-bottom:8px;">👥 المجموعات المتاحة:</h4>
-        <div id="groupsPick"></div>
-
-        <div style="display:flex;gap:8px;margin-top:16px;">
-          <button class="btn btn-secondary" onclick="window.show(1)">→ السابق</button>
-          <button class="btn btn-primary" style="flex:1;" onclick="window.next(2)">التالي ←</button>
-        </div>
-      </div>
-
-      <!-- الخطوة 3: كلمة المرور + الملخص -->
-      <div id="step3" style="display:none;">
-        <div class="info-note">
-          🔑 <strong>كلمة المرور</strong> دي هي نفسها اللي هيستخدمها ولي الأمر للدخول. اختار كلمة مرور قوية وسجّلها.
-        </div>
-        <div class="form-group"><label>كلمة المرور (٤+ حرف) *</label><input type="password" id="rPass" class="form-input" placeholder="اكتب كلمة مرور"></div>
-        <div class="form-group"><label>تأكيد كلمة المرور *</label><input type="password" id="rPass2" class="form-input" placeholder="أعد كتابة كلمة المرور"></div>
-        <div class="card" style="background:var(--info-bg);border-color:var(--info-border);margin-bottom:16px;">
-          <strong>ملخص الطلب:</strong>
-          <div id="summary" class="text-sm" style="line-height:1.9;margin-top:6px;"></div>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn btn-secondary" onclick="window.show(2)">→ السابق</button>
-          <button class="btn btn-primary btn-lg" style="flex:1;" onclick="window.submitReg()">📤 إرسال الطلب للإدارة</button>
-        </div>
-      </div>
-
-      <!-- شاشة النجاح -->
-      <div id="stepDone" style="display:none;"></div>
+<div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div>
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;padding:16px;padding-bottom:80px;">
+<div class="card" style="max-width:600px;width:100%;max-height:94vh;overflow-y:auto;">
+  
+  <div style="text-align:center;margin-bottom:20px;">
+    <div class="sidebar-logo" data-logo style="margin:0 auto;width:64px;height:64px;margin-bottom:12px;"></div>
+    <h2 style="margin:0 0 8px 0;font-size:22px;">طلب تسجيل طالب جديد</h2>
+    <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:4px;">
+      <span class="step-chip active" id="c1">1. البيانات</span>
+      <span class="step-chip" id="c2">2. الأساتذة والمجموعات</span>
+      <span class="step-chip" id="c3">3. الحساب</span>
     </div>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-  <script src="js/config.js"></script>
-  <script src="js/firebase-service.js"></script>
-  <script src="js/data-service.js"></script>
-  <script src="js/operations-service.js"></script>
-  <script src="js/ui-helpers.js"></script>
-  <script src="js/drive-service.js"></script>
-  <script src="js/theme-manager.js"></script>
+  <div class="info-banner" id="infoBanner">
+    <div style="font-size:24px;flex-shrink:0;">ℹ️</div>
+    <div>
+      <strong style="font-size:14px;display:block;margin-bottom:4px;">معلومة مهمة!</strong>
+      <p class="text-sm" style="margin:0;line-height:1.6;">التسجيل الرسمي يتم عادةً عن طريق <strong>الإدارة أثناء الحصة</strong> ويتم تسليمك <strong>باركود خاص</strong> بك.<br>إذا سجلت نفسك أونلاين، فطلبك سيصل للإدارة للمراجعة والموافقة، وبعدها تستلم الباركود الخاص بك.</p>
+    </div>
+  </div>
 
-  <script>
-    const DAYS=[{en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},{en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'},{en:'Saturday',ar:'السبت'}];
-    const dayAr=en=>(DAYS.find(d=>d.en===en)||{}).ar||en;
-    const T=tm=>DataService?.formatTime12 ? DataService.formatTime12(tm) : tm;
-    let pickedGroups=[];
-    let selectedTeacherIds=[];
+  <!-- الخطوة 1: البيانات -->
+  <div id="step1">
+    <div class="form-group"><label>الاسم الكامل *</label><input type="text" id="rName" class="form-input" placeholder="مثال: أحمد محمد" required></div>
+    <div class="stage-grade-row">
+      <div class="form-group"><label>رقم هاتف الطالب</label><input type="tel" id="rPhone" class="form-input" placeholder="01xxxxxxxxx"></div>
+      <div class="form-group"><label>رقم هاتف ولي الأمر</label><input type="tel" id="rParent" class="form-input" placeholder="01xxxxxxxxx"></div>
+    </div>
+    <div class="stage-grade-row">
+      <div class="form-group"><label>المرحلة الدراسية *</label><select id="rLevel" class="form-select" onchange="window.buildGradeSelect();window.renderGroupsPick();"></select></div>
+      <div class="form-group"><label>الصف الدراسي *</label><select id="rGrade" class="form-select" onchange="window.renderGroupsPick();"></select></div>
+    </div>
+    <div class="form-group"><label>البريد الإلكتروني (اختياري)</label><input type="email" id="rEmail" class="form-input" placeholder="example@mail.com"></div>
+    
+    <button class="btn btn-primary btn-lg w-full" onclick="window.next(1)" style="margin-top:8px;">التالي: اختيار الأساتذة ←</button>
+    <a href="login.html" class="btn btn-ghost w-full" style="margin-top:8px;">لدي حساب بالفعل</a>
+  </div>
 
-    (async function(){
-      try{ await DataService?.init(); }catch(e){ console.warn('DataService.init skipped', e); }
-      window.buildStageSelect();
-    })();
+  <!-- الخطوة 2: الأساتذة والمجموعات -->
+  <div id="step2" style="display:none;">
+    <div class="filter-info">🎯 <strong>خطوة 1:</strong> اختر الأستاذ أو الأساتذة الذين ترغب في التسجيل معهم.<br>🎯 <strong>خطوة 2:</strong> اختر المجموعة المناسبة لكل أستاذ من القائمة التي ستظهر أدناه.</div>
+    
+    <h4 class="text-sm" style="margin-bottom:10px;">👨‍🏫 اختر الأساتذة:</h4>
+    <div id="teachersPick" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:20px;"></div>
+    
+    <h4 class="text-sm" style="margin-bottom:10px;">👥 المجموعات المتاحة:</h4>
+    <div id="groupsPick" style="max-height:300px;overflow-y:auto;padding:4px;"></div>
+    
+    <div style="display:flex;gap:8px;margin-top:20px;">
+      <button class="btn btn-secondary" onclick="window.show(1)">→ السابق</button>
+      <button class="btn btn-primary" style="flex:1;" onclick="window.next(2)">التالي: مراجعة الطلب ←</button>
+    </div>
+  </div>
 
-    window.buildStageSelect = function(){
-      try{
-        var lvl=document.getElementById('rLevel');
-        if(!lvl) return;
-        var html='';
-        var levels = (typeof EduFlowConfig !== 'undefined' && EduFlowConfig?.educationLevels) ? EduFlowConfig.educationLevels : {};
-        for(var key in levels){
-          html+='<option value="'+key+'">'+levels[key].nameAr+'</option>';
-        }
-        lvl.innerHTML=html;
-        window.buildGradeSelect();
-      }catch(e){ console.error('buildStageSelect error', e); }
-    };
+  <!-- الخطوة 3: الحساب والمراجعة -->
+  <div id="step3" style="display:none;">
+    <div class="card" style="background:var(--info-bg);border-color:var(--info-border);margin-bottom:20px;padding:16px;">
+      <strong style="display:block;margin-bottom:8px;font-size:15px;">📋 ملخص الطلب:</strong>
+      <div id="summary" class="text-sm" style="line-height:1.8;"></div>
+    </div>
 
-    window.buildGradeSelect = function(){
-      try{
-        var lvl=document.getElementById('rLevel');
-        var key = lvl ? lvl.value : 'Primary';
-        var grades = (typeof EduFlowConfig !== 'undefined' && EduFlowConfig?.educationLevels?.[key]?.grades) || [];
-        var html='';
-        for(var i=0;i<grades.length;i++){ html+='<option value="'+grades[i]+'">'+grades[i]+'</option>'; }
-        const g = document.getElementById('rGrade');
-        if(g) g.innerHTML=html;
-      }catch(e){ console.error('buildGradeSelect error', e); }
-    };
+    <div class="stage-grade-row">
+      <div class="form-group"><label>كلمة المرور (4 أحرف على الأقل) *</label><input type="password" id="rPass" class="form-input" placeholder="••••" required></div>
+      <div class="form-group"><label>تأكيد كلمة المرور *</label><input type="password" id="rPass2" class="form-input" placeholder="••••" required></div>
+    </div>
+    
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="btn btn-secondary" onclick="window.show(2)">→ السابق</button>
+      <button class="btn btn-primary btn-lg" style="flex:1;" onclick="window.submitReg()">📤 إرسال الطلب للإدارة</button>
+    </div>
+  </div>
 
-    window.show = function(n){
-      try{
-        for(var i=1;i<=3;i++){
-          const el = document.getElementById('step'+i);
-          if(el) el.style.display=(i===n)?'block':'none';
-          const chip = document.getElementById('c'+i);
-          if(chip) chip.classList.toggle('active',i<=n);
-        }
-        const banner = document.getElementById('infoBanner');
-        if(banner) banner.style.display=(n===1)?'block':'none';
-        if(n===2){ window.buildTeachersPick(); window.renderGroupsPick(); }
-        if(n===3) window.buildSummary();
-      }catch(e){ console.error('show error', e); }
-    };
+  <!-- خطوة النجاح -->
+  <div id="stepDone" style="display:none;"></div>
 
-    window.next = function(f){
-      try{
-        if(f===1){
-          var name=document.getElementById('rName')?.value.trim()||'';
-          var phone=document.getElementById('rPhone')?.value.trim()||'';
-          var parent=document.getElementById('rParent')?.value.trim()||'';
-          if(!name||!phone||!parent){
-            if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('أكمل البيانات الأساسية (الاسم، رقمك، رقم ولي الأمر)','error');
-            return;
-          }
-          if(phone.length<10||parent.length<10){
-            if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('أرقام الهواتف غير صحيحة','error');
-            return;
-          }
-          window.show(2);
-        }
-        if(f===2){
-          pickedGroups=[];
-          var boxes=document.querySelectorAll('.g-chk:checked');
-          for(var i=0;i<boxes.length;i++) pickedGroups.push(boxes[i].value);
-          if(selectedTeacherIds.length===0){
-            if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('اختار أستاذ واحد على الأقل','error');
-            return;
-          }
-          if(pickedGroups.length===0){
-            if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('اختار مجموعة واحدة على الأقل','error');
-            return;
-          }
-          window.show(3);
-        }
-      }catch(e){ console.error('next error', e); }
-    };
+</div>
+</div>
 
-    window.buildTeachersPick = function(){
-      try{
-        var ts = typeof DataService?.getTeachers === 'function' ? DataService.getTeachers() : [];
-        const pick = document.getElementById('teachersPick');
-        if(!pick) return;
-        if(ts.length===0){
-          pick.innerHTML='<p class="text-muted">لا أساتذة بعد في النظام</p>';
-          return;
-        }
-        var html='';
-        ts.forEach(function(t){
-          html+='<div class="teacher-card" data-teacher="'+t.id+'" onclick="window.toggleTeacher(\''+t.id+'\')">'+
-            '<div class="name">'+t.name+'</div>'+
-            '<div class="subject">📚 '+(t.subject||'-')+'</div>'+
-          '</div>';
-        });
-        pick.innerHTML=html;
-      }catch(e){ console.error('buildTeachersPick error', e); }
-    };
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="js/config.js"></script>
+<script src="js/firebase-service.js"></script>
+<script src="js/data-service.js"></script>
+<script src="js/operations-service.js"></script>
+<script src="js/ui-helpers.js"></script>
+<script src="js/drive-service.js"></script>
+<script src="js/theme-manager.js"></script>
+<script src="js/footer-injector.js"></script>
 
-    window.toggleTeacher = function(tid){
-      try{
-        var idx=selectedTeacherIds.indexOf(tid);
-        if(idx>-1) selectedTeacherIds.splice(idx,1);
-        else selectedTeacherIds.push(tid);
-        document.querySelectorAll('.teacher-card').forEach(function(card){
-          var id=card.getAttribute('data-teacher');
-          card.classList.toggle('selected', selectedTeacherIds.indexOf(id)>-1);
-        });
-        window.renderGroupsPick();
-      }catch(e){ console.error('toggleTeacher error', e); }
-    };
+<script>
+const DAYS=[{en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},{en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'},{en:'Saturday',ar:'السبت'}];
+const dayAr=en=>(DAYS.find(d=>d.en===en)||{}).ar||en;
+const T=tm=>DataService?.formatTime12 ? DataService.formatTime12(tm) : tm;
 
-    window.renderGroupsPick = function(){
-      try{
-        var stage=document.getElementById('rLevel')?.value||'';
-        var grade=document.getElementById('rGrade')?.value||'';
-        var stageLabel=(typeof EduFlowConfig !== 'undefined' && EduFlowConfig?.educationLevels?.[stage]?.nameAr) || '-';
-        const gp = document.getElementById('groupsPick');
-        if(!gp) return;
+let pickedGroups=[];
+let selectedTeacherIds=[];
 
-        if(selectedTeacherIds.length===0){
-          gp.innerHTML='<p class="text-muted">اختار أستاذ واحد على الأقل علشان تشوف المجموعات المتاحة</p>';
-          return;
-        }
+(async function(){
+  try{ if(typeof DataService?.init==='function') await DataService.init(); }catch(e){}
+  window.buildStageSelect();
+})();
 
-        var allGroups=[];
-        selectedTeacherIds.forEach(function(tid){
-          const groups = typeof DataService?.getGroupsByTeacher === 'function' ? DataService.getGroupsByTeacher(tid) : [];
-          groups.forEach(function(g){ allGroups.push({...g, teacherId:tid}); });
-        });
+window.buildStageSelect=function(){
+  try{
+    const lvl=document.getElementById('rLevel');
+    if(!lvl)return;
+    let html='<option value="">-- اختر المرحلة --</option>';
+    const levels=(typeof EduFlowConfig!=='undefined'&&EduFlowConfig?.educationLevels)||{};
+    for(const k in levels){ html+='<option value="'+k+'">'+levels[k].nameAr+'</option>'; }
+    lvl.innerHTML=html;
+    window.buildGradeSelect();
+  }catch(e){}
+};
 
-        var filtered=allGroups.filter(function(g){
-          var matchStage=!stage||!g.stage||g.stage===stage;
-          var matchGrade=!grade||!g.grade||g.grade===grade;
-          return matchStage && matchGrade;
-        });
+window.buildGradeSelect=function(){
+  try{
+    const key=document.getElementById('rLevel')?.value;
+    const grades=(typeof EduFlowConfig!=='undefined'&&EduFlowConfig?.educationLevels?.[key]?.grades)||[];
+    const el=document.getElementById('rGrade');
+    if(el) el.innerHTML='<option value="">-- اختر الصف --</option>'+grades.map(g=>`<option value="${g}">${g}</option>`).join('');
+  }catch(e){}
+};
 
-        if(filtered.length===0){
-          gp.innerHTML=`
-            <div class="filter-warning">
-              <strong>⚠️ لا توجد مجموعات مطابقة</strong><br>
-              مفيش مجموعات متاحة للمرحلة <strong>${stageLabel}</strong> - الصف <strong>${grade}</strong> عند الأساتذة اللي اخترتهم.<br>
-              <span class="text-xs">ممكن:</span>
-              <ul style="margin-top:6px;padding-inline-start:20px;">
-                <li>تختار أساتذة تانيين</li>
-                <li>تغير المرحلة أو الصف</li>
-                <li>تتواصل مع الإدارة علشان يضيفوا مجموعات جديدة</li>
-              </ul>
-            </div>`;
-          return;
-        }
+window.show=function(n){
+  try{
+    for(let i=1;i<=3;i++){
+      const st=document.getElementById('step'+i);
+      if(st) st.style.display=(i===n)?'block':'none';
+      const ch=document.getElementById('c'+i);
+      if(ch) ch.classList.toggle('active',i<=n);
+    }
+    const bn=document.getElementById('infoBanner');
+    if(bn) bn.style.display=(n===1)?'flex':'none';
+    if(n===2){ window.buildTeachersPick(); window.renderGroupsPick(); }
+    if(n===3) window.buildSummary();
+  }catch(e){ console.error(e); }
+};
 
-        var html='<div class="filter-info">✓ تم العثور على <strong>'+filtered.length+'</strong> مجموعة مطابقة للمرحلة <strong>'+stageLabel+'</strong> - الصف <strong>'+grade+'</strong></div>';
-        filtered.forEach(function(g){
-          var t = typeof DataService?.getUserById === 'function' ? DataService.getUserById(g.teacherId) : null;
-          var count = typeof DataService?.getStudentsByGroup === 'function' ? DataService.getStudentsByGroup(g.id).length : 0;
-          var full = count >= (g.maxStudents || 30);
-          var dayName = dayAr(g.day);
-          var timeName = T(g.time);
-          html+='<label class="grp-chk">'+
-            '<input type="checkbox" class="g-chk" value="'+g.id+'">'+
-            '<div class="info">'+
-              '<div class="name">'+g.name+'</div>'+
-              '<div class="meta">👨‍🏫 '+(t?t.name:'-')+' · 📅 '+dayName+' '+timeName+' · 👥 '+count+' طالب'+(full?' <span class="badge badge-warning">قائمة انتظار</span>':'')+'</div>'+
-            '</div>'+
-          '</label>';
-        });
-        gp.innerHTML=html;
-      }catch(e){ console.error('renderGroupsPick error', e); }
-    };
+window.next=function(f){
+  try{
+    if(f===1){
+      const name=document.getElementById('rName')?.value.trim()||'';
+      const level=document.getElementById('rLevel')?.value||'';
+      const grade=document.getElementById('rGrade')?.value||'';
+      if(!name){ ThemeManager?.toast?.('اكتب الاسم الكامل','error') || alert('اكتب الاسم الكامل'); return; }
+      if(!level || !grade){ ThemeManager?.toast?.('اختر المرحلة والصف الدراسي','error') || alert('اختر المرحلة والصف'); return; }
+      window.show(2);
+    }
+    if(f===2){
+      pickedGroups=[];
+      document.querySelectorAll('.g-chk:checked').forEach(b=>pickedGroups.push(b.value));
+      if(selectedTeacherIds.length===0){ ThemeManager?.toast?.('اختر أستاذاً واحداً على الأقل','error'); return; }
+      if(pickedGroups.length===0){ ThemeManager?.toast?.('اختر مجموعة واحدة على الأقل','error'); return; }
+      window.show(3);
+    }
+  }catch(e){ console.error(e); }
+};
 
-    window.buildSummary = function(){
-      try{
-        var name=document.getElementById('rName')?.value||'';
-        var phone=document.getElementById('rPhone')?.value||'';
-        var parent=document.getElementById('rParent')?.value||'';
-        var stage=document.getElementById('rLevel')?.value||'';
-        var grade=document.getElementById('rGrade')?.value||'';
-        var stageLabel=(typeof EduFlowConfig !== 'undefined' && EduFlowConfig?.educationLevels?.[stage]?.nameAr) || '-';
-        var gs=pickedGroups.map(function(id){return DataService?.getGroups ? DataService.getGroups().find(function(g){return g.id===id;}) : null;}).filter(Boolean);
-        var groupDetails=gs.map(function(g){
-          var t = typeof DataService?.getUserById === 'function' ? DataService.getUserById(g.teacherId) : null;
-          return g.name+' <span class="text-muted">('+(t?t.name:'-')+')</span>';
-        }).join('<br>');
-        const sum = document.getElementById('summary');
-        if(sum) sum.innerHTML=
-          '👤 <strong>'+name+'</strong><br>'+
-          '📱 رقمك: '+phone+' · ولي الأمر: '+parent+'<br>'+
-          '📚 '+stageLabel+' - '+grade+'<br>'+
-          '👥 <strong>المجموعات ('+gs.length+'):</strong><br>'+groupDetails;
-      }catch(e){ console.error('buildSummary error', e); }
-    };
+window.buildTeachersPick=function(){
+  try{
+    const ts=typeof DataService?.getTeachers==='function'?DataService.getTeachers():[];
+    const el=document.getElementById('teachersPick');
+    if(!el)return;
+    if(!ts.length){ el.innerHTML='<p class="text-muted">لا يوجد أساتذة متاحين للتسجيل حالياً</p>'; return; }
+    el.innerHTML=ts.map(t=>`
+      <div class="teacher-card" data-teacher="${t.id}" onclick="window.toggleTeacher('${t.id}')">
+        <div class="avatar">${(t.name||'?').charAt(0)}</div>
+        <div class="info">
+          <div class="name">${t.name}</div>
+          <div class="subject">📚 ${t.subject||'-'}</div>
+        </div>
+      </div>
+    `).join('');
+  }catch(e){ console.error(e); }
+};
 
-    window.submitReg = async function(){
-      try{
-        var pass=document.getElementById('rPass')?.value||'';
-        var pass2=document.getElementById('rPass2')?.value||'';
-        if(pass.length<4){
-          if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('كلمة المرور لازم تكون 4 أحرف على الأقل','error');
-          return;
-        }
-        if(pass!==pass2){
-          if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('كلمتا المرور غير متطابقتين','error');
-          return;
-        }
+window.toggleTeacher=function(tid){
+  try{
+    const idx=selectedTeacherIds.indexOf(tid);
+    if(idx>-1) selectedTeacherIds.splice(idx,1); 
+    else selectedTeacherIds.push(tid);
+    
+    document.querySelectorAll('.teacher-card').forEach(c=>{
+      c.classList.toggle('selected', selectedTeacherIds.includes(c.getAttribute('data-teacher')));
+    });
+    window.renderGroupsPick();
+  }catch(e){ console.error(e); }
+};
 
-        if(typeof DataService?.addPendingRegistration !== 'function'){
-          if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('الدالة غير متوفرة حالياً','error');
-          return;
-        }
-
-        var req = await DataService.addPendingRegistration({
-          name: document.getElementById('rName').value.trim(),
-          phone: document.getElementById('rPhone').value.trim(),
-          parentPhone: document.getElementById('rParent').value.trim(),
-          email: document.getElementById('rEmail').value.trim(),
-          stage: document.getElementById('rLevel').value,
-          grade: document.getElementById('rGrade').value,
-          password: pass,
-          groupIds: pickedGroups,
-          teacherIds: selectedTeacherIds,
-          source: 'self_register'
-        });
-
-        const doneEl = document.getElementById('stepDone');
-        if(doneEl){
-          doneEl.style.display='block';
-          doneEl.innerHTML=`
-            <div class="pending-hero">
-              <div style="font-size:48px;margin-bottom:8px;">⏳</div>
-              <h2>تم إرسال طلبك بنجاح!</h2>
-              <p style="opacity:.95;">طلبك في انتظار موافقة الإدارة</p>
-              <div class="temp-code">كود مؤقت: ${req.tempCode || '-'}</div>
-            </div>
-
-            <div class="card" style="background:var(--info-bg);border-color:var(--info-border);margin-bottom:16px;">
-              <strong>📋 الخطوات التالية:</strong>
-              <ul style="margin-top:8px;padding-inline-start:20px;line-height:2;">
-                <li>الإدارة هتراجع طلبك وتوافق عليه</li>
-                <li>هيتم إنشاء حسابك الرسمي وكود الطالب الدائم (EDU-XXXX)</li>
-                <li>هتستلم <strong>الباركود الخاص بيك</strong> من الإدارة</li>
-                <li>كلمة المرور الافتراضية هي اللي اخترتها دلوقتي</li>
-                <li>بعدها تقدر تدخل داشبوردك بشكل كامل</li>
-              </ul>
-            </div>
-
-            <div class="card" style="background:var(--warning-bg);border-color:var(--warning);margin-bottom:16px;">
-              <strong>⚡ تقدر تتصفح الداشبورد كزائر:</strong>
-              <p class="text-sm" style="margin-top:6px;">تقدر تدخل داشبورد الطالب دلوقتي وتستكشف المميزات، لكن أي واجبات أو امتحانات أو درجات متتحفظش إلا بعد موافقة الإدارة.</p>
-              <a href="student-dashboard.html?temp=${req.id||''}" class="btn btn-primary w-full" style="margin-top:10px;">👀 استكشف الداشبورد</a>
-            </div>
-
-            <a href="login.html" class="btn btn-secondary w-full">→ العودة لتسجيل الدخول</a>
-          `;
-        }
-        ['step1','step2','step3','infoBanner'].forEach(id=>{
-          const el = document.getElementById(id);
-          if(el) el.style.display='none';
-        });
-
-      }catch(err){
-        console.error('submitReg error', err);
-        if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('فشل إرسال الطلب: '+err.message,'error');
+// 🆕 تحسين عرض المجموعات لتكون مجمعة تحت كل أستاذ
+window.renderGroupsPick=function(){
+  try{
+    const stage=document.getElementById('rLevel')?.value||'';
+    const grade=document.getElementById('rGrade')?.value||'';
+    const el=document.getElementById('groupsPick');
+    if(!el)return;
+    
+    if(selectedTeacherIds.length===0){ 
+      el.innerHTML='<p class="text-muted" style="text-align:center;padding:20px;">اختر أستاذاً واحداً على الأقل لعرض مجموعاته</p>'; 
+      return; 
+    }
+    
+    let html = '';
+    let hasAnyGroup = false;
+    
+    selectedTeacherIds.forEach(tid => {
+      const teacher = DataService?.getUserById ? DataService.getUserById(tid) : null;
+      const tName = teacher ? teacher.name : 'أستاذ';
+      
+      const groups = (typeof DataService?.getGroupsByTeacher === 'function' ? DataService.getGroupsByTeacher(tid) : [])
+        .filter(g => (!stage || !g.stage || g.stage === stage) && (!grade || !g.grade || g.grade === grade));
+      
+      if(groups.length > 0){
+        hasAnyGroup = true;
+        html += `<div class="teacher-section">
+          <div class="teacher-section-title">👨‍🏫 ${tName}</div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            ${groups.map(g => {
+              const count = typeof DataService?.getStudentsByGroup === 'function' ? DataService.getStudentsByGroup(g.id).length : 0;
+              return `<label class="grp-chk">
+                <input type="checkbox" class="g-chk" value="${g.id}" data-teacher="${tid}">
+                <div class="info">
+                  <div class="name">${g.name}</div>
+                  <div class="meta">📅 ${dayAr(g.day)} ${T(g.time)} · 👥 ${count} طالب</div>
+                </div>
+              </label>`;
+            }).join('')}
+          </div>
+        </div>`;
+      } else {
+        html += `<div class="teacher-section">
+          <div class="teacher-section-title" style="color:var(--text-muted);">👨‍🏫 ${tName}</div>
+          <div class="filter-warning" style="margin-bottom:0; padding:10px;">⚠️ لا توجد مجموعات متاحة لهذا الأستاذ في المرحلة/الصف المختار</div>
+        </div>`;
       }
-    };
-  </script>
-  <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}</script>
+    });
+    
+    el.innerHTML = hasAnyGroup ? html : `<div class="filter-warning"><strong>⚠️ لا توجد مجموعات مطابقة</strong><br>يرجى تغيير الأساتذة أو المرحلة/الصف المختار</div>`;
+  }catch(e){ console.error(e); }
+};
+
+window.buildSummary=function(){
+  try{
+    const name=document.getElementById('rName')?.value||'';
+    const phone=document.getElementById('rPhone')?.value||'-';
+    const parent=document.getElementById('rParent')?.value||'-';
+    const stage=document.getElementById('rLevel')?.value||'';
+    const grade=document.getElementById('rGrade')?.value||'';
+    const stageLabel=(typeof EduFlowConfig!=='undefined'&&EduFlowConfig?.educationLevels?.[stage]?.nameAr)||'-';
+    
+    let summaryHtml = `👤 <strong>${name}</strong><br>📱 الطالب: ${phone} · ولي الأمر: ${parent}<br>📚 ${stageLabel} - ${grade}<br><br>👥 <strong>المجموعات المختارة:</strong>`;
+    
+    selectedTeacherIds.forEach(tid => {
+      const teacher = DataService?.getUserById ? DataService.getUserById(tid) : null;
+      const tName = teacher ? teacher.name : 'أستاذ';
+      
+      const selectedForThisTeacher = [];
+      document.querySelectorAll('.g-chk:checked').forEach(chk => {
+        if(chk.getAttribute('data-teacher') === tid) {
+          const g = DataService?.getGroups ? DataService.getGroups().find(x => x.id === chk.value) : null;
+          if(g) selectedForThisTeacher.push(g.name);
+        }
+      });
+      
+      if(selectedForThisTeacher.length > 0) {
+        summaryHtml += `<div style="margin-top:8px; padding:10px; background:var(--surface); border:1px solid var(--border); border-radius:8px;">
+          <div style="font-weight:700; color:var(--primary); font-size:13px;">👨‍🏫 ${tName}</div>
+          <div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">${selectedForThisTeacher.join(' ، ')}</div>
+        </div>`;
+      }
+    });
+
+    const el=document.getElementById('summary');
+    if(el) el.innerHTML = summaryHtml;
+  }catch(e){ console.error(e); }
+};
+
+window.submitReg=async function(){
+  try{
+    const pass=document.getElementById('rPass')?.value||'';
+    const pass2=document.getElementById('rPass2')?.value||'';
+    if(pass.length<4){ ThemeManager?.toast?.('كلمة المرور يجب أن تكون 4 أحرف على الأقل','error'); return; }
+    if(pass!==pass2){ ThemeManager?.toast?.('كلمتا المرور غير متطابقتين','error'); return; }
+    
+    if(typeof DataService?.addPendingRegistration!=='function'){ 
+      ThemeManager?.toast?.('خدمة التسجيل غير متاحة حالياً','error'); 
+      return; 
+    }
+    
+    const req=await DataService.addPendingRegistration({
+      name:document.getElementById('rName')?.value.trim()||'',
+      phone:document.getElementById('rPhone')?.value.trim()||'',
+      parentPhone:document.getElementById('rParent')?.value.trim()||'',
+      email:document.getElementById('rEmail')?.value.trim()||'',
+      stage:document.getElementById('rLevel')?.value||'',
+      grade:document.getElementById('rGrade')?.value||'',
+      password:pass,
+      groupIds:pickedGroups,
+      teacherIds:selectedTeacherIds,
+      source:'self_register'
+    });
+    
+    const done=document.getElementById('stepDone');
+    if(done){
+      done.style.display='block';
+      done.innerHTML=`
+        <div class="pending-hero">
+          <div style="font-size:56px;margin-bottom:12px;">✅</div>
+          <h2 style="margin:0 0 8px 0;">تم إرسال طلبك بنجاح!</h2>
+          <p style="opacity:.9;margin:0 0 16px 0;">طلبك قيد المراجعة من قبل الإدارة. سيتم التواصل معك قريباً.</p>
+          <div style="background:rgba(255,255,255,0.15);padding:12px 20px;border-radius:10px;display:inline-block;">
+            <div style="font-size:12px;opacity:.8;margin-bottom:4px;">كود المتابعة المؤقت</div>
+            <div class="temp-code" style="margin:0;background:transparent;padding:0;font-size:24px;">${req.tempCode||'-'}</div>
+          </div>
+        </div>
+        <div class="card" style="background:var(--info-bg);border-color:var(--info-border);margin-bottom:20px;padding:16px;">
+          <strong style="display:block;margin-bottom:8px;">📋 الخطوات التالية:</strong>
+          <ul style="margin:0;padding-inline-start:20px;line-height:1.8;font-size:13px;color:var(--text-secondary);">
+            <li>ستقوم الإدارة بمراجعة طلبك والموافقة عليه.</li>
+            <li>سيتم إنشاء حسابك الرسمي وكود الطالب الدائم.</li>
+            <li>ستستلم الباركود الخاص بك من الإدارة أو عبر رسالة نصية.</li>
+          </ul>
+        </div>
+        <a href="login.html" class="btn btn-primary w-full btn-lg">→ العودة لتسجيل الدخول</a>
+      `;
+    }
+    ['step1','step2','step3','infoBanner'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.style.display='none';
+    });
+  }catch(err){
+    console.error('submitReg',err);
+    ThemeManager?.toast?.('فشل إرسال الطلب: '+err.message,'error');
+  }
+};
+</script>
 </body>
 </html>

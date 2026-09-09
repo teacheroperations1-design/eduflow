@@ -2,47 +2,104 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>طباعة باركودات - EduFlow</title>
+  <title>طباعة باركودات - EduFlow by Habbash Group</title>
   <link rel="stylesheet" href="css/eduflow-theme.css">
   <style>
     .print-controls{max-width:900px;margin:20px auto;padding:16px;position:relative;z-index:1}
+    .page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:10px;flex-wrap:wrap}
+    .back-btn{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 14px;color:var(--text);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:13px;transition:all .2s}
+    .back-btn:hover{border-color:var(--primary);color:var(--primary)}
+    .brand-mini{display:flex;align-items:center;gap:8px}
+    .brand-mini-logo{width:40px;height:40px;border-radius:10px;background:var(--grad);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;box-shadow:var(--glow)}
+    .brand-mini-text{font-size:15px;font-weight:800;color:var(--primary)}
+    .brand-mini-sub{font-size:10px;color:var(--text-muted);display:block;margin-top:2px}
     .qr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:900px;margin:0 auto;padding:0 16px 30px}
-    .qr-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 6px;text-align:center;break-inside:avoid}
+    .qr-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 6px;text-align:center;break-inside:avoid;transition:all .2s}
+    .qr-card:hover{border-color:var(--primary-border);transform:translateY(-2px)}
     .qr-card img{width:100%;max-width:130px;border-radius:6px;background:#fff;padding:4px}
     .qr-name{font-weight:800;font-size:11px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .qr-codeline{font-family:var(--font-en);font-weight:800;font-size:12px;color:var(--primary);margin-top:4px;letter-spacing:1px}
-    .qr-brand{font-size:9px;color:var(--text-muted);margin-top:2px}
+    .qr-brand{font-size:9px;color:var(--text-muted);margin-top:2px;display:flex;align-items:center;justify-content:center;gap:4px}
+    .qr-brand .dot{width:4px;height:4px;border-radius:50%;background:var(--text-muted)}
     .card-actions{display:flex;gap:4px;justify-content:center;margin-top:6px}
-    .card-actions button{flex:1;max-width:80px}
+    .card-actions button{flex:1;max-width:90px}
+    
+    /* 🆕 Parent Badge */
+    .parent-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:9999px;background:linear-gradient(135deg,rgba(251,191,36,.15),rgba(245,158,11,.15));border:1px solid rgba(251,191,36,.3);color:var(--text-secondary);font-size:10px;font-weight:700;margin-top:6px}
+    
+    /* 🆕 Print Size Options */
+    .size-options{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+    .size-opt{padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);cursor:pointer;font-size:12px;font-weight:700;transition:all .2s}
+    .size-opt.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+    
     @media print{
-      .print-controls,.bg-grid,.orb,.card-actions{display:none!important}
+      .print-controls,.bg-grid,.orb,.card-actions,.page-header{display:none!important}
       body{background:#fff!important}
       .qr-grid{grid-template-columns:repeat(4,1fr);gap:3mm;padding:0;max-width:100%}
-      .qr-card{border:1px solid #999;border-radius:6px;background:#fff;padding:2mm 1mm;height:6.2cm;display:flex;flex-direction:column;justify-content:center;align-items:center}
+      .qr-card{border:1px solid #999;border-radius:6px;background:#fff;padding:2mm 1mm;height:6.2cm;display:flex;flex-direction:column;justify-content:center;align-items:center;page-break-inside:avoid}
       .qr-card img{max-width:3.2cm}
-      .qr-name{font-size:9pt;color:#000}
-      .qr-codeline{font-size:10pt;color:#000}
-      .qr-brand{display:none}
+      .qr-name{font-size:9pt;color:#000;font-weight:800}
+      .qr-codeline{font-size:10pt;color:#000;font-weight:800}
+      .qr-brand{font-size:7pt;color:#666;display:flex;gap:3px;align-items:center}
+      .qr-brand .dot{width:3px;height:3px;background:#999;border-radius:50%;display:inline-block}
     }
-    @media(max-width:640px){.qr-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:640px){
+      .qr-grid{grid-template-columns:repeat(2,1fr)}
+      .page-header{flex-direction:column;align-items:flex-start}
+    }
   </style>
 </head>
 <body data-theme="dark">
   <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div>
+  
   <div class="print-controls">
+    <div class="page-header">
+      <a href="javascript:history.back()" class="back-btn">
+        <span>←</span>
+        <span>رجوع</span>
+      </a>
+      <div class="brand-mini">
+        <div class="brand-mini-logo">🎓</div>
+        <div>
+          <div class="brand-mini-text">EduFlow</div>
+          <span class="brand-mini-sub">by Habbash Group</span>
+        </div>
+      </div>
+    </div>
+    
     <div class="card">
       <h2 style="margin-bottom:4px;">🖨️ طباعة باركودات الطلاب</h2>
-      <p class="text-sm text-muted" style="margin-bottom:14px;">كل باركود بيفتح بطاقة الطالب على الموقع المنشور — اطبع صفحة كاملة أو كارت واحد من الأزرار تحت كل كارت</p>
+      <p class="text-sm text-muted" style="margin-bottom:14px;">
+        كل باركود بيفتح بطاقة الطالب على الموقع المنشور — اطبع صفحة كاملة أو كارت واحد
+        <span class="parent-badge" style="margin-right:6px;">🏢 Habbash Group</span>
+      </p>
+      
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label>المجموعة</label><select id="prGroup" class="form-select" onchange="window.renderGrid()"></select></div>
-        <div class="form-group"><label>بحث (اسم/كود)</label><input type="text" id="prSearch" class="form-input" onkeyup="window.renderGrid()"></div>
+        <div class="form-group">
+          <label>المجموعة</label>
+          <select id="prGroup" class="form-select" onchange="window.renderGrid()"></select>
+        </div>
+        <div class="form-group">
+          <label>بحث (اسم/كود)</label>
+          <input type="text" id="prSearch" class="form-input" placeholder="ابحث عن طالب..." onkeyup="window.renderGrid()">
+        </div>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-primary" onclick="window.print()">🖨️ طباعة الصفحة (16/A4)</button>
+      
+      <div class="size-options">
+        <span style="font-size:12px;color:var(--text-muted);align-self:center;font-weight:700;">حجم الطباعة:</span>
+        <button class="size-opt active" onclick="window.setPrintSize('a4',this)" data-size="a4">📄 A4 (4×4)</button>
+        <button class="size-opt" onclick="window.setPrintSize('small',this)" data-size="small">🏷️ بطاقات صغيرة (6×4)</button>
+        <button class="size-opt" onclick="window.setPrintSize('large',this)" data-size="large">📋 بطاقات كبيرة (3×3)</button>
+      </div>
+      
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+        <button class="btn btn-primary" onclick="window.print()">🖨️ طباعة الصفحة</button>
+        <button class="btn btn-secondary" onclick="window.downloadAllQR()">⬇️ تحميل الكل (ZIP)</button>
         <span class="text-sm text-muted" id="countLabel" style="align-self:center;"></span>
       </div>
     </div>
   </div>
+  
   <div class="qr-grid" id="qrGrid"></div>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -56,7 +113,6 @@
   <script src="js/drive-service.js"></script>
   <script src="js/theme-manager.js"></script>
   <script src="js/auth-service.js"></script>
-  <script src="js/admin-patch.js"></script>
 
   <script>
     // ✅ الرابط المنشور ثابت — الباركود مش هيشاور على IP محلي أبداً
@@ -65,11 +121,13 @@
     const qrImg = (code,size) => 'https://api.qrserver.com/v1/create-qr-code/?size=' + size + 'x' + size + '&data=' + encodeURIComponent(qrData(code));
 
     let currentUser = null;
+    let currentPrintSize = 'a4';
 
     (async function boot(){
       try{
         if(typeof DataService?.init === 'function') await DataService.init();
         currentUser = AuthService?.getCurrentUser ? AuthService.getCurrentUser() : null;
+        if(!currentUser){ window.location.href='login.html'; return; }
         window.buildGroupSelect();
         const s = new URLSearchParams(location.search).get('search');
         if(s){ const el = document.getElementById('prSearch'); if(el) el.value = s; }
@@ -92,6 +150,45 @@
       }catch(e){ console.error('buildGroupSelect error', e); }
     };
 
+    // 🆕 تغيير حجم الطباعة
+    window.setPrintSize = function(size, btn){
+      currentPrintSize = size;
+      document.querySelectorAll('.size-opt').forEach(b => b.classList.remove('active'));
+      btn?.classList.add('active');
+      
+      const grid = document.getElementById('qrGrid');
+      if(!grid) return;
+      
+      // تغيير عدد الأعمدة بناءً على الحجم
+      if(size === 'small'){
+        grid.style.gridTemplateColumns = 'repeat(6, 1fr)';
+      } else if(size === 'large'){
+        grid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+      } else {
+        grid.style.gridTemplateColumns = 'repeat(4, 1fr)';
+      }
+      
+      // تحديث الطباعة
+      const styleEl = document.getElementById('print-size-style');
+      if(styleEl) styleEl.remove();
+      
+      const style = document.createElement('style');
+      style.id = 'print-size-style';
+      if(size === 'small'){
+        style.textContent = '@media print{.qr-grid{grid-template-columns:repeat(6,1fr)}.qr-card{height:4.5cm}.qr-card img{max-width:2.2cm}}';
+      } else if(size === 'large'){
+        style.textContent = '@media print{.qr-grid{grid-template-columns:repeat(3,1fr)}.qr-card{height:8cm}.qr-card img{max-width:4.5cm}.qr-name{font-size:11pt}.qr-codeline{font-size:12pt}}';
+      } else {
+        style.textContent = '@media print{.qr-grid{grid-template-columns:repeat(4,1fr)}.qr-card{height:6.2cm}.qr-card img{max-width:3.2cm}.qr-name{font-size:9pt}.qr-codeline{font-size:10pt}}';
+      }
+      document.head.appendChild(style);
+      
+      if(typeof ThemeManager?.toast === 'function'){
+        const labels = {a4:'📄 A4 قياسي', small:'🏷️ بطاقات صغيرة', large:'📋 بطاقات كبيرة'};
+        ThemeManager.toast(labels[size], 'info');
+      }
+    };
+
     window.renderGrid = function(){
       try{
         const sel = document.getElementById('prGroup');
@@ -100,23 +197,33 @@
         let students = gid === 'all'
           ? (DataService?.getStudents ? DataService.getStudents() : [])
           : (DataService?.getStudentsByGroup ? DataService.getStudentsByGroup(gid) : []);
+        
+        // فلترة حسب Scope
+        if(currentUser && typeof Ops?.studentsInScope === 'function'){
+          const scopedIds = Ops.studentsInScope(currentUser.id).map(s => s.id);
+          students = students.filter(s => scopedIds.includes(s.id));
+        }
+        
         if(q) students = students.filter(s => (s.name||'').toLowerCase().includes(q) || (s.code||'').toLowerCase().includes(q));
         students = students.filter(s => s.code);
+        
         const label = document.getElementById('countLabel');
         if(label) label.textContent = students.length + ' طالب';
+        
         const grid = document.getElementById('qrGrid');
         if(!grid) return;
-        if(!students.length){ grid.innerHTML = '<div class="card" style="grid-column:1/-1;text-align:center;">لا طلاب مطابقين</div>'; return; }
+        if(!students.length){ grid.innerHTML = '<div class="card" style="grid-column:1/-1;text-align:center;padding:30px;">لا طلاب مطابقين</div>'; return; }
+        
         grid.innerHTML = students.map(s => {
           const safeName = (s.name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
           return '<div class="qr-card">' +
             '<div class="qr-name">' + safeName + '</div>' +
-            '<img src="' + qrImg(s.code,140) + '" alt="' + s.code + '">' +
+            '<img src="' + qrImg(s.code, 140) + '" alt="' + s.code + '" loading="lazy">' +
             '<div class="qr-codeline">' + s.code + '</div>' +
-            '<div class="qr-brand">EduFlow</div>' +
+            '<div class="qr-brand">EduFlow <span class="dot"></span> Habbash Group</div>' +
             '<div class="card-actions">' +
-              '<button class="btn btn-secondary btn-sm" title="طباعة ده بس" onclick="window.printSingle(\'' + s.code + '\',\'' + (s.name||'').replace(/'/g,'') + '\')">🖨️ طباعة</button>' +
-              '<button class="btn btn-ghost btn-sm" title="تحميل PNG" onclick="window.downloadQR(\'' + s.code + '\')">⬇️ تحميل</button>' +
+              '<button class="btn btn-secondary btn-sm" title="طباعة ده بس" onclick="window.printSingle(\'' + s.code + '\',\'' + (s.name||'').replace(/'/g,'\\\'') + '\')">🖨️ طباعة</button>' +
+              '<button class="btn btn-ghost btn-sm" title="تحميل PNG" onclick="window.downloadQR(\'' + s.code + '\',\'' + safeName + '\')">⬇️</button>' +
             '</div></div>';
         }).join('');
       }catch(e){
@@ -126,7 +233,7 @@
       }
     };
 
-    // 🖨️ طباعة كارت واحد — بناء DOM مباشر (بدون document.write عشان ميحصلش كسر)
+    // 🖨️ طباعة كارت واحد — بناء DOM مباشر
     window.printSingle = function(code, name){
       try{
         const w = window.open('', '_blank', 'width=480,height=700');
@@ -135,31 +242,101 @@
         d.documentElement.setAttribute('dir','rtl');
         d.title = code;
         const st = d.createElement('style');
-        st.textContent = 'body{font-family:Cairo,Arial,sans-serif;text-align:center;padding:24px;color:#000}img{width:260px;height:260px;margin:12px auto;display:block}.n{font-weight:800;font-size:20px}.c{font-family:monospace;font-size:22px;letter-spacing:3px;margin-top:8px}.b{font-size:12px;color:#555;margin-top:6px}';
+        st.textContent = `
+          body{font-family:Cairo,Arial,sans-serif;text-align:center;padding:24px;color:#000;background:#fff}
+          .logo{font-size:14px;color:#666;margin-bottom:16px}
+          img{width:260px;height:260px;margin:12px auto;display:block}
+          .n{font-weight:800;font-size:22px;margin-top:12px}
+          .c{font-family:monospace;font-size:24px;letter-spacing:3px;margin-top:8px;color:#6366f1;font-weight:800}
+          .b{font-size:11px;color:#555;margin-top:8px;padding-top:10px;border-top:1px solid #ddd}
+          .sub{font-size:10px;color:#999;margin-top:4px}
+        `;
         d.head.appendChild(st);
-        const n = d.createElement('div'); n.className = 'n'; n.textContent = name || 'طالب';
-        const img = d.createElement('img'); img.src = qrImg(code, 300);
-        const c = d.createElement('div'); c.className = 'c'; c.textContent = code;
-        const b = d.createElement('div'); b.className = 'b'; b.textContent = 'EduFlow — بطاقة طالب';
-        d.body.appendChild(n); d.body.appendChild(img); d.body.appendChild(c); d.body.appendChild(b);
+        
+        const logo = d.createElement('div'); 
+        logo.className = 'logo'; 
+        logo.innerHTML = '🎓 <strong>EduFlow</strong> by <strong>Habbash Group</strong>';
+        
+        const n = d.createElement('div'); 
+        n.className = 'n'; 
+        n.textContent = name || 'طالب';
+        
+        const img = d.createElement('img'); 
+        img.src = qrImg(code, 300);
+        
+        const c = d.createElement('div'); 
+        c.className = 'c'; 
+        c.textContent = code;
+        
+        const b = d.createElement('div'); 
+        b.className = 'b'; 
+        b.innerHTML = 'بطاقة طالب — امسح الباركود للدخول السريع';
+        
+        const sub = d.createElement('div');
+        sub.className = 'sub';
+        sub.textContent = '© Habbash Group';
+        
+        d.body.appendChild(logo);
+        d.body.appendChild(n);
+        d.body.appendChild(img);
+        d.body.appendChild(c);
+        d.body.appendChild(b);
+        d.body.appendChild(sub);
+        
         img.onload = function(){ setTimeout(function(){ w.focus(); w.print(); }, 250); };
-        setTimeout(function(){ w.focus(); w.print(); }, 1500); // احتياطي لو الصورة اتأخرت
+        setTimeout(function(){ w.focus(); w.print(); }, 1500);
       }catch(e){ console.error('printSingle error', e); }
     };
 
     // ⬇️ تحميل PNG
-    window.downloadQR = async function(code){
+    window.downloadQR = async function(code, name){
       try{
         const r = await fetch(qrImg(code, 300));
         const b = await r.blob();
         const a = document.createElement('a');
         a.href = URL.createObjectURL(b);
-        a.download = 'QR_' + code + '.png';
-        document.body.appendChild(a); a.click(); a.remove();
+        a.download = 'QR_' + code + '_' + (name||'').replace(/\s+/g,'_') + '.png';
+        document.body.appendChild(a); 
+        a.click(); 
+        a.remove();
         setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
-        if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('تم تحميل الباركود','success');
+        if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('✅ تم تحميل الباركود','success');
       }catch(e){
         window.open(qrImg(code, 300), '_blank');
+      }
+    };
+    
+    // 🆕 تحميل كل الباركودات (ZIP) - تجريبي
+    window.downloadAllQR = async function(){
+      try{
+        const cards = document.querySelectorAll('.qr-card');
+        if(!cards.length){
+          if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('لا يوجد باركودات للتحميل','warning');
+          return;
+        }
+        
+        if(typeof ThemeManager?.toast === 'function'){
+          ThemeManager.toast('📦 جاري تحميل الباركودات... افتح كل واحدة يدوياً لو مش مدعوم','info');
+        }
+        
+        // تحميل أول 10 باركودات كحد أقصى (لتجنب حظر المتصفح)
+        const max = Math.min(cards.length, 10);
+        for(let i = 0; i < max; i++){
+          const card = cards[i];
+          const code = card.querySelector('.qr-codeline')?.textContent || '';
+          if(code){
+            await new Promise(r => setTimeout(r, 300));
+            window.downloadQR(code);
+          }
+        }
+        
+        if(cards.length > 10){
+          if(typeof ThemeManager?.toast === 'function'){
+            ThemeManager.toast(`تم تحميل أول 10 فقط من ${cards.length} — استخدم الطباعة للكل`,'warning');
+          }
+        }
+      }catch(e){
+        console.error('downloadAllQR error', e);
       }
     };
   </script>

@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>أداء الامتحان - EduFlow by Habbash Group</title>
+  <link rel="stylesheet" href="css/eduflow-theme.css">
+  <style>
+    /* Exam-specific styles */
+    .exam-topbar {
+      position: sticky; top: 0; z-index: 100;
+      background: color-mix(in srgb, var(--surface) 95%, transparent);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+    }
+    .countdown {
+      font-family: var(--font-en); font-size: 22px; font-weight: 900;
+      color: var(--primary); background: var(--primary-bg);
+      padding: 6px 16px; border-radius: 8px; letter-spacing: 1px;
+    }
+    .countdown.danger {
+      color: var(--danger); background: var(--danger-bg);
+      animation: blink 1s infinite;
+    }
+    @keyframes blink { 50% { opacity: 0.6; } }
+    
+    .viol-badge {
+      background: var(--danger); color: #fff; border-radius: 9999px;
+      padding: 4px 12px; font-size: 12px; font-weight: 800; font-family: var(--font-en);
+    }
+    
+    .q-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
+      transition: all 0.2s;
+    }
+    .q-card.flagged {
+      border-color: var(--warning); background: var(--warning-bg);
+    }
+    .q-num {
+      display: inline-flex; width: 32px; height: 32px; border-radius: 50%;
+      background: var(--grad); color: #fff; align-items: center; justify-content: center;
+      font-weight: 800; font-family: var(--font-en); margin-inline-end: 10px; flex-shrink: 0;
+    }
+    .q-text { font-size: 16px; font-weight: 700; line-height: 1.6; }
+    
+    .q-opt {
+      display: flex; align-items: center; gap: 12px; padding: 14px;
+      background: var(--surface-hover); border: 1.5px solid var(--border);
+      border-radius: 10px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s;
+    }
+    .q-opt:hover { border-color: var(--primary); background: var(--primary-bg); }
+    .q-opt.selected { border-color: var(--primary); background: var(--primary-bg); }
+    .q-opt input { accent-color: var(--primary); width: 18px; height: 18px; }
+    
+    .q-time-warn {
+      font-size: 11px; color: var(--warning); font-weight: 700; margin-inline-start: auto;
+    }
+    
+    .anti-cheat-banner {
+      background: var(--warning-bg); border: 1px solid var(--warning);
+      border-radius: 10px; padding: 14px; font-size: 13px; color: var(--warning);
+      margin-bottom: 20px; line-height: 1.7; display: flex; gap: 10px; align-items: flex-start;
+    }
+    
+    .gate-card {
+      max-width: 500px; margin: 40px auto; background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--radius-xl);
+      padding: 32px; text-align: center;
+    }
+    
+    .result-hero {
+      background: linear-gradient(135deg, var(--primary), var(--accent)); 
+      color: #fff; border-radius: var(--radius-xl);
+      padding: 40px 24px; text-align: center; margin: 20px 0;
+    }
+    
+    .parent-company-badge {
+      display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px;
+      border-radius: 9999px; background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: #fff; font-size: 11px; font-weight: 700; margin-bottom: 16px;
+    }
+
+    @media (max-width: 640px) {
+      .exam-topbar { padding: 10px; }
+      .countdown { font-size: 18px; padding: 4px 10px; }
+      .q-card { padding: 16px; }
+      .q-num { width: 28px; height: 28px; font-size: 14px; }
+      .q-text { font-size: 15px; }
+    }
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div>
+  
+  <!-- Top Bar (Hidden initially) -->
+  <div class="exam-topbar" id="topbar" style="display:none;">
+    <div style="flex:1;min-width:0;">
+      <strong id="exTitle" style="font-size:15px;">🎓 الامتحان</strong>
+      <div class="text-xs text-muted" id="exMeta" style="margin-top:2px;"></div>
+    </div>
+    <span class="viol-badge" id="violBadge" style="display:none;">⚠️ 0/3</span>
+    <span class="countdown" id="countdown">--:--</span>
+  </div>
+
+  <!-- Main Content Area -->
+  <div style="max-width:760px; margin:0 auto; padding:16px; position:relative; z-index:1;">
+    <div id="exArea"></div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/firebase-service.js"></script>
+  <script src="js/data-service.js"></script>
+  <script src="js/operations-service.js"></script>
+  <script src="js/ui-helpers.js"></script>
+  <script src="js/drive-service.js"></script>
+  <script src="js/theme-manager.js"></script>
+  <script src="js/auth-service.js"></script>
+
+  <script>
+    window.driveThumb = function(url) { 
+      try { 
+        if(!url) return ''; 
+        const u = String(url); 
+        const m = u.match(/\/d\/([\w-]+)/) || u.match(/[?&]id=([\w-]+)/) || u.match(/^([\w-]{20,})$/); 
+        return m ? ('https://drive.google.com/thumbnail?id='+m[1]+'&sz=w400') : u; 
+      } catch(e) { return url || ''; } 
+    };
+
+    const safeToast = (msg, type='info') => { try { if(typeof ThemeManager?.toast==='function') ThemeManager.toast(msg, type); } catch(e) {} };
+    
+    let currentUser = null, exam = null, started = false, submitted = false;
+    let violations = 0, suspicious = [], qStart = Date.now(), qWarnedAt = {};
+    let endTime = 0, countdownInt = null;
+    const MAX_V = 3, Q_WARN_MS = 120000, Q_FLAG_MS = 240000;
+
+    (async function boot(){
+      try {
+        if (typeof DataService?.init === 'function') await DataService.init();
+        currentUser = AuthService?.getCurrentUser ? AuthService.getCurrentUser() : null;
+        
+        if (!currentUser || currentUser.role !== 'student') {
+          document.getElementById('exArea').innerHTML = `<div class="gate-card">
+            <div class="parent-company-badge"><span>🏢</span><span>Habbash Group</span></div>
+            <div style="font-size:48px; margin-bottom:12px;">🔐</div>
+            <h3>يجب تسجيل الدخول كطالب</h3>
+            <p class="text-muted" style="margin:8px 0 20px;">هذه الصفحة مخصصة للطلاب فقط لأداء الامتحانات.</p>
+            <a class="btn btn-primary w-full" href="login.html">تسجيل الدخول</a>
+          </div>`;
+          return;
+        }
+
+        const exId = new URLSearchParams(location.search).get('ex');
+        if (!exId) { 
+          window.renderExList(); 
+          return; 
+        }
+        
+        exam = DataService?.getExamById ? DataService.getExamById(exId) : null;
+        if (!exam) { 
+          document.getElementById('exArea').innerHTML = `<div class="gate-card">
+            <div style="font-size:48px;">❌</div>
+            <h3>الامتحان غير موجود</h3>
+            <a href="student-dashboard.html" class="btn btn-secondary w-full" style="margin-top:16px;">العودة للداشبورد</a>
+          </div>`;
+          return; 
+        }
+
+        // Check attempts
+        const myAtt = DataService.getExamAttempts({studentId: currentUser.id, examId: exam.id});
+        if (myAtt.length >= (exam.maxAttempts || 1)) {
+          // 🆕 إخفاء الدرجة وإظهار الدعاء حتى في حالة محاولة إعادة الدخول
+          document.getElementById('exArea').innerHTML = `<div class="result-hero">
+            <div style="font-size:56px;">🤲</div>
+            <h2>تم تسليم هذا الامتحان مسبقاً</h2>
+            <div style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 12px; margin: 20px 0; font-size: 16px; font-weight: 700; line-height: 1.6;">
+              "رَبِّ اشْرَحْ لِي صَدْرِي * وَيَسِّرْ لِي أَمْرِي"
+              <br><br>
+              <span style="font-size: 14px; opacity: 0.9;">نسأل الله لك التوفيق والسداد، ونتيجة مشرفة بإذنه تعالى.</span>
+            </div>
+            <p style="opacity:.8; font-size:13px; margin-top:8px;">🔒 النتيجة قيد المراجعة من قبل الإدارة ولا تظهر للطالب.</p>
+          </div><a href="student-dashboard.html" class="btn btn-secondary w-full" style="margin-top:16px;">→ العودة للداشبورد</a>`;
+          return;
+        }
+
+        // Gate for Class Mode Exams
+        if (exam.mode === 'class') {
+          document.getElementById('exArea').innerHTML = `<div class="gate-card">
+            <div class="parent-company-badge"><span>🏢</span><span>Habbash Group</span></div>
+            <div style="font-size:48px; margin-top:12px;">🏫</div>
+            <h3>امتحان حصة</h3>
+            <p class="text-sm text-muted" style="margin:12px 0;">أدخل كود الدخول الذي أمدك به الأستاذ لبدء الامتحان</p>
+            <div class="form-group">
+              <input type="text" id="entryCode" class="form-input" placeholder="EXAM-XXXX" 
+                style="text-align:center; font-family:var(--font-en); letter-spacing:3px; text-transform:uppercase; font-size:18px; font-weight:800;">
+            </div>
+            <button class="btn btn-primary w-full btn-lg" onclick="window.checkEntryCode()">🔓 دخول الامتحان</button>
+            <a href="student-dashboard.html" class="btn btn-ghost w-full" style="margin-top:8px;">إلغاء</a>
+          </div>`;
+          return;
+        }
+
+        window.renderGate();
+      } catch(err) {
+        console.error('Boot error:', err);
+        document.getElementById('exArea').innerHTML = `<div class="gate-card">حدث خطأ: ${err.message}</div>`;
+      }
+    })();
+
+    window.renderExList = function(){
+      try {
+        const teachers = DataService.getStudentTeachers(currentUser.id);
+        const list = DataService.getExams().filter(e => teachers.some(t => t.group?.id === e.groupId));
+        
+        document.getElementById('exArea').innerHTML = `
+          <div class="gate-card" style="max-width:760px; text-align:right; padding:24px;">
+            <div class="parent-company-badge"><span>🏢</span><span>Habbash Group</span></div>
+            <h3 style="margin-bottom:16px;">📋 الامتحانات المتاحة</h3>
+            ${list.length ? list.map(e => {
+              const att = DataService.getExamAttempts({studentId: currentUser.id}).find(a => a.examId === e.id);
+              const modeLabel = e.mode === 'home' ? '🏠 منزلي' : e.mode === 'class' ? '🏫 حصة (بكود)' : '📝 ورقي';
+              return `<div class="q-card" style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+                <div>
+                  <strong style="font-size:15px;">${e.title}</strong>
+                  <div class="text-xs text-muted" style="margin-top:4px;">${modeLabel} · ⏱️ ${e.duration || 60} دقيقة · ❓ ${(e.questions||[]).length} سؤال</div>
+                </div>
+                ${e.mode === 'offline' ? '<span class="badge badge-muted">يُعمل في الحصة</span>' : 
+                  att ? '<span class="badge badge-success">تم التسليم بنجاح 🔒</span>' : 
+                  `<button class="btn btn-primary btn-sm" onclick="location.href='exam-taker.html?ex=${e.id}'">🎮 دخول</button>`}
+              </div>`;
+            }).join('') : '<div style="text-align:center; padding:20px; color:var(--text-muted);">لا توجد امتحانات متاحة لك حالياً</div>'}
+            <a href="student-dashboard.html" class="btn btn-ghost w-full" style="margin-top:16px;">→ العودة للداشبورد</a>
+          </div>`;
+      } catch(e) { console.error(e); }
+    };
+
+    window.checkEntryCode = function(){
+      try {
+        const val = (document.getElementById('entryCode')?.value || '').trim().toUpperCase();
+        const correct = (exam.backupCode || '').toUpperCase();
+        if (!correct || val !== correct) {
+          safeToast('❌ كود الدخول غير صحيح', 'error');
+          return;
+        }
+        window.renderGate();
+      } catch(e) { console.error(e); }
+    };
+
+    window.renderGate = function(){
+      try {
+        document.getElementById('exArea').innerHTML = `<div class="gate-card">
+          <div class="parent-company-badge"><span>🏢</span><span>Habbash Group</span></div>
+          <div style="font-size:56px; margin-top:12px;">🎓</div>
+          <h3 style="margin-top:12px;">${exam.title}</h3>
+          <div class="text-sm text-muted" style="margin:16px 0; line-height:2;">
+            ❓ عدد الأسئلة: <strong>${(exam.questions || []).length}</strong><br>
+            ⏱️ المدة الزمنية: <strong>${exam.duration || 60} دقيقة</strong><br>
+            🛡️ حماية الغش: <strong>مفعّلة</strong> (ملء شاشة إجباري)<br>
+            🤲 ملاحظة: بعد التسليم سيظهر لك دعاء بالتوفيق، والنتيجة تظهر للإدارة فقط.
+          </div>
+          <button class="btn btn-primary w-full btn-lg" onclick="window.startExam()">▶️ ابدأ الامتحان الآن</button>
+          <a href="student-dashboard.html" class="btn btn-ghost w-full" style="margin-top:8px;">إلغاء والعودة</a>
+        </div>`;
+      } catch(e) { console.error(e); }
+    };
+
+    window.startExam = function(){
+      try {
+        started = true;
+        // Force Fullscreen
+        try { 
+          const el = document.documentElement;
+          if (el.requestFullscreen) el.requestFullscreen();
+          else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+        } catch(e) {}
+        
+        document.getElementById('topbar').style.display = 'flex';
+        document.getElementById('exTitle').textContent = '🎓 ' + exam.title;
+        document.getElementById('exMeta').textContent = (exam.questions || []).length + ' سؤال';
+        
+        // Timer Setup
+        endTime = Date.now() + (exam.duration || 60) * 60000;
+        countdownInt = setInterval(window.tickCountdown, 1000);
+        window.tickCountdown();
+        
+        // Shuffle questions if required
+        let qs = [...(exam.questions || [])];
+        if (exam.randomizeQuestions) qs.sort(() => Math.random() - 0.5);
+        exam._renderQs = qs;
+        
+        document.getElementById('exArea').innerHTML = `
+          <div class="anti-cheat-banner">
+            <span style="font-size:20px;">🛡️</span>
+            <div>
+              <strong>تحذير أمني هام:</strong><br>
+              الخروج من الصفحة، التبديل بين النوافذ، أو إلغاء ملء الشاشة سيُحسب كـ "تحذير".<br>
+              عند الوصول إلى <strong>3 تحذيرات</strong> أو انتهاء الوقت، سيتم تسليم الامتحان <strong>تلقائياً</strong> على آخر إجاباتك.
+            </div>
+          </div>
+          ${qs.map((q, i) => {
+            const opts = q.type === 'mcq' ? (q.options || []) : q.type === 'truefalse' ? ['صح', 'خطأ'] : null;
+            const imgHtml = q.imageUrl ? `<img src="${window.driveThumb(q.imageUrl)}" style="width:100%; max-height:300px; object-fit:contain; border-radius:8px; margin-bottom:12px;" onerror="this.style.display='none'">` : '';
+            
+            return `<div class="q-card" data-q="${q.id}" id="qcard_${q.id}">
+              ${imgHtml}
+              <div style="margin-bottom:14px; display:flex; align-items:flex-start;">
+                <span class="q-num">${i + 1}</span>
+                <div style="flex:1;">
+                  <div class="q-text">${q.text || ''}</div>
+                  <span class="q-time-warn" id="qw_${q.id}"></span>
+                </div>
+              </div>
+              ${opts ? opts.map((o, oi) => {
+                const val = q.type === 'mcq' ? oi : (oi === 0 ? 'true' : 'false');
+                return `<label class="q-opt" onclick="window.pickOpt('${q.id}', this)">
+                  <input type="radio" name="q_${q.id}" value="${val}">
+                  <span>${o || ''}</span>
+                </label>`;
+              }).join('') : `<textarea class="form-textarea" rows="4" data-short="${q.id}" placeholder="اكتب إجابتك التفصيلية هنا..." onfocus="window.qFocus('${q.id}')"></textarea>`}
+            </div>`;
+          }).join('')}
+          <button class="btn btn-success w-full btn-lg" style="margin-top:20px; margin-bottom:40px;" onclick="window.submitExamNow()">📤 تسليم نهائي</button>`;
+          
+        window.bindAntiCheat();
+        window.startQTimer();
+      } catch(e) { 
+        console.error(e); 
+        safeToast('حدث خطأ أثناء بدء الامتحان', 'error'); 
+      }
+    };
+
+    window.pickOpt = function(qid, el){
+      try {
+        el.closest('.q-card').querySelectorAll('.q-opt').forEach(o => o.classList.remove('selected'));
+        el.classList.add('selected'); 
+        el.querySelector('input').checked = true;
+        window.qFocus(qid);
+      } catch(e) {}
+    };
+    
+    window.qFocus = function(qid){ 
+      qStart = Date.now(); 
+    };
+
+    window.tickCountdown = function(){
+      try {
+        const left = endTime - Date.now();
+        const el = document.getElementById('countdown');
+        if (left <= 0) { 
+          el.textContent = '00:00'; 
+          if (!submitted) { 
+            safeToast('⏰ انتهى الوقت المحدد! جاري التسليم التلقائي...', 'warning'); 
+            window.submitExamNow(true);
+          } 
+          return; 
+        }
+        const m = Math.floor(left / 60000), s = Math.floor((left % 60000) / 1000);
+        el.textContent = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        el.classList.toggle('danger', left < 60000); // Last minute warning
+      } catch(e) {}
+    };
+
+    window.startQTimer = function(){
+      setInterval(() => {
+        if (!started || submitted) return;
+        const elapsed = Date.now() - qStart;
+        document.querySelectorAll('.q-card[data-q]').forEach(c => {
+          const qid = c.dataset.q;
+          const warnEl = document.getElementById('qw_' + qid);
+          
+          if (c.contains(document.activeElement) || c.querySelector('input:checked')) {
+            if (elapsed > Q_FLAG_MS) { 
+              c.classList.add('flagged'); 
+              if (warnEl) warnEl.textContent = '🚩 وقت طويل جداً'; 
+              if (!qWarnedAt[qid + '_f']) {
+                qWarnedAt[qid + '_f'] = 1;
+                suspicious.push({type: 'long_time', question: qid, at: new Date().toISOString()});
+              } 
+            } else if (elapsed > Q_WARN_MS) { 
+              c.classList.add('flagged'); 
+              if (warnEl) warnEl.textContent = '⏰ أخذت وقتاً طويلاً'; 
+            }
+          }
+        });
+      }, 5000);
+    };
+
+    window.bindAntiCheat = function(){
+      document.addEventListener('visibilitychange', () => { 
+        if (document.hidden && !submitted) window.registerViolation('الخروج من صفحة الامتحان'); 
+      });
+      
+      window.addEventListener('blur', () => { 
+        if (!submitted) window.registerViolation('الخروج من نافذة الامتحان'); 
+      });
+      
+      document.addEventListener('fullscreenchange', () => { 
+        if (!document.fullscreenElement && started && !submitted) {
+          window.registerViolation('الخروج من وضع ملء الشاشة');
+          try { document.documentElement.requestFullscreen(); } catch(e) {}
+        }
+      });
+      
+      document.addEventListener('contextmenu', e => { 
+        if (started && !submitted) {
+          e.preventDefault(); 
+          window.registerViolation('محاولة استخدام الزر الأيمن'); 
+        }
+      });
+      
+      document.addEventListener('keydown', e => {
+        if (!submitted) {
+          const isCopyPaste = e.ctrlKey && ['c', 'v', 'u', 'a'].includes(e.key.toLowerCase());
+          const isInspect = e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'i');
+          if (isCopyPaste || isInspect) { 
+            e.preventDefault(); 
+            window.registerViolation('محاولة نسخ أو فتح أدوات المطور'); 
+          }
+        }
+      });
+    };
+
+    window.registerViolation = function(reason){
+      violations++;
+      suspicious.push({type: 'violation', reason, at: new Date().toISOString()});
+      
+      const badge = document.getElementById('violBadge');
+      if (badge) {
+        badge.style.display = 'inline-block';
+        badge.textContent = '⚠️ ' + violations + '/' + MAX_V;
+      }
+      
+      // 🆕 التسليم التلقائي عند الوصول لـ 3 مخالفات
+      if (violations >= MAX_V) { 
+        safeToast('🚨 تم التسليم التلقائي بسبب تكرار المخالفات!', 'error');
+        window.submitExamNow(true); 
+      } else { 
+        safeToast('⚠️ تحذير ' + violations + '/' + MAX_V + ': ' + reason, 'error'); 
+      }
+    };
+
+    window.submitExamNow = async function(auto){
+      try {
+        if (submitted) return;
+        submitted = true;
+        if (countdownInt) clearInterval(countdownInt);
+        
+        // Gather answers (آخر وضع حله الطالب)
+        const answers = [];
+        (exam._renderQs || exam.questions || []).forEach(q => {
+          if (q.type === 'short') { 
+            const ta = document.querySelector(`textarea[data-short="${q.id}"]`); 
+            answers.push({questionId: q.id, answer: ta ? ta.value.trim() : ''}); 
+          } else { 
+            const sel = document.querySelector(`input[name="q_${q.id}"]:checked`); 
+            answers.push({questionId: q.id, answer: sel ? sel.value : ''}); 
+          }
+        });
+
+        // Submit to DataService
+        await DataService.submitExamAttempt({
+          examId: exam.id, 
+          studentId: currentUser.id, 
+          answers,
+          startTime: new Date(endTime - (exam.duration || 60) * 60000).toISOString(),
+          endTime: new Date().toISOString(),
+          suspiciousActivities: suspicious.concat([{type: 'summary', violations, autoSubmitted: !!auto}])
+        });
+
+        // 🆕 Show Result Screen with Dua (No Grade Shown)
+        document.getElementById('topbar').style.display = 'none';
+        
+        document.getElementById('exArea').innerHTML = `
+          <div class="result-hero">
+            <div style="font-size:64px; margin-bottom: 16px;">🤲</div>
+            <h2 style="margin-bottom: 16px;">تم تسليم إجابتك بنجاح${auto ? ' (تلقائياً)' : ''}!</h2>
+            
+            <div style="background: rgba(255,255,255,0.15); padding: 24px; border-radius: 12px; margin: 20px 0; font-size: 18px; font-weight: 700; line-height: 1.8;">
+              "رَبِّ اشْرَحْ لِي صَدْرِي * وَيَسِّرْ لِي أَمْرِي * وَاحْلُلْ عُقْدَةً مِّن لِّسَانِي * يَفْقَهُوا قَوْلِي"
+              <br><br>
+              <span style="font-size: 15px; opacity: 0.9;">نسأل الله لك التوفيق والسداد، ونتيجة مشرفة بإذنه تعالى.</span>
+            </div>
+            
+            ${violations > 0 ? `<div style="background:rgba(239,68,68,0.2); border: 1px solid var(--danger); padding:12px; border-radius:8px; margin-top:16px; font-size:14px; color: #fca5a5;">⚠️ تنويه: تم تسجيل <strong>${violations}</strong> ملاحظة أمان أثناء الامتحان.</div>` : ''}
+            
+            <p style="opacity:.8; margin-top:16px; font-size:14px;">🔒 سيتم مراجعة الإجابات من قبل الإدارة، والنتيجة لا تظهر للطالب فوراً.</p>
+          </div>
+          <a href="student-dashboard.html" class="btn btn-secondary w-full btn-lg" style="margin-top:16px;">→ العودة للداشبورد</a>
+        `;
+        
+        // Exit fullscreen gracefully
+        try { if (document.fullscreenElement) document.exitFullscreen(); } catch(e) {}
+        
+      } catch(e) {
+        submitted = false; // Allow retry on network error
+        console.error('Submit error:', e);
+        safeToast('خطأ في الاتصال، يرجى المحاولة مرة أخرى', 'error');
+      }
+    };
+  </script>
+  <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}</script>
+</body>
+</html>

@@ -1,150 +1,299 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>مسح باركود - EduFlow</title>
-  <link rel="stylesheet" href="css/eduflow-theme.css">
-  <style>
-    .scan-wrap{max-width:520px;margin:30px auto;padding:16px;position:relative;z-index:1}
-    .cam-box{position:relative;border-radius:var(--radius-xl);overflow:hidden;border:2px solid var(--primary);background:#000;aspect-ratio:1/1}
-    .cam-box video{width:100%;height:100%;object-fit:cover}
-    .scan-line{position:absolute;left:8%;right:8%;height:3px;background:var(--primary);box-shadow:0 0 12px var(--primary);animation:scan 2s infinite;border-radius:2px}
-    @keyframes scan{0%,100%{top:12%}50%{top:86%}}
-    .cam-corners::before,.cam-corners::after{content:'';position:absolute;width:34px;height:34px;border:4px solid var(--primary)}
-    .cam-corners::before{top:10px;right:10px;border-left:none;border-bottom:none;border-radius:0 8px 0 0}
-    .cam-corners::after{bottom:10px;left:10px;border-right:none;border-top:none;border-radius:0 0 0 8px}
-  </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مسح باركود - EduFlow by Habbash Group</title>
+<link rel="stylesheet" href="css/eduflow-theme.css">
+<style>
+.cam-wrap{max-width:520px;margin:20px auto;padding:16px;position:relative;z-index:1}
+.cam-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:10px;flex-wrap:wrap}
+.back-btn{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 14px;color:var(--text);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:13px;transition:all .2s}
+.back-btn:hover{border-color:var(--primary);color:var(--primary)}
+.brand-mini{display:flex;align-items:center;gap:8px}
+.brand-mini-logo{width:36px;height:36px;border-radius:10px;background:var(--grad);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;box-shadow:var(--glow)}
+.brand-mini-text{font-size:14px;font-weight:800;color:var(--primary)}
+.brand-mini-sub{font-size:10px;color:var(--text-muted);display:block;margin-top:2px}
+.cam-box{position:relative;border-radius:var(--radius-xl);overflow:hidden;border:2px solid var(--primary);background:#000;aspect-ratio:1/1;box-shadow:0 8px 32px rgba(99,102,241,.25)}
+.cam-box video{width:100%;height:100%;object-fit:cover}
+.cam-box img.uploaded{width:100%;height:100%;object-fit:contain;background:#000}
+.scan-line{position:absolute;left:8%;right:8%;height:3px;background:var(--primary);box-shadow:0 0 12px var(--primary);animation:scan 2s infinite;border-radius:2px}
+@keyframes scan{0%,100%{top:12%}50%{top:86%}}
+.cam-corners::before,.cam-corners::after{content:'';position:absolute;width:34px;height:34px;border:4px solid var(--primary)}
+.cam-corners::before{top:10px;right:10px;border-left:none;border-bottom:none;border-radius:0 8px 0 0}
+.cam-corners::after{bottom:10px;left:10px;border-right:none;border-top:none;border-radius:0 0 0 8px}
+.cam-controls{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.cam-controls .btn{flex:1;min-width:120px}
+.hint-box{background:var(--surface-hover);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:12px;font-size:12px;color:var(--text-secondary);display:flex;gap:8px;align-items:flex-start}
+.hint-box .icon{font-size:16px;flex-shrink:0}
+.parent-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:9999px;background:linear-gradient(135deg,rgba(251,191,36,.15),rgba(245,158,11,.15));border:1px solid rgba(251,191,36,.3);color:var(--text-secondary);font-size:10px;font-weight:700}
+</style>
 </head>
 <body data-theme="dark">
-  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div>
-  <div class="scan-wrap">
-    <div style="text-align:center;margin-bottom:16px;">
-      <div class="sidebar-logo" data-logo style="margin:0 auto;width:56px;height:56px;"></div>
-      <h2 style="margin-top:8px;">📱 مسح باركود</h2>
-      <p class="text-sm text-muted">باركود طالب → بروفايل كامل · باركود حضور → تسجيل حضور</p>
+<div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div>
+<div class="cam-wrap">
+
+<div class="cam-header">
+  <a href="javascript:history.back()" class="back-btn">
+    <span>←</span>
+    <span>رجوع</span>
+  </a>
+  <div class="brand-mini">
+    <div class="brand-mini-logo">🎓</div>
+    <div>
+      <div class="brand-mini-text">EduFlow</div>
+      <span class="brand-mini-sub">by Habbash Group</span>
     </div>
-    <div class="cam-box"><video id="preview" muted playsinline></video><div class="scan-line"></div><div class="cam-corners"></div></div>
-    <div id="scanStatus" class="filter-info" style="margin-top:12px;text-align:center;">🎥 تشغيل الكاميرا...</div>
-    <div class="card" style="margin-top:16px;">
-      <div class="form-group"><label>أو اكتب الكود يدوياً</label><input type="text" id="manualCode" class="form-input" placeholder="EDU-1234 أو كود الحضور"></div>
-      <button class="btn btn-primary w-full" onclick="window.handleScan(document.getElementById('manualCode').value)">➡️ متابعة</button>
-    </div>
-    <div id="scanResult" style="margin-top:14px;"></div>
   </div>
+</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-  <script src="js/config.js"></script>
-  <script src="js/firebase-service.js"></script>
-  <script src="js/data-service.js"></script>
-  <script src="js/operations-service.js"></script>
-  <script src="js/ui-helpers.js"></script>
-  <script src="js/drive-service.js"></script>
-  <script src="js/theme-manager.js"></script>
-  <script src="js/auth-service.js"></script>
+<h2 style="text-align:center;margin-bottom:6px;">📱 مسح باركود</h2>
+<p class="text-sm text-muted" style="text-align:center;margin-bottom:16px;">
+  وجّه الكاميرا على باركود الطالب أو الحصة
+  <span class="parent-badge" style="margin-right:6px;">🏢 Habbash Group</span>
+</p>
 
-  <script>
-    let currentUser=null, stream=null, scanning=true, lastScan=0;
-    const video=document.getElementById('preview');
-    const canvas=document.createElement('canvas');
-    const ctx=canvas.getContext('2d',{willReadFrequently:true});
+<div class="cam-box" id="camBox">
+  <video id="preview" muted playsinline></video>
+  <div class="scan-line" id="scanLine"></div>
+  <div class="cam-corners"></div>
+</div>
 
-    (async function boot(){
-      try{
-        if(typeof DataService?.init==='function') await DataService.init();
-        currentUser = AuthService?.getCurrentUser ? AuthService.getCurrentUser() : null;
-        window.startCamera();
-      }catch(e){ console.error(e); }
-    })();
+<div class="cam-controls">
+  <button class="btn btn-secondary" onclick="window.toggleCamera()" id="flipBtn">
+    🔄 تبديل الكاميرا
+  </button>
+  <button class="btn btn-secondary" onclick="document.getElementById('uploadInput').click()">
+    🖼️ من الصورة
+  </button>
+  <input type="file" id="uploadInput" accept="image/*" style="display:none" onchange="window.handleUpload(event)">
+</div>
 
-    window.startCamera=async function(){
-      try{
-        stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
-        video.srcObject=stream;
-        await video.play();
-        document.getElementById('scanStatus').innerHTML='✅ الكاميرا شغالة — وجّه الباركود داخل الإطار';
-        requestAnimationFrame(window.tick);
-      }catch(e){
-        document.getElementById('scanStatus').innerHTML='⚠️ الكاميرا مش متاحة — استخدم الإدخال اليدوي بالأسفل';
+<div id="scanStatus" class="filter-info" style="margin-top:12px;text-align:center;">🎥 تشغيل الكاميرا...</div>
+
+<div class="hint-box">
+  <span class="icon">💡</span>
+  <div>
+    <strong>نصيحة:</strong> وجّه الكاميرا على الباركود من مسافة 15-30 سم. لو في إضاءة ضعيفة، جرّب مسح الباركود من الصورة.
+  </div>
+</div>
+
+<div class="card" style="margin-top:16px;">
+  <h3 style="font-size:14px;margin-bottom:10px;">⌨️ أو اكتب الكود يدوياً</h3>
+  <div class="form-group">
+    <label>الكود</label>
+    <input type="text" id="manualCode" class="form-input" placeholder="EDU-1234 أو EDUFLOW-ATT:QR-XXXX" autocomplete="off">
+  </div>
+  <button class="btn btn-primary w-full" onclick="window.goManual()">➡️ فتح الملف / تسجيل الحضور</button>
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="js/config.js"></script>
+<script src="js/firebase-service.js"></script>
+<script src="js/data-service.js"></script>
+<script src="js/operations-service.js"></script>
+<script src="js/ui-helpers.js"></script>
+<script src="js/drive-service.js"></script>
+<script src="js/theme-manager.js"></script>
+<script src="js/auth-service.js"></script>
+
+<script>
+let currentUser=null, scanning=true, lastScan=0, stream=null;
+let useFrontCamera=false;
+const video=document.getElementById('preview');
+const canvas=document.createElement('canvas');
+const ctx=canvas.getContext('2d',{willReadFrequently:true});
+
+(async function boot(){
+  try{
+    if(typeof DataService?.init==='function') await DataService.init();
+    currentUser = AuthService?.getCurrentUser ? AuthService.getCurrentUser() : null;
+    if(!currentUser){ window.location.href='login.html'; return; }
+    window.startCamera();
+  }catch(e){ console.error(e); }
+})();
+
+window.startCamera=async function(){
+  try{
+    if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
+    stream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:useFrontCamera?'user':'environment'},
+      audio:false
+    });
+    video.srcObject=stream;
+    video.style.display='block';
+    const uploaded=document.querySelector('.cam-box img.uploaded');
+    if(uploaded) uploaded.remove();
+    const scanLine=document.getElementById('scanLine');
+    if(scanLine) scanLine.style.display='block';
+    await video.play();
+    const st=document.getElementById('scanStatus');
+    if(st) st.innerHTML='✅ الكاميرا شغالة — امسح الباركود';
+    scanning=true;
+    requestAnimationFrame(window.tick);
+  }catch(e){
+    const st=document.getElementById('scanStatus');
+    if(st) st.innerHTML='⚠️ الكاميرا غير متاحة — استخدم الإدخال اليدوي أو رفع صورة';
+    scanning=false;
+  }
+};
+
+window.toggleCamera=async function(){
+  useFrontCamera=!useFrontCamera;
+  await window.startCamera();
+  if(typeof ThemeManager?.toast==='function'){
+    ThemeManager.toast(useFrontCamera?'📷 الكاميرا الأمامية':'📷 الكاميرا الخلفية','info');
+  }
+};
+
+window.tick=function(){
+  try{
+    if(scanning && video.readyState===video.HAVE_ENOUGH_DATA && window.jsQR){
+      canvas.width=video.videoWidth; 
+      canvas.height=video.videoHeight;
+      ctx.drawImage(video,0,0);
+      const img=ctx.getImageData(0,0,canvas.width,canvas.height);
+      const code=jsQR(img.data,img.width,img.height,{inversionAttempts:'dontInvert'});
+      if(code && code.data && (Date.now()-lastScan>2500)){
+        lastScan=Date.now();
+        if(navigator.vibrate) navigator.vibrate(120);
+        window.handleScan(code.data);
       }
-    };
+    }
+  }catch(e){}
+  if(scanning) requestAnimationFrame(window.tick);
+};
 
-    window.tick=function(){
-      try{
-        if(scanning && video.readyState===video.HAVE_ENOUGH_DATA && window.jsQR){
-          canvas.width=video.videoWidth; canvas.height=video.videoHeight;
-          ctx.drawImage(video,0,0);
-          const img=ctx.getImageData(0,0,canvas.width,canvas.height);
-          const code=jsQR(img.data,img.width,img.height);
-          if(code && code.data && (Date.now()-lastScan>2500)){
-            lastScan=Date.now();
-            if(navigator.vibrate) navigator.vibrate(120);
-            window.handleScan(code.data);
+// 🆕 مسح باركود من صورة مرفوعة
+window.handleUpload=async function(event){
+  try{
+    const file=event.target.files[0];
+    if(!file) return;
+    
+    scanning=false;
+    const st=document.getElementById('scanStatus');
+    if(st) st.innerHTML='🔍 جاري تحليل الصورة...';
+    
+    // عرض الصورة
+    video.style.display='none';
+    const scanLine=document.getElementById('scanLine');
+    if(scanLine) scanLine.style.display='none';
+    
+    let uploadedImg=document.querySelector('.cam-box img.uploaded');
+    if(!uploadedImg){
+      uploadedImg=document.createElement('img');
+      uploadedImg.className='uploaded';
+      document.getElementById('camBox').appendChild(uploadedImg);
+    }
+    
+    const reader=new FileReader();
+    reader.onload=function(e){
+      uploadedImg.src=e.target.result;
+      const img=new Image();
+      img.onload=function(){
+        canvas.width=img.width;
+        canvas.height=img.height;
+        ctx.drawImage(img,0,0);
+        const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+        
+        if(window.jsQR){
+          const code=jsQR(imgData.data,imgData.width,imgData.height,{inversionAttempts:'attemptBoth'});
+          if(code && code.data){
+            if(navigator.vibrate) navigator.vibrate([100,50,100]);
+            if(st) st.innerHTML='✅ تم العثور على باركود في الصورة!';
+            setTimeout(()=>window.handleScan(code.data),500);
+          }else{
+            if(st) st.innerHTML='❌ لم يتم العثور على باركود في الصورة — جرّب صورة أوضح';
+            scanning=true;
           }
         }
-      }catch(e){}
-      requestAnimationFrame(window.tick);
+      };
+      img.src=e.target.result;
     };
+    reader.readAsDataURL(file);
+  }catch(e){
+    console.error(e);
+    if(typeof ThemeManager?.toast==='function') ThemeManager.toast('خطأ في قراءة الصورة','error');
+  }
+  event.target.value='';
+};
 
-    // 🧠 التوجيه الذكي حسب نوع الباركود ونوع المستخدم
-    window.handleScan=function(raw){
-      try{
-        raw=String(raw||'').trim();
-        if(!raw) return;
-        scanning=false;
+window.goManual=function(){
+  const v=document.getElementById('manualCode')?.value.trim();
+  if(!v){
+    if(typeof ThemeManager?.toast==='function') ThemeManager.toast('اكتب الكود الأول','warning');
+    return;
+  }
+  window.handleScan(v);
+};
 
-        // 1) باركود حضور حصة
-        if(raw.includes('EDUFLOW-ATT:')){
-          const code=raw.split('EDUFLOW-ATT:')[1]||'';
-          window.attendanceFlow(code);
-          return;
+// ✅ معالجة الباركود: طالب → بروفايل | حضور → تسجيل
+window.handleScan=function(data){
+  try{
+    data=String(data||'').trim();
+    if(!data){
+      if(typeof ThemeManager?.toast==='function') ThemeManager.toast('باركود فارغ','error');
+      return;
+    }
+    
+    // 🆕 باركود حضور
+    if(data.includes('EDUFLOW-ATT:')){
+      const code=data.split('EDUFLOW-ATT:')[1]||'';
+      if(currentUser?.role==='student'){
+        (async()=>{
+          const r=await DataService.checkInByCode(currentUser.id,code);
+          if(typeof ThemeManager?.toast==='function'){
+            ThemeManager.toast(r.success?'✅ تم تسجيل الحضور':r.message, r.success?'success':'error');
+          }
+          if(r.success){
+            setTimeout(()=>{ window.location.href='student-dashboard.html'; },1200);
+          }
+        })();
+      }else{
+        // المساعد/Admin يمسح باركود حضور → يفتح صفحة الحضور للمجموعة
+        if(typeof ThemeManager?.toast==='function'){
+          ThemeManager.toast('📋 ده باركود حضور للطالب — يمسحه من داشبورده','warning');
         }
-        // 2) استخراج كود الطالب
-        let m=raw.match(/code=([A-Za-z]+-?\d+)/i)||raw.match(/(EDU-\d+)/i);
-        const code=m?m[1].toUpperCase():raw.toUpperCase();
-
-        const role=currentUser?.role;
-        let target;
-        if(role==='super_admin'||role==='assistant'||role==='teacher'){
-          target='student-qr.html?code='+code; // بروفايل إدارة كامل
-        }else if(role==='student'){
-          target=(currentUser.code&&currentUser.code.toUpperCase()===code)?'student-dashboard.html':'student-qr.html?code='+code;
-        }else if(role==='parent'){
-          target='student-qr.html?code='+code; // بيوجّهه تلقائياً للداشبورد
-        }else{
-          target='student-qr.html?code='+code; // زائر: عرض عام + دخول
-        }
-        document.getElementById('scanResult').innerHTML=`<div class="card" style="text-align:center;"><div style="font-size:36px;">✅</div><strong>تم المسح: <span style="font-family:var(--font-en);">${code}</span></strong><p class="text-sm text-muted">ثانية واحدة وبنحوّلك...</p></div>`;
-        setTimeout(()=>{ window.location.href=target; },900);
-      }catch(e){
-        console.error(e);
-        scanning=true;
       }
-    };
+      return;
+    }
+    
+    // 🆕 باركود طالب
+    const m=data.match(/code=([A-Za-z0-9-]+)/i)||data.match(/(EDU-[A-Z0-9-]+)/i);
+    const code=m?m[1]:data;
+    
+    // لو المساعد/Admin → يفتح بروفايل الطالب
+    if(currentUser?.role==='assistant'||currentUser?.role==='super_admin'||currentUser?.role==='teacher'){
+      scanning=false;
+      window.location.href='assistant-dashboard.html?openStudent='+encodeURIComponent(code);
+    }else{
+      // الطالب يمسح باركود طالب تاني؟ (مش شائع)
+      scanning=false;
+      window.location.href='student-qr.html?code='+encodeURIComponent(code);
+    }
+  }catch(e){
+    console.error(e);
+    if(typeof ThemeManager?.toast==='function') ThemeManager.toast('خطأ في معالجة الباركود','error');
+  }
+};
 
-    // ✋ تسجيل حضور طالب بكود الحصة
-    window.attendanceFlow=async function(code){
-      try{
-        const resEl=document.getElementById('scanResult');
-        if(!currentUser || currentUser.role!=='student'){
-          if(resEl) resEl.innerHTML='<div class="card" style="text-align:center;border-color:var(--warning);">⚠️ ده باركود <strong>حضور حصة</strong> — لازم تكون مسجل دخول كطالب الأول<br><a class="btn btn-primary btn-sm" style="margin-top:8px;" href="login.html">تسجيل دخول</a></div>';
-          scanning=true; return;
-        }
-        const r = await DataService.checkInByCode(currentUser.id, code);
-        if(resEl){
-          resEl.innerHTML = r.success
-            ? `<div class="card" style="text-align:center;border-color:var(--success);"><div style="font-size:40px;">✅</div><strong>تم تسجيل حضورك!</strong><div class="text-sm text-muted">مجموعة: ${r.groupName||''}</div></div>`
-            : `<div class="card" style="text-align:center;border-color:var(--danger);">❌ ${r.message||'فشل التسجيل'}</div>`;
-        }
-        if(typeof ThemeManager?.toast==='function') ThemeManager.toast(r.success?'✅ تم الحضور':'❌ '+r.message, r.success?'success':'error');
-        scanning=true;
-      }catch(e){ scanning=true; console.error(e); }
-    };
+window.addEventListener('beforeunload',function(){
+  try{
+    if(stream) stream.getTracks().forEach(t=>t.stop());
+  }catch(e){}
+});
 
-    window.addEventListener('beforeunload',()=>{ try{stream?.getTracks().forEach(t=>t.stop());}catch(e){} });
-  </script>
-  <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}</script>
+// ✅ دعم اختصار Enter في حقل الإدخال اليدوي
+document.addEventListener('keydown',function(e){
+  if(e.key==='Enter' && document.activeElement?.id==='manualCode'){
+    window.goManual();
+  }
+});
+</script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
 </body>
 </html>

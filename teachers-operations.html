@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>إدارة وتشغيل الأساتذة - EduFlow</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إدارة وتشغيل الأساتذة - Habbash Group</title>
   <link rel="stylesheet" href="css/eduflow-theme.css">
   <style>
-    .ops-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;text-align:center;transition:all var(--t)}
+    .ops-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;text-align:center;transition:all .2s}
     .ops-card:hover{border-color:var(--primary-border);transform:translateY(-2px)}
     .ops-card-value{font-size:30px;font-weight:800;font-family:var(--font-en);color:var(--primary)}
     .ops-card-label{font-size:12px;color:var(--text-muted);margin-top:4px}
@@ -13,7 +14,7 @@
     .ops-card.critical .ops-card-value{color:var(--danger)}
     .ops-card.warning .ops-card-value{color:var(--warning)}
     .teacher-row,.task-row{background:var(--surface-hover);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid var(--border)}
-    .tag{display:inline-block;padding:2px 9px;border-radius:9999px;font-size:11px;font-weight:700;background:var(--primary-soft);color:var(--primary);margin-inline-end:4px;margin-bottom:4px}
+    .tag{display:inline-block;padding:2px 9px;border-radius:9999px;font-size:11px;font-weight:700;background:var(--primary-bg);color:var(--primary);margin-inline-end:4px;margin-bottom:4px}
     .tag.rel-am{background:var(--info-bg);color:var(--info)}
     .tag.rel-bm{background:var(--warning-bg);color:var(--warning)}
     .tag.rel-both{background:var(--success-bg);color:var(--success)}
@@ -21,7 +22,7 @@
     .prio-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-inline-end:6px}
     .chk-grid{display:flex;flex-wrap:wrap;gap:8px}
     .chk-grid label{display:flex;align-items:center;gap:6px;background:var(--surface-hover);padding:7px 12px;border-radius:8px;cursor:pointer;font-size:13px;border:1px solid var(--border)}
-    .chk-grid label:has(input:checked){border-color:var(--primary);background:var(--primary-soft)}
+    .chk-grid label:has(input:checked){border-color:var(--primary);background:var(--primary-bg)}
     .empty-state{text-align:center;padding:32px;color:var(--text-muted)}
     .empty-state-icon{font-size:44px;opacity:.5;margin-bottom:8px}
     .cal-toolbar{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
@@ -31,7 +32,7 @@
     .cal-cell:hover{border-color:var(--primary)}
     .cal-cell.empty{opacity:.35;cursor:default}
     .cal-day-num{font-size:12px;font-weight:800;margin-bottom:6px;color:var(--text-muted)}
-    .cal-chip{font-size:11px;border-radius:6px;padding:3px 6px;margin-bottom:4px;background:var(--primary-soft);color:var(--primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .cal-chip{font-size:11px;border-radius:6px;padding:3px 6px;margin-bottom:4px;background:var(--primary-bg);color:var(--primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .cal-chip.critical{background:rgba(239,68,68,.15);color:#ef4444}
     .cal-chip.high{background:rgba(249,115,22,.15);color:#f97316}
     .cal-chip.medium{background:rgba(234,179,8,.15);color:#eab308}
@@ -56,7 +57,7 @@
     .detail-box .val{font-weight:700;font-size:13px}
     .notif-bell{position:relative}
     .notif-count{position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;display:flex;align-items:center;justify-content:center}
-    .notif-dropdown{position:absolute;top:44px;left:0;width:320px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);z-index:200;max-height:400px;overflow-y:auto}
+    .notif-dropdown{position:absolute;top:44px;left:0;width:320px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 10px 15px -3px rgba(0,0,0,0.1);z-index:200;max-height:400px;overflow-y:auto}
     .report-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px}
     .report-table{width:100%;border-collapse:collapse;font-size:13px}
     .report-table th{text-align:right;padding:10px;border-bottom:2px solid var(--border);font-weight:800;color:var(--text-muted)}
@@ -71,8 +72,10 @@
     .note-item{background:var(--surface-hover);border-radius:8px;padding:12px;margin-bottom:8px;border-right:3px solid var(--primary)}
     .note-meta{font-size:11px;color:var(--text-muted);margin-top:6px}
     .filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
-    .filter-btn{padding:7px 15px;border-radius:9999px;font-size:12px;font-weight:700;background:var(--surface-hover);color:var(--text-secondary);border:1px solid var(--border);cursor:pointer;transition:all var(--t)}
+    .filter-btn{padding:7px 15px;border-radius:9999px;font-size:12px;font-weight:700;background:var(--surface-hover);color:var(--text-secondary);border:1px solid var(--border);cursor:pointer;transition:all .2s}
     .filter-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .parent-company-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:9999px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#fff;font-size:11px;font-weight:700;margin-top:8px}
+    
     @media(max-width:768px){
       .calendar-month{gap:5px}
       .cal-cell{min-height:82px;padding:6px}
@@ -86,14 +89,14 @@
 </head>
 <body data-theme="dark">
   <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div>
-  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="document.getElementById('sidebar').classList.remove('open')"></div>
 
   <div class="app-layout">
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="sidebar-logo" data-logo></div>
         <div>
-          <div class="sidebar-brand-name" data-brand-name>EduFlow</div>
+          <div class="sidebar-brand-name" data-brand-name>Habbash Group</div>
           <div class="sidebar-brand-tagline">Teachers Operations</div>
         </div>
       </div>
@@ -106,17 +109,16 @@
             <div class="sidebar-user-role">إدارة الأساتذة</div>
           </div>
         </div>
-        <button class="btn btn-ghost w-full" onclick="handleLogout()">🚪 خروج</button>
+        <div class="parent-company-badge"><span>🏢</span><span>Habbash Group</span></div>
+        <button class="btn btn-ghost w-full" onclick="window.handleLogout()" style="margin-top:8px;">🚪 خروج</button>
       </div>
     </aside>
 
     <main class="main-content">
       <header class="main-header">
         <div class="main-header-right">
-          <button class="menu-toggle" id="menuToggle">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-            </svg>
+          <button class="menu-toggle" id="menuToggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
           <div>
             <h1 class="page-title" id="pageTitle">إدارة الأساتذة</h1>
@@ -126,57 +128,44 @@
         <div class="main-header-left">
           <div class="header-actions">
             <div style="position:relative;">
-              <button class="icon-btn notif-bell" onclick="toggleNotifDropdown()">
-                🔔
-                <span class="notif-count" id="notifCount">0</span>
-              </button>
-              <div id="notifDropdown" class="notif-dropdown hidden">
+              <button class="icon-btn notif-bell" onclick="window.toggleNotifDropdown()">🔔<span class="notif-count" id="notifCount">0</span></button>
+              <div id="notifDropdown" class="notif-dropdown" style="display:none;">
                 <div style="padding:12px;border-bottom:1px solid var(--border);font-weight:700;">🔔 الإشعارات</div>
                 <div id="notifList"></div>
               </div>
             </div>
             <a href="admin-dashboard.html" class="btn btn-ghost btn-sm">→ الأدمن</a>
-            <button class="icon-btn" id="themeToggle"></button>
+            <button class="icon-btn" id="themeToggle" onclick="if(typeof ThemeManager?.toggleTheme==='function')ThemeManager.toggleTheme()"></button>
           </div>
         </div>
       </header>
 
       <div class="content-area">
-
         <!-- Overview -->
         <section class="section active" id="section-overview">
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:20px;" id="opsCards"></div>
-          <div class="card" style="margin-bottom:14px;">
-            <div class="card-header"><h3 class="card-title">🔔 تنبيهات اليوم</h3></div>
-            <div id="todayAlerts"></div>
-          </div>
-          <div class="card">
-            <div class="card-header"><h3 class="card-title">📍 اقتراحات تنظيمية</h3></div>
-            <div id="smartSuggestions"></div>
-          </div>
+          <div class="card" style="margin-bottom:14px;"><div class="card-header"><h3 class="card-title">🔔 تنبيهات اليوم</h3></div><div id="todayAlerts"></div></div>
+          <div class="card"><div class="card-header"><h3 class="card-title">📍 اقتراحات تنظيمية</h3></div><div id="smartSuggestions"></div></div>
         </section>
 
         <!-- Calendar -->
         <section class="section" id="section-calendar">
           <div class="section-header">
-            <div>
-              <h2 class="section-title">📅 Calendar التشغيل</h2>
-              <p class="text-sm text-muted">Day / Week / Month + إنشاء مهام ومواعيد</p>
-            </div>
-            <button class="btn btn-primary" onclick="openTaskModal()">+ Task / Event</button>
+            <div><h2 class="section-title">📅 Calendar التشغيل</h2><p class="text-sm text-muted">Day / Week / Month + إنشاء مهام ومواعيد</p></div>
+            <button class="btn btn-primary" onclick="window.openTaskModal()">+ Task / Event</button>
           </div>
           <div class="card">
             <div class="cal-toolbar">
               <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button class="btn btn-secondary btn-sm" onclick="moveCal(-1)">السابق</button>
-                <button class="btn btn-ghost btn-sm" onclick="goToday()">اليوم</button>
-                <button class="btn btn-secondary btn-sm" onclick="moveCal(1)">التالي</button>
+                <button class="btn btn-secondary btn-sm" onclick="window.moveCal(-1)">السابق</button>
+                <button class="btn btn-ghost btn-sm" onclick="window.goToday()">اليوم</button>
+                <button class="btn btn-secondary btn-sm" onclick="window.moveCal(1)">التالي</button>
               </div>
               <div><strong id="calTitle"></strong></div>
               <div class="filter-bar" style="margin:0;">
-                <button class="filter-btn active" onclick="setCalView('day',this)">Day</button>
-                <button class="filter-btn" onclick="setCalView('week',this)">Week</button>
-                <button class="filter-btn" onclick="setCalView('month',this)">Month</button>
+                <button class="filter-btn active" onclick="window.setCalView('day',this)">Day</button>
+                <button class="filter-btn" onclick="window.setCalView('week',this)">Week</button>
+                <button class="filter-btn" onclick="window.setCalView('month',this)">Month</button>
               </div>
             </div>
             <div id="calendarView"></div>
@@ -186,19 +175,16 @@
         <!-- Tasks -->
         <section class="section" id="section-tasks">
           <div class="section-header">
-            <div>
-              <h2 class="section-title">✅ Tasks & Events</h2>
-              <p class="text-sm text-muted">كل المهام والمواعيد الخاصة بالأساتذة</p>
-            </div>
-            <button class="btn btn-primary" onclick="openTaskModal()">+ مهمة</button>
+            <div><h2 class="section-title">✅ Tasks & Events</h2><p class="text-sm text-muted">كل المهام والمواعيد الخاصة بالأساتذة</p></div>
+            <button class="btn btn-primary" onclick="window.openTaskModal()">+ مهمة</button>
           </div>
           <div class="card" style="margin-bottom:14px;">
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
-              <div class="form-group"><label>بحث</label><input id="taskSearch" class="form-input" placeholder="بحث..." onkeyup="loadTasks()"></div>
-              <div class="form-group"><label>مدرس</label><select id="taskTeacherFilter" class="form-select" onchange="loadTasks()"></select></div>
-              <div class="form-group"><label>نوع</label><select id="taskTypeFilter" class="form-select" onchange="loadTasks()"></select></div>
-              <div class="form-group"><label>أولوية</label><select id="taskPrioFilter" class="form-select" onchange="loadTasks()"><option value="">الكل</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
-              <div class="form-group"><label>حالة</label><select id="taskStatusFilter" class="form-select" onchange="loadTasks()"><option value="">الكل</option><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="postponed">Postponed</option></select></div>
+              <div class="form-group"><label>بحث</label><input id="taskSearch" class="form-input" placeholder="بحث..." onkeyup="window.loadTasks()"></div>
+              <div class="form-group"><label>مدرس</label><select id="taskTeacherFilter" class="form-select" onchange="window.loadTasks()"></select></div>
+              <div class="form-group"><label>نوع</label><select id="taskTypeFilter" class="form-select" onchange="window.loadTasks()"></select></div>
+              <div class="form-group"><label>أولوية</label><select id="taskPrioFilter" class="form-select" onchange="window.loadTasks()"><option value="">الكل</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
+              <div class="form-group"><label>حالة</label><select id="taskStatusFilter" class="form-select" onchange="window.loadTasks()"><option value="">الكل</option><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="postponed">Postponed</option></select></div>
             </div>
           </div>
           <div id="tasksList"></div>
@@ -207,17 +193,10 @@
         <!-- Teachers -->
         <section class="section" id="section-teachers">
           <div class="section-header">
-            <div>
-              <h2 class="section-title">👨‍🏫 المدرسون</h2>
-              <p class="text-sm text-muted">أضف أي عدد من المدرسين</p>
-            </div>
-            <button class="btn btn-primary" onclick="openTeacherModal()">+ إضافة مدرس</button>
+            <div><h2 class="section-title">👨‍🏫 المدرسون</h2><p class="text-sm text-muted">أضف أي عدد من المدرسين</p></div>
+            <button class="btn btn-primary" onclick="window.openTeacherModal()">+ إضافة مدرس</button>
           </div>
-          <div class="card" style="margin-bottom:14px;">
-            <div class="search-bar">
-              <input type="text" id="tSearch" class="form-input" placeholder="بحث بالاسم أو المادة أو المنطقة..." onkeyup="loadTeachers()">
-            </div>
-          </div>
+          <div class="card" style="margin-bottom:14px;"><div class="search-bar"><input type="text" id="tSearch" class="form-input" placeholder="بحث بالاسم أو المادة أو المنطقة..." onkeyup="window.loadTeachers()"></div></div>
           <div id="teachersList"></div>
         </section>
 
@@ -229,17 +208,14 @@
         <!-- Reports -->
         <section class="section" id="section-reports-ops">
           <div class="section-header">
-            <div>
-              <h2 class="section-title">📊 تقارير التشغيل</h2>
-              <p class="text-sm text-muted">إحصائيات شاملة للمهام والمواعيد</p>
-            </div>
+            <div><h2 class="section-title">📊 تقارير التشغيل</h2><p class="text-sm text-muted">إحصائيات شاملة للمهام والمواعيد</p></div>
           </div>
           <div class="card" style="margin-bottom:16px;">
             <div class="filter-bar">
-              <button class="filter-btn active" onclick="setReportRange('today',this)">اليوم</button>
-              <button class="filter-btn" onclick="setReportRange('week',this)">الأسبوع</button>
-              <button class="filter-btn" onclick="setReportRange('month',this)">الشهر</button>
-              <button class="filter-btn" onclick="setReportRange('all',this)">الكل</button>
+              <button class="filter-btn active" onclick="window.setReportRange('today',this)">اليوم</button>
+              <button class="filter-btn" onclick="window.setReportRange('week',this)">الأسبوع</button>
+              <button class="filter-btn" onclick="window.setReportRange('month',this)">الشهر</button>
+              <button class="filter-btn" onclick="window.setReportRange('all',this)">الكل</button>
             </div>
           </div>
           <div id="reportsContent"></div>
@@ -249,7 +225,7 @@
         <section class="section" id="section-locations">
           <div class="section-header">
             <div><h2 class="section-title">📍 المناطق والأماكن</h2></div>
-            <button class="btn btn-primary" onclick="openLocationModal()">+ إضافة مكان</button>
+            <button class="btn btn-primary" onclick="window.openLocationModal()">+ إضافة مكان</button>
           </div>
           <div id="locationsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;"></div>
         </section>
@@ -258,7 +234,7 @@
         <section class="section" id="section-types">
           <div class="section-header">
             <div><h2 class="section-title">🏷️ أنواع الأنشطة</h2></div>
-            <button class="btn btn-primary" onclick="openTypeModal()">+ نوع جديد</button>
+            <button class="btn btn-primary" onclick="window.openTypeModal()">+ نوع جديد</button>
           </div>
           <div id="typesList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;"></div>
         </section>
@@ -272,17 +248,12 @@
             <div class="form-group">
               <label>Buffer Time بين المواعيد</label>
               <select id="setBuffer" class="form-select">
-                <option value="0">بدون</option>
-                <option value="15">15 دقيقة</option>
-                <option value="30">30 دقيقة</option>
-                <option value="45">45 دقيقة</option>
-                <option value="60">60 دقيقة</option>
+                <option value="0">بدون</option><option value="15">15 دقيقة</option><option value="30">30 دقيقة</option><option value="45">45 دقيقة</option><option value="60">60 دقيقة</option>
               </select>
             </div>
-            <button class="btn btn-primary w-full" onclick="saveSettings()">💾 حفظ الإعدادات</button>
+            <button class="btn btn-primary w-full" onclick="window.saveSettings()">💾 حفظ الإعدادات</button>
           </div>
         </section>
-
       </div>
     </main>
   </div>
@@ -297,46 +268,22 @@
   <script src="js/auth-service.js"></script>
 
   <script>
-    const DAYS=[
-      {en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},{en:'Tuesday',ar:'الثلاثاء'},
-      {en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'},{en:'Saturday',ar:'السبت'}
-    ];
-
-    const PRIORITIES={
-      critical:{ar:'Critical',color:'#ef4444',icon:'🔴'},
-      high:{ar:'High',color:'#f97316',icon:'🟠'},
-      medium:{ar:'Medium',color:'#eab308',icon:'🟡'},
-      low:{ar:'Low',color:'#22c55e',icon:'🟢'}
+    // 🆕 Safe toast wrapper لضمان التوافق
+    window.safeToast = function(msg, type='success') {
+      try {
+        if (typeof ThemeManager?.toast === 'function') ThemeManager.toast(msg, type);
+        else console.log(`[Toast ${type}]`, msg);
+      } catch(e) { console.log('[Toast fallback]', msg); }
     };
 
-    const STATUSES={
-      pending:'Pending',in_progress:'In Progress',completed:'Completed',cancelled:'Cancelled',postponed:'Postponed'
-    };
-
-    const RELATIONS={
-      assistant:{ar:'Assistant',cls:'rel-am'},
-      business:{ar:'Business Manager',cls:'rel-bm'},
-      both:{ar:'Assistant + Business Manager',cls:'rel-both'}
-    };
+    const DAYS=[{en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},{en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'},{en:'Saturday',ar:'السبت'}];
+    const PRIORITIES={critical:{ar:'Critical',color:'#ef4444',icon:'🔴'},high:{ar:'High',color:'#f97316',icon:'🟠'},medium:{ar:'Medium',color:'#eab308',icon:'🟡'},low:{ar:'Low',color:'#22c55e',icon:'🟢'}};
+    const STATUSES={pending:'Pending',in_progress:'In Progress',completed:'Completed',cancelled:'Cancelled',postponed:'Postponed'};
+    const RELATIONS={assistant:{ar:'Assistant',cls:'rel-am'},business:{ar:'Business Manager',cls:'rel-bm'},both:{ar:'Assistant + Business Manager',cls:'rel-both'}};
 
     const TOPS={
-      data:{
-        teachers:[],locations:[],tasks:[],events:[],types:[],recurring:[],notes:[],notifications:[],
-        settings:{workStart:'12:00',workEnd:'22:00',buffer:15}
-      },
-      defaultTypes:[
-        {id:'class',icon:'👨‍🏫',name:'حصة / مجموعة'},
-        {id:'shooting',icon:'🎥',name:'Production / Shooting'},
-        {id:'event',icon:'🎬',name:'Event'},
-        {id:'meeting',icon:'🤝',name:'اجتماع'},
-        {id:'admin',icon:'📋',name:'متابعة إدارية'},
-        {id:'online',icon:'📱',name:'متابعة أونلاين'},
-        {id:'visit',icon:'📍',name:'زيارة مدرس'},
-        {id:'content',icon:'📝',name:'تجهيز محتوى'},
-        {id:'marketing',icon:'📢',name:'Marketing'},
-        {id:'travel',icon:'🚗',name:'انتقال'},
-        {id:'other',icon:'🔧',name:'مهمة أخرى'}
-      ],
+      data:{teachers:[],locations:[],tasks:[],events:[],types:[],recurring:[],notes:[],notifications:[],settings:{workStart:'12:00',workEnd:'22:00',buffer:15}},
+      defaultTypes:[{id:'class',icon:'👨‍🏫',name:'حصة / مجموعة'},{id:'shooting',icon:'🎥',name:'Production / Shooting'},{id:'event',icon:'🎬',name:'Event'},{id:'meeting',icon:'🤝',name:'اجتماع'},{id:'admin',icon:'📋',name:'متابعة إدارية'},{id:'online',icon:'📱',name:'متابعة أونلاين'},{id:'visit',icon:'📍',name:'زيارة مدرس'},{id:'content',icon:'📝',name:'تجهيز محتوى'},{id:'marketing',icon:'📢',name:'Marketing'},{id:'travel',icon:'🚗',name:'انتقال'},{id:'other',icon:'🔧',name:'مهمة أخرى'}],
       load(){
         const s=localStorage.getItem('eduflow_ops');
         if(s){try{this.data={...this.data,...JSON.parse(s)};}catch(e){}}
@@ -358,25 +305,22 @@
       uid(p){return p+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);}
     };
 
-    let currentUser=null;
-    let calView='day';
-    let calDate=new Date();
-    let reportRange='today';
-    let currentTeacherProfile=null;
+    let currentUser=null, calView='day', calDate=new Date(), reportRange='today', currentTeacherProfile=null;
 
     (async function boot(){
       try{
-        await DataService.init();
-        if(!AuthService.requireRole(['super_admin'])) return;
-
-        currentUser=AuthService.getCurrentUser();
+        if(typeof DataService?.init==='function') await DataService.init();
+        if(typeof AuthService?.requireRole==='function' && !AuthService.requireRole(['super_admin'])) return;
+        currentUser=AuthService?.getCurrentUser?AuthService.getCurrentUser():null;
+        if(!currentUser){ window.location.href='login.html'; return; }
+        
         document.getElementById('userName').textContent=currentUser.name;
         document.getElementById('userAvatar').textContent=currentUser.name.charAt(0);
 
         TOPS.load();
         generateRecurringTasks();
         buildMenu();
-        showSection('overview');
+        window.showSection('overview');
         generateNotifications();
       }catch(err){
         document.body.innerHTML='<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;"><div class="card">خطأ: '+err.message+'<br><a href="login.html" class="btn btn-primary" style="margin-top:12px;">العودة</a></div></div>';
@@ -389,37 +333,20 @@
         {s:'الإدارة',items:[{id:'teachers',l:'المدرسون',i:'👨‍🏫'},{id:'locations',l:'المناطق والأماكن',i:'📍'},{id:'types',l:'أنواع الأنشطة',i:'🏷️'}]},
         {s:'النظام',items:[{id:'settings',l:'إعدادات التشغيل',i:'⚙️'}]}
       ];
-      document.getElementById('sidebarNav').innerHTML=menu.map(sec=>`
-        <div class="sidebar-section"><div class="sidebar-section-title">${sec.s}</div>
-        ${sec.items.map(it=>`<div class="sidebar-item" data-section="${it.id}" onclick="showSection('${it.id}')"><span class="sidebar-item-icon">${it.i}</span><span class="sidebar-item-label">${it.l}</span></div>`).join('')}
-        </div>`).join('');
+      document.getElementById('sidebarNav').innerHTML=menu.map(sec=>`<div class="sidebar-section"><div class="sidebar-section-title">${sec.s}</div>${sec.items.map(it=>`<div class="sidebar-item" data-section="${it.id}" onclick="window.showSection('${it.id}')"><span class="sidebar-item-icon">${it.i}</span><span class="sidebar-item-label">${it.l}</span></div>`).join('')}</div>`).join('');
     }
 
     window.showSection=function(id){
       document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
       document.getElementById('section-'+id)?.classList.add('active');
       document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.toggle('active',i.dataset.section===id));
-      const titles={
-        overview:['إدارة الأساتذة','نظام التشغيل والمتابعة'],
-        calendar:['Calendar التشغيل','جدولة المهام والمواعيد'],
-        tasks:['Tasks & Events','إدارة كل المهام'],
-        'reports-ops':['تقارير التشغيل','إحصائيات شاملة'],
-        teachers:['المدرسون','إدارة أي عدد من المدرسين'],
-        'teacher-profile':['ملف المدرس','تفاصيل كاملة'],
-        locations:['المناطق والأماكن','المواقع والانتقالات'],
-        types:['أنواع الأنشطة','قابلة للتخصيص'],
-        settings:['إعدادات التشغيل','ساعات العمل والـ Buffer']
-      };
-      if(titles[id]){
-        document.getElementById('pageTitle').textContent=titles[id][0];
-        document.getElementById('pageSubtitle').textContent=titles[id][1];
-      }
+      const titles={overview:['إدارة الأساتذة','نظام التشغيل والمتابعة'],calendar:['Calendar التشغيل','جدولة المهام والمواعيد'],tasks:['Tasks & Events','إدارة كل المهام'],'reports-ops':['تقارير التشغيل','إحصائيات شاملة'],teachers:['المدرسون','إدارة أي عدد من المدرسين'],'teacher-profile':['ملف المدرس','تفاصيل كاملة'],locations:['المناطق والأماكن','المواقع والانتقالات'],types:['أنواع الأنشطة','قابلة للتخصيص'],settings:['إعدادات التشغيل','ساعات العمل والـ Buffer']};
+      if(titles[id]){document.getElementById('pageTitle').textContent=titles[id][0];document.getElementById('pageSubtitle').textContent=titles[id][1];}
       const L={overview:loadOverview,calendar:loadCalendar,tasks:loadTasks,'reports-ops':loadReports,teachers:loadTeachers,'teacher-profile':()=>loadTeacherProfile(currentTeacherProfile),locations:loadLocations,types:loadTypes,settings:loadSettingsUI};
       if(L[id])L[id]();
-      if(window.innerWidth<=1024){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('show');}
+      if(window.innerWidth<=1024){document.getElementById('sidebar').classList.remove('open');}
     };
 
-    // ===== Helpers =====
     function todayStr(){return new Date().toISOString().split('T')[0];}
     function dateStr(d){return d.toISOString().split('T')[0];}
     function parseDate(s){const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);}
@@ -435,316 +362,137 @@
     function taskEndMin(t){if(t.openEnd)return 1439;return minOf(t.endTime);}
     function isOnsite(t){return t.mode!=='online';}
     function tasksForDate(ds){return TOPS.data.tasks.filter(t=>t.date===ds);}
-
     function travelBetween(loc1Id,loc2Id){
       if(!loc1Id||!loc2Id||loc1Id===loc2Id)return 0;
-      const l1=TOPS.data.locations.find(l=>l.id===loc1Id);
-      const l2=TOPS.data.locations.find(l=>l.id===loc2Id);
+      const l1=TOPS.data.locations.find(l=>l.id===loc1Id), l2=TOPS.data.locations.find(l=>l.id===loc2Id);
       if(!l1||!l2)return 0;
       if(l1.area&&l2.area&&l1.area===l2.area)return Math.max(5,Math.min(l1.travelTime||0,l2.travelTime||0));
       return Math.max(l1.travelTime||0,l2.travelTime||0);
     }
 
-    // ===== نظام المهام المتكررة =====
     function generateRecurringTasks(){
-      const today=todayStr();
-      const futureDays=[];
-      for(let i=0;i<14;i++){
-        futureDays.push(dateStr(addDays(new Date(),i)));
-      }
-
+      const today=todayStr(), futureDays=[];
+      for(let i=0;i<14;i++) futureDays.push(dateStr(addDays(new Date(),i)));
       const recurringTasks=TOPS.data.tasks.filter(t=>t.recurring&&t.recurring.enabled&&!t.recurring.generatedFor?.includes(today));
-
       recurringTasks.forEach(rt=>{
         const rec=rt.recurring;
         futureDays.forEach(ds=>{
-          if(ds===today)return;
-          if(rec.endDate&&ds>rec.endDate)return;
-
+          if(ds===today||(rec.endDate&&ds>rec.endDate))return;
           const dayName=DAYS[parseDate(ds).getDay()].en;
           let shouldCreate=false;
-
-          if(rec.frequency==='daily'){
-            shouldCreate=true;
-          }else if(rec.frequency==='weekly'){
-            shouldCreate=(parseDate(ds).getDay()===parseDate(rt.date).getDay());
-          }else if(rec.frequency==='specific_days'){
-            shouldCreate=rec.days&&rec.days.includes(dayName);
-          }
-
+          if(rec.frequency==='daily') shouldCreate=true;
+          else if(rec.frequency==='weekly') shouldCreate=(parseDate(ds).getDay()===parseDate(rt.date).getDay());
+          else if(rec.frequency==='specific_days') shouldCreate=rec.days&&rec.days.includes(dayName);
+          
           if(shouldCreate){
             const exists=TOPS.data.tasks.some(t=>t.recurringParentId===rt.id&&t.date===ds);
-            if(!exists){
-              const newTask={...rt,id:TOPS.uid('task'),date:ds,recurring:null,recurringParentId:rt.id,createdAt:new Date().toISOString()};
-              TOPS.data.tasks.push(newTask);
-            }
+            if(!exists) TOPS.data.tasks.push({...rt,id:TOPS.uid('task'),date:ds,recurring:null,recurringParentId:rt.id,createdAt:new Date().toISOString()});
           }
         });
-
         if(!rt.recurring.generatedFor)rt.recurring.generatedFor=[];
         rt.recurring.generatedFor.push(today);
       });
-
       TOPS.save();
     }
 
-    // ===== نظام كشف التعارضات =====
     function detectConflicts(candidate,ignoreId){
       const conflicts=[];
       if(!candidate.date||!candidate.startTime)return conflicts;
-
-      const s1=minOf(candidate.startTime);
-      const e1=candidate.openEnd?1439:minOf(candidate.endTime);
-      const buffer=parseInt(TOPS.data.settings.buffer)||0;
-
-      if(e1!==null&&s1!==null&&e1<=s1&&!candidate.openEnd){
-        conflicts.push({type:'error',msg:'وقت النهاية يجب أن يكون بعد وقت البداية.'});
-        return conflicts;
-      }
-
-      const ws=minOf(TOPS.data.settings.workStart||'00:00');
-      const we=minOf(TOPS.data.settings.workEnd||'23:59');
-      if(s1!==null&&(s1<ws||(e1!==null&&e1>we))){
-        conflicts.push({type:'warning',msg:`المهمة خارج ساعات العمل المعتادة (${timeLabel(TOPS.data.settings.workStart)} - ${timeLabel(TOPS.data.settings.workEnd)}).`});
-      }
-
+      const s1=minOf(candidate.startTime), e1=candidate.openEnd?1439:minOf(candidate.endTime), buffer=parseInt(TOPS.data.settings.buffer)||0;
+      if(e1!==null&&s1!==null&&e1<=s1&&!candidate.openEnd){conflicts.push({type:'error',msg:'وقت النهاية يجب أن يكون بعد وقت البداية.'});return conflicts;}
+      const ws=minOf(TOPS.data.settings.workStart||'00:00'), we=minOf(TOPS.data.settings.workEnd||'23:59');
+      if(s1!==null&&(s1<ws||(e1!==null&&e1>we))) conflicts.push({type:'warning',msg:`المهمة خارج ساعات العمل المعتادة (${timeLabel(TOPS.data.settings.workStart)} - ${timeLabel(TOPS.data.settings.workEnd)}).`});
+      
       const sameDay=TOPS.data.tasks.filter(t=>t.date===candidate.date&&t.id!==ignoreId);
-
       sameDay.forEach(t=>{
-        const s2=minOf(t.startTime);
-        const e2=t.openEnd?1439:minOf(t.endTime);
+        const s2=minOf(t.startTime), e2=t.openEnd?1439:minOf(t.endTime);
         if(s2===null||e2===null||s1===null||e1===null)return;
-        const overlap=s1<e2&&s2<e1;
-
-        if(overlap){
-          if(t.fullDay&&isOnsite(candidate)&&isOnsite(t)){
-            conflicts.push({type:'error',msg:`Full Day/Event مع ${teacherName(t.teacherId)} يمنع مهمة حضورية متعارضة.`});
-          }else if(candidate.fullDay&&isOnsite(candidate)&&isOnsite(t)){
-            conflicts.push({type:'error',msg:`هذه المهمة Full Day وتتعارض مع: ${t.title}`});
-          }else if(isOnsite(candidate)&&isOnsite(t)){
-            conflicts.push({type:'error',msg:`تعارض وقت مع: ${t.title} (${timeLabel(t.startTime)} → ${t.openEnd?'Until Finished':timeLabel(t.endTime)})`});
-          }
+        if(s1<e2&&s2<e1){
+          if((t.fullDay||candidate.fullDay)&&isOnsite(candidate)&&isOnsite(t)) conflicts.push({type:'error',msg:`تعارض Full Day/Event مع: ${t.title}`});
+          else if(isOnsite(candidate)&&isOnsite(t)) conflicts.push({type:'error',msg:`تعارض وقت مع: ${t.title} (${timeLabel(t.startTime)} → ${t.openEnd?'Until Finished':timeLabel(t.endTime)})`});
         }
       });
 
       if(isOnsite(candidate)&&candidate.locationId){
-        const onsite=sameDay.filter(t=>isOnsite(t)&&t.startTime&&t.endTime&&t.locationId)
-          .sort((a,b)=>minOf(a.startTime)-minOf(b.startTime));
-
+        const onsite=sameDay.filter(t=>isOnsite(t)&&t.startTime&&t.endTime&&t.locationId).sort((a,b)=>minOf(a.startTime)-minOf(b.startTime));
         onsite.forEach(t=>{
-          const s2=minOf(t.startTime),e2=taskEndMin(t);
-          const travelTime=travelBetween(candidate.locationId,t.locationId);
-          const needed=travelTime+buffer;
-
-          if(e2<=s1){
-            const gap=s1-e2;
-            if(gap<needed){
-              conflicts.push({type:'warning',msg:`وقت انتقال غير كافٍ بعد "${t.title}". المتاح ${gap}د والمطلوب ${needed}د.`});
-            }
-          }
-          if(e1<=s2){
-            const gap=s2-e1;
-            if(gap<needed){
-              conflicts.push({type:'warning',msg:`وقت انتقال غير كافٍ قبل "${t.title}". المتاح ${gap}د والمطلوب ${needed}د.`});
-            }
-          }
+          const s2=minOf(t.startTime), e2=taskEndMin(t), travelTime=travelBetween(candidate.locationId,t.locationId), needed=travelTime+buffer;
+          if(e2<=s1 && (s1-e2)<needed) conflicts.push({type:'warning',msg:`وقت انتقال غير كافٍ بعد "${t.title}". المتاح ${s1-e2}د والمطلوب ${needed}د.`});
+          if(e1<=s2 && (s2-e1)<needed) conflicts.push({type:'warning',msg:`وقت انتقال غير كافٍ قبل "${t.title}". المتاح ${s2-e1}د والمطلوب ${needed}د.`});
         });
       }
-
       const seen=new Set();
       return conflicts.filter(c=>{if(seen.has(c.msg))return false;seen.add(c.msg);return true;});
     }
 
-    // ===== نظام الإشعارات =====
     function generateNotifications(){
-      const today=todayStr();
-      const notifications=[];
-      const tasksToday=tasksForDate(today);
-
-      tasksToday.forEach(t=>{
-        const conflicts=detectConflicts(t,t.id).filter(c=>c.type==='error');
-        conflicts.forEach(c=>{notifications.push({icon:'🔴',msg:c.msg,priority:'critical'});});
-      });
-
-      tasksToday.filter(t=>t.priority==='critical'||t.priority==='high').forEach(t=>{
-        notifications.push({icon:'🟠',msg:`مهمة عاجلة: ${t.title} مع ${teacherName(t.teacherId)} الساعة ${timeLabel(t.startTime)}`,priority:'high'});
-      });
-
-      tasksToday.filter(t=>t.typeId==='shooting').forEach(t=>{
-        notifications.push({icon:'🎥',msg:`تصوير اليوم: ${t.title} الساعة ${timeLabel(t.startTime)}${t.openEnd?' → Until Finished':''}`,priority:'info'});
-      });
-
-      TOPS.data.tasks.filter(t=>t.fullDay&&t.date>=today).slice(0,3).forEach(t=>{
-        if(t.date===today){
-          notifications.push({icon:'🎬',msg:`Event Day اليوم: ${t.title}`,priority:'high'});
-        }else{
-          notifications.push({icon:'🎬',msg:`Event Day قادم في ${t.date}: ${t.title}`,priority:'medium'});
-        }
-      });
-
-      const ws=minOf(TOPS.data.settings.workStart||'00:00');
-      const we=minOf(TOPS.data.settings.workEnd||'23:59');
-      tasksToday.forEach(t=>{
-        const s=minOf(t.startTime);
-        const e=taskEndMin(t);
-        if(s!==null&&(s<ws||(e!==null&&e>we))){
-          notifications.push({icon:'⏰',msg:`"${t.title}" خارج ساعات العمل المعتادة`,priority:'medium'});
-        }
-      });
-
-      const recurringToday=tasksToday.filter(t=>t.recurringParentId);
-      if(recurringToday.length){
-        notifications.push({icon:'🔁',msg:`لديك ${recurringToday.length} مهمة متكررة اليوم`,priority:'info'});
-      }
-
+      const today=todayStr(), notifications=[], tasksToday=tasksForDate(today);
+      tasksToday.forEach(t=>{detectConflicts(t,t.id).filter(c=>c.type==='error').forEach(c=>{notifications.push({icon:'🔴',msg:c.msg,priority:'critical'});});});
+      tasksToday.filter(t=>t.priority==='critical'||t.priority==='high').forEach(t=>{notifications.push({icon:'🟠',msg:`مهمة عاجلة: ${t.title} مع ${teacherName(t.teacherId)} الساعة ${timeLabel(t.startTime)}`,priority:'high'});});
+      tasksToday.filter(t=>t.typeId==='shooting').forEach(t=>{notifications.push({icon:'🎥',msg:`تصوير اليوم: ${t.title} الساعة ${timeLabel(t.startTime)}${t.openEnd?' → Until Finished':''}`,priority:'info'});});
+      TOPS.data.tasks.filter(t=>t.fullDay&&t.date>=today).slice(0,3).forEach(t=>{notifications.push({icon:'🎬',msg:`Event Day ${t.date===today?'اليوم':'قادم في '+t.date}: ${t.title}`,priority:t.date===today?'high':'medium'});});
       TOPS.data.notifications=notifications;
       renderNotificationBell();
     }
 
     function renderNotificationBell(){
-      const count=document.getElementById('notifCount');
-      const list=document.getElementById('notifList');
-      const notifications=TOPS.data.notifications||[];
+      const count=document.getElementById('notifCount'), list=document.getElementById('notifList'), notifications=TOPS.data.notifications||[];
       count.textContent=notifications.length;
       count.style.display=notifications.length?'flex':'none';
-      list.innerHTML=notifications.length?notifications.map(n=>`
-        <div style="padding:10px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:flex-start;">
-          <span style="font-size:18px;">${n.icon}</span>
-          <span class="text-sm">${n.msg}</span>
-        </div>`).join(''):'<p class="text-muted" style="padding:12px;">لا إشعارات</p>';
+      list.innerHTML=notifications.length?notifications.map(n=>`<div style="padding:10px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:flex-start;"><span style="font-size:18px;">${n.icon}</span><span class="text-sm">${n.msg}</span></div>`).join(''):'<p class="text-muted" style="padding:12px;">لا إشعارات</p>';
     }
 
     window.toggleNotifDropdown=function(){
-      document.getElementById('notifDropdown').classList.toggle('hidden');
+      const dd=document.getElementById('notifDropdown');
+      dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
     };
 
-    // ===== Overview =====
     window.loadOverview=function(){
-      const today=todayStr();
-      const teachers=TOPS.data.teachers;
-      const tasksToday=tasksForDate(today);
+      const today=todayStr(), teachers=TOPS.data.teachers, tasksToday=tasksForDate(today);
       const urgent=tasksToday.filter(t=>t.priority==='critical'||t.priority==='high');
-      const shootings=tasksToday.filter(t=>t.typeId==='shooting');
-      const travels=tasksToday.filter(t=>t.typeId==='travel'||parseInt(t.travelMinutes||0)>0);
-
-      let totalMin=0;
+      const shootings=tasksToday.filter(t=>t.typeId==='shooting'), travels=tasksToday.filter(t=>t.typeId==='travel'||parseInt(t.travelMinutes||0)>0);
+      let totalMin=0, conflicts=0;
       tasksToday.forEach(t=>{
-        if(t.startTime){
-          const s=minOf(t.startTime),e=taskEndMin(t);
-          if(e>s)totalMin+=e-s;
-        }
-      });
-
-      let conflicts=0;
-      tasksToday.forEach(t=>{
+        if(t.startTime){const s=minOf(t.startTime),e=taskEndMin(t);if(e>s)totalMin+=e-s;}
         if(detectConflicts(t,t.id).length)conflicts++;
       });
-
-      const weekTasks=TOPS.data.tasks.filter(t=>{
-        const d=parseDate(t.date);
-        const now=new Date();now.setHours(0,0,0,0);
-        const diff=(d-now)/(1000*60*60*24);
-        return diff>=0&&diff<=7;
-      });
-
-      const cards=[
-        {icon:'👨‍🏫',label:'عدد المدرسين',value:teachers.length},
-        {icon:'📅',label:'مهام اليوم',value:tasksToday.length},
-        {icon:'🔴',label:'المهام العاجلة',value:urgent.length,cls:urgent.length?'critical':''},
-        {icon:'🎥',label:'تصوير اليوم',value:shootings.length},
-        {icon:'📍',label:'الانتقالات اليوم',value:travels.length},
-        {icon:'⏱️',label:'ساعات العمل اليوم',value:(totalMin/60).toFixed(1)},
-        {icon:'⚠️',label:'التعارضات',value:conflicts,cls:conflicts?'critical':''},
-        {icon:'📌',label:'مهام الأسبوع',value:weekTasks.length}
-      ];
-
-      document.getElementById('opsCards').innerHTML=cards.map(c=>`
-        <div class="ops-card ${c.cls||''}">
-          <div class="ops-card-icon">${c.icon}</div>
-          <div class="ops-card-value">${c.value}</div>
-          <div class="ops-card-label">${c.label}</div>
-        </div>`).join('');
+      const weekTasks=TOPS.data.tasks.filter(t=>{const d=parseDate(t.date),now=new Date();now.setHours(0,0,0,0);const diff=(d-now)/(1000*60*60*24);return diff>=0&&diff<=7;});
+      
+      const cards=[{icon:'👨‍🏫',label:'عدد المدرسين',value:teachers.length},{icon:'📅',label:'مهام اليوم',value:tasksToday.length},{icon:'🔴',label:'المهام العاجلة',value:urgent.length,cls:urgent.length?'critical':''},{icon:'🎥',label:'تصوير اليوم',value:shootings.length},{icon:'📍',label:'الانتقالات اليوم',value:travels.length},{icon:'⏱️',label:'ساعات العمل اليوم',value:(totalMin/60).toFixed(1)},{icon:'⚠️',label:'التعارضات',value:conflicts,cls:conflicts?'critical':''},{icon:'📌',label:'مهام الأسبوع',value:weekTasks.length}];
+      document.getElementById('opsCards').innerHTML=cards.map(c=>`<div class="ops-card ${c.cls||''}"><div class="ops-card-icon">${c.icon}</div><div class="ops-card-value">${c.value}</div><div class="ops-card-label">${c.label}</div></div>`).join('');
 
       const alerts=[];
-      tasksToday.forEach(t=>{
-        const cs=detectConflicts(t,t.id);
-        cs.forEach(c=>alerts.push({icon:'🔴',msg:c.msg}));
-      });
+      tasksToday.forEach(t=>{detectConflicts(t,t.id).forEach(c=>alerts.push({icon:'🔴',msg:c.msg}));});
       urgent.forEach(t=>alerts.push({icon:'🟠',msg:`مهمة عاجلة: ${t.title} مع ${teacherName(t.teacherId)} الساعة ${timeLabel(t.startTime)}`}));
       shootings.forEach(t=>alerts.push({icon:'🎥',msg:`تصوير اليوم: ${t.title} الساعة ${timeLabel(t.startTime)}${t.openEnd?' → Until Finished':''}`}));
-
-      document.getElementById('todayAlerts').innerHTML=alerts.length?alerts.slice(0,8).map(a=>`
-        <div class="alert-card" style="padding:12px;border-radius:8px;margin-bottom:8px;display:flex;gap:10px;align-items:center;background:var(--surface-hover);">
-          <span style="font-size:20px;">${a.icon}</span>
-          <span class="text-sm">${a.msg}</span>
-        </div>`).join(''):'<p class="text-muted">لا تنبيهات اليوم ✓</p>';
-
+      document.getElementById('todayAlerts').innerHTML=alerts.length?alerts.slice(0,8).map(a=>`<div class="alert-card" style="padding:12px;border-radius:8px;margin-bottom:8px;display:flex;gap:10px;align-items:center;background:var(--surface-hover);"><span style="font-size:20px;">${a.icon}</span><span class="text-sm">${a.msg}</span></div>`).join(''):'<p class="text-muted">لا تنبيهات اليوم ✓</p>';
       renderSuggestions();
     };
 
     function renderSuggestions(){
-      const today=todayStr();
-      const tasks=tasksForDate(today).filter(t=>t.locationId);
-      const byArea={};
-      tasks.forEach(t=>{
-        const loc=TOPS.data.locations.find(l=>l.id===t.locationId);
-        const area=loc?.area||'بدون منطقة';
-        byArea[area]=byArea[area]||[];
-        byArea[area].push(t);
-      });
-
+      const today=todayStr(), tasks=tasksForDate(today).filter(t=>t.locationId), byArea={};
+      tasks.forEach(t=>{const loc=TOPS.data.locations.find(l=>l.id===t.locationId);const area=loc?.area||'بدون منطقة';byArea[area]=byArea[area]||[];byArea[area].push(t);});
       const suggestions=[];
-      Object.entries(byArea).forEach(([area,list])=>{
-        if(list.length>=2)suggestions.push(`لديك ${list.length} مهام في منطقة ${area} اليوم، يفضل تجميعها وتقليل التنقل.`);
-      });
-
+      Object.entries(byArea).forEach(([area,list])=>{if(list.length>=2)suggestions.push(`لديك ${list.length} مهام في منطقة ${area} اليوم، يفضل تجميعها وتقليل التنقل.`);});
       const fullTomorrow=TOPS.data.tasks.filter(t=>t.date===dateStr(addDays(new Date(),1))&&t.fullDay);
       if(fullTomorrow.length)suggestions.push(`لديك Event Day غدًا، يفضل عدم إضافة مهام حضورية كثيرة.`);
-
-      document.getElementById('smartSuggestions').innerHTML=suggestions.length?suggestions.map(s=>`
-        <div class="suggest-box">💡 ${s}</div>`).join(''):'<p class="text-muted">لا اقتراحات حاليًا</p>';
+      document.getElementById('smartSuggestions').innerHTML=suggestions.length?suggestions.map(s=>`<div class="suggest-box">💡 ${s}</div>`).join(''):'<p class="text-muted">لا اقتراحات حاليًا</p>';
     }
 
-    // ===== Calendar =====
     window.setCalView=function(v,btn){calView=v;document.querySelectorAll('#section-calendar .filter-btn').forEach(b=>b.classList.toggle('active',b===btn));loadCalendar();};
     window.moveCal=function(dir){if(calView==='day')calDate=addDays(calDate,dir);else if(calView==='week')calDate=addDays(calDate,dir*7);else calDate=new Date(calDate.getFullYear(),calDate.getMonth()+dir,1);loadCalendar();};
     window.goToday=function(){calDate=new Date();loadCalendar();};
     window.loadCalendar=function(){if(calView==='day')renderDay();else if(calView==='week')renderWeek();else renderMonth();};
 
     function renderDay(){
-      const ds=dateStr(calDate);
-      const list=tasksForDate(ds).sort((a,b)=>minOf(a.startTime)-minOf(b.startTime));
+      const ds=dateStr(calDate), list=tasksForDate(ds).sort((a,b)=>minOf(a.startTime)-minOf(b.startTime));
       document.getElementById('calTitle').textContent=calDate.toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-
       let html='';
       list.forEach((t,idx)=>{
-        if(idx>0){
-          const prev=list[idx-1];
-          if(isOnsite(t)&&isOnsite(prev)&&t.locationId&&prev.locationId&&t.locationId!==prev.locationId){
-            const travel=travelBetween(prev.locationId,t.locationId);
-            html+=`<div class="travel-indicator"><span>🚗 انتقال ~${travel} د</span></div>`;
-          }
-        }
-        const ty=typeObj(t.typeId);
-        const pr=PRIORITIES[t.priority]||PRIORITIES.medium;
-        const conflicts=detectConflicts(t,t.id);
-        html+=`<div class="timeline-item">
-          <div class="timeline-time">${timeLabel(t.startTime)}<br>${t.openEnd?'Until Finished':timeLabel(t.endTime)}</div>
-          <div class="timeline-card ${t.priority}" onclick="openTaskDetail('${t.id}')">
-            <div style="display:flex;justify-content:space-between;gap:8px;">
-              <strong>${ty.icon} ${t.title} ${t.recurringParentId?'<span class="tag recurring">🔁</span>':''}</strong>
-              <div style="display:flex;gap:4px;">
-                ${conflicts.length?'<span class="badge badge-danger">⚠️</span>':''}
-                ${statusBadge(t.status)}
-              </div>
-            </div>
-            <div class="text-xs text-muted" style="margin-top:6px;">👨‍🏫 ${teacherName(t.teacherId)} · 📍 ${locationName(t.locationId)} · ${pr.icon} ${pr.ar}</div>
-            ${t.fullDay?`<div class="tag" style="margin-top:8px;background:rgba(239,68,68,.12);color:#ef4444;">Full Day</div>`:''}
-            ${t.mode==='online'?`<div class="tag" style="margin-top:8px;">Online</div>`:''}
-          </div>
-        </div>`;
+        if(idx>0){const prev=list[idx-1];if(isOnsite(t)&&isOnsite(prev)&&t.locationId&&prev.locationId&&t.locationId!==prev.locationId){const travel=travelBetween(prev.locationId,t.locationId);html+=`<div class="travel-indicator"><span>🚗 انتقال ~${travel} د</span></div>`;}}
+        const ty=typeObj(t.typeId), pr=PRIORITIES[t.priority]||PRIORITIES.medium, conflicts=detectConflicts(t,t.id);
+        html+=`<div class="timeline-item"><div class="timeline-time">${timeLabel(t.startTime)}<br>${t.openEnd?'Until Finished':timeLabel(t.endTime)}</div><div class="timeline-card ${t.priority}" onclick="window.openTaskDetail('${t.id}')"><div style="display:flex;justify-content:space-between;gap:8px;"><strong>${ty.icon} ${t.title} ${t.recurringParentId?'<span class="tag recurring">🔁</span>':''}</strong><div style="display:flex;gap:4px;">${conflicts.length?'<span class="badge badge-danger">⚠️</span>':''}${statusBadge(t.status)}</div></div><div class="text-xs text-muted" style="margin-top:6px;">👨‍🏫 ${teacherName(t.teacherId)} · 📍 ${locationName(t.locationId)} · ${pr.icon} ${pr.ar}</div>${t.fullDay?`<div class="tag" style="margin-top:8px;background:rgba(239,68,68,.12);color:#ef4444;">Full Day</div>`:''}${t.mode==='online'?`<div class="tag" style="margin-top:8px;">Online</div>`:''}</div></div>`;
       });
-
       document.getElementById('calendarView').innerHTML=list.length?`<div class="day-timeline">${html}</div>`:`<div class="empty-state"><div class="empty-state-icon">📅</div>لا مهام لهذا اليوم</div>`;
     }
 
@@ -753,309 +501,105 @@
       document.getElementById('calTitle').textContent='أسبوع '+start.toLocaleDateString('ar-EG',{day:'numeric',month:'long'})+' - '+addDays(start,6).toLocaleDateString('ar-EG',{day:'numeric',month:'long',year:'numeric'});
       let rows='';
       for(let i=0;i<7;i++){
-        const d=addDays(start,i);
-        const ds=dateStr(d);
-        const list=tasksForDate(ds).sort((a,b)=>minOf(a.startTime)-minOf(b.startTime));
-        rows+=`<tr><td><strong>${DAYS[d.getDay()].ar}</strong><div class="text-xs text-muted">${ds}</div></td>
-        <td>${list.length?list.map(t=>`<div class="cal-chip ${t.priority}" onclick="openTaskDetail('${t.id}')">${typeObj(t.typeId).icon} ${timeLabel(t.startTime)} - ${t.title}</div>`).join(''):'<span class="text-muted text-xs">لا مهام</span>'}</td>
-        <td><button class="btn btn-ghost btn-sm" onclick="openTaskModal(null,'${ds}')">+</button></td></tr>`;
+        const d=addDays(start,i), ds=dateStr(d), list=tasksForDate(ds).sort((a,b)=>minOf(a.startTime)-minOf(b.startTime));
+        rows+=`<tr><td><strong>${DAYS[d.getDay()].ar}</strong><div class="text-xs text-muted">${ds}</div></td><td>${list.length?list.map(t=>`<div class="cal-chip ${t.priority}" onclick="window.openTaskDetail('${t.id}')">${typeObj(t.typeId).icon} ${timeLabel(t.startTime)} - ${t.title}</div>`).join(''):'<span class="text-muted text-xs">لا مهام</span>'}</td><td><button class="btn btn-ghost btn-sm" onclick="window.openTaskModal(null,'${ds}')">+</button></td></tr>`;
       }
       document.getElementById('calendarView').innerHTML=`<div style="overflow-x:auto;"><table class="week-table"><thead><tr><th>اليوم</th><th>المهام</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
     }
 
     function renderMonth(){
-      const y=calDate.getFullYear(),m=calDate.getMonth();
-      const first=new Date(y,m,1);
-      const daysInMonth=new Date(y,m+1,0).getDate();
+      const y=calDate.getFullYear(),m=calDate.getMonth(), first=new Date(y,m,1), daysInMonth=new Date(y,m+1,0).getDate();
       document.getElementById('calTitle').textContent=calDate.toLocaleDateString('ar-EG',{month:'long',year:'numeric'});
       let html='<div class="calendar-month">';
       html+=DAYS.map(d=>`<div class="cal-head">${d.ar}</div>`).join('');
       for(let i=0;i<first.getDay();i++)html+='<div class="cal-cell empty"></div>';
       for(let d=1;d<=daysInMonth;d++){
-        const dt=new Date(y,m,d);
-        const ds=dateStr(dt);
-        const list=tasksForDate(ds).sort((a,b)=>minOf(a.startTime)-minOf(b.startTime));
-        html+=`<div class="cal-cell" onclick="openTaskModal(null,'${ds}')">
-          <div class="cal-day-num">${d}</div>
-          ${list.slice(0,3).map(t=>`<div class="cal-chip ${t.priority}" onclick="event.stopPropagation();openTaskDetail('${t.id}')">${typeObj(t.typeId).icon} ${timeLabel(t.startTime)} ${t.title}</div>`).join('')}
-          ${list.length>3?`<div class="text-xs text-muted">+${list.length-3} أخرى</div>`:''}
-        </div>`;
+        const dt=new Date(y,m,d), ds=dateStr(dt), list=tasksForDate(ds).sort((a,b)=>minOf(a.startTime)-minOf(b.startTime));
+        html+=`<div class="cal-cell" onclick="window.openTaskModal(null,'${ds}')"><div class="cal-day-num">${d}</div>${list.slice(0,3).map(t=>`<div class="cal-chip ${t.priority}" onclick="event.stopPropagation();window.openTaskDetail('${t.id}')">${typeObj(t.typeId).icon} ${timeLabel(t.startTime)} ${t.title}</div>`).join('')}${list.length>3?`<div class="text-xs text-muted">+${list.length-3} أخرى</div>`:''}</div>`;
       }
       html+='</div>';
       document.getElementById('calendarView').innerHTML=html;
     }
 
-    // ===== Tasks =====
     window.loadTasks=function(){
       fillTaskFilters();
-      const q=(document.getElementById('taskSearch')?.value||'').toLowerCase();
-      const tf=document.getElementById('taskTeacherFilter')?.value||'';
-      const ty=document.getElementById('taskTypeFilter')?.value||'';
-      const pr=document.getElementById('taskPrioFilter')?.value||'';
-      const st=document.getElementById('taskStatusFilter')?.value||'';
-
+      const q=(document.getElementById('taskSearch')?.value||'').toLowerCase(), tf=document.getElementById('taskTeacherFilter')?.value||'', ty=document.getElementById('taskTypeFilter')?.value||'', pr=document.getElementById('taskPrioFilter')?.value||'', st=document.getElementById('taskStatusFilter')?.value||'';
       let list=[...TOPS.data.tasks].sort((a,b)=>(a.date+a.startTime).localeCompare(b.date+b.startTime));
       if(q)list=list.filter(t=>(t.title||'').toLowerCase().includes(q)||(t.notes||'').toLowerCase().includes(q)||teacherName(t.teacherId).toLowerCase().includes(q));
-      if(tf)list=list.filter(t=>t.teacherId===tf);
-      if(ty)list=list.filter(t=>t.typeId===ty);
-      if(pr)list=list.filter(t=>t.priority===pr);
-      if(st)list=list.filter(t=>t.status===st);
-
+      if(tf)list=list.filter(t=>t.teacherId===tf);if(ty)list=list.filter(t=>t.typeId===ty);if(pr)list=list.filter(t=>t.priority===pr);if(st)list=list.filter(t=>t.status===st);
       document.getElementById('tasksList').innerHTML=list.length?list.map(t=>taskRow(t)).join(''):'<div class="empty-state"><div class="empty-state-icon">✅</div>لا مهام</div>';
     };
 
     function fillTaskFilters(){
-      const tf=document.getElementById('taskTeacherFilter');
-      const ty=document.getElementById('taskTypeFilter');
+      const tf=document.getElementById('taskTeacherFilter'), ty=document.getElementById('taskTypeFilter');
       if(tf&&!tf.dataset.done){tf.innerHTML='<option value="">كل المدرسين</option>'+TOPS.data.teachers.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');tf.dataset.done='1';}
       if(ty&&!ty.dataset.done){ty.innerHTML='<option value="">كل الأنواع</option>'+TOPS.data.types.map(t=>`<option value="${t.id}">${t.icon} ${t.name}</option>`).join('');ty.dataset.done='1';}
     }
 
     function taskRow(t){
-      const ty=typeObj(t.typeId);
-      const pr=PRIORITIES[t.priority]||PRIORITIES.medium;
-      const conflicts=detectConflicts(t,t.id);
-      return`<div class="task-row">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
-          <div style="flex:1;">
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-              <span class="prio-dot" style="background:${pr.color}"></span>
-              <strong>${ty.icon} ${t.title} ${t.recurringParentId?'<span class="tag recurring">🔁 متكررة</span>':''}</strong>
-              ${statusBadge(t.status)}
-              ${t.fullDay?'<span class="badge badge-danger">Full Day</span>':''}
-              ${t.mode==='online'?'<span class="badge badge-info">Online</span>':'<span class="badge badge-muted">Onsite</span>'}
-              ${conflicts.length?'<span class="badge badge-danger">⚠️ تعارض</span>':''}
-            </div>
-            <div class="text-sm text-muted" style="margin-top:6px;">📅 ${t.date} · ${timeLabel(t.startTime)} → ${t.openEnd?'Until Finished':timeLabel(t.endTime)} · 👨‍🏫 ${teacherName(t.teacherId)} · 📍 ${locationName(t.locationId)}</div>
-            ${t.notes?`<div class="text-xs text-muted" style="margin-top:6px;">📝 ${t.notes}</div>`:''}
-          </div>
-          <div style="display:flex;gap:6px;">
-            <button class="btn btn-secondary btn-sm" onclick="openTaskDetail('${t.id}')">👁️</button>
-            <button class="btn btn-primary btn-sm" onclick="openTaskModal('${t.id}')">✏️</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteTask('${t.id}')">🗑️</button>
-          </div>
-        </div>
-      </div>`;
+      const ty=typeObj(t.typeId), pr=PRIORITIES[t.priority]||PRIORITIES.medium, conflicts=detectConflicts(t,t.id);
+      return`<div class="task-row"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;"><div style="flex:1;"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><span class="prio-dot" style="background:${pr.color}"></span><strong>${ty.icon} ${t.title} ${t.recurringParentId?'<span class="tag recurring">🔁 متكررة</span>':''}</strong>${statusBadge(t.status)}${t.fullDay?'<span class="badge badge-danger">Full Day</span>':''}${t.mode==='online'?'<span class="badge badge-info">Online</span>':'<span class="badge badge-muted">Onsite</span>'}${conflicts.length?'<span class="badge badge-danger">⚠️ تعارض</span>':''}</div><div class="text-sm text-muted" style="margin-top:6px;">📅 ${t.date} · ${timeLabel(t.startTime)} → ${t.openEnd?'Until Finished':timeLabel(t.endTime)} · 👨‍🏫 ${teacherName(t.teacherId)} · 📍 ${locationName(t.locationId)}</div>${t.notes?`<div class="text-xs text-muted" style="margin-top:6px;">📝 ${t.notes}</div>`:''}</div><div style="display:flex;gap:6px;"><button class="btn btn-secondary btn-sm" onclick="window.openTaskDetail('${t.id}')">👁️</button><button class="btn btn-primary btn-sm" onclick="window.openTaskModal('${t.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="window.deleteTask('${t.id}')">🗑️</button></div></div></div>`;
     }
 
     window.openTaskDetail=function(id){
       const t=TOPS.data.tasks.find(x=>x.id===id);if(!t)return;
-      const cs=detectConflicts(t,t.id);
-      const ty=typeObj(t.typeId);
-      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${ty.icon} ${t.title}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
-      <div class="modal-body">
-        ${cs.length?`<div class="conflict-box">${cs.map(c=>(c.type==='error'?'🔴':'🟡')+' '+c.msg).join('<br>')}</div>`:''}
-        <div class="detail-grid">
-          <div class="detail-box"><div class="lbl">المدرس</div><div class="val">${teacherName(t.teacherId)}</div></div>
-          <div class="detail-box"><div class="lbl">النوع</div><div class="val">${ty.icon} ${ty.name}</div></div>
-          <div class="detail-box"><div class="lbl">التاريخ</div><div class="val">${t.date}</div></div>
-          <div class="detail-box"><div class="lbl">الوقت</div><div class="val">${timeLabel(t.startTime)} → ${t.openEnd?'Until Finished':timeLabel(t.endTime)}</div></div>
-          <div class="detail-box"><div class="lbl">المكان</div><div class="val">${locationName(t.locationId)}</div></div>
-          <div class="detail-box"><div class="lbl">الأولوية</div><div class="val">${(PRIORITIES[t.priority]||{}).icon} ${(PRIORITIES[t.priority]||{}).ar}</div></div>
-          <div class="detail-box"><div class="lbl">الحالة</div><div class="val">${STATUSES[t.status]||t.status}</div></div>
-          <div class="detail-box"><div class="lbl">Travel</div><div class="val">${t.travelMinutes||0} دقيقة</div></div>
-        </div>
-        ${t.notes?`<div style="margin-top:12px;background:var(--surface-hover);padding:12px;border-radius:10px;"><strong>ملاحظات:</strong><br>${t.notes}</div>`:''}
-        <div style="display:flex;gap:8px;margin-top:14px;">
-          <button class="btn btn-primary" onclick="ThemeManager.closeModal();openTaskModal('${t.id}')">✏️ تعديل</button>
-          <button class="btn btn-success" onclick="markTaskDone('${t.id}')">✓ Completed</button>
-        </div>
-      </div>`,'modal-lg');
+      const cs=detectConflicts(t,t.id), ty=typeObj(t.typeId);
+      if(typeof ThemeManager?.openModal==='function'){
+        ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${ty.icon} ${t.title}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">${cs.length?`<div class="conflict-box">${cs.map(c=>(c.type==='error'?'🔴':'🟡')+' '+c.msg).join('<br>')}</div>`:''}<div class="detail-grid"><div class="detail-box"><div class="lbl">المدرس</div><div class="val">${teacherName(t.teacherId)}</div></div><div class="detail-box"><div class="lbl">النوع</div><div class="val">${ty.icon} ${ty.name}</div></div><div class="detail-box"><div class="lbl">التاريخ</div><div class="val">${t.date}</div></div><div class="detail-box"><div class="lbl">الوقت</div><div class="val">${timeLabel(t.startTime)} → ${t.openEnd?'Until Finished':timeLabel(t.endTime)}</div></div><div class="detail-box"><div class="lbl">المكان</div><div class="val">${locationName(t.locationId)}</div></div><div class="detail-box"><div class="lbl">الأولوية</div><div class="val">${(PRIORITIES[t.priority]||{}).icon} ${(PRIORITIES[t.priority]||{}).ar}</div></div><div class="detail-box"><div class="lbl">الحالة</div><div class="val">${STATUSES[t.status]||t.status}</div></div><div class="detail-box"><div class="lbl">Travel</div><div class="val">${t.travelMinutes||0} دقيقة</div></div></div>${t.notes?`<div style="margin-top:12px;background:var(--surface-hover);padding:12px;border-radius:10px;"><strong>ملاحظات:</strong><br>${t.notes}</div>`:''}<div style="display:flex;gap:8px;margin-top:14px;"><button class="btn btn-primary" onclick="ThemeManager.closeModal();window.openTaskModal('${t.id}')">✏️ تعديل</button><button class="btn btn-success" onclick="window.markTaskDone('${t.id}')">✓ Completed</button></div></div>`,'modal-lg');
+      }
     };
 
     window.openTaskModal=function(id,datePreset){
-      const t=id?TOPS.data.tasks.find(x=>x.id===id):null;
-      const dateVal=t?.date||datePreset||dateStr(calDate);
+      const t=id?TOPS.data.tasks.find(x=>x.id===id):null, dateVal=t?.date||datePreset||dateStr(calDate);
       const teacherOpts='<option value="">-- اختر --</option>'+TOPS.data.teachers.map(x=>`<option value="${x.id}" ${t?.teacherId===x.id?'selected':''}>${x.name}</option>`).join('');
       const typeOpts=TOPS.data.types.map(x=>`<option value="${x.id}" ${t?.typeId===x.id?'selected':''}>${x.icon} ${x.name}</option>`).join('');
       const locOpts='<option value="">بدون مكان / Online</option>'+TOPS.data.locations.map(x=>`<option value="${x.id}" ${t?.locationId===x.id?'selected':''}>${x.name} - ${x.area||''}</option>`).join('');
-
-      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${t?'✏️ تعديل':'➕ إضافة'} Task / Event</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
-      <div class="modal-body">
-        <div id="taskConflictPreview"></div>
-        <div class="form-group"><label>العنوان *</label><input id="taskTitle" class="form-input" value="${t?.title||''}" placeholder="مثال: تصوير درس / زيارة مدرس / متابعة جروب"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div class="form-group"><label>المدرس</label><select id="taskTeacher" class="form-select">${teacherOpts}</select></div>
-          <div class="form-group"><label>نوع النشاط</label><select id="taskType" class="form-select" onchange="taskTypeChanged()">${typeOpts}</select></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div class="form-group"><label>التاريخ</label><input type="date" id="taskDate" class="form-input" value="${dateVal}"></div>
-          <div class="form-group"><label>المكان</label><select id="taskLocation" class="form-select" onchange="taskLocationChanged()">${locOpts}</select></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div class="form-group"><label>وقت البداية</label><select id="taskStart" class="form-select">${timeOptions(t?.startTime||'12:00')}</select></div>
-          <div class="form-group"><label>وقت النهاية</label><select id="taskEnd" class="form-select" ${t?.openEnd?'disabled':''}>${timeOptions(t?.endTime||'13:00')}</select></div>
-        </div>
-        <div class="chk-grid" style="margin-bottom:12px;">
-          <label><input type="checkbox" id="taskOpenEnd" ${t?.openEnd?'checked':''} onchange="toggleOpenEnd()"> Open End / Until Finished</label>
-          <label><input type="checkbox" id="taskFullDay" ${t?.fullDay?'checked':''}> Full Day / Event Day</label>
-          <label><input type="checkbox" id="taskOnline" ${t?.mode==='online'?'checked':''}> Online / Remote</label>
-        </div>
-        
-        <!-- نظام التكرار -->
-        <div style="border:1px dashed var(--border);border-radius:10px;padding:12px;margin-bottom:12px;">
-          <div class="chk-grid" style="margin-bottom:8px;">
-            <label><input type="checkbox" id="taskRecurring" ${t?.recurring?.enabled?'checked':''} onchange="toggleRecurringFields()"> 🔁 تكرار المهمة</label>
-          </div>
-          <div id="recurringFields" style="display:${t?.recurring?.enabled?'block':'none'};">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-              <div class="form-group"><label>نوع التكرار</label><select id="recurFreq" class="form-select">
-                <option value="daily" ${t?.recurring?.frequency==='daily'?'selected':''}>كل يوم</option>
-                <option value="weekly" ${t?.recurring?.frequency==='weekly'?'selected':''}>كل أسبوع</option>
-                <option value="specific_days" ${t?.recurring?.frequency==='specific_days'?'selected':''}>أيام محددة</option>
-              </select></div>
-              <div class="form-group"><label>تاريخ الانتهاء (اختياري)</label><input type="date" id="recurEndDate" class="form-input" value="${t?.recurring?.endDate||''}"></div>
-            </div>
-            <div id="recurDaysWrap" style="display:${t?.recurring?.frequency==='specific_days'?'block':'none'};">
-              <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">اختر الأيام</label>
-              <div class="chk-grid">
-                ${DAYS.map(d=>`<label><input type="checkbox" class="recur-day" value="${d.en}" ${t?.recurring?.days?.includes(d.en)?'checked':''}> ${d.ar}</label>`).join('')}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
-          <div class="form-group"><label>Travel Time</label><input type="number" id="taskTravel" class="form-input" value="${t?.travelMinutes||0}"></div>
-          <div class="form-group"><label>الأولوية</label><select id="taskPriority" class="form-select">
-            <option value="critical" ${t?.priority==='critical'?'selected':''}>🔴 Critical</option>
-            <option value="high" ${t?.priority==='high'?'selected':''}>🟠 High</option>
-            <option value="medium" ${!t||t?.priority==='medium'?'selected':''}>🟡 Medium</option>
-            <option value="low" ${t?.priority==='low'?'selected':''}>🟢 Low</option>
-          </select></div>
-          <div class="form-group"><label>الحالة</label><select id="taskStatus" class="form-select">
-            <option value="pending" ${!t||t?.status==='pending'?'selected':''}>Pending</option>
-            <option value="in_progress" ${t?.status==='in_progress'?'selected':''}>In Progress</option>
-            <option value="completed" ${t?.status==='completed'?'selected':''}>Completed</option>
-            <option value="cancelled" ${t?.status==='cancelled'?'selected':''}>Cancelled</option>
-            <option value="postponed" ${t?.status==='postponed'?'selected':''}>Postponed</option>
-          </select></div>
-        </div>
-        <div id="shootingFields" style="display:none;border:1px dashed var(--border);border-radius:10px;padding:12px;margin-bottom:12px;">
-          <div class="form-group"><label>فريق التصوير</label><input id="shootTeam" class="form-input" value="${t?.shootTeam||''}" placeholder="أسماء الفريق"></div>
-          <div class="form-group"><label>المعدات المطلوبة</label><textarea id="shootGear" class="form-textarea" rows="2">${t?.shootGear||''}</textarea></div>
-        </div>
-        <div class="form-group"><label>ملاحظات</label><textarea id="taskNotes" class="form-textarea" rows="3">${t?.notes||''}</textarea></div>
-        <button class="btn btn-secondary w-full" style="margin-bottom:8px;" onclick="previewTaskConflicts('${id||''}')">🔎 فحص التعارضات</button>
-        <button class="btn btn-primary w-full" onclick="saveTask('${id||''}')">💾 حفظ</button>
-      </div>`,'modal-lg');
-      taskTypeChanged();
+      if(typeof ThemeManager?.openModal==='function'){
+        ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${t?'✏️ تعديل':'➕ إضافة'} Task / Event</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div id="taskConflictPreview"></div><div class="form-group"><label>العنوان *</label><input id="taskTitle" class="form-input" value="${t?.title||''}" placeholder="مثال: تصوير درس / زيارة مدرس / متابعة جروب"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المدرس</label><select id="taskTeacher" class="form-select">${teacherOpts}</select></div><div class="form-group"><label>نوع النشاط</label><select id="taskType" class="form-select" onchange="window.taskTypeChanged()">${typeOpts}</select></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>التاريخ</label><input type="date" id="taskDate" class="form-input" value="${dateVal}"></div><div class="form-group"><label>المكان</label><select id="taskLocation" class="form-select" onchange="window.taskLocationChanged()">${locOpts}</select></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>وقت البداية</label><select id="taskStart" class="form-select">${timeOptions(t?.startTime||'12:00')}</select></div><div class="form-group"><label>وقت النهاية</label><select id="taskEnd" class="form-select" ${t?.openEnd?'disabled':''}>${timeOptions(t?.endTime||'13:00')}</select></div></div><div class="chk-grid" style="margin-bottom:12px;"><label><input type="checkbox" id="taskOpenEnd" ${t?.openEnd?'checked':''} onchange="window.toggleOpenEnd()"> Open End / Until Finished</label><label><input type="checkbox" id="taskFullDay" ${t?.fullDay?'checked':''}> Full Day / Event Day</label><label><input type="checkbox" id="taskOnline" ${t?.mode==='online'?'checked':''}> Online / Remote</label></div><div style="border:1px dashed var(--border);border-radius:10px;padding:12px;margin-bottom:12px;"><div class="chk-grid" style="margin-bottom:8px;"><label><input type="checkbox" id="taskRecurring" ${t?.recurring?.enabled?'checked':''} onchange="window.toggleRecurringFields()"> 🔁 تكرار المهمة</label></div><div id="recurringFields" style="display:${t?.recurring?.enabled?'block':'none'};"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>نوع التكرار</label><select id="recurFreq" class="form-select"><option value="daily" ${t?.recurring?.frequency==='daily'?'selected':''}>كل يوم</option><option value="weekly" ${t?.recurring?.frequency==='weekly'?'selected':''}>كل أسبوع</option><option value="specific_days" ${t?.recurring?.frequency==='specific_days'?'selected':''}>أيام محددة</option></select></div><div class="form-group"><label>تاريخ الانتهاء (اختياري)</label><input type="date" id="recurEndDate" class="form-input" value="${t?.recurring?.endDate||''}"></div></div><div id="recurDaysWrap" style="display:${t?.recurring?.frequency==='specific_days'?'block':'none'};"><label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">اختر الأيام</label><div class="chk-grid">${DAYS.map(d=>`<label><input type="checkbox" class="recur-day" value="${d.en}" ${t?.recurring?.days?.includes(d.en)?'checked':''}> ${d.ar}</label>`).join('')}</div></div></div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;"><div class="form-group"><label>Travel Time</label><input type="number" id="taskTravel" class="form-input" value="${t?.travelMinutes||0}"></div><div class="form-group"><label>الأولوية</label><select id="taskPriority" class="form-select"><option value="critical" ${t?.priority==='critical'?'selected':''}>🔴 Critical</option><option value="high" ${t?.priority==='high'?'selected':''}>🟠 High</option><option value="medium" ${!t||t?.priority==='medium'?'selected':''}>🟡 Medium</option><option value="low" ${t?.priority==='low'?'selected':''}>🟢 Low</option></select></div><div class="form-group"><label>الحالة</label><select id="taskStatus" class="form-select"><option value="pending" ${!t||t?.status==='pending'?'selected':''}>Pending</option><option value="in_progress" ${t?.status==='in_progress'?'selected':''}>In Progress</option><option value="completed" ${t?.status==='completed'?'selected':''}>Completed</option><option value="cancelled" ${t?.status==='cancelled'?'selected':''}>Cancelled</option><option value="postponed" ${t?.status==='postponed'?'selected':''}>Postponed</option></select></div></div><div id="shootingFields" style="display:none;border:1px dashed var(--border);border-radius:10px;padding:12px;margin-bottom:12px;"><div class="form-group"><label>فريق التصوير</label><input id="shootTeam" class="form-input" value="${t?.shootTeam||''}" placeholder="أسماء الفريق"></div><div class="form-group"><label>المعدات المطلوبة</label><textarea id="shootGear" class="form-textarea" rows="2">${t?.shootGear||''}</textarea></div></div><div class="form-group"><label>ملاحظات</label><textarea id="taskNotes" class="form-textarea" rows="3">${t?.notes||''}</textarea></div><button class="btn btn-secondary w-full" style="margin-bottom:8px;" onclick="window.previewTaskConflicts('${id||''}')">🔎 فحص التعارضات</button><button class="btn btn-primary w-full" onclick="window.saveTask('${id||''}')">💾 حفظ</button></div>`,'modal-lg');
+        window.taskTypeChanged();
+      }
     };
 
-    window.taskTypeChanged=function(){
-      const type=document.getElementById('taskType')?.value;
-      const box=document.getElementById('shootingFields');
-      if(box)box.style.display=type==='shooting'?'block':'none';
-    };
-
-    window.toggleRecurringFields=function(){
-      const checked=document.getElementById('taskRecurring')?.checked;
-      const fields=document.getElementById('recurringFields');
-      if(fields)fields.style.display=checked?'block':'none';
-      const freq=document.getElementById('recurFreq')?.value;
-      const daysWrap=document.getElementById('recurDaysWrap');
-      if(daysWrap)daysWrap.style.display=freq==='specific_days'?'block':'none';
-    };
-
-    window.toggleOpenEnd=function(){
-      const open=document.getElementById('taskOpenEnd')?.checked;
-      const end=document.getElementById('taskEnd');
-      if(end)end.disabled=!!open;
-    };
-
-    window.taskLocationChanged=function(){
-      const locId=document.getElementById('taskLocation').value;
-      const loc=TOPS.data.locations.find(l=>l.id===locId);
-      if(loc)document.getElementById('taskTravel').value=loc.travelTime||0;
-    };
+    window.taskTypeChanged=function(){const type=document.getElementById('taskType')?.value,box=document.getElementById('shootingFields');if(box)box.style.display=type==='shooting'?'block':'none';};
+    window.toggleRecurringFields=function(){const checked=document.getElementById('taskRecurring')?.checked,fields=document.getElementById('recurringFields');if(fields)fields.style.display=checked?'block':'none';const freq=document.getElementById('recurFreq')?.value,daysWrap=document.getElementById('recurDaysWrap');if(daysWrap)daysWrap.style.display=freq==='specific_days'?'block':'none';};
+    window.toggleOpenEnd=function(){const open=document.getElementById('taskOpenEnd')?.checked,end=document.getElementById('taskEnd');if(end)end.disabled=!!open;};
+    window.taskLocationChanged=function(){const locId=document.getElementById('taskLocation').value,loc=TOPS.data.locations.find(l=>l.id===locId);if(loc)document.getElementById('taskTravel').value=loc.travelTime||0;};
 
     function collectTaskFromModal(id){
-      const title=document.getElementById('taskTitle').value.trim();
-      const recurringEnabled=document.getElementById('taskRecurring')?.checked;
+      const title=document.getElementById('taskTitle').value.trim(), recurringEnabled=document.getElementById('taskRecurring')?.checked;
       let recurring=null;
-      if(recurringEnabled){
-        recurring={
-          enabled:true,
-          frequency:document.getElementById('recurFreq').value,
-          days:[...document.querySelectorAll('.recur-day:checked')].map(c=>c.value),
-          endDate:document.getElementById('recurEndDate').value||null
-        };
-      }
-      return{
-        id:id||TOPS.uid('task'),title,
-        teacherId:document.getElementById('taskTeacher').value,
-        typeId:document.getElementById('taskType').value,
-        date:document.getElementById('taskDate').value,
-        startTime:document.getElementById('taskStart').value,
-        endTime:document.getElementById('taskEnd').value,
-        openEnd:document.getElementById('taskOpenEnd').checked,
-        fullDay:document.getElementById('taskFullDay').checked,
-        mode:document.getElementById('taskOnline').checked?'online':'onsite',
-        locationId:document.getElementById('taskLocation').value,
-        travelMinutes:parseInt(document.getElementById('taskTravel').value)||0,
-        priority:document.getElementById('taskPriority').value,
-        status:document.getElementById('taskStatus').value,
-        notes:document.getElementById('taskNotes').value.trim(),
-        shootTeam:document.getElementById('shootTeam')?.value||'',
-        shootGear:document.getElementById('shootGear')?.value||'',
-        recurring,
-        updatedAt:new Date().toISOString()
-      };
+      if(recurringEnabled) recurring={enabled:true,frequency:document.getElementById('recurFreq').value,days:[...document.querySelectorAll('.recur-day:checked')].map(c=>c.value),endDate:document.getElementById('recurEndDate').value||null};
+      return{id:id||TOPS.uid('task'),title,teacherId:document.getElementById('taskTeacher').value,typeId:document.getElementById('taskType').value,date:document.getElementById('taskDate').value,startTime:document.getElementById('taskStart').value,endTime:document.getElementById('taskEnd').value,openEnd:document.getElementById('taskOpenEnd').checked,fullDay:document.getElementById('taskFullDay').checked,mode:document.getElementById('taskOnline').checked?'online':'onsite',locationId:document.getElementById('taskLocation').value,travelMinutes:parseInt(document.getElementById('taskTravel').value)||0,priority:document.getElementById('taskPriority').value,status:document.getElementById('taskStatus').value,notes:document.getElementById('taskNotes').value.trim(),shootTeam:document.getElementById('shootTeam')?.value||'',shootGear:document.getElementById('shootGear')?.value||'',recurring,updatedAt:new Date().toISOString()};
     }
 
     window.previewTaskConflicts=function(id){
-      const t=collectTaskFromModal(id);
-      const cs=detectConflicts(t,id);
-      document.getElementById('taskConflictPreview').innerHTML=cs.length?`
-        <div class="conflict-box">${cs.map(c=>(c.type==='error'?'🔴':'🟡')+' '+c.msg).join('<br>')}</div>`:
-        `<div class="suggest-box" style="color:#22c55e;border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.12);">✅ لا يوجد تعارض واضح</div>`;
+      const t=collectTaskFromModal(id), cs=detectConflicts(t,id);
+      document.getElementById('taskConflictPreview').innerHTML=cs.length?`<div class="conflict-box">${cs.map(c=>(c.type==='error'?'🔴':'🟡')+' '+c.msg).join('<br>')}</div>`:`<div class="suggest-box" style="color:#22c55e;border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.12);">✅ لا يوجد تعارض واضح</div>`;
     };
 
     window.saveTask=function(id){
       const obj=collectTaskFromModal(id);
-      if(!obj.title)return ThemeManager.toast('اكتب عنوان المهمة','error');
-      if(!obj.date)return ThemeManager.toast('حدد التاريخ','error');
-
-      const conflicts=detectConflicts(obj,id);
-      const errors=conflicts.filter(c=>c.type==='error');
-      const warnings=conflicts.filter(c=>c.type==='warning');
-
-      if(errors.length||warnings.length){
-        showConflictModal(obj,id,conflicts);
-        return;
-      }
+      if(!obj.title)return window.safeToast('اكتب عنوان المهمة','error');
+      if(!obj.date)return window.safeToast('حدد التاريخ','error');
+      const conflicts=detectConflicts(obj,id), errors=conflicts.filter(c=>c.type==='error'), warnings=conflicts.filter(c=>c.type==='warning');
+      if(errors.length||warnings.length){showConflictModal(obj,id,conflicts);return;}
       actuallySaveTask(obj,id);
     };
 
     function showConflictModal(obj,id,conflicts){
-      const errors=conflicts.filter(c=>c.type==='error');
-      const warnings=conflicts.filter(c=>c.type==='warning');
+      const errors=conflicts.filter(c=>c.type==='error'), warnings=conflicts.filter(c=>c.type==='warning');
       window._pendingTask=obj;
-
-      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">⚠️ تعارضات مكتشفة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
-      <div class="modal-body">
-        ${errors.length?`<div class="conflict-box">${errors.map(c=>'🔴 '+c.msg).join('<br>')}</div>`:''}
-        ${warnings.length?`<div class="suggest-box">${warnings.map(c=>'🟡 '+c.msg).join('<br>')}</div>`:''}
-        <div style="display:flex;gap:8px;margin-top:14px;">
-          <button class="btn btn-secondary" style="flex:1;" onclick="ThemeManager.closeModal();openTaskModal('${id||''}')">✏️ تعديل</button>
-          <button class="btn btn-warning" style="flex:1;" onclick="actuallySaveTask(window._pendingTask,'${id||''}')">حفظ على أي حال</button>
-        </div>
-      </div>`,'modal-lg');
+      if(typeof ThemeManager?.openModal==='function'){
+        ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">⚠️ تعارضات مكتشفة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">${errors.length?`<div class="conflict-box">${errors.map(c=>'🔴 '+c.msg).join('<br>')}</div>`:''}${warnings.length?`<div class="suggest-box">${warnings.map(c=>'🟡 '+c.msg).join('<br>')}</div>`:''}<div style="display:flex;gap:8px;margin-top:14px;"><button class="btn btn-secondary" style="flex:1;" onclick="ThemeManager.closeModal();window.openTaskModal('${id||''}')">✏️ تعديل</button><button class="btn btn-warning" style="flex:1;" onclick="actuallySaveTask(window._pendingTask,'${id||''}')">حفظ على أي حال</button></div></div>`,'modal-lg');
+      }
     }
 
     function actuallySaveTask(obj,id){
-      if(id){
-        const i=TOPS.data.tasks.findIndex(t=>t.id===id);
-        if(i>-1)TOPS.data.tasks[i]={...TOPS.data.tasks[i],...obj};
-      }else{
-        obj.createdAt=new Date().toISOString();
-        TOPS.data.tasks.push(obj);
-      }
-      TOPS.save();
-      generateRecurringTasks();
-      ThemeManager.closeModal();
-      ThemeManager.toast('تم حفظ المهمة ✓','success');
-      generateNotifications();
+      if(id){const i=TOPS.data.tasks.findIndex(t=>t.id===id);if(i>-1)TOPS.data.tasks[i]={...TOPS.data.tasks[i],...obj};}
+      else{obj.createdAt=new Date().toISOString();TOPS.data.tasks.push(obj);}
+      TOPS.save();generateRecurringTasks();
+      if(typeof ThemeManager?.closeModal==='function')ThemeManager.closeModal();
+      window.safeToast('تم حفظ المهمة ✓','success');generateNotifications();
       if(document.getElementById('section-calendar').classList.contains('active'))loadCalendar();
       if(document.getElementById('section-tasks').classList.contains('active'))loadTasks();
       if(document.getElementById('section-overview').classList.contains('active'))loadOverview();
@@ -1064,408 +608,131 @@
     window.deleteTask=function(id){
       if(!confirm('حذف المهمة؟'))return;
       TOPS.data.tasks=TOPS.data.tasks.filter(t=>t.id!==id&&t.recurringParentId!==id);
-      TOPS.save();
-      ThemeManager.toast('تم الحذف ✓','success');
-      generateNotifications();
+      TOPS.save();window.safeToast('تم الحذف ✓','success');generateNotifications();
       if(document.getElementById('section-calendar').classList.contains('active'))loadCalendar();
       if(document.getElementById('section-tasks').classList.contains('active'))loadTasks();
     };
 
     window.markTaskDone=function(id){
-      const t=TOPS.data.tasks.find(x=>x.id===id);
-      if(!t)return;
-      t.status='completed';
-      t.completedAt=new Date().toISOString();
-      t.updatedAt=new Date().toISOString();
-      TOPS.save();
-      ThemeManager.closeModal();
-      ThemeManager.toast('تم إكمال المهمة ✓','success');
-      loadTasks();
+      const t=TOPS.data.tasks.find(x=>x.id===id);if(!t)return;
+      t.status='completed';t.completedAt=new Date().toISOString();t.updatedAt=new Date().toISOString();
+      TOPS.save();if(typeof ThemeManager?.closeModal==='function')ThemeManager.closeModal();
+      window.safeToast('تم إكمال المهمة ✓','success');loadTasks();
     };
 
-    // ===== Teachers =====
     window.loadTeachers=function(){
       const q=(document.getElementById('tSearch')?.value||'').toLowerCase();
       let list=TOPS.data.teachers;
       if(q)list=list.filter(t=>(t.name||'').toLowerCase().includes(q)||(t.subject||'').toLowerCase().includes(q)||(t.mainArea||'').toLowerCase().includes(q));
-
       document.getElementById('teachersList').innerHTML=list.length?list.map(t=>{
-        const rel=RELATIONS[t.relationType]||RELATIONS.assistant;
-        const prio=PRIORITIES[t.priority]||PRIORITIES.medium;
-        const taskCount=TOPS.data.tasks.filter(x=>x.teacherId===t.id).length;
-        return`<div class="teacher-row">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
-            <div style="flex:1;">
-              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                <span class="prio-dot" style="background:${prio.color};"></span>
-                <strong style="font-size:15px;">${t.name}</strong>
-                <span class="tag ${rel.cls}">${rel.ar}</span>
-                <span class="tag">Tasks: ${taskCount}</span>
-              </div>
-              <div class="text-sm text-muted" style="margin-top:6px;">📚 ${t.subject||'-'} · 📍 ${t.mainArea||'-'} · 📞 ${t.phone||'-'}</div>
-              <div style="margin-top:8px;">
-                ${(t.stages||[]).map(s=>`<span class="tag">${s}</span>`).join('')}
-                ${(t.workDays||[]).map(w=>`<span class="tag" style="background:var(--surface);color:var(--text-secondary);">${(DAYS.find(d=>d.en===w)||{}).ar||w}</span>`).join('')}
-              </div>
-              ${t.notes?`<div class="text-xs text-muted" style="margin-top:8px;">📝 ${t.notes}</div>`:''}
-            </div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
-              ${t.whatsapp?`<a class="btn btn-success btn-sm" href="https://wa.me/${t.whatsapp.replace(/\D/g,'')}" target="_blank">💬</a>`:''}
-              <button class="btn btn-primary btn-sm" onclick="openTeacherProfile('${t.id}')">👁️ الملف</button>
-              <button class="btn btn-primary btn-sm" onclick="openTaskModal(null,'${todayStr()}');setTimeout(()=>{document.getElementById('taskTeacher').value='${t.id}'},50)">+ Task</button>
-              <button class="btn btn-secondary btn-sm" onclick="openTeacherModal('${t.id}')">✏️</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteTeacher('${t.id}')">🗑️</button>
-            </div>
-          </div>
-        </div>`;
+        const rel=RELATIONS[t.relationType]||RELATIONS.assistant, prio=PRIORITIES[t.priority]||PRIORITIES.medium, taskCount=TOPS.data.tasks.filter(x=>x.teacherId===t.id).length;
+        return`<div class="teacher-row"><div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;"><div style="flex:1;"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span class="prio-dot" style="background:${prio.color};"></span><strong style="font-size:15px;">${t.name}</strong><span class="tag ${rel.cls}">${rel.ar}</span><span class="tag">Tasks: ${taskCount}</span></div><div class="text-sm text-muted" style="margin-top:6px;">📚 ${t.subject||'-'} · 📍 ${t.mainArea||'-'} · 📞 ${t.phone||'-'}</div><div style="margin-top:8px;">${(t.stages||[]).map(s=>`<span class="tag">${s}</span>`).join('')}${(t.workDays||[]).map(w=>`<span class="tag" style="background:var(--surface);color:var(--text-secondary);">${(DAYS.find(d=>d.en===w)||{}).ar||w}</span>`).join('')}</div>${t.notes?`<div class="text-xs text-muted" style="margin-top:8px;">📝 ${t.notes}</div>`:''}</div><div style="display:flex;gap:6px;flex-wrap:wrap;">${t.whatsapp?`<a class="btn btn-success btn-sm" href="https://wa.me/${t.whatsapp.replace(/\D/g,'')}" target="_blank">💬</a>`:''}<button class="btn btn-primary btn-sm" onclick="window.openTeacherProfile('${t.id}')">👁️ الملف</button><button class="btn btn-primary btn-sm" onclick="window.openTaskModal(null,'${todayStr()}');setTimeout(()=>{document.getElementById('taskTeacher').value='${t.id}'},50)">+ Task</button><button class="btn btn-secondary btn-sm" onclick="window.openTeacherModal('${t.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="window.deleteTeacher('${t.id}')">🗑️</button></div></div></div>`;
       }).join(''):'<div class="empty-state"><div class="empty-state-icon">👨‍🏫</div>لا مدرسين بعد — أضف أول مدرس</div>';
     };
 
-    // ===== Teacher Profile =====
-    window.openTeacherProfile=function(id){
-      currentTeacherProfile=id;
-      showSection('teacher-profile');
-    };
-
+    window.openTeacherProfile=function(id){currentTeacherProfile=id;window.showSection('teacher-profile');};
     window.loadTeacherProfile=function(id){
       const t=TOPS.data.teachers.find(x=>x.id===id);
-      if(!t){
-        document.getElementById('teacherProfileContent').innerHTML='<div class="empty-state">المدرس غير موجود</div>';
-        return;
-      }
-
-      const rel=RELATIONS[t.relationType]||RELATIONS.assistant;
-      const prio=PRIORITIES[t.priority]||PRIORITIES.medium;
-      const teacherTasks=TOPS.data.tasks.filter(x=>x.teacherId===id);
-      const todayTasks=teacherTasks.filter(x=>x.date===todayStr());
-      const completedTasks=teacherTasks.filter(x=>x.status==='completed');
-      const pendingTasks=teacherTasks.filter(x=>x.status==='pending'||x.status==='in_progress');
-      const cancelledTasks=teacherTasks.filter(x=>x.status==='cancelled');
-
-      let totalHours=0;
-      teacherTasks.forEach(x=>{
-        if(x.startTime&&x.endTime){
-          const s=minOf(x.startTime),e=taskEndMin(x);
-          if(e>s)totalHours+=(e-s)/60;
-        }
-      });
-
-      const upcomingTasks=teacherTasks.filter(x=>x.date>todayStr()&&x.status!=='completed'&&x.status!=='cancelled').slice(0,5);
-      const pastTasks=teacherTasks.filter(x=>x.date<todayStr()).slice(-5).reverse();
-
-      document.getElementById('teacherProfileContent').innerHTML=`
-        <div class="card">
-          <button class="btn btn-ghost btn-sm" onclick="showSection('teachers')" style="margin-bottom:16px;">→ رجوع للمدرسين</button>
-          
-          <div class="profile-header">
-            <div class="profile-avatar">${t.name.charAt(0)}</div>
-            <div style="flex:1;">
-              <h2 style="margin:0;">${t.name}</h2>
-              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
-                <span class="tag ${rel.cls}">${rel.ar}</span>
-                <span class="tag" style="background:${prio.color}22;color:${prio.color};">${prio.icon} ${prio.ar}</span>
-                <span class="tag">📚 ${t.subject||'-'}</span>
-                <span class="tag">📍 ${t.mainArea||'-'}</span>
-              </div>
-              <div class="text-sm text-muted" style="margin-top:8px;">📞 ${t.phone||'-'} · ${t.whatsapp?'💬 '+t.whatsapp:''}</div>
-            </div>
-          </div>
-
-          <div class="profile-stats">
-            <div class="profile-stat"><div class="profile-stat-value">${teacherTasks.length}</div><div class="profile-stat-label">إجمالي المهام</div></div>
-            <div class="profile-stat"><div class="profile-stat-value" style="color:var(--success)">${completedTasks.length}</div><div class="profile-stat-label">مكتملة</div></div>
-            <div class="profile-stat"><div class="profile-stat-value" style="color:var(--warning)">${pendingTasks.length}</div><div class="profile-stat-label">معلقة</div></div>
-            <div class="profile-stat"><div class="profile-stat-value" style="color:var(--danger)">${cancelledTasks.length}</div><div class="profile-stat-label">ملغية</div></div>
-            <div class="profile-stat"><div class="profile-stat-value">${totalHours.toFixed(1)}</div><div class="profile-stat-label">ساعات العمل</div></div>
-          </div>
-
-          ${todayTasks.length?`
-          <div style="margin-bottom:20px;">
-            <h3 style="margin-bottom:12px;">📅 مهام اليوم</h3>
-            ${todayTasks.map(task=>taskRow(task)).join('')}
-          </div>`:''}
-
-          ${upcomingTasks.length?`
-          <div style="margin-bottom:20px;">
-            <h3 style="margin-bottom:12px;">📌 المهام القادمة</h3>
-            ${upcomingTasks.map(task=>taskRow(task)).join('')}
-          </div>`:''}
-
-          ${pastTasks.length?`
-          <div style="margin-bottom:20px;">
-            <h3 style="margin-bottom:12px;">📜 المهام السابقة</h3>
-            ${pastTasks.map(task=>taskRow(task)).join('')}
-          </div>`:''}
-
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button class="btn btn-primary" onclick="openTaskModal(null,'${todayStr()}');setTimeout(()=>{document.getElementById('taskTeacher').value='${t.id}'},50)">+ إضافة مهمة</button>
-            <button class="btn btn-secondary" onclick="openTeacherModal('${t.id}')">✏️ تعديل بيانات</button>
-            ${t.whatsapp?`<a class="btn btn-success" href="https://wa.me/${t.whatsapp.replace(/\D/g,'')}" target="_blank">💬 واتساب</a>`:''}
-          </div>
-        </div>`;
+      if(!t){document.getElementById('teacherProfileContent').innerHTML='<div class="empty-state">المدرس غير موجود</div>';return;}
+      const rel=RELATIONS[t.relationType]||RELATIONS.assistant, prio=PRIORITIES[t.priority]||PRIORITIES.medium;
+      const teacherTasks=TOPS.data.tasks.filter(x=>x.teacherId===id), todayTasks=teacherTasks.filter(x=>x.date===todayStr());
+      const completedTasks=teacherTasks.filter(x=>x.status==='completed'), pendingTasks=teacherTasks.filter(x=>x.status==='pending'||x.status==='in_progress'), cancelledTasks=teacherTasks.filter(x=>x.status==='cancelled');
+      let totalHours=0;teacherTasks.forEach(x=>{if(x.startTime&&x.endTime){const s=minOf(x.startTime),e=taskEndMin(x);if(e>s)totalHours+=(e-s)/60;}});
+      const upcomingTasks=teacherTasks.filter(x=>x.date>todayStr()&&x.status!=='completed'&&x.status!=='cancelled').slice(0,5), pastTasks=teacherTasks.filter(x=>x.date<todayStr()).slice(-5).reverse();
+      document.getElementById('teacherProfileContent').innerHTML=`<div class="card"><button class="btn btn-ghost btn-sm" onclick="window.showSection('teachers')" style="margin-bottom:16px;">→ رجوع للمدرسين</button><div class="profile-header"><div class="profile-avatar">${t.name.charAt(0)}</div><div style="flex:1;"><h2 style="margin:0;">${t.name}</h2><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;"><span class="tag ${rel.cls}">${rel.ar}</span><span class="tag" style="background:${prio.color}22;color:${prio.color};">${prio.icon} ${prio.ar}</span><span class="tag">📚 ${t.subject||'-'}</span><span class="tag">📍 ${t.mainArea||'-'}</span></div><div class="text-sm text-muted" style="margin-top:8px;">📞 ${t.phone||'-'} · ${t.whatsapp?'💬 '+t.whatsapp:''}</div></div></div><div class="profile-stats"><div class="profile-stat"><div class="profile-stat-value">${teacherTasks.length}</div><div class="profile-stat-label">إجمالي المهام</div></div><div class="profile-stat"><div class="profile-stat-value" style="color:var(--success)">${completedTasks.length}</div><div class="profile-stat-label">مكتملة</div></div><div class="profile-stat"><div class="profile-stat-value" style="color:var(--warning)">${pendingTasks.length}</div><div class="profile-stat-label">معلقة</div></div><div class="profile-stat"><div class="profile-stat-value" style="color:var(--danger)">${cancelledTasks.length}</div><div class="profile-stat-label">ملغية</div></div><div class="profile-stat"><div class="profile-stat-value">${totalHours.toFixed(1)}</div><div class="profile-stat-label">ساعات العمل</div></div></div>${todayTasks.length?`<div style="margin-bottom:20px;"><h3 style="margin-bottom:12px;">📅 مهام اليوم</h3>${todayTasks.map(task=>taskRow(task)).join('')}</div>`:''}${upcomingTasks.length?`<div style="margin-bottom:20px;"><h3 style="margin-bottom:12px;">📌 المهام القادمة</h3>${upcomingTasks.map(task=>taskRow(task)).join('')}</div>`:''}${pastTasks.length?`<div style="margin-bottom:20px;"><h3 style="margin-bottom:12px;">📜 المهام السابقة</h3>${pastTasks.map(task=>taskRow(task)).join('')}</div>`:''}<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-primary" onclick="window.openTaskModal(null,'${todayStr()}');setTimeout(()=>{document.getElementById('taskTeacher').value='${t.id}'},50)">+ إضافة مهمة</button><button class="btn btn-secondary" onclick="window.openTeacherModal('${t.id}')">✏️ تعديل بيانات</button>${t.whatsapp?`<a class="btn btn-success" href="https://wa.me/${t.whatsapp.replace(/\D/g,'')}" target="_blank">💬 واتساب</a>`:''}</div></div>`;
     };
 
     window.openTeacherModal=function(id){
       const t=id?TOPS.data.teachers.find(x=>x.id===id):null;
       const locChecks=TOPS.data.locations.map(l=>`<label><input type="checkbox" class="t-loc" value="${l.id}" ${t&&t.locations&&t.locations.includes(l.id)?'checked':''}> ${l.name}</label>`).join('');
       const dayChecks=DAYS.map(d=>`<label><input type="checkbox" class="t-day" value="${d.en}" ${t&&t.workDays&&t.workDays.includes(d.en)?'checked':''}> ${d.ar}</label>`).join('');
-
-      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${t?'✏️ تعديل':'👨‍🏫 إضافة'} مدرس</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
-      <div class="modal-body">
-        <div class="form-group"><label>اسم المدرس *</label><input type="text" id="tName" class="form-input" value="${t?.name||''}" required></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div class="form-group"><label>المادة</label><input type="text" id="tSubject" class="form-input" value="${t?.subject||''}"></div>
-          <div class="form-group"><label>المنطقة الأساسية</label><input type="text" id="tArea" class="form-input" value="${t?.mainArea||''}"></div>
-        </div>
-        <div class="form-group"><label>المرحلة / الصفوف</label><input type="text" id="tStages" class="form-input" value="${(t?.stages||[]).join('، ')}" placeholder="مثال: إعدادي، ثانوي"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div class="form-group"><label>رقم الهاتف</label><input type="tel" id="tPhone" class="form-input" value="${t?.phone||''}"></div>
-          <div class="form-group"><label>WhatsApp</label><input type="tel" id="tWhats" class="form-input" value="${t?.whatsapp||''}"></div>
-        </div>
-        <div class="form-group"><label>أماكن المجموعات</label><div class="chk-grid">${locChecks||'<span class="text-muted text-sm">أضف أماكن أولاً</span>'}</div></div>
-        <div class="form-group"><label>أيام العمل المعتادة</label><div class="chk-grid">${dayChecks}</div></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div class="form-group"><label>بداية ساعات العمل</label><select id="tWorkStart" class="form-select">${timeOptions(t?.workStart||'12:00')}</select></div>
-          <div class="form-group"><label>نهاية ساعات العمل</label><select id="tWorkEnd" class="form-select">${timeOptions(t?.workEnd||'22:00')}</select></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div class="form-group"><label>أولوية المدرس</label><select id="tPriority" class="form-select">
-            <option value="critical" ${t?.priority==='critical'?'selected':''}>🔴 Critical</option>
-            <option value="high" ${t?.priority==='high'?'selected':''}>🟠 High</option>
-            <option value="medium" ${!t||t?.priority==='medium'?'selected':''}>🟡 Medium</option>
-            <option value="low" ${t?.priority==='low'?'selected':''}>🟢 Low</option>
-          </select></div>
-          <div class="form-group"><label>نوع العلاقة</label><select id="tRelation" class="form-select">
-            <option value="assistant" ${t?.relationType==='assistant'?'selected':''}>Assistant</option>
-            <option value="business" ${t?.relationType==='business'?'selected':''}>Business Manager</option>
-            <option value="both" ${t?.relationType==='both'?'selected':''}>Assistant + Business Manager</option>
-          </select></div>
-        </div>
-        <div class="form-group"><label>ملاحظات</label><textarea id="tNotes" class="form-textarea" rows="2">${t?.notes||''}</textarea></div>
-        <button class="btn btn-primary w-full" onclick="saveTeacher('${id||''}')">💾 حفظ</button>
-      </div>`,'modal-lg');
+      if(typeof ThemeManager?.openModal==='function'){
+        ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${t?'✏️ تعديل':'👨‍🏫 إضافة'} مدرس</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>اسم المدرس *</label><input type="text" id="tName" class="form-input" value="${t?.name||''}" required></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المادة</label><input type="text" id="tSubject" class="form-input" value="${t?.subject||''}"></div><div class="form-group"><label>المنطقة الأساسية</label><input type="text" id="tArea" class="form-input" value="${t?.mainArea||''}"></div></div><div class="form-group"><label>المرحلة / الصفوف</label><input type="text" id="tStages" class="form-input" value="${(t?.stages||[]).join('، ')}" placeholder="مثال: إعدادي، ثانوي"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>رقم الهاتف</label><input type="tel" id="tPhone" class="form-input" value="${t?.phone||''}"></div><div class="form-group"><label>WhatsApp</label><input type="tel" id="tWhats" class="form-input" value="${t?.whatsapp||''}"></div></div><div class="form-group"><label>أماكن المجموعات</label><div class="chk-grid">${locChecks||'<span class="text-muted text-sm">أضف أماكن أولاً</span>'}</div></div><div class="form-group"><label>أيام العمل المعتادة</label><div class="chk-grid">${dayChecks}</div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>بداية ساعات العمل</label><select id="tWorkStart" class="form-select">${timeOptions(t?.workStart||'12:00')}</select></div><div class="form-group"><label>نهاية ساعات العمل</label><select id="tWorkEnd" class="form-select">${timeOptions(t?.workEnd||'22:00')}</select></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>أولوية المدرس</label><select id="tPriority" class="form-select"><option value="critical" ${t?.priority==='critical'?'selected':''}>🔴 Critical</option><option value="high" ${t?.priority==='high'?'selected':''}>🟠 High</option><option value="medium" ${!t||t?.priority==='medium'?'selected':''}>🟡 Medium</option><option value="low" ${t?.priority==='low'?'selected':''}>🟢 Low</option></select></div><div class="form-group"><label>نوع العلاقة</label><select id="tRelation" class="form-select"><option value="assistant" ${t?.relationType==='assistant'?'selected':''}>Assistant</option><option value="business" ${t?.relationType==='business'?'selected':''}>Business Manager</option><option value="both" ${t?.relationType==='both'?'selected':''}>Assistant + Business Manager</option></select></div></div><div class="form-group"><label>ملاحظات</label><textarea id="tNotes" class="form-textarea" rows="2">${t?.notes||''}</textarea></div><button class="btn btn-primary w-full" onclick="window.saveTeacher('${id||''}')">💾 حفظ</button></div>`,'modal-lg');
+      }
     };
 
     window.saveTeacher=function(id){
       const name=document.getElementById('tName').value.trim();
-      if(!name)return ThemeManager.toast('اكتب اسم المدرس','error');
+      if(!name)return window.safeToast('اكتب اسم المدرس','error');
       const stages=document.getElementById('tStages').value.split(/[،,]/).map(s=>s.trim()).filter(Boolean);
-      const locations=[...document.querySelectorAll('.t-loc:checked')].map(c=>c.value);
-      const workDays=[...document.querySelectorAll('.t-day:checked')].map(c=>c.value);
+      const locations=[...document.querySelectorAll('.t-loc:checked')].map(c=>c.value), workDays=[...document.querySelectorAll('.t-day:checked')].map(c=>c.value);
       const obj={name,subject:document.getElementById('tSubject').value.trim(),mainArea:document.getElementById('tArea').value.trim(),stages,locations,workDays,phone:document.getElementById('tPhone').value.trim(),whatsapp:document.getElementById('tWhats').value.trim(),workStart:document.getElementById('tWorkStart').value,workEnd:document.getElementById('tWorkEnd').value,priority:document.getElementById('tPriority').value,relationType:document.getElementById('tRelation').value,notes:document.getElementById('tNotes').value.trim(),updatedAt:new Date().toISOString()};
       if(id){const i=TOPS.data.teachers.findIndex(t=>t.id===id);if(i>-1)TOPS.data.teachers[i]={...TOPS.data.teachers[i],...obj};}
       else{obj.id=TOPS.uid('teacher');obj.createdAt=new Date().toISOString();TOPS.data.teachers.push(obj);}
-      TOPS.save();
-      ThemeManager.closeModal();
-      ThemeManager.toast('تم حفظ المدرس ✓','success');
-      loadTeachers();
+      TOPS.save();if(typeof ThemeManager?.closeModal==='function')ThemeManager.closeModal();
+      window.safeToast('تم حفظ المدرس ✓','success');loadTeachers();
     };
 
     window.deleteTeacher=function(id){
       if(!confirm('حذف المدرس؟'))return;
-      TOPS.data.teachers=TOPS.data.teachers.filter(t=>t.id!==id);
-      TOPS.save();
-      ThemeManager.toast('تم الحذف ✓','success');
-      loadTeachers();
+      TOPS.data.teachers=TOPS.data.teachers.filter(t=>t.id!==id);TOPS.save();
+      window.safeToast('تم الحذف ✓','success');loadTeachers();
     };
 
-    // ===== Reports =====
-    window.setReportRange=function(range,btn){
-      reportRange=range;
-      document.querySelectorAll('#section-reports-ops .filter-btn').forEach(b=>b.classList.toggle('active',b===btn));
-      loadReports();
-    };
-
+    window.setReportRange=function(range,btn){reportRange=range;document.querySelectorAll('#section-reports-ops .filter-btn').forEach(b=>b.classList.toggle('active',b===btn));loadReports();};
     window.loadReports=function(){
-      const today=todayStr();
-      const now=new Date();
-      let startDate,endDate;
-
-      if(reportRange==='today'){
-        startDate=endDate=today;
-      }else if(reportRange==='week'){
-        startDate=dateStr(startOfWeek(now));
-        endDate=dateStr(addDays(startOfWeek(now),6));
-      }else if(reportRange==='month'){
-        startDate=dateStr(new Date(now.getFullYear(),now.getMonth(),1));
-        endDate=dateStr(new Date(now.getFullYear(),now.getMonth()+1,0));
-      }else{
-        startDate='2000-01-01';
-        endDate=dateStr(addDays(now,365));
-      }
-
+      const today=todayStr(), now=new Date();let startDate,endDate;
+      if(reportRange==='today'){startDate=endDate=today;}
+      else if(reportRange==='week'){startDate=dateStr(startOfWeek(now));endDate=dateStr(addDays(startOfWeek(now),6));}
+      else if(reportRange==='month'){startDate=dateStr(new Date(now.getFullYear(),now.getMonth(),1));endDate=dateStr(new Date(now.getFullYear(),now.getMonth()+1,0));}
+      else{startDate='2000-01-01';endDate=dateStr(addDays(now,365));}
       const filteredTasks=TOPS.data.tasks.filter(t=>t.date>=startDate&&t.date<=endDate);
-
-      // إحصائيات عامة
-      const totalTasks=filteredTasks.length;
-      const completed=filteredTasks.filter(t=>t.status==='completed').length;
-      const pending=filteredTasks.filter(t=>t.status==='pending'||t.status==='in_progress').length;
-      const cancelled=filteredTasks.filter(t=>t.status==='cancelled').length;
-      const events=filteredTasks.filter(t=>t.fullDay).length;
-      const shootings=filteredTasks.filter(t=>t.typeId==='shooting').length;
-
-      let totalHours=0;
-      filteredTasks.forEach(t=>{
-        if(t.startTime&&t.endTime){
-          const s=minOf(t.startTime),e=taskEndMin(t);
-          if(e>s)totalHours+=(e-s)/60;
-        }
-      });
-
-      // إحصائيات لكل مدرس
-      const teacherStats=TOPS.data.teachers.map(t=>{
-        const tasks=filteredTasks.filter(x=>x.teacherId===t.id);
-        const comp=tasks.filter(x=>x.status==='completed').length;
-        const pend=tasks.filter(x=>x.status==='pending'||x.status==='in_progress').length;
-        let hours=0;
-        tasks.forEach(x=>{
-          if(x.startTime&&x.endTime){
-            const s=minOf(x.startTime),e=taskEndMin(x);
-            if(e>s)hours+=(e-s)/60;
-          }
-        });
-        return{teacher:t,total:tasks.length,completed:comp,pending:pend,hours:hours.toFixed(1)};
-      });
-
-      // أكثر المناطق زيارة
-      const locationCounts={};
-      filteredTasks.filter(t=>t.locationId).forEach(t=>{
-        const loc=locationName(t.locationId);
-        locationCounts[loc]=(locationCounts[loc]||0)+1;
-      });
+      const totalTasks=filteredTasks.length, completed=filteredTasks.filter(t=>t.status==='completed').length, pending=filteredTasks.filter(t=>t.status==='pending'||t.status==='in_progress').length, cancelled=filteredTasks.filter(t=>t.status==='cancelled').length, events=filteredTasks.filter(t=>t.fullDay).length, shootings=filteredTasks.filter(t=>t.typeId==='shooting').length;
+      let totalHours=0;filteredTasks.forEach(t=>{if(t.startTime&&t.endTime){const s=minOf(t.startTime),e=taskEndMin(t);if(e>s)totalHours+=(e-s)/60;}});
+      const teacherStats=TOPS.data.teachers.map(t=>{const tasks=filteredTasks.filter(x=>x.teacherId===t.id),comp=tasks.filter(x=>x.status==='completed').length,pend=tasks.filter(x=>x.status==='pending'||x.status==='in_progress').length;let hours=0;tasks.forEach(x=>{if(x.startTime&&x.endTime){const s=minOf(x.startTime),e=taskEndMin(x);if(e>s)hours+=(e-s)/60;}});return{teacher:t,total:tasks.length,completed:comp,pending:pend,hours:hours.toFixed(1)};});
+      const locationCounts={};filteredTasks.filter(t=>t.locationId).forEach(t=>{const loc=locationName(t.locationId);locationCounts[loc]=(locationCounts[loc]||0)+1;});
       const topLocations=Object.entries(locationCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
-
-      document.getElementById('reportsContent').innerHTML=`
-        <div class="report-card">
-          <h3 style="margin-bottom:16px;">📊 ملخص الفترة (${startDate} → ${endDate})</h3>
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;">
-            <div class="profile-stat"><div class="profile-stat-value">${totalTasks}</div><div class="profile-stat-label">إجمالي المهام</div></div>
-            <div class="profile-stat"><div class="profile-stat-value" style="color:var(--success)">${completed}</div><div class="profile-stat-label">مكتملة</div></div>
-            <div class="profile-stat"><div class="profile-stat-value" style="color:var(--warning)">${pending}</div><div class="profile-stat-label">معلقة</div></div>
-            <div class="profile-stat"><div class="profile-stat-value" style="color:var(--danger)">${cancelled}</div><div class="profile-stat-label">ملغية</div></div>
-            <div class="profile-stat"><div class="profile-stat-value">${events}</div><div class="profile-stat-label">Events</div></div>
-            <div class="profile-stat"><div class="profile-stat-value">${shootings}</div><div class="profile-stat-label">تصوير</div></div>
-            <div class="profile-stat"><div class="profile-stat-value">${totalHours.toFixed(1)}</div><div class="profile-stat-label">ساعات العمل</div></div>
-          </div>
-        </div>
-
-        <div class="report-card">
-          <h3 style="margin-bottom:16px;">👨‍🏫 إحصائيات المدرسين</h3>
-          <table class="report-table">
-            <thead><tr><th>المدرس</th><th>المهام</th><th>مكتملة</th><th>معلقة</th><th>ساعات</th></tr></thead>
-            <tbody>
-              ${teacherStats.map(s=>`
-                <tr>
-                  <td><strong>${s.teacher.name}</strong></td>
-                  <td>${s.total}</td>
-                  <td style="color:var(--success)">${s.completed}</td>
-                  <td style="color:var(--warning)">${s.pending}</td>
-                  <td>${s.hours}</td>
-                </tr>`).join('')}
-            </tbody>
-          </table>
-        </div>
-
-        ${topLocations.length?`
-        <div class="report-card">
-          <h3 style="margin-bottom:16px;">📍 أكثر المناطق زيارة</h3>
-          <table class="report-table">
-            <thead><tr><th>المنطقة</th><th>عدد الزيارات</th></tr></thead>
-            <tbody>
-              ${topLocations.map(([loc,count])=>`
-                <tr><td>${loc}</td><td>${count}</td></tr>`).join('')}
-            </tbody>
-          </table>
-        </div>`:''}
-      `;
+      document.getElementById('reportsContent').innerHTML=`<div class="report-card"><h3 style="margin-bottom:16px;">📊 ملخص الفترة (${startDate} → ${endDate})</h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;"><div class="profile-stat"><div class="profile-stat-value">${totalTasks}</div><div class="profile-stat-label">إجمالي المهام</div></div><div class="profile-stat"><div class="profile-stat-value" style="color:var(--success)">${completed}</div><div class="profile-stat-label">مكتملة</div></div><div class="profile-stat"><div class="profile-stat-value" style="color:var(--warning)">${pending}</div><div class="profile-stat-label">معلقة</div></div><div class="profile-stat"><div class="profile-stat-value" style="color:var(--danger)">${cancelled}</div><div class="profile-stat-label">ملغية</div></div><div class="profile-stat"><div class="profile-stat-value">${events}</div><div class="profile-stat-label">Events</div></div><div class="profile-stat"><div class="profile-stat-value">${shootings}</div><div class="profile-stat-label">تصوير</div></div><div class="profile-stat"><div class="profile-stat-value">${totalHours.toFixed(1)}</div><div class="profile-stat-label">ساعات العمل</div></div></div></div><div class="report-card"><h3 style="margin-bottom:16px;">👨‍🏫 إحصائيات المدرسين</h3><table class="report-table"><thead><tr><th>المدرس</th><th>المهام</th><th>مكتملة</th><th>معلقة</th><th>ساعات</th></tr></thead><tbody>${teacherStats.map(s=>`<tr><td><strong>${s.teacher.name}</strong></td><td>${s.total}</td><td style="color:var(--success)">${s.completed}</td><td style="color:var(--warning)">${s.pending}</td><td>${s.hours}</td></tr>`).join('')}</tbody></table></div>${topLocations.length?`<div class="report-card"><h3 style="margin-bottom:16px;">📍 أكثر المناطق زيارة</h3><table class="report-table"><thead><tr><th>المنطقة</th><th>عدد الزيارات</th></tr></thead><tbody>${topLocations.map(([loc,count])=>`<tr><td>${loc}</td><td>${count}</td></tr>`).join('')}</tbody></table></div>`:''}`;
     };
 
-    // ===== Locations =====
     window.loadLocations=function(){
       const list=TOPS.data.locations;
-      document.getElementById('locationsList').innerHTML=list.length?list.map(l=>`
-        <div class="user-card">
-          <div class="user-card-header"><div class="user-avatar">📍</div><div><div class="user-name">${l.name}</div><div class="user-meta"><span>🗺️ ${l.area||'-'}</span></div></div></div>
-          <div class="text-sm text-muted" style="margin-bottom:8px;">${l.address||''}</div>
-          <div class="user-meta"><span>⏱️ انتقال ~${l.travelTime||0} د</span></div>
-          <div class="user-actions">
-            ${l.mapsUrl?`<a class="btn btn-secondary btn-sm" href="${l.mapsUrl}" target="_blank">🗺️ Maps</a>`:''}
-            <button class="btn btn-secondary btn-sm" onclick="openLocationModal('${l.id}')">✏️</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteLocation('${l.id}')">🗑️</button>
-          </div>
-        </div>`).join(''):'<div class="empty-state" style="grid-column:1/-1;"><div class="empty-state-icon">📍</div>لا أماكن بعد</div>';
+      document.getElementById('locationsList').innerHTML=list.length?list.map(l=>`<div class="user-card"><div class="user-card-header"><div class="user-avatar">📍</div><div><div class="user-name">${l.name}</div><div class="user-meta"><span>🗺️ ${l.area||'-'}</span></div></div></div><div class="text-sm text-muted" style="margin-bottom:8px;">${l.address||''}</div><div class="user-meta"><span>⏱️ انتقال ~${l.travelTime||0} د</span></div><div class="user-actions">${l.mapsUrl?`<a class="btn btn-secondary btn-sm" href="${l.mapsUrl}" target="_blank">🗺️ Maps</a>`:''}<button class="btn btn-secondary btn-sm" onclick="window.openLocationModal('${l.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="window.deleteLocation('${l.id}')">🗑️</button></div></div>`).join(''):'<div class="empty-state" style="grid-column:1/-1;"><div class="empty-state-icon">📍</div>لا أماكن بعد</div>';
     };
 
     window.openLocationModal=function(id){
       const l=id?TOPS.data.locations.find(x=>x.id===id):null;
-      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${l?'✏️ تعديل':'📍 إضافة'} مكان</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
-      <div class="modal-body">
-        <div class="form-group"><label>اسم المكان *</label><input type="text" id="lName" class="form-input" value="${l?.name||''}"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div class="form-group"><label>المنطقة</label><input type="text" id="lArea" class="form-input" value="${l?.area||''}"></div>
-          <div class="form-group"><label>وقت الانتقال التقريبي (د)</label><input type="number" id="lTravel" class="form-input" value="${l?.travelTime||0}"></div>
-        </div>
-        <div class="form-group"><label>العنوان</label><input type="text" id="lAddress" class="form-input" value="${l?.address||''}"></div>
-        <div class="form-group"><label>رابط Google Maps</label><input type="url" id="lMaps" class="form-input" value="${l?.mapsUrl||''}" placeholder="https://maps.google.com/..."></div>
-        <button class="btn btn-primary w-full" onclick="saveLocation('${id||''}')">💾 حفظ</button>
-      </div>`);
+      if(typeof ThemeManager?.openModal==='function'){
+        ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${l?'✏️ تعديل':'📍 إضافة'} مكان</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>اسم المكان *</label><input type="text" id="lName" class="form-input" value="${l?.name||''}"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المنطقة</label><input type="text" id="lArea" class="form-input" value="${l?.area||''}"></div><div class="form-group"><label>وقت الانتقال التقريبي (د)</label><input type="number" id="lTravel" class="form-input" value="${l?.travelTime||0}"></div></div><div class="form-group"><label>العنوان</label><input type="text" id="lAddress" class="form-input" value="${l?.address||''}"></div><div class="form-group"><label>رابط Google Maps</label><input type="url" id="lMaps" class="form-input" value="${l?.mapsUrl||''}" placeholder="https://maps.google.com/..."></div><button class="btn btn-primary w-full" onclick="window.saveLocation('${id||''}')">💾 حفظ</button></div>`);
+      }
     };
 
     window.saveLocation=function(id){
       const name=document.getElementById('lName').value.trim();
-      if(!name)return ThemeManager.toast('اكتب اسم المكان','error');
+      if(!name)return window.safeToast('اكتب اسم المكان','error');
       const obj={name,area:document.getElementById('lArea').value.trim(),travelTime:parseInt(document.getElementById('lTravel').value)||0,address:document.getElementById('lAddress').value.trim(),mapsUrl:document.getElementById('lMaps').value.trim(),updatedAt:new Date().toISOString()};
       if(id){const i=TOPS.data.locations.findIndex(l=>l.id===id);if(i>-1)TOPS.data.locations[i]={...TOPS.data.locations[i],...obj};}
       else{obj.id=TOPS.uid('loc');obj.createdAt=new Date().toISOString();TOPS.data.locations.push(obj);}
-      TOPS.save();
-      ThemeManager.closeModal();
-      ThemeManager.toast('تم حفظ المكان ✓','success');
-      loadLocations();
+      TOPS.save();if(typeof ThemeManager?.closeModal==='function')ThemeManager.closeModal();
+      window.safeToast('تم حفظ المكان ✓','success');loadLocations();
     };
 
     window.deleteLocation=function(id){
       if(!confirm('حذف المكان؟'))return;
-      TOPS.data.locations=TOPS.data.locations.filter(l=>l.id!==id);
-      TOPS.save();
-      ThemeManager.toast('تم الحذف ✓','success');
-      loadLocations();
+      TOPS.data.locations=TOPS.data.locations.filter(l=>l.id!==id);TOPS.save();
+      window.safeToast('تم الحذف ✓','success');loadLocations();
     };
 
-    // ===== Activity Types =====
     window.loadTypes=function(){
       const fixed=TOPS.defaultTypes.map(t=>t.id);
-      document.getElementById('typesList').innerHTML=TOPS.data.types.map(t=>`
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--surface-hover);border-radius:10px;border:1px solid var(--border);">
-          <div><span style="font-size:20px;margin-inline-end:8px;">${t.icon}</span><strong>${t.name}</strong></div>
-          ${!fixed.includes(t.id)?`<button class="btn btn-danger btn-sm" onclick="deleteType('${t.id}')">🗑️</button>`:''}
-        </div>`).join('');
+      document.getElementById('typesList').innerHTML=TOPS.data.types.map(t=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--surface-hover);border-radius:10px;border:1px solid var(--border);"><div><span style="font-size:20px;margin-inline-end:8px;">${t.icon}</span><strong>${t.name}</strong></div>${!fixed.includes(t.id)?`<button class="btn btn-danger btn-sm" onclick="window.deleteType('${t.id}')">🗑️</button>`:''}</div>`).join('');
     };
 
     window.openTypeModal=function(){
-      ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🏷️ نوع نشاط جديد</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
-      <div class="modal-body">
-        <div class="form-group"><label>الأيقونة</label><input type="text" id="tyIcon" class="form-input" value="⭐"></div>
-        <div class="form-group"><label>الاسم</label><input type="text" id="tyName" class="form-input"></div>
-        <button class="btn btn-primary w-full" onclick="saveType()">💾 إضافة</button>
-      </div>`,'modal-sm');
+      if(typeof ThemeManager?.openModal==='function'){
+        ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🏷️ نوع نشاط جديد</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>الأيقونة</label><input type="text" id="tyIcon" class="form-input" value="⭐"></div><div class="form-group"><label>الاسم</label><input type="text" id="tyName" class="form-input"></div><button class="btn btn-primary w-full" onclick="window.saveType()">💾 إضافة</button></div>`,'modal-sm');
+      }
     };
 
     window.saveType=function(){
       const name=document.getElementById('tyName').value.trim();
-      if(!name)return ThemeManager.toast('اكتب الاسم','error');
+      if(!name)return window.safeToast('اكتب الاسم','error');
       TOPS.data.types.push({id:TOPS.uid('type'),icon:document.getElementById('tyIcon').value||'⭐',name});
-      TOPS.save();
-      ThemeManager.closeModal();
-      loadTypes();
+      TOPS.save();if(typeof ThemeManager?.closeModal==='function')ThemeManager.closeModal();loadTypes();
     };
 
-    window.deleteType=function(id){
-      TOPS.data.types=TOPS.data.types.filter(t=>t.id!==id);
-      TOPS.save();
-      loadTypes();
-    };
+    window.deleteType=function(id){TOPS.data.types=TOPS.data.types.filter(t=>t.id!==id);TOPS.save();loadTypes();};
 
-    // ===== Settings =====
     window.loadSettingsUI=function(){
       const s=TOPS.data.settings;
       document.getElementById('setWorkStart').innerHTML=timeOptions(s.workStart||'12:00');
@@ -1474,18 +741,12 @@
     };
 
     window.saveSettings=function(){
-      TOPS.data.settings={
-        workStart:document.getElementById('setWorkStart').value,
-        workEnd:document.getElementById('setWorkEnd').value,
-        buffer:parseInt(document.getElementById('setBuffer').value)||0
-      };
-      TOPS.save();
-      ThemeManager.toast('تم حفظ الإعدادات ✓','success');
-      generateNotifications();
+      TOPS.data.settings={workStart:document.getElementById('setWorkStart').value,workEnd:document.getElementById('setWorkEnd').value,buffer:parseInt(document.getElementById('setBuffer').value)||0};
+      TOPS.save();window.safeToast('تم حفظ الإعدادات ✓','success');generateNotifications();
     };
 
     window.handleLogout=function(){
-      if(confirm('خروج؟'))AuthService.logout();
+      if(confirm('خروج؟')){if(typeof AuthService?.logout==='function')AuthService.logout();else window.location.href='login.html';}
     };
   </script>
   <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}</script>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>من نحن - Habbash Group</title>
+  <link rel="stylesheet" href="css/eduflow-theme.css">
+  <style>
+    .about-hero {
+      text-align: center; padding: 80px 20px 60px;
+      background: var(--grad); color: #fff;
+      border-radius: 0 0 40px 40px; margin-bottom: 40px;
+      position: relative; overflow: hidden;
+    }
+    .about-hero::before {
+      content: ''; position: absolute; top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+      animation: rotate 30s linear infinite;
+    }
+    @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    
+    .about-hero h1 { font-size: 42px; font-weight: 900; margin: 0; position: relative; z-index: 1; }
+    .about-hero .subtitle { font-size: 20px; opacity: 0.9; margin-top: 12px; position: relative; z-index: 1; font-weight: 600; }
+    
+    .about-container { max-width: 900px; margin: 0 auto; padding: 0 20px 60px; position: relative; z-index: 1; }
+    
+    .about-text-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 32px; margin-bottom: 40px;
+      text-align: center; box-shadow: var(--shadow-md);
+    }
+    .about-text-card h2 { color: var(--primary); margin-bottom: 16px; font-size: 28px; }
+    .about-text-card p { line-height: 2; color: var(--text-secondary); font-size: 16px; }
+
+    .products-title { text-align: center; font-size: 32px; font-weight: 900; color: var(--text-primary); margin-bottom: 32px; }
+    
+    .products-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 24px; }
+    
+    .product-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 24px; padding: 32px; text-align: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative; overflow: hidden; cursor: pointer;
+      text-decoration: none; color: inherit; display: block;
+    }
+    .product-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+      background: var(--grad); transform: scaleX(0); transform-origin: right; transition: transform 0.3s ease;
+    }
+    .product-card:hover { transform: translateY(-8px); box-shadow: var(--shadow-lg); border-color: var(--primary); }
+    .product-card:hover::before { transform: scaleX(1); transform-origin: left; }
+    
+    .product-icon {
+      width: 80px; height: 80px; background: var(--primary-bg);
+      border-radius: 20px; display: flex; align-items: center; justify-content: center;
+      font-size: 36px; margin: 0 auto 20px; transition: transform 0.3s ease;
+    }
+    .product-card:hover .product-icon { transform: scale(1.1) rotate(5deg); }
+    
+    .product-card h3 { font-size: 24px; font-weight: 800; margin-bottom: 12px; color: var(--primary); }
+    .product-card p { line-height: 1.8; color: var(--text-secondary); font-size: 15px; margin-bottom: 20px; }
+    
+    .product-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 24px; background: var(--primary); color: #fff;
+      border-radius: 9999px; font-weight: 700; font-size: 14px; transition: all 0.2s ease;
+    }
+    .product-card:hover .product-btn { background: var(--primary-dark); transform: translateX(-4px); }
+
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      margin-bottom: 24px; color: var(--text-muted);
+      text-decoration: none; font-weight: 600; font-size: 15px; transition: color 0.2s;
+    }
+    .back-btn:hover { color: var(--primary); }
+
+    @media (max-width: 640px) {
+      .about-hero h1 { font-size: 32px; }
+      .products-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div>
+  
+  <div class="about-container">
+    <a href="javascript:history.back()" class="back-btn">→ العودة للرئيسية</a>
+    
+    <div class="about-hero">
+      <h1>من نحن</h1>
+      <div class="subtitle">Habbash Group</div>
+    </div>
+
+    <div class="about-text-card">
+      <h2>رؤيتنا ورسالتنا</h2>
+      <p id="aboutCompanyText">
+        نحن في "هباش جروب" نؤمن بأن التعليم هو حجر الأساس في بناء المستقبل. لذلك، نعمل بشغف على تطوير حلول تقنية مبتكرة تهدف إلى تمكين المدرسين ومراكز الدروس الخصوصية من إدارة أعمالهم بكفاءة واحترافية. نوفر أدوات متكاملة، سهلة الاستخدام، وآمنة، تضمن تقديم أفضل تجربة تعليمية للطلاب وأولياء الأمور، ونسعى دائماً لرقمنة العملية التعليمية لتواكب أحدث التطورات التكنولوجية.
+      </p>
+    </div>
+
+    <h2 class="products-title">أعمالنا ومنصاتنا</h2>
+    
+    <div class="products-grid">
+      <a href="eduflow-features.html" class="product-card">
+        <div class="product-icon">🚀</div>
+        <h3>منصة المتابعة EduFlow</h3>
+        <p>نظام إدارة متكامل للمراكز التعليمية يتيح لك إدارة الحضور، الامتحانات، الواجبات، والمدفوعات، والتواصل مع أولياء الأمور بكل سهولة واحترافية.</p>
+        <span class="product-btn">اكتشف المميزات ←</span>
+      </a>
+
+      <a href="hesetak.html" class="product-card">
+        <div class="product-icon">📚</div>
+        <h3>منصة حصتك التعليمية</h3>
+        <p>منصتنا التعليمية الشاملة التي توفر للطلاب مكتبة ضخمة من الدروس المسجلة، الملازم، الملخصات، والاختبارات التفاعلية لمتابعة التقدم الدراسي خطوة بخطوة.</p>
+        <span class="product-btn">زيارة المنصة ←</span>
+      </a>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/data-service.js"></script>
+  <script src="js/theme-manager.js"></script>
+  <script src="js/footer-injector.js"></script>
+  <script>
+    (async function(){
+      if(typeof DataService?.init === 'function') await DataService.init();
+      const settings = (typeof DataService?.getBranding === 'function') ? DataService.getBranding() : {};
+      if(settings.aboutCompany) document.getElementById('aboutCompanyText').textContent = settings.aboutCompany;
+    })();
+  </script>
+</body>
+</html>

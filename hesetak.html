@@ -1,64 +1,248 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>منصة حصتك - EduFlow</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>منصة حصتك - Habbash Group</title>
   <link rel="stylesheet" href="css/eduflow-theme.css">
   <style>
-    .hero-section{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;padding:24px;text-align:center}
-    .hero-card{max-width:720px;width:100%}
-    .hesetak-logo{width:120px;height:120px;border-radius:30px;background:linear-gradient(135deg,#38bdf8,#6366f1,#a855f7);display:flex;align-items:center;justify-content:center;color:#fff;margin:0 auto 24px;font-size:56px;box-shadow:0 20px 60px rgba(56,189,248,.4);animation:float 3s ease-in-out infinite;overflow:hidden}
-    .hesetak-logo img{width:100%;height:100%;object-fit:cover}
-    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-    .hesetak-title{font-size:52px;font-weight:900;margin:0 0 12px;background:linear-gradient(135deg,#38bdf8,#6366f1,#a855f7);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-1px}
-    .hesetak-subtitle{font-size:18px;color:var(--text-secondary);line-height:1.7;margin-bottom:32px}
-    .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:32px}
-    .stat-pill{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 12px}
-    .stat-pill-value{font-size:28px;font-weight:900;font-family:var(--font-en);color:var(--primary)}
-    .stat-pill-label{font-size:11px;color:var(--text-muted);margin-top:2px}
-    .features-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:32px}
-    .feature-pill{background:color-mix(in srgb,var(--surface) 70%,transparent);backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:right;transition:all var(--t)}
-    .feature-pill:hover{border-color:var(--primary-border);transform:translateY(-2px)}
-    .feature-pill-icon{font-size:24px;margin-bottom:6px}
-    .feature-pill-title{font-size:13px;font-weight:800;margin-bottom:4px}
-    .feature-pill-desc{font-size:11px;color:var(--text-muted);line-height:1.4}
-    .cta-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:16px 32px;background:linear-gradient(135deg,#38bdf8,#6366f1,#a855f7);color:#fff;border-radius:14px;font-size:16px;font-weight:800;text-decoration:none;box-shadow:0 12px 40px rgba(99,102,241,.4);transition:all var(--t)}
-    .cta-btn:hover{transform:translateY(-3px);box-shadow:0 20px 50px rgba(99,102,241,.5);color:#fff}
-    .back-btn{display:inline-block;margin-top:20px;font-size:13px;color:var(--text-muted);text-decoration:none}
-    .theme-float{position:fixed;top:20px;left:20px;z-index:100}
-    @media (max-width:640px){.hesetak-title{font-size:38px}.stats-row{gap:6px}.stat-pill{padding:12px 6px}.stat-pill-value{font-size:22px}}
+    :root {
+      --hesetak-grad: linear-gradient(135deg, #38bdf8 0%, #6366f1 50%, #a855f7 100%);
+      --hesetak-glow: 0 20px 60px rgba(99, 102, 241, .3);
+    }
+    body { overflow-x: hidden; }
+
+    .hero-wrap {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      position: relative; z-index: 1; padding: 40px 20px;
+    }
+
+    .hero-card {
+      max-width: 900px; width: 100%;
+      background: color-mix(in srgb, var(--surface) 85%, transparent);
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border); border-radius: 32px;
+      padding: 60px 40px; box-shadow: var(--shadow-lg);
+      position: relative; overflow: hidden; text-align: center;
+    }
+
+    .hero-card::before {
+      content: ''; position: absolute; top: -50%; right: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(circle, rgba(99,102,241,.08) 0%, transparent 50%);
+      animation: rotate 30s linear infinite; pointer-events: none;
+    }
+    @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    .brand-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 16px; border-radius: 9999px;
+      background: linear-gradient(135deg, rgba(251,191,36,.15), rgba(245,158,11,.15));
+      border: 1px solid rgba(251,191,36,.3);
+      color: var(--text-secondary); font-size: 13px; font-weight: 700;
+      margin-bottom: 24px; position: relative; z-index: 1;
+    }
+
+    .hesetak-logo {
+      width: 120px; height: 120px; border-radius: 32px;
+      background: var(--hesetak-grad);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; margin: 0 auto 24px; font-size: 56px;
+      box-shadow: var(--hesetak-glow); animation: float 4s ease-in-out infinite;
+      position: relative; z-index: 1;
+    }
+    .hesetak-logo img { width: 100%; height: 100%; object-fit: cover; border-radius: 32px; }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+    .hesetak-title {
+      font-size: 48px; font-weight: 900; margin: 0 0 16px;
+      background: var(--hesetak-grad);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; letter-spacing: -1px;
+      position: relative; z-index: 1;
+    }
+
+    .hesetak-subtitle {
+      font-size: 18px; color: var(--text-secondary); line-height: 1.8;
+      margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto;
+      position: relative; z-index: 1;
+    }
+
+    .features-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px; margin-bottom: 40px; position: relative; z-index: 1;
+    }
+
+    .feature-pill {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 24px 16px; text-align: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden;
+    }
+    .feature-pill::after {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+      background: var(--hesetak-grad); transform: scaleX(0); transform-origin: right; transition: transform 0.3s;
+    }
+    .feature-pill:hover {
+      border-color: var(--primary); transform: translateY(-6px); box-shadow: var(--shadow-md);
+    }
+    .feature-pill:hover::after { transform: scaleX(1); transform-origin: left; }
+
+    .feature-pill-icon { font-size: 36px; margin-bottom: 12px; display: block; }
+    .feature-pill-title { font-size: 16px; font-weight: 800; margin-bottom: 8px; color: var(--text-primary); }
+    .feature-pill-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+    .cta-wrap { position: relative; z-index: 1; margin-top: 20px; }
+    .cta-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+      padding: 18px 48px; background: var(--hesetak-grad); color: #fff;
+      border-radius: 9999px; font-size: 18px; font-weight: 800;
+      text-decoration: none; box-shadow: 0 15px 40px rgba(99, 102, 241, .4);
+      transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .cta-btn:hover { transform: translateY(-4px); box-shadow: 0 20px 50px rgba(99, 102, 241, .6); color: #fff; }
+    .cta-arrow { font-size: 22px; transition: transform .3s; }
+    .cta-btn:hover .cta-arrow { transform: translateX(-6px); }
+
+    .secondary-links {
+      display: flex; gap: 24px; justify-content: center; margin-top: 32px;
+      flex-wrap: wrap; position: relative; z-index: 1;
+    }
+    .secondary-links a {
+      font-size: 15px; font-weight: 600; color: var(--text-muted);
+      text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: color .2s;
+    }
+    .secondary-links a:hover { color: var(--primary); }
+
+    .footer-brand {
+      margin-top: 40px; font-size: 13px; color: var(--text-muted);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      position: relative; z-index: 1; padding-top: 24px; border-top: 1px solid var(--border);
+    }
+    .footer-brand strong { color: var(--primary); }
+
+    @media (max-width: 768px) {
+      .hero-card { padding: 40px 24px; }
+      .hesetak-title { font-size: 36px; }
+      .hesetak-subtitle { font-size: 16px; }
+      .features-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 480px) {
+      .hero-card { padding: 32px 20px; }
+      .hesetak-title { font-size: 28px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .cta-btn { padding: 16px 32px; font-size: 16px; }
+    }
   </style>
 </head>
 <body data-theme="dark">
-  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
-  <button class="icon-btn theme-float" id="themeToggle"></button>
-  <div class="hero-section">
+  <div class="bg-grid"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  
+  <button class="icon-btn" style="position:fixed;top:20px;left:20px;z-index:100;" id="themeToggle" onclick="if(typeof ThemeManager?.toggleTheme==='function')ThemeManager.toggleTheme()" title="تبديل المظهر">🌙</button>
+
+  <div class="hero-wrap">
     <div class="hero-card">
+      <div class="brand-badge">
+        <span>🏢</span>
+        <span>Habbash Group</span>
+      </div>
+
       <div class="hesetak-logo" id="hLogo">📚</div>
       <h1 class="hesetak-title" id="hTitle">منصة حصتك</h1>
-      <p class="hesetak-subtitle" id="hSubtitle">منصتك التعليمية الشاملة</p>
-      <div class="stats-row" id="hStats"></div>
-      <div class="features-row" id="hFeatures"></div>
-      <a href="#" id="hCta" target="_blank" rel="noopener" class="cta-btn">🚀 اذهب إلى منصة حصتك <span style="font-size:20px;">←</span></a>
-      <br><a href="login.html" class="back-btn">→ العودة إلى EduFlow</a>
+      <p class="hesetak-subtitle" id="hSubtitle">منصتك التعليمية الشاملة للمراجعة، الشرح، والمتابعة المستمرة. كل ما يحتاجه الطالب للنجاح في مكان واحد.</p>
+      
+      <div class="features-grid" id="hFeatures"></div>
+      
+      <div class="cta-wrap">
+        <a href="#" id="hCta" target="_blank" rel="noopener" class="cta-btn">
+          🚀 اذهب إلى منصة حصتك
+          <span class="cta-arrow">←</span>
+        </a>
+      </div>
+      
+      <div class="secondary-links">
+        <a href="about.html">
+          <span>ℹ️</span> من نحن
+        </a>
+        <a href="login.html">
+          <span>→</span> العودة لتسجيل الدخول
+        </a>
+      </div>
+
+      <div class="footer-brand">
+        <span>Powered by</span>
+        <strong>EduFlow</strong>
+        <span>•</span>
+        <span>Habbash Group</span>
+      </div>
     </div>
   </div>
 
-  <script src="js/config.js"></script><script src="js/firebase-service.js"></script><script src="js/data-service.js"></script><script src="js/ui-helpers.js"></script><script src="js/drive-service.js"></script><script src="js/theme-manager.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/data-service.js"></script>
+  <script src="js/theme-manager.js"></script>
+  <script src="js/footer-injector.js"></script>
+
   <script>
+    window.driveThumb = function(url) { 
+      try { 
+        if(!url) return ''; 
+        const u = String(url); 
+        const m = u.match(/\/d\/([\w-]+)/) || u.match(/[?&]id=([\w-]+)/) || u.match(/^([\w-]{20,})$/); 
+        return m ? ('https://drive.google.com/thumbnail?id='+m[1]+'&sz=w400') : u; 
+      } catch(e) { return url || ''; } 
+    };
+
     (async function(){
-      await DataService.init();
-      ThemeManager.applyBranding();
-      const h=(DataService.getHesetak&&DataService.getHesetak())||EduFlowConfig.hesetak;
-      document.getElementById('hTitle').textContent=h.title||'منصة حصتك';
-      document.getElementById('hSubtitle').textContent=h.subtitle||'';
-      document.getElementById('hCta').href=h.url||EduFlowConfig.hesetak.url;
-      document.title=(h.title||'منصة حصتك')+' - EduFlow';
-      if(h.logo)document.getElementById('hLogo').innerHTML=UI.driveImg(h.logo);
-      document.getElementById('hStats').innerHTML=(h.stats||[]).map(s=>`<div class="stat-pill"><div class="stat-pill-value">${s.v}</div><div class="stat-pill-label">${s.l}</div></div>`).join('');
-      document.getElementById('hFeatures').innerHTML=(h.features||[]).map(f=>`<div class="feature-pill"><div class="feature-pill-icon">${f.i}</div><div class="feature-pill-title">${f.t}</div><div class="feature-pill-desc">${f.d}</div></div>`).join('');
+      try {
+        if (typeof DataService?.init === 'function') await DataService.init();
+        if (typeof ThemeManager?.applyBranding === 'function') ThemeManager.applyBranding();
+        
+        const h = (typeof DataService?.getHesetak === 'function' ? DataService.getHesetak() : null) || 
+                  (window.EduFlowConfig?.hesetak) || {};
+        
+        const title = h.title || 'منصة حصتك';
+        const subtitle = h.subtitle || 'منصتك التعليمية الشاملة للمراجعة، الشرح، والمتابعة المستمرة. كل ما يحتاجه الطالب للنجاح في مكان واحد.';
+        const url = h.url || '#';
+
+        document.getElementById('hTitle').textContent = title;
+        document.getElementById('hSubtitle').textContent = subtitle;
+        document.getElementById('hCta').href = url;
+        document.title = title + ' - Habbash Group';
+        
+        if (h.logo) {
+          document.getElementById('hLogo').innerHTML = `<img src="${window.driveThumb(h.logo)}" alt="Logo" onerror="this.style.display='none'; this.parentElement.textContent='📚';">`;
+        }
+
+        const features = h.features || [
+          { i: '🎬', t: 'شروحات مسجلة', d: 'مكتبة فيديوهات منظمة حسب المنهج الدراسي' },
+          { i: '📝', t: 'امتحانات تجريبية', d: 'قيّم مستواك واكتشف نقاط ضعفك قبل الامتحان الفعلي' },
+          { i: '📊', t: 'تقارير أداء', d: 'تابع تقدمك الدراسي ونقاط قوتك وضعفك بدقة' },
+          { i: '💬', t: 'تفاعل مباشر', d: 'اطرح أسئلتك واحصل على إجابات فورية من المدرسين' }
+        ];
+        
+        document.getElementById('hFeatures').innerHTML = features.map(f => 
+          `<div class="feature-pill">
+            <span class="feature-pill-icon">${f.i}</span>
+            <div class="feature-pill-title">${f.t}</div>
+            <div class="feature-pill-desc">${f.d}</div>
+          </div>`
+        ).join('');
+
+      } catch(err) {
+        console.error('Hesetak boot error:', err);
+      }
+    })();
+
+    (function(){
+      const saved = localStorage.getItem('eduflow_theme');
+      const btn = document.getElementById('themeToggle');
+      if(saved && btn){
+        document.body.setAttribute('data-theme', saved);
+        btn.textContent = saved === 'dark' ? '🌙' : '☀️';
+      }
     })();
   </script>
-  <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}</script>
 </body>
 </html>

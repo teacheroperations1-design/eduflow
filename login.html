@@ -1,293 +1,632 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>تسجيل الدخول - EduFlow</title>
-  <link rel="stylesheet" href="css/eduflow-theme.css">
-  <style>
-    .auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;padding:16px}
-    .auth-card{background:color-mix(in srgb,var(--surface) 90%,transparent);backdrop-filter:blur(20px);border:1px solid var(--border-strong);border-radius:var(--radius-xl);padding:32px;max-width:480px;width:100%;box-shadow:var(--shadow-lg)}
-    .brand-logo{width:72px;height:72px;border-radius:20px;background:var(--grad);display:flex;align-items:center;justify-content:center;color:#fff;margin:0 auto 16px;font-size:32px;box-shadow:var(--glow);overflow:hidden}
-    .brand-logo img{width:100%;height:100%;object-fit:cover}
-    .hesetak-banner{margin-top:20px;padding:14px;border-radius:12px;background:linear-gradient(135deg,rgba(56,189,248,.1),rgba(99,102,241,.1));border:1px solid var(--info-border);display:flex;align-items:center;gap:12px;text-decoration:none;transition:all var(--t)}
-    .hesetak-banner:hover{transform:translateY(-2px);border-color:var(--info)}
-    .support-box{background:var(--info-bg);border:1px solid var(--info-border);border-radius:12px;padding:20px;text-align:center}
-    .support-phone{font-family:var(--font-en);font-size:26px;font-weight:800;color:var(--info);margin:10px 0;letter-spacing:1px}
-    .theme-float{position:fixed;top:20px;left:20px;z-index:100}
-    .hint-box{background:var(--info-bg);border:1px solid var(--info-border);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--info);line-height:1.7}
-    .warn-banner{background:var(--warning-bg);border:1px solid var(--warning);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px;color:var(--warning);display:flex;gap:10px;align-items:center}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>تسجيل الدخول - EduFlow</title>
+<link rel="stylesheet" href="css/eduflow-theme.css">
+<style>
+body { overflow-x: hidden; }
+
+.auth-wrap{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  z-index:1;
+  padding:24px 16px;
+  padding-bottom:100px;
+}
+
+.auth-card{
+  background:color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter:blur(24px);
+  -webkit-backdrop-filter:blur(24px);
+  border:1px solid var(--border-strong);
+  border-radius:28px;
+  padding:40px 32px;
+  max-width:480px;
+  width:100%;
+  box-shadow:0 30px 80px rgba(0,0,0,.3);
+  position:relative;
+  overflow:hidden;
+}
+
+.auth-card::before{
+  content:'';
+  position:absolute;
+  top:-50%;
+  right:-50%;
+  width:200%;
+  height:200%;
+  background:radial-gradient(circle, rgba(99,102,241,.08) 0%, transparent 50%);
+  animation:rotate 30s linear infinite;
+  pointer-events:none;
+}
+
+@keyframes rotate { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+
+.brand-logo{
+  width:92px;
+  height:92px;
+  border-radius:26px;
+  background:var(--grad);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  margin:0 auto 20px;
+  font-size:42px;
+  box-shadow:0 20px 50px rgba(99,102,241,.35);
+  overflow:hidden;
+  position:relative;
+  z-index:1;
+  animation:float 4s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-6px)}
+}
+
+.brand-logo img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  position:absolute;
+  top:0;
+  left:0;
+}
+
+.brand-logo .fallback{
+  font-size:42px;
+  z-index:1;
+}
+
+.brand-name{
+  font-size:28px;
+  font-weight:900;
+  color:var(--primary);
+  text-align:center;
+  margin:0 0 4px;
+  position:relative;
+  z-index:1;
+}
+
+.brand-tagline{
+  font-size:13px;
+  color:var(--text-muted);
+  text-align:center;
+  margin-bottom:8px;
+  position:relative;
+  z-index:1;
+}
+
+.parent-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:5px 14px;
+  border-radius:9999px;
+  background:linear-gradient(135deg, rgba(251,191,36,.15), rgba(245,158,11,.15));
+  border:1px solid rgba(251,191,36,.3);
+  color:var(--text-secondary);
+  font-size:11px;
+  font-weight:700;
+  margin:8px auto 0;
+  position:relative;
+  z-index:1;
+}
+
+.brand-center{
+  text-align:center;
+  margin-bottom:28px;
+}
+
+.tabs{
+  display:flex;
+  gap:4px;
+  background:var(--surface-hover);
+  padding:4px;
+  border-radius:14px;
+  margin-bottom:24px;
+  position:relative;
+  z-index:1;
+}
+
+.tab{
+  padding:11px 16px;
+  background:transparent;
+  border:none;
+  color:var(--text-secondary);
+  cursor:pointer;
+  font-weight:700;
+  font-size:13px;
+  border-radius:10px;
+  white-space:nowrap;
+  flex:1;
+  transition:all .25s;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+
+.tab:hover{ color:var(--primary); }
+
+.tab.active{
+  background:var(--surface);
+  color:var(--primary);
+  box-shadow:0 2px 8px rgba(0,0,0,.1);
+}
+
+.info-box{
+  background:var(--info-bg);
+  border:1px solid var(--info-border);
+  border-radius:12px;
+  padding:12px;
+  font-size:12px;
+  color:var(--info);
+  margin-bottom:16px;
+  text-align:center;
+  line-height:1.6;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  justify-content:center;
+}
+
+.login-links{
+  display:flex;
+  gap:16px;
+  justify-content:center;
+  margin-top:18px;
+  flex-wrap:wrap;
+  position:relative;
+  z-index:1;
+}
+
+.login-links a{
+  font-size:13px;
+  font-weight:700;
+  text-decoration:none;
+  transition:all .2s;
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+}
+
+.login-links a:hover{
+  transform:translateY(-1px);
+}
+
+.hesetak-banner{
+  margin-top:24px;
+  padding:16px;
+  border-radius:14px;
+  background:linear-gradient(135deg, rgba(56,189,248,.12), rgba(99,102,241,.12));
+  border:1px solid rgba(99,102,241,.25);
+  display:flex;
+  align-items:center;
+  gap:14px;
+  text-decoration:none;
+  transition:all .3s cubic-bezier(.4,0,.2,1);
+  position:relative;
+  z-index:1;
+  overflow:hidden;
+}
+
+.hesetak-banner::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(135deg, rgba(56,189,248,.1), rgba(99,102,241,.1));
+  opacity:0;
+  transition:opacity .3s;
+}
+
+.hesetak-banner:hover{
+  transform:translateY(-3px);
+  border-color:var(--primary);
+  box-shadow:0 10px 30px rgba(99,102,241,.2);
+}
+
+.hesetak-banner:hover::before{ opacity:1; }
+
+.hesetak-banner-icon{
+  width:46px;
+  height:46px;
+  border-radius:12px;
+  background:linear-gradient(135deg, #38bdf8, #6366f1);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-size:22px;
+  flex-shrink:0;
+  position:relative;
+  z-index:1;
+}
+
+.hesetak-banner-content{
+  flex:1;
+  position:relative;
+  z-index:1;
+}
+
+.hesetak-banner-content strong{
+  display:block;
+  font-size:14px;
+  margin-bottom:2px;
+  color:var(--text);
+}
+
+.hesetak-banner-content span{
+  font-size:12px;
+  color:var(--text-muted);
+}
+
+.hesetak-banner-arrow{
+  color:var(--text-muted);
+  font-size:20px;
+  transition:transform .3s;
+  position:relative;
+  z-index:1;
+}
+
+.hesetak-banner:hover .hesetak-banner-arrow{
+  transform:translateX(-4px);
+  color:var(--primary);
+}
+
+.theme-float{
+  position:fixed;
+  top:20px;
+  left:20px;
+  z-index:100;
+}
+
+/* 🆕 Footer خاص بصفحة تسجيل الدخول */
+.login-footer{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  z-index:50;
+  padding:14px 16px;
+  text-align:center;
+  background:color-mix(in srgb, var(--surface) 95%, transparent);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border-top:1px solid var(--border);
+  font-size:11px;
+  color:var(--text-muted);
+}
+
+.login-footer .footer-brand{
+  font-weight:700;
+  color:var(--primary);
+}
+
+.login-footer .footer-links{
+  margin-top:6px;
+  display:flex;
+  gap:16px;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+
+.login-footer .footer-links a{
+  color:var(--text-muted);
+  text-decoration:none;
+  transition:color .2s;
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+}
+
+.login-footer .footer-links a:hover{
+  color:var(--primary);
+}
+
+@media(max-width:480px){
+  .auth-card{
+    padding:28px 20px;
+    border-radius:24px;
+  }
+  .brand-logo{
+    width:80px;
+    height:80px;
+    font-size:36px;
+  }
+  .brand-logo .fallback{ font-size:36px; }
+  .brand-name{ font-size:24px; }
+  .tab{
+    padding:10px 12px;
+    font-size:12px;
+  }
+  .hesetak-banner{
+    padding:14px;
+  }
+  .hesetak-banner-icon{
+    width:40px;
+    height:40px;
+    font-size:18px;
+  }
+}
+</style>
 </head>
 <body data-theme="dark">
-  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
-  <button class="icon-btn theme-float" id="themeToggle"></button>
-  <div class="auth-wrap">
-    <div class="auth-card">
-      <div style="text-align:center;margin-bottom:20px;">
-        <div class="brand-logo" id="brandLogo">🎓</div>
-        <div style="font-size:24px;font-weight:900;color:var(--primary);" id="brandName">EduFlow</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">منصة إدارة المراكز التعليمية</div>
-      </div>
+<div class="bg-grid"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
 
-      <div class="tabs">
-        <button class="tab active" onclick="window.tab('main',this)">🔐 دخول عام</button>
-        <button class="tab" onclick="window.tab('parent',this)">👨‍👩‍ ولي أمر</button>
-      </div>
+<button class="icon-btn theme-float" id="themeToggle" title="تغيير المظهر">🌙</button>
 
-      <form id="mainForm" onsubmit="return window.doMainLogin(event)">
-        <div class="hint-box">
-          💡 تقدر تدخل باستخدام: <strong>الإيميل</strong> / <strong>كود الطالب EDU-XXXX</strong> / <strong>رقم الهاتف</strong>
-        </div>
-        <div class="form-group"><label>البريد / الكود / رقم الهاتف</label><input type="text" id="mainId" class="form-input" placeholder="mail / EDU-XXXX / 01xxxxxxxxx" required autocomplete="username"></div>
-        <div class="form-group"><label>كلمة المرور</label><input type="password" id="mainPass" class="form-input" required autocomplete="current-password"></div>
-        <button class="btn btn-primary w-full btn-lg">دخول</button>
-        <div style="text-align:center;margin-top:12px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-          <a href="register.html" class="text-sm" style="color:var(--primary);font-weight:700;">تسجيل طالب جديد</a>
-          <a href="#" onclick="window.openRecovery();return false;" class="text-sm" style="color:var(--text-muted);">نسيت كلمة المرور؟</a>
-        </div>
-      </form>
-
-      <form id="parentForm" style="display:none" onsubmit="return window.doParentLogin(event)">
-        <div class="hint-box">
-          👨‍👩‍👧 ولي الأمر يمكنه الدخول بـ: <strong>كود الابن EDU-XXXX</strong> أو <strong>رقم هاتفه</strong> المسجّل كنسبة لولي الأمر
-        </div>
-        <div class="form-group"><label>كود الابن أو رقم هاتف ولي الأمر</label><input type="text" id="parentCode" class="form-input" placeholder="EDU-1001 أو 01xxxxxxxxx" required></div>
-        <div class="form-group"><label>كلمة المرور (نفس كلمة مرور الابن)</label><input type="password" id="parentPass" class="form-input" required></div>
-        <button class="btn btn-primary w-full btn-lg">متابعة الأبناء</button>
-        <a href="#" onclick="window.openRecovery();return false;" class="text-sm" style="color:var(--text-muted);display:block;text-align:center;margin-top:10px;">نسيت كلمة المرور؟</a>
-      </form>
-
-      <a href="hesetak.html" class="hesetak-banner">
-        <div style="width:40px;height:40px;border-radius:10px;background:var(--info);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;flex-shrink:0;">📚</div>
-        <div style="flex:1;"><strong style="display:block;font-size:13px;">منصة حصتك</strong><span style="font-size:11px;color:var(--text-muted);">منصتنا التعليمية الشاملة</span></div>
-        <span style="color:var(--text-muted);">←</span>
-      </a>
-    </div>
+<div class="auth-wrap">
+<div class="auth-card">
+<div class="brand-center">
+  <div class="brand-logo" id="brandLogo">
+    <span class="fallback" id="brandLogoFallback">🎓</span>
+    <img id="brandLogoImg" src="" alt="Logo" style="display:none;" onerror="this.style.display='none';document.getElementById('brandLogoFallback').style.display='block';">
   </div>
+  <h1 class="brand-name" id="brandName">EduFlow</h1>
+  <div class="brand-tagline" id="brandTagline">منصة إدارة المراكز التعليمية</div>
+  <div class="parent-badge">
+    <span>🏢</span>
+    <span>by Habbash Group</span>
+  </div>
+</div>
 
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-  <script src="js/config.js"></script>
-  <script src="js/firebase-service.js"></script>
-  <script src="js/data-service.js"></script>
-  <script src="js/operations-service.js"></script>
-  <script src="js/ui-helpers.js"></script>
-  <script src="js/drive-service.js"></script>
-  <script src="js/theme-manager.js"></script>
-  <script src="js/auth-service.js"></script>
+<div class="tabs">
+<button class="tab active" onclick="window.tab('main',this)">
+  <span>🔐</span> دخول عام
+</button>
+<button class="tab" onclick="window.tab('parent',this)">
+  <span>👨‍👩‍👦</span> ولي أمر
+</button>
+</div>
 
-  <script>
-    (async function(){
-      try{
-        await DataService.init();
-        if(typeof ThemeManager?.applyBranding === 'function') ThemeManager.applyBranding();
-        const u = AuthService?.getCurrentUser ? AuthService.getCurrentUser() : null;
-        if(u && typeof AuthService?.redirectToDashboard === 'function') AuthService.redirectToDashboard(u.role);
-      }catch(e){ console.error('Boot error', e); }
-    })();
+<form id="mainForm" onsubmit="return window.doMainLogin(event)">
+<div class="form-group">
+  <label>البريد / كود الطالب / رقم الهاتف</label>
+  <input type="text" id="mainId" class="form-input" placeholder="mail@example.com / EDU-XXXX / 01xxxxxxxxx" required autocomplete="username">
+</div>
+<div class="form-group">
+  <label>كلمة المرور</label>
+  <input type="password" id="mainPass" class="form-input" required autocomplete="current-password" placeholder="••••••••">
+</div>
+<button class="btn btn-primary w-full btn-lg" style="margin-top:8px;" type="submit">
+  🚀 دخول
+</button>
+<div class="login-links">
+<a href="register.html" style="color:var(--primary);">
+  <span>✨</span> تسجيل طالب جديد
+</a>
+<a href="#" onclick="window.openRecovery();return false;" style="color:var(--text-muted);">
+  <span>🔑</span> نسيت كلمة المرور؟
+</a>
+</div>
+</form>
 
-    window.tab = function(t,btn){
-      try{
-        document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-        btn?.classList.add('active');
-        const mf = document.getElementById('mainForm');
-        const pf = document.getElementById('parentForm');
-        if(mf) mf.style.display = t==='main' ? 'block' : 'none';
-        if(pf) pf.style.display = t==='parent' ? 'block' : 'none';
-      }catch(e){ console.error('tab error', e); }
-    };
+<form id="parentForm" style="display:none" onsubmit="return window.doParentLogin(event)">
+<div class="info-box">
+  <span>💡</span>
+  <span>أدخل كود الابن وكلمة المرور الخاصة به لمتابعة مستواه الدراسي</span>
+</div>
+<div class="form-group">
+  <label>كود الابن</label>
+  <input type="text" id="parentCode" class="form-input" placeholder="EDU-1001" required>
+</div>
+<div class="form-group">
+  <label>كلمة المرور (نفس كلمة الابن)</label>
+  <input type="password" id="parentPass" class="form-input" required placeholder="••••••••">
+</div>
+<button class="btn btn-primary w-full btn-lg" style="margin-top:8px;" type="submit">
+  👁️ متابعة الابن
+</button>
+</form>
 
-    // تنبيه خاص بكلمة المرور الافتراضية 1234
-    function warnDefaultPassword(u){
-      try{
-        if(u?.role==='student' && u?.password==='1234'){
-          setTimeout(()=>{
-            if(typeof ThemeManager?.toast === 'function'){
-              ThemeManager.toast('⚠️ كلمة المرور الافتراضية! غيّرها من الصفحة الشخصية للأمان','warning',6000);
-            }
-          }, 1500);
-        }
-      }catch(e){}
+<a href="hesetak.html" class="hesetak-banner">
+<div class="hesetak-banner-icon">📚</div>
+<div class="hesetak-banner-content">
+  <strong>منصة حصتك</strong>
+  <span>منصتنا التعليمية الشاملة للمحتوى</span>
+</div>
+<span class="hesetak-banner-arrow">←</span>
+</a>
+</div>
+
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="js/config.js"></script>
+<script src="js/firebase-service.js"></script>
+<script src="js/data-service.js"></script>
+<script src="js/operations-service.js"></script>
+<script src="js/ui-helpers.js"></script>
+<script src="js/drive-service.js"></script>
+<script src="js/theme-manager.js"></script>
+<script src="js/auth-service.js"></script>
+
+<script>
+const safeToast=(msg,type='info')=>{
+  if(typeof ThemeManager?.toast==='function') ThemeManager.toast(msg,type);
+  else console.log(`[${type}] ${msg}`);
+};
+
+window.driveThumb=function(url){
+  try{
+    if(!url) return '';
+    const u=String(url);
+    const m=u.match(/\/d\/([\w-]+)/)||u.match(/[?&]id=([\w-]+)/)||u.match(/^([\w-]{20,})$/);
+    return m?('https://drive.google.com/thumbnail?id='+m[1]+'&sz=w400'):u;
+  }catch(e){ return url||''; }
+};
+
+async function loadBranding(){
+  try{
+    if(typeof DataService?.init==='function') await DataService.init();
+    if(typeof ThemeManager?.applyBranding==='function') ThemeManager.applyBranding();
+    
+    const branding = typeof DataService?.getBranding==='function' ? DataService.getBranding() : {};
+    const org = typeof DataService?.getOrganization==='function' ? DataService.getOrganization() : {};
+    
+    const brandName = org.name || branding.name || 'EduFlow';
+    const brandNameEl = document.getElementById('brandName');
+    if(brandNameEl) brandNameEl.textContent = brandName;
+    
+    const logoUrl = branding.logo || org.logo || '';
+    const logoImg = document.getElementById('brandLogoImg');
+    const logoFallback = document.getElementById('brandLogoFallback');
+    if(logoUrl && logoImg){
+      const thumbUrl = window.driveThumb(logoUrl);
+      logoImg.src = thumbUrl;
+      logoImg.onload = function(){
+        logoImg.style.display = 'block';
+        if(logoFallback) logoFallback.style.display = 'none';
+      };
+      logoImg.onerror = function(){
+        logoImg.style.display = 'none';
+        if(logoFallback) logoFallback.style.display = 'block';
+      };
     }
+    
+    const tagline = branding.tagline || 'منصة إدارة المراكز التعليمية';
+    const taglineEl = document.getElementById('brandTagline');
+    if(taglineEl) taglineEl.textContent = tagline;
+    
+    document.title = 'تسجيل الدخول - ' + brandName;
+    
+    const year = new Date().getFullYear();
+    const yearEl = document.getElementById('footerYear');
+    if(yearEl) yearEl.textContent = year;
+    
+    const phone = branding.supportPhone || branding.whatsappSupport || '';
+    const phoneEl = document.getElementById('footerPhone');
+    const waEl = document.getElementById('footerWhatsapp');
+    if(phoneEl && phone) phoneEl.href = 'tel:' + phone;
+    if(waEl && phone) waEl.href = 'https://wa.me/2' + String(phone).replace(/\D/g,'');
+    
+    const u = AuthService?.getCurrentUser ? AuthService.getCurrentUser() : null;
+    if(u && typeof AuthService?.redirectToDashboard==='function') AuthService.redirectToDashboard(u.role);
+  }catch(e){ console.error('Branding load error:',e); }
+}
 
-    function enter(u, tag){
-      try{
-        sessionStorage.setItem('eduflow_user', JSON.stringify(u));
-        if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('أهلاً '+u.name,'success');
-        warnDefaultPassword(u);
-        setTimeout(()=>{
-          if(typeof AuthService?.redirectToDashboard === 'function') AuthService.redirectToDashboard(u.role);
-        }, 600);
-      }catch(e){
-        console.error('enter error', e);
-        window.location.href = (u?.role==='student'?'student-dashboard.html':'login.html');
-      }
+loadBranding();
+
+window.tab=function(t,btn){
+  try{
+    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+    btn?.classList.add('active');
+    document.getElementById('mainForm').style.display = t==='main'?'block':'none';
+    document.getElementById('parentForm').style.display = t==='parent'?'block':'none';
+  }catch(e){}
+};
+
+function enter(u){
+  try{
+    sessionStorage.setItem('eduflow_user', JSON.stringify(u));
+    safeToast('أهلاً '+u.name,'success');
+    if(u.role==='student' && String(u.password)==='1234'){
+      setTimeout(()=>safeToast('⚠️ كلمة المرور الافتراضية 1234 — يُفضل تغييرها','warning'),1500);
     }
+    setTimeout(()=>{
+      if(typeof AuthService?.redirectToDashboard==='function') AuthService.redirectToDashboard(u.role);
+    },600);
+  }catch(e){ console.error('enter',e); }
+}
 
-    // 🔐 الدخول العام (ذكي): إيميل / كود / هاتف الطالب / هاتف ولي الأمر
-    window.doMainLogin = async function(e){
-      e.preventDefault();
-      try{
-        const idEl = document.getElementById('mainId');
-        const passEl = document.getElementById('mainPass');
-        const id = idEl ? idEl.value.trim() : '';
-        const pass = passEl ? passEl.value : '';
+window.doMainLogin=async function(e){
+  e.preventDefault();
+  try{
+    const id=document.getElementById('mainId')?.value.trim()||'';
+    const pass=document.getElementById('mainPass')?.value||'';
+    if(!id||!pass){ safeToast('أكمل البيانات','error'); return false; }
+    
+    if(typeof DataService?.authenticateSmart==='function'){
+      const u=DataService.authenticateSmart(id,pass);
+      if(u){ enter(u); return false; }
+    }
+    if(id.toUpperCase().startsWith('EDU-') && typeof DataService?.findStudentByCode==='function'){
+      const s=DataService.findStudentByCode(id);
+      if(s && String(s.password)===String(pass)){ enter(s); return false; }
+    }
+    if(typeof DataService?.authenticate==='function'){
+      const u=DataService.authenticate(id,pass);
+      if(u){ enter(u); return false; }
+    }
+    safeToast('بيانات الدخول غير صحيحة','error');
+  }catch(err){
+    console.error('login',err);
+    safeToast('خطأ: '+err.message,'error');
+  }
+  return false;
+};
 
-        if(!id || !pass){
-          if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('أكمل كل الحقول','error');
-          return false;
-        }
-
-        // 1) لو ولي أمر يحاول الدخول برقمه من "دخول عام" → نوجهه تلقائياً كولي أمر
-        const digits = id.replace(/\D/g,'');
-        if(digits && digits.length >= 10){
-          const children = (typeof DataService?.getStudents === 'function' ? DataService.getStudents() : []).filter(s=>{
-            return (s.parentPhone||'').replace(/\D/g,'') === digits;
-          });
-          if(children.length > 0){
-            // الدخول بكلمة مرور الابن (أي ابن — كلها نفس الكلمة عادةً)
-            const matchChild = children.find(c => String(c.password) === String(pass));
-            if(matchChild){
-              const parent = {
-                id: 'parent_' + matchChild.id,
-                role: 'parent',
-                name: 'ولي أمر ' + matchChild.name,
-                phone: matchChild.parentPhone,
-                studentIds: children.map(c=>c.studentId || c.id),
-                viaParentPhone: true
-              };
-              enter(parent, 'ولي أمر');
-              return false;
-            }
-          }
-        }
-
-        // 2) دخول ذكي عادي (إيميل / كود / هاتف الطالب)
-        if(typeof DataService?.authenticateSmart === 'function'){
-          const u = DataService.authenticateSmart(id, pass);
-          if(u){
-            if(typeof DataService?.logActivity === 'function') await DataService.logActivity(u.id, u.name, 'تسجيل دخول', id);
-            enter(u);
-            return false;
-          }
-        }
-
-        // 3) Fallback للأنظمة القديمة
-        if(typeof DataService?.findStudentByCode === 'function' && id.toUpperCase().startsWith('EDU-')){
-          const s = DataService.findStudentByCode(id);
-          if(s && String(s.password)===String(pass)){ enter(s); return false; }
-        }
-        if(typeof DataService?.authenticate === 'function'){
-          const u = DataService.authenticate(id, pass);
-          if(u){ enter(u); return false; }
-        }
-
-        if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('بيانات الدخول غير صحيحة','error');
-      }catch(err){
-        console.error('doMainLogin error', err);
-        if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('خطأ: '+err.message,'error');
-      }
-      return false;
+window.doParentLogin=async function(e){
+  e.preventDefault();
+  try{
+    const code=document.getElementById('parentCode')?.value.trim()||'';
+    const pass=document.getElementById('parentPass')?.value||'';
+    const s = typeof DataService?.findStudentByCode==='function' ? DataService.findStudentByCode(code) : null;
+    if(!s){ safeToast('كود الابن غير صحيح','error'); return false; }
+    if(String(s.password)!==String(pass)){ safeToast('كلمة المرور غير صحيحة','error'); return false; }
+    
+    const parent={
+      id:'parent_'+s.id,
+      role:'parent',
+      name:'ولي أمر '+s.name,
+      phone:s.parentPhone,
+      studentIds:[s.id],
+      parentOf: s.name
     };
+    enter(parent);
+  }catch(err){
+    console.error('parent login',err);
+    safeToast('خطأ: '+err.message,'error');
+  }
+  return false;
+};
 
-    // 👨‍👩‍👧 دخول ولي الأمر: كود الابن أو رقم هاتف ولي الأمر
-    window.doParentLogin = async function(e){
-      e.preventDefault();
-      try{
-        const codeEl = document.getElementById('parentCode');
-        const passEl = document.getElementById('parentPass');
-        const code = codeEl ? codeEl.value.trim() : '';
-        const pass = passEl ? passEl.value : '';
+window.openRecovery=function(){
+  try{
+    const b = typeof DataService?.getBranding==='function' ? DataService.getBranding() : {};
+    const phone = b.supportPhone || b.whatsappSupport || '';
+    ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🔑 استرجاع كلمة المرور</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+    <div class="modal-body"><div style="background:var(--info-bg);border:1px solid var(--info-border);border-radius:12px;padding:20px;text-align:center;">
+    <div style="font-size:36px;">📞</div>
+    <p style="margin:8px 0 0;">تواصل مع الدعم لإعادة التعيين</p>
+    <div style="font-family:var(--font-en);font-size:24px;font-weight:800;color:var(--info);margin:10px 0;">${phone||'غير محدد'}</div>
+    ${phone?`<a class="btn btn-success w-full" href="https://wa.me/2${String(phone).replace(/\D/g,'')}" target="_blank" style="text-decoration:none;color:#fff;margin-top:10px;display:inline-block;">💬 واتساب الدعم</a>`:''}
+    </div></div>`,'modal-sm');
+  }catch(e){}
+};
 
-        if(!code || !pass){
-          if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('أكمل كل الحقول','error');
-          return false;
-        }
+document.getElementById('themeToggle')?.addEventListener('click', function(){
+  try{
+    const body = document.body;
+    const current = body.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    body.setAttribute('data-theme', next);
+    localStorage.setItem('eduflow_theme', next);
+    this.textContent = next === 'dark' ? '🌙' : '☀️';
+  }catch(e){}
+});
 
-        // 1) كود الابن EDU-XXXX
-        if(code.toUpperCase().startsWith('EDU-') && typeof DataService?.findStudentByCode === 'function'){
-          const s = DataService.findStudentByCode(code);
-          if(!s){
-            if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('كود الابن غير صحيح','error');
-            return false;
-          }
-          if(String(s.password) !== String(pass)){
-            if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('كلمة المرور غير صحيحة','error');
-            return false;
-          }
-          const parent = {
-            id: 'parent_' + s.id,
-            role: 'parent',
-            name: 'ولي أمر ' + s.name,
-            phone: s.parentPhone,
-            studentIds: [s.studentId || s.id],
-            viaChildCode: true
-          };
-          if(typeof DataService?.logActivity === 'function') await DataService.logActivity(s.id, 'ولي أمر ' + s.name, 'دخول ولي أمر عبر كود الابن', code);
-          enter(parent, 'ولي أمر');
-          return false;
-        }
-
-        // 2) رقم هاتف ولي الأمر — نبحث عن كل الطلاب اللي ليهم رقم ولي الأمر ده
-        const digits = code.replace(/\D/g,'');
-        if(digits && digits.length >= 10){
-          const children = (typeof DataService?.getStudents === 'function' ? DataService.getStudents() : []).filter(s=>{
-            return (s.parentPhone||'').replace(/\D/g,'') === digits;
-          });
-          if(children.length === 0){
-            if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('لا يوجد أبناء مسجلين بهذا الرقم','error');
-            return false;
-          }
-          const matchChild = children.find(c => String(c.password) === String(pass));
-          if(!matchChild){
-            if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('كلمة المرور غير صحيحة','error');
-            return false;
-          }
-          const parent = {
-            id: 'parent_' + matchChild.id,
-            role: 'parent',
-            name: 'ولي أمر ' + matchChild.name,
-            phone: matchChild.parentPhone,
-            studentIds: children.map(c=>c.studentId || c.id),
-            viaParentPhone: true
-          };
-          if(typeof DataService?.logActivity === 'function') await DataService.logActivity(matchChild.id, 'ولي أمر ' + matchChild.name, 'دخول ولي أمر برقم الهاتف', digits);
-          enter(parent, 'ولي أمر');
-          return false;
-        }
-
-        if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('صيغة غير صحيحة: استخدم EDU-XXXX أو رقم الهاتف','error');
-      }catch(err){
-        console.error('doParentLogin error', err);
-        if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('خطأ: '+err.message,'error');
-      }
-      return false;
-    };
-
-    window.openRecovery = function(){
-      try{
-        const b = typeof DataService?.getBranding === 'function' ? DataService.getBranding() : {};
-        if(typeof ThemeManager?.openModal === 'function'){
-          ThemeManager.openModal(`
-            <div class="modal-header">
-              <h3 class="modal-title">🔑 استرجاع كلمة المرور</h3>
-              <button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button>
-            </div>
-            <div class="modal-body">
-              <div class="support-box">
-                <div style="font-size:36px;">📞</div>
-                <p style="margin:8px 0 0;">تواصل مع الدعم لإعادة التعيين</p>
-                <div class="support-phone">${b.supportPhone||b.whatsappSupport||'غير محدد'}</div>
-                ${b.whatsappSupport?`<a class="btn btn-success w-full" href="https://wa.me/2${String(b.whatsappSupport).replace(/\D/g,'')}" target="_blank">💬 واتساب الدعم</a>`:''}
-                <p class="text-xs" style="margin-top:12px;color:var(--text-muted);">كلمة المرور الافتراضية للطلاب الجدد هي: <strong style="font-family:var(--font-en);color:var(--primary);">1234</strong></p>
-              </div>
-            </div>
-          `,'modal-sm');
-        }
-      }catch(e){ console.error('openRecovery error', e); }
-    };
-  </script>
-  <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}</script>
+(function(){
+  try{
+    const saved = localStorage.getItem('eduflow_theme');
+    if(saved){
+      document.body.setAttribute('data-theme', saved);
+      const btn = document.getElementById('themeToggle');
+      if(btn) btn.textContent = saved === 'dark' ? '🌙' : '☀️';
+    }
+  }catch(e){}
+})();
+</script>
 </body>
 </html>
