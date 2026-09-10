@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Smart Grader V2</title>
+<style>
+:root{--bg:#0f172a;--p:#1e293b;--p2:#273449;--ln:#334155;--t:#e2e8f0;--m:#94a3b8;
+--ac:#38bdf8;--ok:#34d399;--bd:#f87171;--wn:#fbbf24}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Segoe UI,Tahoma,Arial}
+body{background:var(--bg);color:var(--t)}
+header{position:sticky;top:0;background:#111827ee;border-bottom:1px solid var(--ln);
+ padding:10px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;z-index:9}
+header b{font-size:16px}
+.tabs{display:flex;gap:5px;background:var(--p);padding:4px;border-radius:11px}
+.tabs button{border:0;background:0;color:var(--m);padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer}
+.tabs button.on{background:var(--ac);color:#062033}
+main{max-width:1000px;margin:auto;padding:14px}
+section{display:none}section.on{display:block}
+.card{background:var(--p);border:1px solid var(--ln);border-radius:13px;padding:14px;margin-bottom:13px}
+.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:9px}
+.btn{border:0;border-radius:9px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:14px}
+.bp{background:var(--ac);color:#062033}.bo{background:var(--ok);color:#04281c}
+.bd{background:var(--bd);color:#330a0a}.bg{background:var(--p2);color:var(--t);border:1px solid var(--ln)}
+.bw{background:var(--wn);color:#3a2a02}
+input,select{background:var(--p2);border:1px solid var(--ln);color:var(--t);padding:9px;border-radius:8px;font-size:14px}
+.hint{font-size:12.5px;color:var(--m);line-height:1.6}
+canvas{max-width:100%;border-radius:10px;background:#000;display:block}
+.wrap{display:flex;justify-content:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:7px}
+.qi{background:var(--p2);border:1px solid var(--ln);border-radius:9px;padding:7px}
+.qi .qt{font-size:12px;color:var(--m);margin-bottom:5px}
+.qi .op{display:flex;gap:4px}
+.ob{flex:1;padding:6px 0;border-radius:6px;border:1px solid var(--ln);background:var(--bg);color:var(--m);font-weight:700;cursor:pointer}
+.ob.sel{background:var(--ok);color:#04281c;border-color:var(--ok)}
+.big{font-size:46px;font-weight:800;color:var(--ac);text-align:center}
+.st{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.st div{text-align:center;background:var(--p2);border-radius:10px;padding:10px 18px}
+.st .v{font-size:22px;font-weight:800}.st .l{font-size:11px;color:var(--m)}
+.chips{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-top:9px}
+.ch{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;background:var(--p2);color:var(--m)}
+.ch.ok{background:var(--ok);color:#04281c}.ch.bd{background:var(--bd);color:#330a0a}
+.ch.rv{background:var(--wn);color:#3a2a02;cursor:pointer}.ch.bl{border:1px dashed var(--m)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:9px;border-bottom:1px solid var(--ln);text-align:right}
+th{color:var(--m);font-size:12px}
+video{display:none}
+#dbg{font-size:11px;direction:ltr;text-align:left;background:#0b1220;border:1px solid var(--ln);border-radius:8px;padding:8px;white-space:pre-wrap;color:#7dd3fc}
+</style></head><body>
+<header><b>✓ Smart Grader V2</b>
+ <div class="tabs">
+  <button class="on" data-t="ref">المرجع</button>
+  <button data-t="live">التصحيح</button>
+  <button data-t="res">النتائج</button>
+ </div>
+ <label style="margin-inline-start:auto" class="hint"><input type="checkbox" id="dbgChk"> 🔬 وضع المعاينة</label>
+</header>
+<main>
+<!-- المرجع -->
+<section id="ref" class="on">
+ <div class="card"><div class="row">
+  <button class="btn bp" id="rCam">📷 كاميرا</button>
+  <button class="btn bg" id="rCap" disabled>⚪ التقاط</button>
+  <button class="btn bg" id="rUp">🖼️ رفع صورة</button><input type="file" id="rFile" accept="image/*" hidden>
+  <button class="btn bd" id="rStop" hidden>إيقاف</button></div>
+  <video id="vid" playsinline muted></video>
+  <div class="wrap"><canvas id="rCv"></canvas></div>
+  <pre id="dbg" hidden></pre>
+ </div>
+ <div class="card" id="keyCard" hidden>
+  <div class="row"><b>راجع المفتاح المستخرج:</b>
+   <input id="refName" placeholder="اسم المرجع" style="flex:1;min-width:160px">
+   <button class="btn bo" id="saveRef">💾 حفظ</button></div>
+  <div class="grid" id="keyGrid"></div>
+ </div>
+ <div class="card"><b>المراجع:</b><div id="refList" class="hint">لا يوجد.</div></div>
+</section>
+<!-- التصحيح -->
+<section id="live">
+ <div class="card"><div class="row">
+  <button class="btn bp" id="lCam">📷 تشغيل</button>
+  <button class="btn bd" id="lStop" hidden>إيقاف</button>
+  <button class="btn bw" id="lAuto">⚡ مستمر: لا</button>
+  <button class="btn bg" id="lShot" disabled>⚪ صحّح الآن</button>
+  <select id="refSel"></select></div>
+  <div class="wrap"><canvas id="lCv"></canvas></div>
+ </div>
+ <div class="card" id="resCard" hidden>
+  <div class="big" id="score">0/0</div>
+  <div class="st">
+   <div><div class="v" style="color:var(--ok)" id="sOk">0</div><div class="l">صح</div></div>
+   <div><div class="v" style="color:var(--bd)" id="sBd">0</div><div class="l">خطأ</div></div>
+   <div><div class="v" id="sBl">0</div><div class="l">فارغ</div></div>
+   <div><div class="v" style="color:var(--wn)" id="sRv">0</div><div class="l">مراجعة</div></div></div>
+  <div class="chips" id="chips"></div>
+  <div class="row" style="justify-content:center;margin-top:11px">
+   <input id="stuName" placeholder="اسم الطالب" style="max-width:240px;flex:1">
+   <button class="btn bo" id="saveRes">💾 حفظ والتالي</button>
+   <button class="btn bw" id="revBtn" hidden>🔍 مراجعة</button></div>
+ </div>
+</section>
+<!-- النتائج -->
+<section id="res">
+ <div class="card"><div class="row">
+  <input id="q" placeholder="🔍 بحث" style="flex:1;min-width:150px">
+  <button class="btn bp" id="csv">⬇️ CSV</button>
+  <button class="btn bd" id="clr">🗑️ مسح</button></div>
+  <table><thead><tr><th>#</th><th>الطالب</th><th>الدرجة</th><th>%</th><th>صح</th><th>خطأ</th><th>فارغ</th><th></th></tr></thead>
+  <tbody id="tb"></tbody></table>
+  <p class="hint" id="noRes" style="text-align:center;padding:16px">لا نتائج بعد.</p>
+ </div>
+</section>
+</main>
+<div id="modal" style="position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:50;padding:14px">
+ <div style="background:var(--p);border:1px solid var(--ln);border-radius:14px;padding:16px;max-width:520px;width:100%;max-height:85vh;overflow:auto">
+  <b>🔍 مراجعة</b><div id="revBox"></div>
+  <div class="row" style="justify-content:flex-end"><button class="btn bo" id="revOk">✔ تم</button></div></div></div>
+<script>
+'use strict';
+const L=['أ','ب','ج','د','هـ'];
+const S={refs:[],act:null,res:{},ord:[],stream:null,auto:false,timer:null,last:null,cur:null};
+const $=i=>document.getElementById(i);
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
+ document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on'));
+ document.querySelectorAll('section').forEach(x=>x.classList.remove('on'));
+ b.classList.add('on');$(b.dataset.t).classList.add('on');
+ if(b.dataset.t==='res')drawRes();});
+$('dbgChk').onchange=e=>$('dbg').hidden=!e.target.checked;
+
+/* ---------- أساسيات صورة ---------- */
+function grab(src,isV){const w=isV?src.videoWidth:src.naturalWidth,h=isV?src.videoHeight:src.naturalHeight;
+ if(!w)return null;const sc=Math.min(1,1000/Math.max(w,h));
+ const c=document.createElement('canvas');c.width=w*sc|0;c.height=h*sc|0;
+ c.getContext('2d').drawImage(src,0,0,c.width,c.height);return c;}
+function gray(c){const d=c.getContext('2d').getImageData(0,0,c.width,c.height),n=c.width*c.height,g=new Uint8Array(n);
+ for(let i=0;i<n;i++){const o=i*4;g[i]=(d.data[o]*3+d.data[o+1]*4+d.data[o+2])>>3;}return g;}
+function otsu(g){const h=new Array(256).fill(0);for(const v of g)h[v]++;
+ let t=0,s=0;for(let i=0;i<256;i++){t+=h[i];s+=i*h[i];}
+ let sb=0,wb=0,b=0,th=127;
+ for(let i=0;i<256;i++){wb+=h[i];if(!wb)continue;const wf=t-wb;if(!wf)break;
+  sb+=i*h[i];const mb=sb/wb,mf=(s-sb)/wf,v=wb*wf*(mb-mf)*(mb-mf);if(v>b){b=v;th=i;}}return th;}
+function varOf(a){let m=0;for(const v of a)m+=v;m/=a.length;let s=0;for(const v of a)s+=(v-m)*(v-m);return s/a.length;}
+function comps(mask,w,h,want){const lab=new Int32Array(w*h).fill(-1),st=new Int32Array(w*h),out=[];
+ for(let i=0;i<w*h;i++){if(mask[i]!==want||lab[i]>=0)continue;
+  let sp=0;st[sp++]=i;lab[i]=out.length;let a=1e9,b=0,c=1e9,d=0,n=0;
+  while(sp){const p=st[--sp],x=p%w,y=p/w|0;n++;
+   if(x<a)a=x;if(x>b)b=x;if(y<c)c=y;if(y>d)d=y;
+   for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const nx=x+dx,ny=y+dy;
+    if(nx<0||ny<0||nx>=w||ny>=h)continue;const q=ny*w+nx;
+    if(mask[q]===want&&lab[q]<0){lab[q]=out.length;st[sp++]=q;}}}
+  out.push({a,b,c,d,n,bw:b-a+1,bh:d-c+1});}
+ return out;}
+
+/* ---------- 1) عزل الورقة + 2) الزوايا ---------- */
+function isolate(c){const w=c.width,h=c.height,g=gray(c),th=otsu(g);
+ const light=new Uint8Array(w*h);for(let i=0;i<w*h;i++)light[i]=g[i]>th?1:0;
+ const cs=comps(light,w,h,1);if(!cs.length)return null;
+ cs.sort((x,y)=>y.n-x.n);const p=cs[0];
+ if(p.n<w*h*0.25)return null; // الورقة لازم تكون جزء معقول
+ // الزوايا الأربع بأطراف (x+y) و(x-y)
+ let TL=1e18,BR=-1,TR=-1e18,BL=1e18,tp=null,bp2=null,trp=null,blp=null;
+ for(let y=p.c;y<=p.d;y++)for(let x=p.a;x<=p.b;x++){const i=y*w+x;if(!light[i])continue;
+  const s=x+y,d=x-y;
+  if(s<TL){TL=s;tp=[x,y];}if(s>BR){BR=s;bp2=[x,y];}
+  if(d>TR){TR=d;trp=[x,y];}if(d<BL){BL=d;blp=[x,y];}}
+ return {mask:light,quad:[tp,trp,bp2,blp],th};}
+
+/* ---------- 2) Perspective Warp ---------- */
+function homog(dst,src){ // dst->src ، 4 نقاط
+ const A=[],B=[];
+ for(let i=0;i<4;i++){const[x,y]=dst[i],[u,v]=src[i];
+  A.push([x,y,1,0,0,0,-x*u,-y*u]);B.push(u);
+  A.push([0,0,0,x,y,1,-x*v,-y*v]);B.push(v);}
+ const n=8,M=[];for(let i=0;i<n;i++){M.push([...A[i],B[i]]);}
+ for(let i=0;i<n;i++){let piv=i;for(let r=i+1;r<n;r++)if(Math.abs(M[r][i])>Math.abs(M[piv][i]))piv=r;
+  [M[i],M[piv]]=[M[piv],M[i]];
+  for(let r=0;r<n;r++){if(r===i)continue;const f=M[r][i]/M[i][i];
+   for(let c2=i;c2<=n;c2++)M[r][c2]-=f*M[i][c2];}}
+ const h=[];for(let i=0;i<n;i++)h.push(M[i][n]/M[i][i]);return h;}
+function warp(c,quad,W,H){const h=homog([[0,0],[W,0],[W,H],[0,H]],quad);
+ const o=document.createElement('canvas');o.width=W;o.height=H;
+ const oc=o.getContext('2d'),od=oc.createImageData(W,H);
+ const sd=c.getContext('2d').getImageData(0,0,c.width,c.height).data;
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+  const dn=h[6]*x+h[7]*y+1,sx=(h[0]*x+h[1]*y+h[2])/dn,sy=(h[3]*x+h[4]*y+h[5])/dn;
+  const ix=sx|0,iy=sy|0,oi=(y*W+x)*4;
+  if(ix<0||iy<0||ix>=c.width||iy>=c.height){od.data[oi]=255;od.data[oi+1]=255;od.data[oi+2]=255;od.data[oi+3]=255;continue;}
+  const si=(iy*c.width+ix)*4;
+  od.data[oi]=sd[si];od.data[oi+1]=sd[si+1];od.data[oi+2]=sd[si+2];od.data[oi+3]=255;}
+ oc.putImageData(od,0,0);return o;}
+
+/* ---------- 3) لفّة تلقائية جوّا الورقة ---------- */
+function orient(c){let best=0,bs=-1e18;
+ for(let k=0;k<4;k++){const r=rotK(c,k),g=gray(r),w=r.width,h=r.height;
+  const rs=new Float64Array(h),cs=new Float64Array(w);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const v=255-g[y*w+x];rs[y]+=v;cs[x]+=v;}
+  const s=varOf(rs)-varOf(cs);if(s>bs){bs=s;best=k;}}
+ return rotK(c,best);}
+function rotK(s,k){if(!k)return s;const c=document.createElement('canvas');
+ if(k===2){c.width=s.width;c.height=s.height;}else{c.width=s.height;c.height=s.width;}
+ const g=c.getContext('2d');g.translate(c.width/2,c.height/2);g.rotate(k*Math.PI/2);
+ g.drawImage(s,-s.width/2,-s.height/2);return c;}
+
+/* ---------- 4) كشف العلامات (مقاسات تكيّفية) ---------- */
+function detectMarks(c){const w=c.width,h=c.height,g=gray(c),th=otsu(g);
+ const ink=new Uint8Array(w*h);for(let i=0;i<w*h;i++)ink[i]=g[i]<th?1:0;
+ const cs=comps(ink,w,h,1);
+ const solid=cs.filter(x=>{const f=x.n/(x.bw*x.bh);return f>0.5&&x.n>w*h*0.0004&&x.n<w*h*0.03;});
+ // مقاس تكيّفي: وسيط مساحات الكتلات المصمتة
+ solid.sort((a,b)=>a.n-b.n);
+ const med=solid.length?solid[solid.length>>1].n:0;
+ const marks=solid.filter(x=>x.n>med*0.35&&x.n<med*2.6);
+ // الدواير المرسومة (حلقات مفرّغة)
+ const rings=cs.filter(x=>{const f=x.n/(x.bw*x.bh);
+  return f>0.08&&f<0.45&&x.n>w*h*0.0006&&x.n<w*h*0.03&&centerInk(ink,w,x)<0.3;});
+ return {marks,rings,th,ink,w,h};}
+function centerInk(m,w,c){const x0=c.a+c.bw*0.3|0,x1=c.a+c.bw*0.7|0,y0=c.c+c.bh*0.3|0,y1=c.c+c.bh*0.7|0;
+ let ink=0,t=0;for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){t++;if(m[y*w+x])ink++;}return t?ink/t:0;}
+function cluster(v,tol){v=v.slice().sort((a,b)=>a-b);const o=[];
+ for(const x of v){const l=o[o.length-1];
+  if(l&&x-l.s/l.n<=tol){l.s+=x;l.n++;}else o.push({s:x,n:1});}
+ return o.map(z=>z.s/z.n);}
+
+/* ---------- معالجة صورة كاملة → قياسية ---------- */
+function normalize(c){const iso=isolate(c);
+ if(!iso)return {fail:'لم يتم عزل الورقة'};
+ const q=iso.quad;
+ const Wd=Math.hypot(q[1][0]-q[0][0],q[1][1]-q[0][1]);
+ const Hd=Math.hypot(q[3][0]-q[0][0],q[3][1]-q[0][1]);
+ const CW=700,CH=Math.round(CW*Hd/Math.max(1,Wd));
+ const w=warp(c,q,CW,CH);
+ const fin=orient(w);
+ return {canvas:fin,iso};}
+
+/* ---------- المرجع ---------- */
+let rStream=null;
+$('rCam').onclick=async()=>{try{
+ rStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+ $('vid').srcObject=rStream;await $('vid').play();
+ $('rCap').disabled=false;$('rStop').hidden=false;$('rCam').hidden=true;loop();}
+ catch(e){alert('الكاميرا مرفوضة — استخدم رفع صورة.');}};
+function loop(){if(!rStream)return;requestAnimationFrame(loop);}
+$('rStop').onclick=()=>{rStream.getTracks().forEach(t=>t.stop());rStream=null;
+ $('rStop').hidden=true;$('rCam').hidden=false;$('rCap').disabled=true;};
+$('rCap').onclick=()=>{const c=grab($('vid'),true);if(c)procRef(c);};
+$('rUp').onclick=()=>$('rFile').click();
+$('rFile').onchange=e=>{const f=e.target.files[0];if(!f)return;
+ const im=new Image();im.onload=()=>procRef(grab(im,false));im.src=URL.createObjectURL(f);};
+
+function procRef(c){const N=normalize(c);
+ const cv=$('rCv');
+ if(N.fail){cv.width=0;alert(N.fail);return;}
+ const dm=detectMarks(N.canvas);
+ const all=[...dm.marks,...dm.rings];
+ const rowY=cluster(all.map(m=>(m.c+m.d)/2),N.canvas.height*0.02);
+ const colX=cluster(all.map(m=>(m.a+m.b)/2),N.canvas.width*0.04);
+ S.cur={canvas:N.canvas,rowY,colX,marks:all,
+        key:rowY.map(()=>null),iso:N.iso};
+ // اسناد كل علامة لصف/عمود
+ all.forEach(m=>{const my=(m.c+m.d)/2,mx=(m.a+m.b)/2;
+  const ri=nearest(rowY,my),ci=nearest(colX,mx);
+  if(ri>=0&&ci>=0)S.cur.key[ri]=ci;});
+ drawRef(dm);renderKey();}
+function nearest(arr,v){let bi=-1,bd=1e18;arr.forEach((x,i)=>{const d=Math.abs(x-v);if(d<bd){bd=d;bi=i;}});return bi;}
+function drawRef(dm){const cv=$('rCv'),c=S.cur.canvas;
+ cv.width=c.width;cv.height=c.height;
+ const g=cv.getContext('2d');g.drawImage(c,0,0);
+ g.strokeStyle='#f87171';dm.marks.forEach(m=>g.strokeRect(m.a,m.c,m.bw,m.bh));
+ g.strokeStyle='#fbbf24';dm.rings.forEach(m=>g.strokeRect(m.a,m.c,m.bw,m.bh));
+ g.strokeStyle='#34d39988';S.cur.rowY.forEach(y=>{g.beginPath();g.moveTo(0,y);g.lineTo(c.width,y);g.stroke();});
+ S.cur.colX.forEach(x=>{g.beginPath();g.moveTo(x,0);g.lineTo(x,c.height);g.stroke();});
+ if($('dbgChk').checked)$('dbg').textContent=
+  `page=${c.width}x${c.height} marks=${dm.marks.length} rings=${dm.rings.length} rows=${S.cur.rowY.length} cols=${S.cur.colX.length} thr=${dm.th}`;}
+function renderKey(){const K=S.cur;if(!K)return;$('keyCard').hidden=false;
+ const box=$('keyGrid');box.innerHTML='';
+ K.rowY.forEach((y,i)=>{const d=document.createElement('div');d.className='qi';
+  d.innerHTML=`<div class="qt">س${i+1}</div><div class="op"></div>`;
+  const op=d.querySelector('.op');
+  for(let j=0;j<K.colX.length;j++){const b=document.createElement('button');
+   b.className='ob'+(K.key[i]===j?' sel':'');b.textContent=L[j];
+   b.onclick=()=>{K.key[i]=(K.key[i]===j?null:j);renderKey();};op.appendChild(b);}
+  box.appendChild(d);});}
+$('saveRef').onclick=()=>{const K=S.cur;if(!K)return;
+ const r={id:Date.now(),name:$('refName').value||('مرجع '+(S.refs.length+1)),
+  rows:K.rowY,cols:K.colX,key:K.key,aspect:K.canvas.height/K.canvas.width};
+ S.refs.push(r);S.act=r.id;$('refName').value='';$('keyCard').hidden=true;
+ listRefs();selRefs();};
+function listRefs(){const b=$('refList');
+ if(!S.refs.length){b.textContent='لا يوجد.';return;}b.innerHTML='';
+ S.refs.forEach(r=>{const d=document.createElement('div');d.className='row';
+  d.innerHTML=`<span class="hint">${r.name} · ${r.rows.length}س × ${r.cols.length}خ</span>`;
+  const a=document.createElement('button');a.className='btn bg';a.style.padding='5px 10px';
+  a.textContent=S.act===r.id?'✓':'تنشيط';a.onclick=()=>{S.act=r.id;listRefs();selRefs();};
+  const x=document.createElement('button');x.className='btn bd';x.style.padding='5px 10px';x.textContent='✕';
+  x.onclick=()=>{S.refs=S.refs.filter(z=>z.id!==r.id);listRefs();selRefs();};
+  d.append(a,x);b.appendChild(d);});}
+function selRefs(){const s=$('refSel');s.innerHTML='';
+ S.refs.forEach(r=>{const o=document.createElement('option');o.value=r.id;o.textContent=r.name;s.appendChild(o);});
+ s.value=S.act||'';}
+$('refSel').onchange=e=>S.act=+e.target.value;
+const actRef=()=>S.refs.find(r=>r.id===S.act);
+
+/* ---------- التصحيح ---------- */
+$('lCam').onclick=async()=>{try{
+ S.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+ $('vid').srcObject=S.stream;await $('vid').play();
+ $('lStop').hidden=false;$('lCam').hidden=true;$('lShot').disabled=false;tick();}
+ catch(e){alert('الكاميرا مرفوضة.');}};
+$('lStop').onclick=()=>{S.stream.getTracks().forEach(t=>t.stop());S.stream=null;
+ if(S.timer){clearInterval(S.timer);S.timer=null;}
+ $('lStop').hidden=true;$('lCam').hidden=false;$('lShot').disabled=true;};
+$('lAuto').onclick=()=>{S.auto=!S.auto;
+ $('lAuto').textContent='⚡ مستمر: '+(S.auto?'نعم':'لا');
+ $('lAuto').className='btn '+(S.auto?'bo':'bw');};
+function tick(){if(S.timer)return;S.timer=setInterval(()=>{
+ if(S.auto)gradeFrame();else overlayLive(null);},400);}
+$('lShot').onclick=gradeFrame;
+function overlayLive(res){const cv=$('lCv');if(!S.stream){cv.width=0;return;}
+ const c=grab($('vid'),true);if(!c)return;
+ cv.width=c.width;cv.height=c.height;
+ const g=cv.getContext('2d');g.drawImage(c,0,0);
+ const r=actRef();if(!r)return;
+ // اسقاط شبكة المرجع (نسب من الأبعاد) على الإطار الحالي
+ const sx=c.width/700, sy=c.height/Math.round(700*r.aspect);
+ r.cols.forEach(x=>{g.strokeStyle='#38bdf855';g.beginPath();g.moveTo(x*sx,0);g.lineTo(x*sx,c.height);g.stroke();});
+ r.rows.forEach(y=>{g.strokeStyle='#38bdf855';g.beginPath();g.moveTo(0,y*sy);g.lineTo(c.width,y*sy);g.stroke();});}
+function gradeFrame(){const r=actRef();if(!r){alert('احفظ مرجعًا أولًا');return;}
+ if(!S.stream)return;
+ const raw=grab($('vid'),true);const N=normalize(raw);
+ if(N.fail){alert(N.fail);return;}
+ const c=N.canvas,dm=detectMarks(c);
+ const sx=c.width/700, sy=c.height/Math.round(700*r.aspect);
+ // كثافة الحبر لكل خانة
+ const cellW=r.cols.length>1?Math.abs(r.cols[1]-r.cols[0]):60;
+ const cellH=r.rows.length>1?Math.abs(r.rows[1]-r.rows[0]):40;
+ const dens=[];
+ for(let i=0;i<r.rows.length;i++){const row=[];
+  for(let j=0;j<r.cols.length;j++){
+   const cx=r.cols[j],cy=r.rows[i];
+   const x0=Math.max(0,cx-cellW*0.4|0),x1=Math.min(c.width,cx+cellW*0.4|0);
+   const y0=Math.max(0,cy-cellH*0.4|0),y1=Math.min(c.height,cy+cellH*0.4|0);
+   let ink=0,t=0;
+   for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){t++;if(dm.ink[y*c.width+x])ink++;}
+   row.push(t?ink/t:0);}
+  dens.push(row);}
+ const flat=dens.flat().map(v=>Math.round(v*255));
+ const thr=otsu(flat)/255;
+ const ans=dens.map(row=>{const mk=[];let mj=0;
+  row.forEach((v,j)=>{if(v>=thr)mk.push(j);if(v>row[mj])mj=j;});
+  return mk.length===0?null:(mk.length===1?mk[0]:mj);});
+ const multi=dens.map(row=>row.filter(v=>v>=thr).length>1);
+ // التصحيح
+ let ok=0,bd=0,bl=0,rv=0;const chips=[];
+ for(let i=0;i<r.rows.length;i++){const a=ans[i],k=r.key[i];
+  if(multi[i]){rv++;chips.push('rv');}
+  else if(a==null){bl++;chips.push('bl');}
+  else if(k==null){rv++;chips.push('rv');}
+  else if(a===k){ok++;chips.push('ok');}
+  else{bd++;chips.push('bd');}}
+ S.last={ans,multi,chips,ok,bd,bl,rv,total:r.rows.length,ref:r,c,dens};
+ $('resCard').hidden=false;
+ $('score').textContent=ok+'/'+r.rows.length;
+ $('sOk').textContent=ok;$('sBd').textContent=bd;$('sBl').textContent=bl;$('sRv').textContent=rv;
+ const ch=$('chips');ch.innerHTML='';
+ chips.forEach((cl,i)=>{const d=document.createElement('div');d.className='ch '+cl;d.textContent=i+1;
+  if(cl==='rv')d.onclick=()=>openRev([i]);ch.appendChild(d);});
+ $('revBtn').hidden=rv===0;
+ overlayLive(true);}
+$('revBtn').onclick=()=>{const Ls=S.last;if(!Ls)return;
+ openRev(Ls.ans.map((a,i)=>Ls.multi[i]?i:-1).filter(i=>i>=0));};
+function openRev(idx){const Ls=S.last,r=Ls.ref;const box=$('revBox');box.innerHTML='';
+ idx.forEach(i=>{const d=document.createElement('div');d.className='qi';d.style.marginBottom='8px';
+  d.innerHTML=`<div class="qt">س${i+1} — اختر الفعلي:</div><div class="op"></div>`;
+  const op=d.querySelector('.op');
+  for(let j=0;j<r.cols.length;j++){const b=document.createElement('button');
+   b.className='ob'+(Ls.ans[i]===j?' sel':'');b.textContent=L[j];
+   b.onclick=()=>{Ls.ans[i]=j;Ls.multi[i]=false;recompute();op.querySelectorAll('.ob').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');};
+   op.appendChild(b);}
+  box.appendChild(d);});
+ $('modal').style.display='flex';}
+$('revOk').onclick=()=>$('modal').style.display='none';
+function recompute(){const Ls=S.last,r=Ls.ref;let ok=0,bd=0,bl=0;
+ for(let i=0;i<r.rows.length;i++){const a=Ls.ans[i],k=r.key[i];
+  if(a==null)bl++;else if(k==null||a===k&&false){}
+  if(a!=null&&k!=null&&a===k)ok++;else if(a!=null&&k!=null)bd++;}
+ Ls.ok=ok;Ls.bd=bd;Ls.bl=bl;Ls.rv=0;
+ $('score').textContent=ok+'/'+r.rows.length;
+ $('sOk').textContent=ok;$('sBd').textContent=bd;$('sBl').textContent=bl;$('sRv').textContent=0;
+ $('revBtn').hidden=true;}
+$('saveRes').onclick=()=>{const Ls=S.last;if(!Ls){alert('صوّر أولًا');return;}
+ const n=$('stuName').value.trim();if(!n){alert('اسم الطالب');return;}
+ if(!S.res[n]){S.res[n]={name:n,ok:0,bd:0,bl:0,tot:0};S.ord.push(n);}
+ const R=S.res[n];R.ok+=Ls.ok;R.bd+=Ls.bd;R.bl+=Ls.bl;R.tot+=Ls.total;
+ $('stuName').value='';$('resCard').hidden=true;S.last=null;$('stuName').focus();};
+
+/* ---------- النتائج ---------- */
+function drawRes(){const q=($('q').value||'').toLowerCase();
+ let rows=S.ord.map(n=>S.res[n]);if(q)rows=rows.filter(r=>r.name.includes(q));
+ const tb=$('tb');tb.innerHTML='';$('noRes').style.display=rows.length?'none':'';
+ rows.forEach((r,i)=>{const p=r.tot?Math.round(r.ok/r.tot*100):0;
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td>${i+1}</td><td>${r.name}</td><td>${r.ok}/${r.tot}</td><td>${p}%</td>
+   <td>${r.ok}</td><td>${r.bd}</td><td>${r.bl}</td>
+   <td><button class="btn bd" style="padding:3px 8px" data-n="${r.name}">✕</button></td>`;
+  tb.appendChild(tr);});
+ tb.querySelectorAll('button').forEach(b=>b.onclick=()=>{delete S.res[b.dataset.n];
+  S.ord=S.ord.filter(x=>x!==b.dataset.n);drawRes();});}
+$('q').oninput=drawRes;
+$('clr').onclick=()=>{if(confirm('مسح الكل؟')){S.res={};S.ord=[];drawRes();}};
+$('csv').onclick=()=>{let s='\uFEFFالطالب,الدرجة,الإجمالي,%,صح,خطأ,فارغ\n';
+ S.ord.forEach(n=>{const r=S.res[n],p=r.tot?Math.round(r.ok/r.tot*100):0;
+  s+=`${r.name},${r.ok},${r.tot},${p}%,${r.ok},${r.bd},${r.bl}\n`;});
+ const a=document.createElement('a');
+ a.href=URL.createObjectURL(new Blob([s],{type:'text/csv'}));a.download='results.csv';a.click();};
+</script></body></html>

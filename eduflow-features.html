@@ -6,73 +6,277 @@
   <title>مميزات منصة EduFlow - Habbash Group</title>
   <link rel="stylesheet" href="css/eduflow-theme.css">
   <style>
+    /* ==============================
+       الأنماط الأساسية (من تصميمك)
+       ============================== */
     .feature-hero {
       text-align: center; padding: 80px 20px 60px;
       background: var(--grad); color: #fff;
       border-radius: 0 0 40px 40px; margin-bottom: 40px;
+      position: relative; overflow: hidden;
     }
-    .feature-hero h1 { font-size: 40px; font-weight: 900; margin: 0; }
-    .feature-hero p { font-size: 18px; opacity: 0.9; margin-top: 12px; max-width: 600px; margin-left: auto; margin-right: auto; }
+    .feature-hero::before {
+      content: ''; position: absolute; top: -50%; right: -20%; width: 400px; height: 400px;
+      background: rgba(255,255,255,0.05); border-radius: 50%;
+      animation: floatBg 8s ease-in-out infinite;
+    }
+    .feature-hero::after {
+      content: ''; position: absolute; bottom: -30%; left: -10%; width: 300px; height: 300px;
+      background: rgba(255,255,255,0.03); border-radius: 50%;
+      animation: floatBg 10s ease-in-out infinite reverse;
+    }
+    .feature-hero h1 { 
+      font-size: 40px; font-weight: 900; margin: 0; position: relative; z-index: 1; 
+      animation: fadeInDown 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+    .feature-hero p { 
+      font-size: 18px; opacity: 0; margin-top: 12px; max-width: 700px; margin-left: auto; margin-right: auto; 
+      position: relative; z-index: 1; line-height: 1.8; 
+      animation: fadeInDown 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s forwards;
+    }
     
-    .container { max-width: 1000px; margin: 0 auto; padding: 0 20px 60px; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 20px 60px; }
     
     .section-title {
       text-align: center; font-size: 32px; font-weight: 900; color: var(--text-primary);
-      margin-bottom: 40px; position: relative;
+      margin-bottom: 16px; position: relative;
+    }
+    .section-subtitle {
+      text-align: center; color: var(--text-secondary); font-size: 16px; margin-bottom: 40px; max-width: 700px; margin-left: auto; margin-right: auto;
     }
     .section-title::after {
       content: ''; display: block; width: 60px; height: 4px;
       background: var(--grad); margin: 12px auto 0; border-radius: 2px;
+      animation: expandWidth 1s ease-out forwards;
     }
 
-    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 60px; }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 80px; }
     
     .feature-card {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: 20px; padding: 28px; text-align: center; transition: all 0.3s ease;
+      border-radius: 20px; padding: 28px; text-align: center; transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+      position: relative; overflow: hidden;
     }
-    .feature-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); border-color: var(--primary); }
+    .feature-card::before {
+      content: ''; position: absolute; top: 0; right: 0; width: 100%; height: 3px;
+      background: var(--grad); opacity: 0; transition: opacity 0.4s ease;
+    }
+    .feature-card:hover { 
+      transform: translateY(-8px); 
+      box-shadow: 0 15px 35px rgba(0,0,0,0.08); 
+      border-color: var(--primary-border); 
+    }
+    .feature-card:hover::before { opacity: 1; }
+    
     .feature-icon {
       width: 64px; height: 64px; background: var(--primary-bg);
       border-radius: 16px; display: flex; align-items: center; justify-content: center;
-      font-size: 28px; margin: 0 auto 16px;
+      font-size: 28px; margin: 0 auto 16px; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
     }
-    .feature-card h3 { font-size: 18px; font-weight: 800; margin-bottom: 10px; color: var(--primary); }
-    .feature-card p { font-size: 14px; line-height: 1.7; color: var(--text-secondary); }
+    .feature-icon::after {
+      content: ''; position: absolute; inset: 0; border-radius: 16px;
+      background: var(--grad); opacity: 0; z-index: -1; transition: all 0.4s ease;
+      filter: blur(15px);
+    }
+    .feature-card:hover .feature-icon { 
+      transform: scale(1.15) rotate(-8deg); 
+      background: var(--grad);
+      color: #fff;
+    }
+    .feature-card:hover .feature-icon::after { opacity: 0.4; inset: -10px; }
+    
+    .feature-card h3 { font-size: 18px; font-weight: 800; margin-bottom: 10px; color: var(--primary); transition: color 0.3s; }
+    .feature-card:hover h3 { color: var(--text-primary); }
+    .feature-card p { font-size: 14px; line-height: 1.7; color: var(--text-secondary); margin: 0; }
 
     .incentives-section {
-      background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.1));
-      border: 1px solid var(--border); border-radius: 24px; padding: 40px; margin-bottom: 40px;
+      background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.08));
+      border: 1px solid var(--border); border-radius: 24px; padding: 50px 30px; margin-bottom: 80px;
     }
     .incentives-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 30px; }
     .incentive-item {
       display: flex; align-items: flex-start; gap: 16px;
-      background: var(--surface); padding: 20px; border-radius: 16px;
+      background: var(--surface); padding: 24px; border-radius: 16px; border: 1px solid var(--border);
+      transition: all 0.4s ease;
     }
-    .incentive-icon { font-size: 24px; flex-shrink: 0; }
+    .incentive-item:hover { border-color: var(--primary-border); transform: translateY(-4px) scale(1.02); box-shadow: var(--shadow-lg); }
+    .incentive-icon { font-size: 28px; flex-shrink: 0; background: var(--primary-bg); width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; transition: transform 0.3s; }
+    .incentive-item:hover .incentive-icon { transform: scale(1.1) rotate(5deg); }
     .incentive-item h4 { font-size: 16px; font-weight: 800; margin-bottom: 6px; color: var(--text-primary); }
-    .incentive-item p { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+    .incentive-item p { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin: 0; }
 
-    .cta-section { text-align: center; padding: 40px 20px; }
+    .cta-section { 
+      text-align: center; padding: 60px 20px; 
+      background: var(--surface); border: 1px solid var(--border); border-radius: 32px; 
+      margin-bottom: 40px; position: relative; overflow: hidden;
+    }
+    .cta-section::before {
+      content: ''; position: absolute; top: -100px; left: 50%; transform: translateX(-50%);
+      width: 400px; height: 400px; background: var(--grad); opacity: 0.1; filter: blur(80px); border-radius: 50%;
+      animation: pulseBg 4s ease-in-out infinite;
+    }
     .cta-btn {
       display: inline-flex; align-items: center; gap: 10px;
-      padding: 16px 40px; background: var(--grad); color: #fff;
+      padding: 18px 45px; color: #fff;
       border-radius: 9999px; font-size: 18px; font-weight: 800;
       text-decoration: none; box-shadow: 0 10px 30px rgba(99,102,241,0.4);
-      transition: all 0.3s ease;
+      transition: all 0.3s ease; position: relative; z-index: 1;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6, #6366f1);
+      background-size: 200% 100%;
+      animation: shimmer 3s linear infinite;
     }
-    .cta-btn:hover { transform: translateY(-4px); box-shadow: 0 15px 40px rgba(99,102,241,0.5); }
+    .cta-btn:hover { transform: translateY(-4px) scale(1.03); box-shadow: 0 15px 40px rgba(99,102,241,0.6); }
 
     .back-btn {
       display: inline-flex; align-items: center; gap: 8px;
       margin-bottom: 24px; color: var(--text-muted);
       text-decoration: none; font-weight: 600; font-size: 15px;
+      transition: all 0.2s ease;
     }
-    .back-btn:hover { color: var(--primary); }
+    .back-btn:hover { color: var(--primary); transform: translateX(5px); }
+
+    /* ==============================
+       الإضافات الجديدة
+       ============================== */
+    
+    /* بانر الفريق والدعم */
+    .team-banner {
+      background: linear-gradient(135deg, rgba(99,102,241,0.05), rgba(139,92,246,0.05));
+      border: 2px dashed var(--primary); 
+      border-radius: 24px; 
+      padding: 50px 30px; 
+      margin-bottom: 80px; 
+      text-align: center; 
+      position: relative; 
+      overflow: hidden;
+      transition: all 0.4s ease;
+    }
+    .team-banner:hover { border-style: solid; box-shadow: 0 20px 40px rgba(99,102,241,0.1); }
+    .team-banner::before {
+      content: '🤝'; position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+      font-size: 80px; opacity: 0.05; transition: all 0.5s ease;
+    }
+    .team-banner:hover::before { transform: translateX(-50%) scale(1.2) rotate(10deg); opacity: 0.1; }
+    
+    /* قسم أدوار المستخدمين */
+    .roles-section { margin-bottom: 80px; }
+    .roles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+    .role-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+      padding: 28px 24px; text-align: center; position: relative; overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .role-card::before {
+      content: ''; position: absolute; top: 0; right: 0; width: 100%; height: 4px;
+      background: var(--grad);
+    }
+    .role-card::after {
+      content: ''; position: absolute; inset: 0; border-radius: 20px;
+      background: linear-gradient(135deg, var(--primary), var(--accent, #8b5cf6));
+      opacity: 0; transition: opacity 0.4s ease; z-index: -1;
+      filter: blur(20px);
+    }
+    .role-card:hover { 
+      transform: translateY(-8px); 
+      border-color: var(--primary-border); 
+    }
+    .role-card:hover::after { opacity: 0.15; }
+    
+    .role-icon { font-size: 42px; margin-bottom: 16px; display: inline-block; transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .role-card:hover .role-icon { transform: scale(1.2) translateY(-5px); }
+    .role-card h3 { font-size: 18px; font-weight: 800; color: var(--primary); margin-bottom: 16px; }
+    .role-card ul { list-style: none; padding: 0; margin: 0; text-align: right; }
+    .role-card li { 
+      font-size: 13px; color: var(--text-secondary); padding: 6px 0; 
+      display: flex; align-items: center; gap: 8px; border-bottom: 1px dashed var(--border);
+      transition: transform 0.2s ease;
+    }
+    .role-card:hover li { transform: translateX(-5px); }
+    .role-card li:last-child { border-bottom: none; }
+    .role-card li::before { 
+      content: '✓'; color: var(--success); font-weight: bold; 
+      background: var(--success-bg); width: 18px; height: 18px; border-radius: 50%; 
+      display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0;
+    }
+
+    /* قسم الأسئلة الشائعة */
+    .faq-section { margin-bottom: 80px; max-width: 800px; margin-left: auto; margin-right: auto; }
+    .faq-item {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      margin-bottom: 12px; overflow: hidden; transition: all 0.3s ease;
+    }
+    .faq-item:hover { border-color: var(--primary-border); }
+    .faq-item.active { border-color: var(--primary); box-shadow: 0 8px 24px rgba(99,102,241,0.12); background: var(--surface-hover); }
+    .faq-question {
+      padding: 20px 24px; font-size: 16px; font-weight: 700; color: var(--text-primary);
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      user-select: none;
+    }
+    .faq-answer {
+      max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease;
+      padding: 0 24px; font-size: 14px; color: var(--text-secondary); line-height: 1.8; 
+    }
+    .faq-item.active .faq-answer { max-height: 300px; padding: 0 24px 20px; }
+    .faq-toggle { 
+      font-size: 24px; color: var(--primary); transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); 
+      width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+      background: var(--primary-bg); border-radius: 50%; flex-shrink: 0;
+    }
+    .faq-item.active .faq-toggle { transform: rotate(45deg) scale(1.1); background: var(--primary); color: #fff; }
+    
+    /* أنيميشن الظهور المتتابع */
+    .animate-on-scroll {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .animate-on-scroll.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .badge-new {
+      display: inline-block; background: var(--danger); color: #fff;
+      padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 800;
+      margin-right: 6px; vertical-align: middle;
+      animation: pulseBadge 2s infinite;
+    }
+
+    /* Keyframes */
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes floatBg {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-30px) rotate(10deg); }
+    }
+    @keyframes expandWidth {
+      from { width: 0; }
+      to { width: 60px; }
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    @keyframes pulseBg {
+      0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.1; }
+      50% { transform: translateX(-50%) scale(1.1); opacity: 0.15; }
+    }
+    @keyframes pulseBadge {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+    }
 
     @media (max-width: 640px) {
+      .feature-hero { padding: 60px 20px 40px; border-radius: 0 0 24px 24px; }
       .feature-hero h1 { font-size: 28px; }
-      .features-grid, .incentives-grid { grid-template-columns: 1fr; }
+      .feature-hero p { font-size: 16px; }
+      .section-title { font-size: 24px; }
+      .features-grid, .incentives-grid, .roles-grid { grid-template-columns: 1fr; }
+      .cta-btn { width: 100%; justify-content: center; padding: 16px 20px; font-size: 16px; }
+      .team-banner { padding: 40px 20px; }
     }
   </style>
 </head>
@@ -83,84 +287,230 @@
     <a href="about.html" class="back-btn">→ العودة لصفحة من نحن</a>
     
     <div class="feature-hero">
-      <h1>منصة المتابعة EduFlow</h1>
-      <p>الحل المتكامل والأذكى لإدارة مركزك التعليمي باحترافية، وتوفير وقتك وجهدك للتركيز على ما يهم حقاً: التعليم.</p>
+      <h1>مدير أعمالك ومنسقك الخاص</h1>
+      <p>الخدمة دي مش موجهة للمراكز الكبيرة بس، دي مخصصة ليك <strong>أنت يا أستاذ</strong>. نحن فريقك الدائم، بنشتغل كـ "مدير أعمال" و "منسق" خاص بيك.. سيبك من همومة الإدارة والتحصيل، وركز في شغفك الحقيقي: التعليم. ونحن معاك في كل خطوة، وحتى وقت الحصة!</p>
     </div>
 
-    <h2 class="section-title">كل ما تحتاجه في مكان واحد</h2>
+    <!-- ==============================
+         المميزات الأساسية
+         ============================== -->
+    <h2 class="section-title">كل ما تحتاجه لإدارة مجموعاتك في مكان واحد</h2>
+    <p class="section-subtitle">أدوات قوية ومصممة خصيصاً لتسهيل إدارتك لمجموعاتك، طلابك، ومستحقاتك، لتظهر بأفضل صورة أمام أولياء الأمور</p>
+    
     <div class="features-grid">
       <div class="feature-card">
         <div class="feature-icon">📋</div>
-        <h3>إدارة الحضور والغياب</h3>
-        <p>تسجيل حضور الطلاب بسهولة عبر QR Code أو الكود اليدوي، مع إشعارات فورية لولي الأمر في حالة الغياب.</p>
+        <h3>إدارة حضور طلابك</h3>
+        <p>سجل حضور طلابك بسهولة عبر QR Code أو الكود اليدوي، مع إشعارات فورية لولي الأمر في حالة الغياب دون أي effort منك.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">📝</div>
-        <h3>الواجبات والامتحانات</h3>
-        <p>إنشاء واجبات وامتحانات إلكترونية أو ورقية، وتصحيحها إلكترونياً مع حفظ الدرجات تلقائياً في سجل الطالب.</p>
+        <h3>واجبات وامتحانات تفاعلية</h3>
+        <p>إنشاء واجبات وامتحانات لطلابك إلكترونياً أو ورقياً، وتصحيحها بسرعة مع حفظ الدرجات تلقائياً في سجل كل طالب.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">💰</div>
-        <h3>إدارة المدفوعات</h3>
-        <p>تتبع مستحقات كل طالب بدقة، مع تنبيهات آلية للمصروفات المتأخرة وحساب الحصص الملغاة والمعوضة تلقائياً.</p>
+        <h3>متابعة مستحقاتك المالية</h3>
+        <p>تابع مستحقاتك أنت شخصياً بدقة، تعرف مين دفع ومين لأ، واحسب حصصك الملغية والمعوضة بضغطة زر لضمان حقك.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">👨‍👩‍👦</div>
         <h3>بوابة ولي الأمر</h3>
-        <p>منصة مخصصة لولي الأمر لمتابعة حضور ابنه، درجاته، واجباته، ومستحقاته المالية بكل شفافية وراحة بال.</p>
+        <p>منصة مخصصة لولي أمر طلابك لمتابعة ابنه، درجاته، واجباته، ومستحقاته المالية بكل شفافية وراحة بال.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">📊</div>
         <h3>تقارير وإحصائيات شاملة</h3>
-        <p>لوحة تحكم متقدمة تمنحك رؤية شاملة لأداء المركز، المدرسين، والطلاب لاتخاذ قرارات إدارية مدروسة.</p>
+        <p>لوحة تحكم متقدمة تمنحك رؤية شاملة لأداء مجموعاتك وطلابك لاتخاذ قرارات إدارية ومدروسة تخص شغلك.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">📱</div>
         <h3>تصميم متجاوب وسهل</h3>
         <p>واجهة استخدام بسيطة وأنيقة تعمل بكفاءة على جميع الأجهزة (موبايل، تابلت، كمبيوتر) بدون أي تعقيد.</p>
       </div>
+      
+      <div class="feature-card">
+        <div class="feature-icon">🏆</div>
+        <h3>نظام النقاط والتحفيز <span class="badge-new">جديد</span></h3>
+        <p>حفّز طلابك بنظام نقاط متطور، لوحة صدارة، وتحديات تفاعلية تمنحهم نقاطاً إضافية وتشجعهم على التفوق والمنافسة.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💬</div>
+        <h3>تكامل واتساب الذكي</h3>
+        <p>قوالب رسائل جاهزة للتواصل مع أولياء الأمور بشأن الغياب، الدفعات المتأخرة، والتهنئة بنقرة واحدة دون عناء الكتابة.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📅</div>
+        <h3>إدارة الحصص التعويضية</h3>
+        <p>أي حصة ملغية تتحول لـ "دين" يتم تتبعه، جدولته، أو خصمه تلقائياً من الشهرية في نهاية الشهر بكل شفافية تامة.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🧩</div>
+        <h3>محتوى تفاعلي وفيديو</h3>
+        <p>شارك روابط، ملفات صوتية للتسميع، فيديوهات شرح مستهدفة من يوتيوب وفيسبوك، وملخصات الحصة مباشرة لطلابك.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🤝</div>
+        <h3>مساحة عمل المساعد</h3>
+        <p>واجهة مخصصة لمساعدك لإدارة الحضور، التحصيل، ومتابعة المهام اليومية بصلاحيات محددة وآمنة تحت إشرافك المباشر.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🏢</div>
+        <h3>تسوية حساباتك مع السناتر</h3>
+        <p>تسوية شاملة وشفافة لمستحقاتك مع السناتر المختلفة، مع تتبع دقيق للمصروفات وحساب صافي إيراداتك تلقائياً.</p>
+      </div>
     </div>
 
+    <!-- ==============================
+         بانر الفريق والدعم (الجوهرة)
+         ============================== -->
+    <div class="team-banner">
+      <h2 style="font-size: 28px; font-weight: 900; color: var(--primary); margin-bottom: 16px; position: relative; z-index: 1;">🤝 نحن فريقك.. مديرين أعمالك ومنسقينك</h2>
+      <p style="font-size: 17px; color: var(--text-secondary); max-width: 750px; margin: 0 auto 24px; line-height: 1.9; position: relative; z-index: 1;">
+        هدفنا إننا نرفع عنك العبء الإداري بالكامل. محتاج دعم وقت الحصة؟ واجهت مشكلة في التحصيل؟ محتاج تنسق مع ولي أمر أو السنتر؟ 
+        <strong>فريق Habbash Group معاك على مدار الساعة</strong>. نحن لا نقدم مجرد برنامج، بل نعمل كـ "مدير أعمال" و "منسق" خاص بيك، عشان أنت تركز في رسالتك السامية وتظهر بأفضل صورة.
+      </p>
+      <a href="https://wa.me/201061197845" target="_blank" class="cta-btn" style="font-size: 16px; padding: 14px 30px; position: relative; z-index: 1;">
+        <span>💬</span> تواصل مباشرة مع إدارة Habbash Group
+      </a>
+    </div>
+
+    <!-- ==============================
+         قسم أدوار المستخدمين
+         ============================== -->
+    <div class="roles-section">
+      <h2 class="section-title">تجربة مخصصة لكل فرد في منظومتك</h2>
+      <p class="section-subtitle">كل فرد في المجموعات التابعة لك له واجهته الخاصة التي تناسب احتياجاته وتسهل عمله دون تشتيت</p>
+      
+      <div class="roles-grid">
+        <div class="role-card">
+          <span class="role-icon">👑</span>
+          <h3>الأستاذ / المالك</h3>
+          <ul>
+            <li>رؤية شاملة لكل مجموعاتك وفروعك</li>
+            <li>تقارير مالية وإدارية لحظية لمستحقاتك</li>
+            <li>إدارة كاملة للطلاب والمجموعات التابعة لك</li>
+            <li>فريق دعم (Habbash Group) يساندك في الإدارة والتنسيق</li>
+          </ul>
+        </div>
+        <div class="role-card">
+          <span class="role-icon">🛠️</span>
+          <h3>المساعد (تحت إشرافك)</h3>
+          <ul>
+            <li>تسجيل الحضور والغياب اليومي</li>
+            <li>تحصيل المصروفات وإصدار إيصالات</li>
+            <li>متابعة الديون والحصص التعويضية</li>
+            <li>التواصل السريع مع أولياء الأمور</li>
+          </ul>
+        </div>
+        <div class="role-card">
+          <span class="role-icon">🎓</span>
+          <h3>الطالب / ولي الأمر</h3>
+          <ul>
+            <li>متابعة الدرجات وسجل الحضور</li>
+            <li>حل الواجبات أونلاين وتقديمها</li>
+            <li>مشاهدة الفيديوهات والمحتوى الحصري</li>
+            <li>معرفة المتبقي من المصروفات ودفعها</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==============================
+         قسم الحوافز
+         ============================== -->
     <div class="incentives-section">
-      <h2 class="section-title" style="margin-bottom: 10px;">لماذا تختار EduFlow لمركزك؟</h2>
-      <p style="text-align: center; color: var(--text-secondary); margin-bottom: 20px;">نحن لا نقدم مجرد برنامج، بل شريك نجاح لمركزك التعليمي</p>
+      <h2 class="section-title" style="margin-bottom: 10px;">لماذا نحن فريقك المثالي؟</h2>
+      <p class="section-subtitle" style="margin-bottom: 30px;">نحن لا نقدم مجرد برنامج، بل شريك نجاح حقيقي ومدير أعمالك الخاص</p>
+      
       <div class="incentives-grid">
         <div class="incentive-item">
           <div class="incentive-icon">⏱️</div>
           <div>
             <h4>وفر وقتك وجهدك</h4>
-            <p>ودّع الجداول الورقية والحسابات اليدوية المعقدة. كل شيء مؤتمت ويحتاج فقط لبضع نقرات.</p>
+            <p>ودّع الجداول الورقية والحسابات اليدوية المعقدة. كل شيء مؤتمت ويحتاج فقط لبضع نقرات لتوفير وقتك.</p>
           </div>
         </div>
         <div class="incentive-item">
           <div class="incentive-icon">📈</div>
           <div>
-            <h4>زِد من إيرادات مركزك</h4>
-            <p>نظام المتابعة المالية الدقيق يضمن لك تحصيل مستحقاتك في وقتها ويقلل من الديون المتراكمة.</p>
+            <h4>ضمن مستحقاتك المالية</h4>
+            <p>نظام المتابعة المالية الدقيق يضمن لك تحصيل مستحقاتك أنت شخصياً في وقتها ويقلل من الديون المتراكمة.</p>
           </div>
         </div>
         <div class="incentive-item">
           <div class="incentive-icon">🌟</div>
           <div>
-            <h4>صورة احترافية لمركزك</h4>
-            <p>امنح أولياء الأمور والطلاب تجربة حديثة واحترافية تعكس جودة ومستوى مركزك التعليمي.</p>
+            <h4>صورة احترافية تليق بك</h4>
+            <p>امنح أولياء أمور طلابك تجربة حديثة واحترافية تعكس قيمتك ومستواك كأستاذ متميز.</p>
           </div>
         </div>
         <div class="incentive-item">
           <div class="incentive-icon">🛡️</div>
           <div>
-            <h4>أمان وخصوصية تامة</h4>
-            <p>بياناتك وبيانات طلابك محفوظة بأعلى معايير الأمان مع نسخ احتياطي دوري ومستمر.</p>
+            <h4>دعم فني وإداري وقت الحصة</h4>
+            <p>فريق Habbash Group معاك على مدار الساعة. لو احتجت أي تنسيق أو دعم حتى وأنت في نص الحصة، نحن هنا نساندك فوراً.</p>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- ==============================
+         قسم الأسئلة الشائعة
+         ============================== -->
+    <div class="faq-section">
+      <h2 class="section-title">الأسئلة الشائعة</h2>
+      <p class="section-subtitle">إجابات سريعة على أكثر الأسئلة التي تدور في ذهن الأساتذة والمعلمين</p>
+      
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span>هل المنصة تعمل على الموبايل وقت الحصة؟</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          نعم، منصة EduFlow مصممة بتقنية (Responsive Design) وتعمل كتطبيق ويب تقدمي (PWA)، مما يعني أنها تعمل بكفاءة وسلاسة على الموبايل، التابلت، والكمبيوتر. يمكنك إدارة كل شيء من موبايلك وأنت في الحصة.
+        </div>
+      </div>
+      
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span>كيف يتعامل النظام مع الحصص الملغية؟</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          بمجرد إلغاء حصة، يقوم النظام بتحويلها تلقائياً إلى "دين" أو حصة تعويضية. يمكنك أنت أو مساعدك جدولتها في وقت لاحق، أو خصم قيمتها من الشهرية في نهاية الشهر، مع إشعار جميع الأطراف المعنية لضمان الشفافية.
+        </div>
+      </div>
+      
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span>هل يمكنني رفع فيديوهات من يوتيوب أو فيسبوك لطلابي؟</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          بالتأكيد! يدعم النظام لصق روابط الفيديوهات من يوتيوب، فيسبوك، وتيك توك، ويقوم بسحبها وعرضها مباشرة للطلاب المستهدفين داخل المنصة مع تصنيفها (شرح، مراجعة، مفردات) لسهولة الوصول إليها.
+        </div>
+      </div>
+      
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span>ماذا لو واجهت مشكلة أو احتجت دعم أثناء المحاضرة؟</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          فريق Habbash Group يعتبر "مدير أعمالك ومنسقك". نحن متواجدون لدعمك فنياً وإدارياً في أي وقت، حتى أثناء الحصص. يمكنك التواصل معنا مباشرة عبر الواتساب وسنقوم بحل أي طارئ أو تنسيق فوري نيابة عنك.
+        </div>
+      </div>
+    </div>
+
+    <!-- ==============================
+         قسم الدعوة لاتخاذ إجراء (CTA)
+         ============================== -->
     <div class="cta-section">
-      <h2 style="margin-bottom: 16px; font-size: 28px;">جاهز لنقل مركزك التعليمي للمستوى التالي؟</h2>
-      <p style="color: var(--text-secondary); margin-bottom: 24px;">تواصل معنا الآن واحصل على عرض توضيحي مجاني للمنصة</p>
-      <a href="https://wa.me/201000000000" target="_blank" class="cta-btn">
-        <span>💬</span> تواصل معنا عبر واتساب
+      <h2 style="margin-bottom: 16px; font-size: 28px; position: relative; z-index: 1;">جاهز نبدأ شراكتنا ونرفع عنك العبء الإداري؟</h2>
+      <p style="color: var(--text-secondary); margin-bottom: 24px; position: relative; z-index: 1;">تواصل مع إدارة Habbash Group الآن واحصل على استشارة مجانية وتفعيل حسابك</p>
+      <a href="https://wa.me/201061197845" target="_blank" class="cta-btn">
+        <span>💬</span> تواصل مع إدارة Habbash Group (01061197845)
       </a>
     </div>
   </div>
@@ -168,5 +518,41 @@
   <script src="js/config.js"></script>
   <script src="js/theme-manager.js"></script>
   <script src="js/footer-injector.js"></script>
+  
+  <script>
+    // سكربت تفاعل الأسئلة الشائعة (FAQ)
+    function toggleFaq(el) {
+      const item = el.parentElement;
+      const isActive = item.classList.contains('active');
+      
+      // إغلاق جميع العناصر المفتوحة
+      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('active'));
+      
+      // فتح العنصر المضغوط عليه إذا لم يكن مفتوحاً مسبقاً
+      if (!isActive) {
+        item.classList.add('active');
+      }
+    }
+    
+    // تأثير ظهور العناصر عند التمرير (Scroll Animation) مع Staggered Delay
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const elements = document.querySelectorAll('.feature-card, .role-card, .incentive-item, .faq-item, .team-banner, .cta-section');
+      elements.forEach((el, index) => {
+        el.classList.add('animate-on-scroll');
+        // إضافة تأخير بسيط لكل عنصر لظهور متتابع (Staggered)
+        el.style.transitionDelay = `${(index % 4) * 0.1}s`; 
+        observer.observe(el);
+      });
+    });
+  </script>
 </body>
 </html>

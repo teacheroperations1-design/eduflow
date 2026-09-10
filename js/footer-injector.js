@@ -30,7 +30,6 @@
              Habbash Group
             <div style="display: flex; justify-content: center; gap: 16px; margin-top: 12px;">
               ${branding.facebookLink ? `<a href="${branding.facebookLink}" target="_blank" style="color: var(--text-secondary); text-decoration: none; font-weight: 600;">فيسبوك</a>` : ''}
-              ${branding.whatsappSupport ? `<a href="https://wa.me/${branding.whatsappSupport.replace(/\D/g,'')}" target="_blank" style="color: var(--text-secondary); text-decoration: none; font-weight: 600;">واتساب الدعم</a>` : ''}
               <a href="about.html" style="color: var(--primary); text-decoration: none; font-weight: 700;">من نحن</a>
             </div>
           </div>

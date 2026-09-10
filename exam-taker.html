@@ -57,7 +57,15 @@
     .q-time-warn {
       font-size: 11px; color: var(--warning); font-weight: 700; margin-inline-start: auto;
     }
-    
+    /* 🆕 رفع صور إجابة المقالي */
+.img-upload-zone{margin-top:10px;border:2px dashed var(--border);border-radius:10px;padding:12px;text-align:center;cursor:pointer;background:var(--surface-hover);transition:all .2s}
+.img-upload-zone:hover{border-color:var(--primary);background:var(--primary-bg)}
+.img-upload-zone input[type="file"]{display:none}
+.img-upload-zone .up-icon{font-size:26px}
+.img-upload-zone .up-text{font-size:12px;color:var(--text-muted);margin-top:4px}
+.answer-images-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px;margin-top:8px}
+.answer-thumb{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:2px solid var(--border);cursor:pointer}
+
     .anti-cheat-banner {
       background: var(--warning-bg); border: 1px solid var(--warning);
       border-radius: 10px; padding: 14px; font-size: 13px; color: var(--warning);
@@ -268,9 +276,10 @@
       } catch(e) { console.error(e); }
     };
 
-    window.startExam = function(){
+        window.startExam = function(){
       try {
         started = true;
+        window._examImages = window._examImages || {};
         // Force Fullscreen
         try { 
           const el = document.documentElement;
@@ -282,12 +291,10 @@
         document.getElementById('exTitle').textContent = '🎓 ' + exam.title;
         document.getElementById('exMeta').textContent = (exam.questions || []).length + ' سؤال';
         
-        // Timer Setup
         endTime = Date.now() + (exam.duration || 60) * 60000;
         countdownInt = setInterval(window.tickCountdown, 1000);
         window.tickCountdown();
         
-        // Shuffle questions if required
         let qs = [...(exam.questions || [])];
         if (exam.randomizeQuestions) qs.sort(() => Math.random() - 0.5);
         exam._renderQs = qs;
@@ -304,6 +311,7 @@
           ${qs.map((q, i) => {
             const opts = q.type === 'mcq' ? (q.options || []) : q.type === 'truefalse' ? ['صح', 'خطأ'] : null;
             const imgHtml = q.imageUrl ? `<img src="${window.driveThumb(q.imageUrl)}" style="width:100%; max-height:300px; object-fit:contain; border-radius:8px; margin-bottom:12px;" onerror="this.style.display='none'">` : '';
+            const isEssay = (q.type === 'essay' || q.type === 'short');
             
             return `<div class="q-card" data-q="${q.id}" id="qcard_${q.id}">
               ${imgHtml}
@@ -311,6 +319,7 @@
                 <span class="q-num">${i + 1}</span>
                 <div style="flex:1;">
                   <div class="q-text">${q.text || ''}</div>
+                  ${isEssay ? '<span class="badge badge-info" style="margin-top:4px;">✍️ سؤال مقالي — اكتب إجابتك أو ارفع صورة ورقتك</span>' : ''}
                   <span class="q-time-warn" id="qw_${q.id}"></span>
                 </div>
               </div>
@@ -320,7 +329,13 @@
                   <input type="radio" name="q_${q.id}" value="${val}">
                   <span>${o || ''}</span>
                 </label>`;
-              }).join('') : `<textarea class="form-textarea" rows="4" data-short="${q.id}" placeholder="اكتب إجابتك التفصيلية هنا..." onfocus="window.qFocus('${q.id}')"></textarea>`}
+              }).join('') : `<textarea class="form-textarea" rows="4" data-short="${q.id}" placeholder="اكتب إجابتك التفصيلية هنا..." onfocus="window.qFocus('${q.id}')"></textarea>
+              <label class="img-upload-zone">
+                <input type="file" accept="image/*" multiple onchange="window.attachExamImages('${q.id}', this)">
+                <div class="up-icon">📷</div>
+                <div class="up-text">ارفع صورة إجابتك الورقية (اختياري — صورة أو أكتر)</div>
+              </label>
+              <div id="examImgPrev_${q.id}" class="answer-images-grid"></div>`}
             </div>`;
           }).join('')}
           <button class="btn btn-success w-full btn-lg" style="margin-top:20px; margin-bottom:40px;" onclick="window.submitExamNow()">📤 تسليم نهائي</button>`;
@@ -331,6 +346,31 @@
         console.error(e); 
         safeToast('حدث خطأ أثناء بدء الامتحان', 'error'); 
       }
+    };
+
+    // 🆕 إرفاق صور إجابة المقالي
+    window.attachExamImages = function(qid, input){
+      try{
+        const files = Array.from(input.files||[]);
+        if(!files.length) return;
+        window._examImages = window._examImages || {};
+        window._examImages[qid] = window._examImages[qid] || [];
+        const prev = document.getElementById('examImgPrev_'+qid);
+        files.forEach(function(f){
+          const push = function(url){
+            window._examImages[qid].push(url);
+            if(prev) prev.insertAdjacentHTML('beforeend', `<img src="${window.driveThumb(url)}" class="answer-thumb">`);
+          };
+          if(typeof DriveService !== 'undefined' && DriveService && typeof DriveService.uploadImage === 'function'){
+            DriveService.uploadImage(f).then(push).catch(function(){
+              const r=new FileReader(); r.onload=function(e){ push(e.target.result); }; r.readAsDataURL(f);
+            });
+          } else {
+            const r=new FileReader(); r.onload=function(e){ push(e.target.result); }; r.readAsDataURL(f);
+          }
+        });
+        safeToast('📷 تم إرفاق الصور بالإجابة','success');
+      }catch(e){ console.error(e); }
     };
 
     window.pickOpt = function(qid, el){
@@ -443,25 +483,28 @@
       }
     };
 
-    window.submitExamNow = async function(auto){
+        window.submitExamNow = async function(auto){
       try {
         if (submitted) return;
         submitted = true;
         if (countdownInt) clearInterval(countdownInt);
         
-        // Gather answers (آخر وضع حله الطالب)
+        // Gather answers (نص + صور المقالي)
         const answers = [];
         (exam._renderQs || exam.questions || []).forEach(q => {
-          if (q.type === 'short') { 
+          if (q.type === 'short' || q.type === 'essay') { 
             const ta = document.querySelector(`textarea[data-short="${q.id}"]`); 
-            answers.push({questionId: q.id, answer: ta ? ta.value.trim() : ''}); 
+            answers.push({
+              questionId: q.id, 
+              answer: ta ? ta.value.trim() : '',
+              answerImages: (window._examImages && window._examImages[q.id]) ? window._examImages[q.id] : []
+            }); 
           } else { 
             const sel = document.querySelector(`input[name="q_${q.id}"]:checked`); 
             answers.push({questionId: q.id, answer: sel ? sel.value : ''}); 
           }
         });
 
-        // Submit to DataService
         await DataService.submitExamAttempt({
           examId: exam.id, 
           studentId: currentUser.id, 
@@ -471,36 +514,32 @@
           suspiciousActivities: suspicious.concat([{type: 'summary', violations, autoSubmitted: !!auto}])
         });
 
-        // 🆕 Show Result Screen with Dua (No Grade Shown)
         document.getElementById('topbar').style.display = 'none';
         
         document.getElementById('exArea').innerHTML = `
           <div class="result-hero">
             <div style="font-size:64px; margin-bottom: 16px;">🤲</div>
             <h2 style="margin-bottom: 16px;">تم تسليم إجابتك بنجاح${auto ? ' (تلقائياً)' : ''}!</h2>
-            
             <div style="background: rgba(255,255,255,0.15); padding: 24px; border-radius: 12px; margin: 20px 0; font-size: 18px; font-weight: 700; line-height: 1.8;">
               "رَبِّ اشْرَحْ لِي صَدْرِي * وَيَسِّرْ لِي أَمْرِي * وَاحْلُلْ عُقْدَةً مِّن لِّسَانِي * يَفْقَهُوا قَوْلِي"
               <br><br>
               <span style="font-size: 15px; opacity: 0.9;">نسأل الله لك التوفيق والسداد، ونتيجة مشرفة بإذنه تعالى.</span>
             </div>
-            
             ${violations > 0 ? `<div style="background:rgba(239,68,68,0.2); border: 1px solid var(--danger); padding:12px; border-radius:8px; margin-top:16px; font-size:14px; color: #fca5a5;">⚠️ تنويه: تم تسجيل <strong>${violations}</strong> ملاحظة أمان أثناء الامتحان.</div>` : ''}
-            
             <p style="opacity:.8; margin-top:16px; font-size:14px;">🔒 سيتم مراجعة الإجابات من قبل الإدارة، والنتيجة لا تظهر للطالب فوراً.</p>
           </div>
           <a href="student-dashboard.html" class="btn btn-secondary w-full btn-lg" style="margin-top:16px;">→ العودة للداشبورد</a>
         `;
         
-        // Exit fullscreen gracefully
         try { if (document.fullscreenElement) document.exitFullscreen(); } catch(e) {}
         
       } catch(e) {
-        submitted = false; // Allow retry on network error
+        submitted = false;
         console.error('Submit error:', e);
         safeToast('خطأ في الاتصال، يرجى المحاولة مرة أخرى', 'error');
       }
     };
+   
   </script>
   <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}</script>
 </body>

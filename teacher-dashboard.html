@@ -82,6 +82,15 @@
 .material-media{margin-top:10px;border-radius:10px;overflow:hidden;background:var(--surface-hover)}
 .material-media img{width:100%;max-height:220px;object-fit:cover;display:block}
 .material-media audio{width:100%;display:block;margin-top:6px}
+/* 🆕 صور حل الطالب */
+.answer-images-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:12px}
+.answer-thumb{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;border:2px solid var(--border);cursor:pointer;transition:all .2s}
+.answer-thumb:hover{border-color:var(--primary);transform:scale(1.03);box-shadow:0 4px 12px rgba(99,102,241,.25)}
+.paper-image-preview{width:100%;max-height:300px;object-fit:cover;border-radius:10px;margin-top:8px;border:1px solid var(--border);cursor:pointer}
+.paper-image-preview:hover{border-color:var(--primary)}
+.images-count-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:var(--info-bg);color:var(--info);border-radius:9999px;font-size:10px;font-weight:700;margin-right:4px}
+.publish-toggle{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface-hover);border-radius:8px;margin-top:8px;cursor:pointer;font-size:12px}
+.publish-toggle input{transform:scale(1.2)}
 @media(max-width:640px){
   .detail-grid{grid-template-columns:1fr}
   .stat-mini{grid-template-columns:1fr 1fr}
@@ -89,6 +98,7 @@
   .points-breakdown{grid-template-columns:1fr}
   .grade-row{flex-direction:column;align-items:stretch}
   .grade-input-group{margin-top:6px}
+  .answer-images-grid{grid-template-columns:repeat(2,1fr)}
 }
 </style>
 </head>
@@ -247,6 +257,31 @@
 <script src="js/footer-injector.js"></script>
 
 <script>
+  /* 🆕 View-As: لو الرابط فيه ?viewas= خد الهوية دي كالمستخدم الحالي للتبويب ده */
+(function(){
+  try{
+    const vid=new URLSearchParams(location.search).get('viewas');
+    if(!vid) return;
+    const u=(window.DataService&&DataService.getUsers?DataService.getUsers():[]).find(x=>x.id===vid);
+    if(!u) return;
+    window.__VIEWAS_USER=u;
+    if(window.AuthService){
+      AuthService.getCurrentUser=function(){ return window.__VIEWAS_USER; };
+      if(typeof AuthService.requireRole==='function'){
+        AuthService.requireRole=function(roles){
+          if(!roles||roles.includes(u.role)) return true;
+          location.href='login.html'; return false;
+        };
+      }
+      const origLogout=(typeof AuthService.logout==='function')?AuthService.logout.bind(AuthService):null;
+      AuthService.logout=function(){
+        window.__VIEWAS_USER=null;
+        try{ sessionStorage.removeItem('eduflow_viewas'); }catch(e){}
+        if(origLogout) origLogout(); else location.href='login.html';
+      };
+    }
+  }catch(e){}
+})();
 const DAYS=[{en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},{en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'},{en:'Saturday',ar:'السبت'}];
 const dayAr=en=>(DAYS.find(d=>d.en===en)||{}).ar||en;
 const T=tm=>DataService?.formatTime12?DataService.formatTime12(tm):tm;
@@ -326,7 +361,6 @@ window.loadOverview=function(){
     const groups=DataService.getGroupsByTeacher(currentUser.id);
     const gids=groups.map(g=>g.id);
     
-    // 1. تحديد الحصة الجارية أو القادمة
     const todayEn = DAYS[new Date().getDay()].en;
     const now = new Date();
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
@@ -392,21 +426,27 @@ window.loadOverview=function(){
 
     document.getElementById('currentClassBanner').innerHTML = classInfoHtml;
 
-    // 2. الإحصائيات العامة
     const studentsSet = new Set();
     groups.forEach(g => DataService.getStudentsByGroup(g.id).forEach(s => studentsSet.add(s.id)));
     const subs = (db().submissions || []).filter(s => s.status === 'pending_review' && (db().homework || []).some(h => h.id === s.homeworkId && gids.includes(h.groupId)));
     const att = (db().attendance || []).filter(a => a.status === 'pending' && gids.includes(a.groupId));
 
+    // 🆕 عد التسليمات بصور
+    const subsWithImages = subs.filter(s => s.answerImages && s.answerImages.length > 0).length;
+
     document.getElementById('ovStats').innerHTML = `
       <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">المجموعات</span><span class="stat-card-icon">👥</span></div><div class="stat-card-value">${groups.length}</div></div>
       <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">الطلاب</span><span class="stat-card-icon">🎓</span></div><div class="stat-card-value">${studentsSet.size}</div></div>
-      <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">واجبات للمراجعة</span><span class="stat-card-icon">📝</span></div><div class="stat-card-value" style="color:var(--warning)">${subs.length}</div></div>
+      <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">واجبات للمراجعة</span><span class="stat-card-icon">📝</span></div><div class="stat-card-value" style="color:var(--warning)">${subs.length}</div>${subsWithImages>0?`<div class="text-xs" style="color:var(--info);">📸 ${subsWithImages} بصور</div>`:''}</div>
       <div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">حضور معلق</span><span class="stat-card-icon">📋</span></div><div class="stat-card-value" style="color:var(--info)">${att.length}</div></div>
     `;
 
     const recent = [
-      ...subs.slice(0, 3).map(s => { const h = (db().homework || []).find(x => x.id === s.homeworkId); return { icon: '📝', text: `تسليم واجب: ${DataService.getUserById(s.studentId)?.name || '-'} (${h?.title || ''})`, action: `window.showSection('homework')` }; }),
+      ...subs.slice(0, 3).map(s => { 
+        const h = (db().homework || []).find(x => x.id === s.homeworkId); 
+        const hasImg = s.answerImages && s.answerImages.length > 0;
+        return { icon: '📝', text: `تسليم واجب: ${DataService.getUserById(s.studentId)?.name || '-'} (${h?.title || ''})${hasImg?' 📸':''}`, action: `window.showSection('homework')` }; 
+      }),
       ...att.slice(0, 3).map(a => ({ icon: '📋', text: `حضور معلق: ${a.groupName}`, action: `window.showSection('attendance')` }))
     ];
     
@@ -414,7 +454,6 @@ window.loadOverview=function(){
   } catch(e) { console.error(e); }
 };
 
-// 🆕 دالة بدء امتحان سريع للحصة الحالية
 window.startClassExam=function(groupId){
   try{
     const g=DataService.getGroups().find(x=>x.id===groupId);
@@ -422,8 +461,9 @@ window.startClassExam=function(groupId){
     challengeQuestions=[];
     ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🎓 بدء امتحان حصة: ${g.name}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
     <div class="modal-body">
-      <div class="filter-info">سيتم إنشاء امتحان "حصة" للمجموعة الحالية. يمكنك إضافة الأسئلة الآن أو لاحقاً من صفحة الامتحانات.</div>
+      <div class="filter-info">سيتم إنشاء امتحان "حصة" للمجموعة الحالية.</div>
       <div class="form-group"><label>عنوان الامتحان</label><input id="exTitle" class="form-input" value="امتحان حصة ${new Date().toLocaleDateString('ar-EG')}" required></div>
+      <div class="form-group"><label>📄 صورة ورقة الامتحان (Drive)</label><input id="exPaperImage" class="form-input" placeholder="https://drive.google.com/file/d/..."><div class="text-xs text-muted">الطالب هيشوفها كورقة الامتحان</div></div>
       <input type="hidden" id="exGroup" value="${groupId}">
       <input type="hidden" id="exMode" value="class">
       <div id="exQList"></div>
@@ -496,13 +536,11 @@ window.saveGroup=async function(e,editId){
   }catch(e){ window.safeToast('خطأ','error'); return false; }
 };
 
-// 🆕 تحسين عرض الطلاب لإظهار المجموعة بوضوح
 window.loadStudents=function(){
   try{
     const q=(document.getElementById('sSearchBar')?.value||'').toLowerCase();
     const groups=DataService.getGroupsByTeacher(currentUser.id);
     
-    // ربط كل طالب بالمجموعات التي ينتمي إليها
     let studentMap = {};
     groups.forEach(g => {
       const studentsInGroup = DataService.getStudentsByGroup(g.id);
@@ -552,10 +590,13 @@ window.openStudentProfile=function(id){
     ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${s.name}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
     <div class="modal-body">
       <div class="detail-grid"><div class="detail-box"><div class="lbl">الكود</div><div class="val">${s.code||'-'}</div></div><div class="detail-box"><div class="lbl">الهاتف</div><div class="val">${s.phone||'-'}</div></div><div class="detail-box"><div class="lbl">ولي الأمر</div><div class="val">${s.parentPhone||'-'}</div></div><div class="detail-box"><div class="lbl">المرحلة</div><div class="val">${s.grade||'-'}</div></div></div>
-      ${ungradedHw.length?`<div class="quick-grade-section"><h3>⚡ واجبات غير مصححة</h3>${ungradedHw.map(({hw, sub})=>`<div class="grade-row"><div class="hw-info"><div class="hw-title">${hw?.title||'-'}</div><div class="hw-meta">من ${hw?.totalPoints||10}</div></div><div class="grade-input-group"><input type="number" class="grade-input" id="qg-${sub.id}" min="0" max="${hw?.totalPoints||10}"><button class="quick-btn quick-btn-success" onclick="window.quickGradeSub('${sub.id}',${hw?.totalPoints||10})">✓</button></div></div>`).join('')}</div>`:''}
+      ${ungradedHw.length?`<div class="quick-grade-section"><h3>⚡ واجبات غير مصححة</h3>${ungradedHw.map(({hw, sub})=>{
+        const hasImages = sub.answerImages && sub.answerImages.length > 0;
+        return `<div class="grade-row"><div class="hw-info"><div class="hw-title">${hw?.title||'-'} ${hasImages?`<span class="images-count-badge">📸 ${sub.answerImages.length}</span>`:''}</div><div class="hw-meta">من ${hw?.totalPoints||10}</div></div><div class="grade-input-group">${hasImages?`<button class="btn btn-ghost btn-sm" onclick="ThemeManager.closeModal();window.viewSubImages('${sub.id}')">👁️</button>`:''}<input type="number" class="grade-input" id="qg-${sub.id}" min="0" max="${hw?.totalPoints||10}"><button class="quick-btn quick-btn-success" onclick="window.quickGradeSub('${sub.id}',${hw?.totalPoints||10})">✓</button></div></div>`;
+      }).join('')}</div>`:''}
       <div class="tabs" style="margin-top:16px;"><button class="tab-btn active" onclick="window.switchTab(event,'att')">حضور</button><button class="tab-btn" onclick="window.switchTab(event,'hw')">واجبات</button><button class="tab-btn" onclick="window.switchTab(event,'ex')">امتحانات</button></div>
       <div id="tab-att" class="tab-content active">${(db().attendance||[]).filter(a=>a.status==='approved' && gids.includes(a.groupId) && a.records.some(r=>r.studentId===id)).map(a=>{const r=a.records.find(x=>x.studentId===id);return `<div class="sub-row ${r?.status==='present'?'graded':'pending'}"><div><strong>${a.groupName}</strong><div class="text-xs text-muted">${a.date}</div></div><span class="badge ${r?.status==='present'?'badge-success':'badge-danger'}">${r?.status==='present'?'✓':'✗'}</span></div>`;}).join('')||'<p class="text-muted">لا سجل</p>'}</div>
-      <div id="tab-hw" class="tab-content">${subs.map(x=>{const h=(db().homework||[]).find(h=>h.id===x.homeworkId);return `<div class="sub-row ${x.status==='graded'?'graded':'pending'}"><div><strong>${h?.title||'-'}</strong> ${h?.paper?'<span class="badge badge-muted">📄 ورقي</span>':'<span class="badge badge-info">💻 أونلاين</span>'}</div><strong style="color:${x.status==='graded'?'var(--success)':'var(--warning)'}">${x.status==='graded'?x.score+'%':'معلق'}</strong></div>`;}).join('')||'<p class="text-muted">لا واجبات</p>'}</div>
+      <div id="tab-hw" class="tab-content">${subs.map(x=>{const h=(db().homework||[]).find(h=>h.id===x.homeworkId); const hasImages=x.answerImages&&x.answerImages.length>0; return `<div class="sub-row ${x.status==='graded'?'graded':'pending'}"><div><strong>${h?.title||'-'}</strong> ${h?.paper?'<span class="badge badge-muted">📄 ورقي</span>':'<span class="badge badge-info">💻 أونلاين</span>'} ${hasImages?`<span class="images-count-badge">📸 ${x.answerImages.length}</span>`:''}</div><strong style="color:${x.status==='graded'?'var(--success)':'var(--warning)'}">${x.status==='graded'?x.score+'%':'معلق'}</strong></div>`;}).join('')||'<p class="text-muted">لا واجبات</p>'}</div>
       <div id="tab-ex" class="tab-content">${attempts.map(x=>{const e=(db().exams||[]).find(e=>e.id===x.examId);return `<div class="sub-row ${x.status==='approved'?'graded':'pending'}"><div><strong>${e?.title||'-'}</strong> ${e?.mode==='offline'?'<span class="badge badge-muted">📄 ورقي</span>':'<span class="badge badge-info">💻 أونلاين</span>'}</div><strong style="color:${x.status==='approved'?'var(--success)':'var(--warning)'}">${x.status==='approved'?x.score+'%':'معلق'}</strong></div>`;}).join('')||'<p class="text-muted">لا امتحانات</p>'}</div>
     </div>`,'modal-lg');
   }catch(e){console.error(e);}
@@ -565,7 +606,20 @@ window.quickGradeSub=async function(subId, max){
   try{
     const score=parseInt(document.getElementById('qg-'+subId)?.value);
     if(isNaN(score)||score<0||score>max){ window.safeToast('درجة غير صحيحة','error'); return; }
-    await DataService.gradeSubmission(subId, score, currentUser.id, 'تصحيح سريع');
+    const d=db();
+    const sub=(d.submissions||[]).find(x=>x.id===subId);
+    if(sub){
+      sub.score=score;
+      sub.status='graded';
+      sub.gradedBy=currentUser.id;
+      sub.gradedAt=new Date().toISOString();
+      // 🆕 للامتحانات/الواجبات الأونلاين: نشر الدرجة أوتوماتيك للمدرس (الطالب يشوفها بعد)
+      const hw=(d.homework||[]).find(h=>h.id===sub.homeworkId);
+      if(hw && !hw.paper) sub.published=true; // أونلاين = منشورة فوراً
+      else sub.published=true; // ورقي = منشورة فوراً
+    }
+    save(d);
+    if(window.FirebaseService?.connected) await FirebaseService.saveDoc('submissions', subId, sub);
     window.safeToast('تم التصحيح ✓','success');
     ThemeManager.closeModal();
   }catch(e){ window.safeToast('خطأ','error'); }
@@ -586,10 +640,13 @@ window.loadHomework=function(){
       const graded=subs.filter(s=>s.status==='graded');
       const avg=graded.length?Math.round(graded.reduce((a,x)=>a+(x.score||0),0)/graded.length):0;
       const typeBadge = h.paper ? '<span class="badge badge-muted">📄 ورقي</span>' : '<span class="badge badge-info">💻 أونلاين</span>';
-      return `<div class="hw-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><strong>${h.title}</strong> ${typeBadge}<div class="text-xs text-muted">👥 ${group?.name||'-'} · 📅 ${h.deadline||'-'}</div><div class="stat-mini" style="margin-top:8px;"><div class="stat-mini-box"><div class="stat-mini-value">${subs.length}</div><div class="stat-mini-label">تسليم</div></div><div class="stat-mini-box"><div class="stat-mini-value">${avg}%</div><div class="stat-mini-label">متوسط</div></div></div></div><div style="display:flex;gap:6px;"><button class="btn btn-primary btn-sm" onclick="window.viewHwSubs('${h.id}')">📊</button><button class="btn btn-danger btn-sm" onclick="window.delHw('${h.id}')">🗑️</button></div></div></div>`;
+      // 🆕 عد الصور المرفوعة
+      const subsWithImages = subs.filter(s => s.answerImages && s.answerImages.length > 0).length;
+      return `<div class="hw-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><strong>${h.title}</strong> ${typeBadge}<div class="text-xs text-muted">👥 ${group?.name||'-'} · 📅 ${h.deadline||'-'}</div><div class="stat-mini" style="margin-top:8px;"><div class="stat-mini-box"><div class="stat-mini-value">${subs.length}</div><div class="stat-mini-label">تسليم</div></div><div class="stat-mini-box"><div class="stat-mini-value">${avg}%</div><div class="stat-mini-label">متوسط</div></div>${subsWithImages>0?`<div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--info);">${subsWithImages}</div><div class="stat-mini-label">📸 بصور</div></div>`:''}</div></div><div style="display:flex;gap:6px;"><button class="btn btn-primary btn-sm" onclick="window.viewHwSubs('${h.id}')">📊</button><button class="btn btn-danger btn-sm" onclick="window.delHw('${h.id}')">🗑️</button></div></div></div>`;
     }).join(''):'<p class="text-muted">لا واجبات</p>';
   }catch(e){}
 };
+
 window.viewHwSubs=function(hwId){
   try{
     const h=(db().homework||[]).find(x=>x.id===hwId); if(!h)return;
@@ -597,34 +654,199 @@ window.viewHwSubs=function(hwId){
     const students=group?DataService.getStudentsByGroup(group.id):[];
     const subs=(db().submissions||[]).filter(s=>s.homeworkId===hwId);
     const pending=subs.filter(s=>s.status!=='graded');
+    const graded=subs.filter(s=>s.status==='graded');
     const typeBadge = h.paper ? '<span class="badge badge-muted">📄 ورقي</span>' : '<span class="badge badge-info">💻 أونلاين</span>';
-    ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📊 ${h.title} ${typeBadge}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="tabs"><button class="tab-btn active" onclick="window.switchTab(event,'pend')">⏳ معلق (${pending.length})</button><button class="tab-btn" onclick="window.switchTab(event,'grad')">✓ مصحح</button></div>
-    <div id="tab-pend" class="tab-content active">${pending.map(s=>{const st=DataService.getUserById(s.studentId);return `<div class="sub-row pending"><div><strong>${st?.name||'-'}</strong></div><div style="display:flex;gap:4px;align-items:center;"><input type="number" class="grade-input" id="gs-${s.id}" style="width:60px;" max="${h.totalPoints||10}"><button class="quick-btn quick-btn-success" onclick="window.saveHwGrade('${s.id}',${h.totalPoints||10})">✓</button></div></div>`;}).join('')||'<p class="text-muted">لا يوجد</p>'}</div>
-    <div id="tab-grad" class="tab-content">${subs.filter(s=>s.status==='graded').map(s=>{const st=DataService.getUserById(s.studentId);return `<div class="sub-row graded"><div><strong>${st?.name||'-'}</strong></div><strong style="color:var(--success)">${s.score}%</strong></div>`;}).join('')||'<p class="text-muted">لا يوجد</p>'}</div></div>`,'modal-lg');
+    
+    // 🆕 عرض صورة ورقة الواجب لو موجودة
+    const paperImageHtml = h.paperImageUrl ? `
+      <div style="margin-bottom:16px;">
+        <h4 style="margin:0 0 8px 0;">📄 ورقة الواجب</h4>
+        <img src="${window.driveThumb(h.paperImageUrl)}" class="paper-image-preview" onclick="window.open(this.src,'_blank')" alt="ورقة الواجب">
+      </div>
+    ` : '';
+    
+    ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📊 ${h.title} ${typeBadge}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">
+    ${paperImageHtml}
+    <div class="tabs"><button class="tab-btn active" onclick="window.switchTab(event,'pend')">⏳ معلق (${pending.length})</button><button class="tab-btn" onclick="window.switchTab(event,'grad')">✓ مصحح (${graded.length})</button></div>
+    <div id="tab-pend" class="tab-content active">${pending.map(s=>{
+      const st=DataService.getUserById(s.studentId);
+      const hasImages=s.answerImages&&s.answerImages.length>0;
+      return `<div class="sub-row pending"><div><strong>${st?.name||'-'}</strong>${hasImages?` <span class="images-count-badge">📸 ${s.answerImages.length} صورة</span>`:''}</div><div style="display:flex;gap:6px;">${hasImages?`<button class="btn btn-ghost btn-sm" onclick="window.viewSubImages('${s.id}')">👁️ الحل</button>`:''}<input type="number" class="grade-input" id="gs-${s.id}" style="width:60px;" max="${h.totalPoints||10}"><button class="quick-btn quick-btn-success" onclick="window.saveHwGrade('${s.id}',${h.totalPoints||10})">✓</button></div></div>`;
+    }).join('')||'<p class="text-muted">لا يوجد</p>'}</div>
+    <div id="tab-grad" class="tab-content">${graded.map(s=>{
+      const st=DataService.getUserById(s.studentId);
+      const hasImages=s.answerImages&&s.answerImages.length>0;
+      return `<div class="sub-row graded"><div><strong>${st?.name||'-'}</strong>${hasImages?` <span class="images-count-badge">📸 ${s.answerImages.length}</span>`:''}</div><div style="display:flex;gap:6px;align-items:center;">${hasImages?`<button class="btn btn-ghost btn-sm" onclick="window.viewSubImages('${s.id}')">👁️</button>`:''}<strong style="color:var(--success)">${s.score}%</strong></div></div>`;
+    }).join('')||'<p class="text-muted">لا يوجد</p>'}</div></div>`,'modal-lg');
   }catch(e){}
 };
+
+// 🆕 دالة عرض صور حل الطالب في مودال
+window.viewSubImages=function(subId){
+  try{
+    const d=db();
+    const s=(d.submissions||[]).find(x=>x.id===subId);
+    if(!s) return;
+    const st=DataService.getUserById(s.studentId);
+    const hw=(d.homework||[]).find(h=>h.id===s.homeworkId);
+    const imgs=s.answerImages||[];
+    const subDate=new Date(s.submittedAt||Date.now()).toLocaleString('ar-EG');
+    
+    ThemeManager.openModal(`
+      <div class="modal-header">
+        <h3 class="modal-title">📸 حل: ${st?.name||'-'}</h3>
+        <button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom:12px;padding:10px;background:var(--surface-hover);border-radius:8px;">
+          <div class="text-sm"><strong>${hw?.title||'-'}</strong></div>
+          <div class="text-xs text-muted">📅 ${subDate}</div>
+        </div>
+        ${hw?.paperImageUrl?`<div style="margin-bottom:12px;"><strong>📄 ورقة الواجب:</strong><img src="${window.driveThumb(hw.paperImageUrl)}" class="paper-image-preview" onclick="window.open(this.src,'_blank')"></div>`:''}
+        <h4>📝 حلول الطالب (${imgs.length} صورة):</h4>
+        <div class="answer-images-grid">
+          ${imgs.map(url=>`<img src="${window.driveThumb(url)}" class="answer-thumb" onclick="window.open('${window.driveThumb(url).replace('w400','w1200')}', '_blank')" alt="حل">`).join('')}
+        </div>
+        <div style="display:flex;gap:8px;margin-top:16px;">
+          <input type="number" class="form-input" id="subGradeInput" placeholder="الدرجة" min="0" max="${hw?.totalPoints||10}" style="flex:1;">
+          <button class="btn btn-success" onclick="window.gradeFromView('${subId}',${hw?.totalPoints||10})">✓ رصد الدرجة</button>
+        </div>
+      </div>
+    `, 'modal-lg');
+  }catch(e){ console.error(e); }
+};
+
+window.gradeFromView=function(subId, max){
+  try{
+    const score=parseInt(document.getElementById('subGradeInput')?.value);
+    if(isNaN(score)||score<0||score>max){ window.safeToast('درجة غير صحيحة','error'); return; }
+    const d=db();
+    const sub=(d.submissions||[]).find(x=>x.id===subId);
+    if(sub){
+      sub.score=score;
+      sub.status='graded';
+      sub.gradedBy=currentUser.id;
+      sub.gradedAt=new Date().toISOString();
+      sub.published=true;
+    }
+    save(d);
+    if(window.FirebaseService?.connected) FirebaseService.saveDoc('submissions', subId, sub);
+    window.safeToast('✓ تم رصد الدرجة: '+score+'/'+max,'success');
+    ThemeManager.closeModal();
+    window.loadHomework();
+  }catch(e){ window.safeToast('خطأ','error'); }
+};
+
 window.saveHwGrade=async function(subId, max){
   try{
     const score=parseInt(document.getElementById('gs-'+subId)?.value);
     if(isNaN(score)||score<0||score>max){ window.safeToast('درجة غير صحيحة','error'); return; }
-    await DataService.gradeSubmission(subId, score, currentUser.id, 'تصحيح');
+    const d=db();
+    const sub=(d.submissions||[]).find(x=>x.id===subId);
+    if(sub){
+      sub.score=score;
+      sub.status='graded';
+      sub.gradedBy=currentUser.id;
+      sub.gradedAt=new Date().toISOString();
+      sub.published=true;
+    }
+    save(d);
+    if(window.FirebaseService?.connected) await FirebaseService.saveDoc('submissions', subId, sub);
     window.safeToast('تم ✓','success');
     ThemeManager.closeModal(); window.loadHomework();
   }catch(e){ window.safeToast('خطأ','error'); }
 };
+
 window.openHwBuilder=function(){
   try{
     hwQ=[];
     const groups=DataService.getGroupsByTeacher(currentUser.id);
-    ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📝 واجب جديد</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>العنوان</label><input id="hwTitle" class="form-input" required></div><div class="form-group"><label>المجموعة</label><select id="hwGroup" class="form-select">${groups.map(g=>`<option value="${g.id}">${g.name}</option>`).join('')}</select></div><div class="form-group"><label>الموعد</label><input type="date" id="hwDeadline" class="form-input" required></div><div class="form-group"><label>صورة (Drive)</label><input id="hwImage" class="form-input" placeholder="https://..."></div><div class="form-group"><label><input type="checkbox" id="hwPaper"> واجب ورقي</label></div><div id="hwQList"></div><div style="display:flex;gap:8px;margin:8px 0;"><button class="btn btn-secondary btn-sm" onclick="window.addHwQ('mcq')">+ MCQ</button><button class="btn btn-secondary btn-sm" onclick="window.addHwQ('truefalse')">+ صح/خطأ</button></div><button class="btn btn-primary w-full" onclick="window.saveHw()">💾</button></div>`);
+    ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📝 واجب جديد</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">
+    <div class="form-group"><label>العنوان</label><input id="hwTitle" class="form-input" required></div>
+    <div class="form-group"><label>المجموعة</label><select id="hwGroup" class="form-select">${groups.map(g=>`<option value="${g.id}">${g.name}</option>`).join('')}</select></div>
+    <div class="form-group"><label>الموعد</label><input type="date" id="hwDeadline" class="form-input" required></div>
+    
+    <div class="filter-info" style="margin-bottom:12px;">
+      💡 اختر نوع الواجب: الطالب هيشوف المحتوى حسب النوع
+    </div>
+    
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+      <label class="content-card" style="cursor:pointer;padding:10px;margin:0;">
+        <input type="radio" name="hwType" value="paper" checked onchange="window.toggleHwType()">
+        <strong>📄 واجب ورقي</strong>
+        <div class="text-xs text-muted">ترفع صورة الورقة والطالب يرفع صور حله</div>
+      </label>
+      <label class="content-card" style="cursor:pointer;padding:10px;margin:0;">
+        <input type="radio" name="hwType" value="online" onchange="window.toggleHwType()">
+        <strong>💻 واجب أونلاين</strong>
+        <div class="text-xs text-muted">أسئلة تفاعلية تتصحح أوتوماتيك</div>
+      </label>
+    </div>
+    
+    <div id="hwPaperFields">
+      <div class="form-group">
+        <label>📄 صورة ورقة الواجب (Drive) *</label>
+        <input id="hwPaperImage" class="form-input" placeholder="https://drive.google.com/file/d/..." required>
+        <div class="text-xs text-muted">الطالب هيشوفها كورقة الواجب</div>
+      </div>
+    </div>
+    
+    <div id="hwOnlineFields" style="display:none;">
+      <div class="form-group"><label>صورة توضيحية (Drive - اختياري)</label><input id="hwImage" class="form-input" placeholder="https://..."></div>
+      <div id="hwQList"></div>
+      <div style="display:flex;gap:8px;margin:8px 0;">
+        <button class="btn btn-secondary btn-sm" onclick="window.addHwQ('mcq')">+ MCQ</button>
+        <button class="btn btn-secondary btn-sm" onclick="window.addHwQ('truefalse')">+ صح/خطأ</button>
+      </div>
+    </div>
+    
+    <button class="btn btn-primary w-full" onclick="window.saveHw()">💾 حفظ</button>
+    </div>`);
+    window.toggleHwType();
   }catch(e){}
 };
+
+window.toggleHwType=function(){
+  try{
+    const type=document.querySelector('input[name="hwType"]:checked')?.value||'paper';
+    const paper=document.getElementById('hwPaperFields');
+    const online=document.getElementById('hwOnlineFields');
+    if(paper) paper.style.display=type==='paper'?'block':'none';
+    if(online) online.style.display=type==='online'?'block':'none';
+  }catch(e){}
+};
+
 window.addHwQ=function(t){ hwQ.push({id:'q'+Date.now(),type:t,text:'',options:t==='mcq'?['','','','']:[],correctAnswer:t==='mcq'?0:true,points:10}); window.renderHwQ(); };
 window.renderHwQ=function(){ const el=document.getElementById('hwQList'); if(el) el.innerHTML=hwQ.map((q,i)=>`<div style="background:var(--surface-hover);border-radius:8px;padding:12px;margin-bottom:8px;"><input type="text" class="form-input" placeholder="س${i+1}" onchange="hwQ[${i}].text=this.value">${q.type==='mcq'?q.options.map((o,oi)=>`<div style="display:flex;gap:8px;align-items:center;margin-top:6px;"><input type="radio" name="c${q.id}" ${q.correctAnswer===oi?'checked':''} onchange="hwQ[${i}].correctAnswer=${oi}"><input type="text" class="form-input" placeholder="خيار" onchange="hwQ[${i}].options[${oi}]=this.value"></div>`).join(''):''}</div>`).join(''); };
+
 window.saveHw=async function(){
   try{
     if(!document.getElementById('hwTitle')?.value){ window.safeToast('اكتب العنوان','error'); return; }
-    await DataService.addHomework({title:document.getElementById('hwTitle').value,groupId:document.getElementById('hwGroup').value,deadline:document.getElementById('hwDeadline').value,imageUrl:document.getElementById('hwImage').value,questions:hwQ,paper:document.getElementById('hwPaper')?.checked||false,createdBy:currentUser.id});
+    const type=document.querySelector('input[name="hwType"]:checked')?.value||'paper';
+    
+    if(type==='paper'){
+      const paperImage=document.getElementById('hwPaperImage')?.value;
+      if(!paperImage){ window.safeToast('أدخل رابط صورة الورقة','error'); return; }
+      await DataService.addHomework({
+        title:document.getElementById('hwTitle').value,
+        groupId:document.getElementById('hwGroup').value,
+        deadline:document.getElementById('hwDeadline').value,
+        paperImageUrl:paperImage,
+        questions:[],
+        paper:true,
+        createdBy:currentUser.id
+      });
+    } else {
+      await DataService.addHomework({
+        title:document.getElementById('hwTitle').value,
+        groupId:document.getElementById('hwGroup').value,
+        deadline:document.getElementById('hwDeadline').value,
+        imageUrl:document.getElementById('hwImage')?.value||'',
+        questions:hwQ,
+        paper:false,
+        createdBy:currentUser.id
+      });
+    }
     ThemeManager.closeModal(); window.safeToast('تم ✓','success'); window.loadHomework();
   }catch(e){ window.safeToast('خطأ','error'); }
 };
@@ -644,43 +866,171 @@ window.loadExams=function(){
       const atts=(db().examAttempts||[]).filter(a=>a.examId===e.id);
       const graded=atts.filter(a=>a.status==='approved');
       const avg=graded.length?Math.round(graded.reduce((a,x)=>a+(x.score||0),0)/graded.length):0;
-      const modeBadge = e.mode === 'offline' ? '<span class="badge badge-muted">📄 ورقي</span>' : '<span class="badge badge-info">💻 أونلاين</span>';
+      const modeBadge = e.mode === 'offline' ? '<span class="badge badge-muted">📄 ورقي</span>' : e.mode === 'class' ? '<span class="badge badge-info">🏫 حصة</span>' : '<span class="badge badge-info">💻 أونلاين</span>';
       return `<div class="hw-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><strong>${e.title}</strong> ${modeBadge}<div class="text-xs text-muted">👥 ${group?.name||'-'} · ⏱️ ${e.duration||60}د</div><div class="stat-mini" style="margin-top:8px;"><div class="stat-mini-box"><div class="stat-mini-value">${atts.length}</div><div class="stat-mini-label">حاولوا</div></div><div class="stat-mini-box"><div class="stat-mini-value">${avg}%</div><div class="stat-mini-label">متوسط</div></div></div></div><div style="display:flex;gap:6px;"><button class="btn btn-primary btn-sm" onclick="window.viewExAtts('${e.id}')">📊</button><button class="btn btn-danger btn-sm" onclick="window.delEx('${e.id}')">🗑️</button></div></div></div>`;
     }).join(''):'<p class="text-muted">لا امتحانات</p>';
   }catch(e){}
 };
+
 window.viewExAtts=function(exId){
   try{
     const e=(db().exams||[]).find(x=>x.id===exId); if(!e)return;
     const atts=(db().examAttempts||[]).filter(a=>a.examId===exId);
     const pending=atts.filter(a=>a.status!=='approved');
-    const modeBadge = e.mode === 'offline' ? '<span class="badge badge-muted">📄 ورقي</span>' : '<span class="badge badge-info">💻 أونلاين</span>';
-    ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📊 ${e.title} ${modeBadge}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="tabs"><button class="tab-btn active" onclick="window.switchTab(event,'pend')">⏳ معلق (${pending.length})</button><button class="btn btn-ghost btn-sm" style="margin-right:auto;" onclick="ThemeManager.closeModal()">إغلاق</button></div>
-    <div id="tab-pend" class="tab-content active">${pending.map(a=>{const st=DataService.getUserById(a.studentId);return `<div class="sub-row pending"><div><strong>${st?.name||'-'}</strong></div><div style="display:flex;gap:4px;align-items:center;"><input type="number" class="grade-input" id="es-${a.id}" style="width:60px;" max="${e.totalPoints||10}"><button class="quick-btn quick-btn-success" onclick="window.saveExGrade('${a.id}',${e.totalPoints||10})">✓</button></div></div>`;}).join('')||'<p class="text-muted">لا يوجد</p>'}</div></div>`,'modal-lg');
+    const graded=atts.filter(a=>a.status==='approved');
+    const modeBadge = e.mode === 'offline' ? '<span class="badge badge-muted">📄 ورقي</span>' : e.mode === 'class' ? '<span class="badge badge-info">🏫 حصة</span>' : '<span class="badge badge-info">💻 أونلاين</span>';
+    
+    // 🆕 صورة ورقة الامتحان
+    const paperImageHtml = e.paperImageUrl ? `
+      <div style="margin-bottom:16px;">
+        <h4 style="margin:0 0 8px 0;">📄 ورقة الامتحان</h4>
+        <img src="${window.driveThumb(e.paperImageUrl)}" class="paper-image-preview" onclick="window.open(this.src,'_blank')">
+      </div>
+    ` : '';
+    
+    ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📊 ${e.title} ${modeBadge}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">
+    ${paperImageHtml}
+    <div class="tabs"><button class="tab-btn active" onclick="window.switchTab(event,'pend')">⏳ معلق (${pending.length})</button><button class="tab-btn" onclick="window.switchTab(event,'grad')">✓ مصحح (${graded.length})</button></div>
+    <div id="tab-pend" class="tab-content active">${pending.map(a=>{
+      const st=DataService.getUserById(a.studentId);
+      const hasImages=a.answerImages&&a.answerImages.length>0;
+      return `<div class="sub-row pending"><div><strong>${st?.name||'-'}</strong>${hasImages?` <span class="images-count-badge">📸 ${a.answerImages.length}</span>`:''}</div><div style="display:flex;gap:6px;">${hasImages?`<button class="btn btn-ghost btn-sm" onclick="window.viewExSubImages('${a.id}')">👁️</button>`:''}<input type="number" class="grade-input" id="es-${a.id}" style="width:60px;" max="${e.totalPoints||10}"><button class="quick-btn quick-btn-success" onclick="window.saveExGrade('${a.id}',${e.totalPoints||10})">✓</button></div></div>`;
+    }).join('')||'<p class="text-muted">لا يوجد</p>'}</div>
+    <div id="tab-grad" class="tab-content">${graded.map(a=>{
+      const st=DataService.getUserById(a.studentId);
+      const hasImages=a.answerImages&&a.answerImages.length>0;
+      return `<div class="sub-row graded"><div><strong>${st?.name||'-'}</strong>${hasImages?` <span class="images-count-badge">📸 ${a.answerImages.length}</span>`:''}</div><div style="display:flex;gap:6px;align-items:center;">${hasImages?`<button class="btn btn-ghost btn-sm" onclick="window.viewExSubImages('${a.id}')">👁️</button>`:''}<strong style="color:var(--success)">${a.score}%</strong></div></div>`;
+    }).join('')||'<p class="text-muted">لا يوجد</p>'}</div></div>`,'modal-lg');
   }catch(e){}
 };
+
+// 🆕 عرض صور حل الامتحان
+window.viewExSubImages=function(attId){
+  try{
+    const d=db();
+    const a=(d.examAttempts||[]).find(x=>x.id===attId);
+    if(!a) return;
+    const st=DataService.getUserById(a.studentId);
+    const e=(d.exams||[]).find(x=>x.id===a.examId);
+    const imgs=a.answerImages||[];
+    
+    ThemeManager.openModal(`
+      <div class="modal-header">
+        <h3 class="modal-title">📸 حل امتحان: ${st?.name||'-'}</h3>
+        <button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        ${e?.paperImageUrl?`<div style="margin-bottom:12px;"><strong>📄 ورقة الامتحان:</strong><img src="${window.driveThumb(e.paperImageUrl)}" class="paper-image-preview" onclick="window.open(this.src,'_blank')"></div>`:''}
+        <h4>📝 إجابات الطالب (${imgs.length} صورة):</h4>
+        <div class="answer-images-grid">
+          ${imgs.map(url=>`<img src="${window.driveThumb(url)}" class="answer-thumb" onclick="window.open('${window.driveThumb(url).replace('w400','w1200')}', '_blank')">`).join('')}
+        </div>
+        <div style="display:flex;gap:8px;margin-top:16px;">
+          <input type="number" class="form-input" id="exSubGradeInput" placeholder="الدرجة" min="0" max="${e?.totalPoints||10}" style="flex:1;">
+          <button class="btn btn-success" onclick="window.gradeExFromView('${attId}',${e?.totalPoints||10})">✓ رصد الدرجة</button>
+        </div>
+      </div>
+    `, 'modal-lg');
+  }catch(e){ console.error(e); }
+};
+
+window.gradeExFromView=function(attId, max){
+  try{
+    const score=parseInt(document.getElementById('exSubGradeInput')?.value);
+    if(isNaN(score)||score<0||score>max){ window.safeToast('درجة غير صحيحة','error'); return; }
+    const d=db();
+    const att=(d.examAttempts||[]).find(x=>x.id===attId);
+    if(att){
+      att.score=score;
+      att.status='approved';
+      att.gradedBy=currentUser.id;
+      att.gradedAt=new Date().toISOString();
+      att.published=true;
+    }
+    save(d);
+    if(window.FirebaseService?.connected) FirebaseService.saveDoc('examAttempts', attId, att);
+    window.safeToast('✓ تم رصد الدرجة: '+score+'/'+max,'success');
+    ThemeManager.closeModal();
+    window.loadExams();
+  }catch(e){ window.safeToast('خطأ','error'); }
+};
+
 window.saveExGrade=async function(attId, max){
   try{
     const score=parseInt(document.getElementById('es-'+attId)?.value);
     if(isNaN(score)||score<0||score>max){ window.safeToast('درجة غير صحيحة','error'); return; }
     const d=db(); const a=(d.examAttempts||[]).find(x=>x.id===attId);
-    if(a){ a.score=score; a.status='approved'; a.gradedBy=currentUser.id; a.gradedAt=new Date().toISOString(); save(d); }
+    if(a){ 
+      a.score=score; 
+      a.status='approved'; 
+      a.gradedBy=currentUser.id; 
+      a.gradedAt=new Date().toISOString();
+      a.published=true;
+      save(d); 
+    }
+    if(window.FirebaseService?.connected) await FirebaseService.saveDoc('examAttempts', attId, a);
     window.safeToast('تم ✓','success'); ThemeManager.closeModal(); window.loadExams();
   }catch(e){ window.safeToast('خطأ','error'); }
 };
+
 window.openExBuilder=function(){
   try{
     exQ=[];
     const groups=DataService.getGroupsByTeacher(currentUser.id);
-    ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🎓 امتحان جديد</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>العنوان</label><input id="exTitle" class="form-input" required></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المجموعة</label><select id="exGroup" class="form-select">${groups.map(g=>`<option value="${g.id}">${g.name}</option>`).join('')}</select></div><div class="form-group"><label>النوع</label><select id="exMode" class="form-select"><option value="home">منزلي</option><option value="class">حصة</option><option value="offline">ورقي</option></select></div></div><div id="exQList"></div><div style="display:flex;gap:8px;margin:8px 0;"><button class="btn btn-secondary btn-sm" onclick="window.addExQ('mcq')">+ MCQ</button><button class="btn btn-secondary btn-sm" onclick="window.addExQ('truefalse')">+ صح/خطأ</button></div><button class="btn btn-primary w-full" onclick="window.saveEx()">💾</button></div>`);
+    ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🎓 امتحان جديد</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">
+    <div class="form-group"><label>العنوان</label><input id="exTitle" class="form-input" required></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label>المجموعة</label><select id="exGroup" class="form-select">${groups.map(g=>`<option value="${g.id}">${g.name}</option>`).join('')}</select></div>
+      <div class="form-group"><label>النوع</label><select id="exMode" class="form-select" onchange="window.toggleExMode()"><option value="home">💻 أونلاين (منزلي)</option><option value="class">🏫 حصة</option><option value="offline">📄 ورقي</option></select></div>
+    </div>
+    
+    <div id="exPaperFields">
+      <div class="form-group">
+        <label>📄 صورة ورقة الامتحان (Drive)</label>
+        <input id="exPaperImage" class="form-input" placeholder="https://drive.google.com/file/d/...">
+        <div class="text-xs text-muted">الطالب هيشوفها كورقة الامتحان</div>
+      </div>
+    </div>
+    
+    <div class="filter-info" style="margin:12px 0;">
+      🤲 <strong>إخفاء الدرجة:</strong> الطالب مش هيشوف درجته لحد ما ترصدها هنا
+    </div>
+    
+    <div id="exQList"></div>
+    <div style="display:flex;gap:8px;margin:8px 0;">
+      <button class="btn btn-secondary btn-sm" onclick="window.addExQ('mcq')">+ MCQ</button>
+      <button class="btn btn-secondary btn-sm" onclick="window.addExQ('truefalse')">+ صح/خطأ</button>
+    </div>
+    <button class="btn btn-primary w-full" onclick="window.saveEx()">💾</button>
+    </div>`);
+    window.toggleExMode();
   }catch(e){}
 };
-window.addExQ=function(t){ exQ.push({id:'q'+Date.now(),type:t,text:'',options:t==='mcq'?['','','','']:['صح','خطأ'],correctAnswer:t==='mcq'?0:true,points:10}); window.renderExQ(); };
-window.renderExQ=function(){ const el=document.getElementById('exQList'); if(el) el.innerHTML=exQ.map((q,i)=>`<div style="background:var(--surface-hover);border-radius:8px;padding:12px;margin-bottom:8px;"><input type="text" class="form-input" placeholder="س${i+1}" onchange="exQ[${i}].text=this.value">${q.type==='mcq'?q.options.map((o,oi)=>`<div style="display:flex;gap:8px;align-items:center;margin-top:6px;"><input type="radio" name="x${q.id}" ${q.correctAnswer===oi?'checked':''} onchange="exQ[${i}].correctAnswer=${oi}"><input type="text" class="form-input" placeholder="خيار" onchange="exQ[${i}].options[${oi}]=this.value"></div>`).join(''):''}</div>`).join(''); };
+
+window.toggleExMode=function(){
+  try{
+    const mode=document.getElementById('exMode')?.value||'home';
+    const paperFields=document.getElementById('exPaperFields');
+    if(paperFields) paperFields.style.display=(mode==='offline'||mode==='class')?'block':'none';
+  }catch(e){}
+};
+
+window.addExQ=function(t){ exQ.push({id:'q'+Date.now(),type:t,text:'',image:'',options:t==='mcq'?['','','','']:['صح','خطأ'],correctAnswer:t==='mcq'?0:true,points:10}); window.renderExQ(); };
+window.removeExQ=function(i){ exQ.splice(i,1); window.renderExQ(); };
+window.renderExQ=function(){ const el=document.getElementById('exQList'); if(el) el.innerHTML=exQ.map((q,i)=>`<div style="background:var(--surface-hover);border-radius:8px;padding:12px;margin-bottom:8px;border:1px solid var(--border);"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><strong style="color:var(--primary);">س${i+1}</strong><button type="button" class="btn btn-danger btn-sm" onclick="window.removeExQ(${i})">✕ حذف</button></div><input type="text" class="form-input" placeholder="نص السؤال" onchange="exQ[${i}].text=this.value" value="${(q.text||'').replace(/"/g,'&quot;')}"><div class="form-group" style="margin-top:8px;margin-bottom:0;"><label style="font-size:11px;">🖼️ صورة السؤال (اختياري - رابط Drive)</label><input type="url" class="form-input" placeholder="https://drive.google.com/..." onchange="exQ[${i}].image=this.value" value="${q.image||''}">${q.image?`<img src="${window.driveThumb(q.image)}" style="max-width:100%;max-height:150px;border-radius:6px;margin-top:6px;">`:''}</div>${q.type==='mcq'?q.options.map((o,oi)=>`<div style="display:flex;gap:8px;align-items:center;margin-top:6px;"><input type="radio" name="x${q.id}" ${q.correctAnswer===oi?'checked':''} onchange="exQ[${i}].correctAnswer=${oi}"><input type="text" class="form-input" placeholder="خيار ${oi+1}" onchange="exQ[${i}].options[${oi}]=this.value" value="${(o||'').replace(/"/g,'&quot;')}"></div>`).join(''):''}</div>`).join(''); };
+
 window.saveEx=async function(){
   try{
     if(!document.getElementById('exTitle')?.value){ window.safeToast('اكتب العنوان','error'); return; }
-    await DataService.addExam({title:document.getElementById('exTitle').value,groupId:document.getElementById('exGroup').value,mode:document.getElementById('exMode').value,duration:60,questions:exQ,createdBy:currentUser.id});
+    await DataService.addExam({
+      title:document.getElementById('exTitle').value,
+      groupId:document.getElementById('exGroup').value,
+      mode:document.getElementById('exMode').value,
+      duration:60,
+      questions:exQ,
+      paperImageUrl:document.getElementById('exPaperImage')?.value||'',
+      createdBy:currentUser.id
+    });
     ThemeManager.closeModal(); window.safeToast('تم ✓','success'); window.loadExams();
   }catch(e){ window.safeToast('خطأ','error'); }
 };
@@ -695,7 +1045,7 @@ window.switchReportTab=function(ev,mode){
   window.loadGradesReport();
 };
 
-// 🆕 تحسين تقرير الدرجات لإظهار نوع الواجب/الامتحان (ورقي / أونلاين)
+// 🆕 تقرير الدرجات المحسّن مع فصل الورقي/الأونلاين وإحصائيات الصور
 window.loadGradesReport=function(){
   try{
     const groups=DataService.getGroupsByTeacher(currentUser.id);
@@ -705,20 +1055,36 @@ window.loadGradesReport=function(){
     const subs=(db().submissions||[]).filter(s=>hws.some(h=>h.id===s.homeworkId));
     const atts=(db().examAttempts||[]).filter(a=>exs.some(e=>e.id===a.examId));
     
-    document.getElementById('overallStats').innerHTML=`<div class="stat-mini"><div class="stat-mini-box"><div class="stat-mini-value">${hws.length}</div><div class="stat-mini-label">واجبات</div></div><div class="stat-mini-box"><div class="stat-mini-value">${subs.filter(s=>s.status==='graded').length}</div><div class="stat-mini-label">تم تصحيحها</div></div><div class="stat-mini-box"><div class="stat-mini-value">${exs.length}</div><div class="stat-mini-label">امتحانات</div></div><div class="stat-mini-box"><div class="stat-mini-value">${atts.filter(a=>a.status==='approved').length}</div><div class="stat-mini-label">تم تصحيحها</div></div></div>`;
+    // إحصائيات عامة
+    const hwPaper=hws.filter(h=>h.paper).length;
+    const hwOnline=hws.length-hwPaper;
+    const exPaper=exs.filter(e=>e.mode==='offline').length;
+    const exOnline=exs.length-exPaper;
+    const totalImages=subs.reduce((sum,s)=>sum+(s.answerImages?.length||0),0)+atts.reduce((sum,a)=>sum+(a.answerImages?.length||0),0);
+    
+    document.getElementById('overallStats').innerHTML=`
+      <div class="stat-mini">
+        <div class="stat-mini-box"><div class="stat-mini-value">${hws.length}</div><div class="stat-mini-label">واجبات</div><div class="text-xs" style="color:var(--text-muted);">${hwPaper} ورقي · ${hwOnline} أونلاين</div></div>
+        <div class="stat-mini-box"><div class="stat-mini-value">${subs.filter(s=>s.status==='graded').length}</div><div class="stat-mini-label">تم تصحيحها</div></div>
+        <div class="stat-mini-box"><div class="stat-mini-value">${exs.length}</div><div class="stat-mini-label">امتحانات</div><div class="text-xs" style="color:var(--text-muted);">${exPaper} ورقي · ${exOnline} أونلاين</div></div>
+        <div class="stat-mini-box"><div class="stat-mini-value">${atts.filter(a=>a.status==='approved').length}</div><div class="stat-mini-label">تم تصحيحها</div></div>
+      </div>
+      ${totalImages>0?`<div class="filter-info">📸 إجمالي الصور المرفوعة من الطلاب: <strong>${totalImages} صورة</strong></div>`:''}
+    `;
     
     if(reportMode==='hw'){
       document.getElementById('hwReportContent').innerHTML=hws.length?hws.map(h=>{
         const hSubs=subs.filter(s=>s.homeworkId===h.id && s.status==='graded');
         const avg=hSubs.length?Math.round(hSubs.reduce((a,x)=>a+(x.score||0),0)/hSubs.length):0;
         const typeBadge = h.paper ? '<span class="badge badge-muted" style="margin-right:6px;">📄 ورقي</span>' : '<span class="badge badge-info" style="margin-right:6px;">💻 أونلاين</span>';
-        return `<div class="sub-row"><div><strong>${h.title}</strong> ${typeBadge}<div class="text-xs text-muted">${DataService.getGroups().find(g=>g.id===h.groupId)?.name||'-'}</div></div><strong style="color:var(--primary)">${avg}% متوسط (${hSubs.length}/${DataService.getStudentsByGroup(h.groupId).length})</strong></div>`;
+        const subsWithImages = subs.filter(s=>s.homeworkId===h.id && s.answerImages && s.answerImages.length > 0).length;
+        return `<div class="sub-row"><div><strong>${h.title}</strong> ${typeBadge}<div class="text-xs text-muted">${DataService.getGroups().find(g=>g.id===h.groupId)?.name||'-'} ${subsWithImages>0?`· 📸 ${subsWithImages} بصور`:''}</div></div><strong style="color:var(--primary)">${avg}% متوسط (${hSubs.length}/${DataService.getStudentsByGroup(h.groupId).length})</strong></div>`;
       }).join(''):'<p class="text-muted">لا واجبات</p>';
     }else if(reportMode==='ex'){
       document.getElementById('exReportContent').innerHTML=exs.length?exs.map(e=>{
         const eAtts=atts.filter(a=>a.examId===e.id && a.status==='approved');
         const avg=eAtts.length?Math.round(eAtts.reduce((a,x)=>a+(x.score||0),0)/eAtts.length):0;
-        const modeBadge = e.mode === 'offline' ? '<span class="badge badge-muted" style="margin-right:6px;">📄 ورقي</span>' : '<span class="badge badge-info" style="margin-right:6px;">💻 أونلاين</span>';
+        const modeBadge = e.mode === 'offline' ? '<span class="badge badge-muted" style="margin-right:6px;">📄 ورقي</span>' : e.mode === 'class' ? '<span class="badge badge-info" style="margin-right:6px;">🏫 حصة</span>' : '<span class="badge badge-info" style="margin-right:6px;">💻 أونلاين</span>';
         return `<div class="sub-row"><div><strong>${e.title}</strong> ${modeBadge}<div class="text-xs text-muted">${DataService.getGroups().find(g=>g.id===e.groupId)?.name||'-'}</div></div><strong style="color:var(--primary)">${avg}% متوسط (${eAtts.length})</strong></div>`;
       }).join(''):'<p class="text-muted">لا امتحانات</p>';
     }else{
@@ -729,7 +1095,8 @@ window.loadGradesReport=function(){
         const sAtts=atts.filter(x=>x.studentId===s.id && x.status==='approved');
         const hwAvg=sSubs.length?Math.round(sSubs.reduce((a,x)=>a+(x.score||0),0)/sSubs.length):0;
         const exAvg=sAtts.length?Math.round(sAtts.reduce((a,x)=>a+(x.score||0),0)/sAtts.length):0;
-        return `<div class="sub-row"><div><strong>${s.name}</strong><div class="text-xs text-muted">${s.code||''}</div></div><div style="text-align:left;"><div class="text-xs">واجبات: <strong>${hwAvg}%</strong></div><div class="text-xs">امتحانات: <strong>${exAvg}%</strong></div></div></div>`;
+        const totalImgs=sSubs.reduce((sum,x)=>sum+(x.answerImages?.length||0),0)+sAtts.reduce((sum,x)=>sum+(x.answerImages?.length||0),0);
+        return `<div class="sub-row"><div><strong>${s.name}</strong><div class="text-xs text-muted">${s.code||''} ${totalImgs>0?`· 📸 ${totalImgs} صورة`:''}</div></div><div style="text-align:left;"><div class="text-xs">واجبات: <strong>${hwAvg}%</strong></div><div class="text-xs">امتحانات: <strong>${exAvg}%</strong></div></div></div>`;
       }).join('')||'<p class="text-muted">لا طلاب</p>';
     }
   }catch(e){console.error(e);}

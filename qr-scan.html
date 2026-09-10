@@ -26,6 +26,15 @@
 .hint-box{background:var(--surface-hover);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:12px;font-size:12px;color:var(--text-secondary);display:flex;gap:8px;align-items:flex-start}
 .hint-box .icon{font-size:16px;flex-shrink:0}
 .parent-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:9999px;background:linear-gradient(135deg,rgba(251,191,36,.15),rgba(245,158,11,.15));border:1px solid rgba(251,191,36,.3);color:var(--text-secondary);font-size:10px;font-weight:700}
+
+/* 🆕 Smart Modal Styles */
+.smart-modal-overlay{display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:2000; align-items:center; justify-content:center; padding:16px; backdrop-filter:blur(8px);}
+.smart-modal-overlay.active{display:flex;}
+.smart-modal-card{background:var(--surface); border:2px solid var(--primary); border-radius:20px; max-width:500px; width:100%; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.5); padding:24px; position:relative;}
+.smart-student-header{background:var(--surface-hover); padding:16px; border-radius:12px; margin-bottom:20px; text-align:center; border:1px solid var(--border);}
+.smart-student-name{font-size:24px; font-weight:900; color:var(--primary); margin-bottom:4px;}
+.smart-action-box{background:var(--success-bg); border:1px solid var(--success); border-radius:12px; padding:14px; margin-bottom:16px;}
+.smart-hw-box{background:var(--warning-bg); border:1px dashed var(--warning); border-radius:12px; padding:14px; margin-bottom:16px;}
 </style>
 </head>
 <body data-theme="dark">
@@ -86,6 +95,17 @@
   <button class="btn btn-primary w-full" onclick="window.goManual()">➡️ فتح الملف / تسجيل الحضور</button>
 </div>
 
+</div>
+
+<!-- 🆕 Smart Scan Modal (النظام الذكي للمساعد/الأدمن) -->
+<div id="smartScanModal" class="smart-modal-overlay">
+  <div class="smart-modal-card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h3 style="margin:0; color:var(--primary); display:flex; align-items:center; gap:8px;">⚡ إجراء سريع (النظام الذكي)</h3>
+      <button class="btn btn-ghost btn-icon" onclick="window.closeSmartModal()">✕</button>
+    </div>
+    <div id="smartModalBody"></div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
@@ -168,7 +188,6 @@ window.tick=function(){
   if(scanning) requestAnimationFrame(window.tick);
 };
 
-// 🆕 مسح باركود من صورة مرفوعة
 window.handleUpload=async function(event){
   try{
     const file=event.target.files[0];
@@ -178,7 +197,6 @@ window.handleUpload=async function(event){
     const st=document.getElementById('scanStatus');
     if(st) st.innerHTML='🔍 جاري تحليل الصورة...';
     
-    // عرض الصورة
     video.style.display='none';
     const scanLine=document.getElementById('scanLine');
     if(scanLine) scanLine.style.display='none';
@@ -231,54 +249,244 @@ window.goManual=function(){
   window.handleScan(v);
 };
 
-// ✅ معالجة الباركود: طالب → بروفايل | حضور → تسجيل
-window.handleScan=function(data){
-  try{
-    data=String(data||'').trim();
-    if(!data){
-      if(typeof ThemeManager?.toast==='function') ThemeManager.toast('باركود فارغ','error');
-      return;
+// ==========================================
+// 🆕 النظام الذكي (Smart Modal Functions للمساعد/الأدمن)
+// ==========================================
+window.openSmartModal = function(student) {
+    const teachers = DataService.getStudentTeachers ? DataService.getStudentTeachers(student.id) : [];
+    if (!teachers.length) {
+        ThemeManager.toast('هذا الطالب غير مسجل في أي مجموعة حالياً', 'error');
+        return;
     }
     
-    // 🆕 باركود حضور
-    if(data.includes('EDUFLOW-ATT:')){
-      const code=data.split('EDUFLOW-ATT:')[1]||'';
-      if(currentUser?.role==='student'){
-        (async()=>{
-          const r=await DataService.checkInByCode(currentUser.id,code);
-          if(typeof ThemeManager?.toast==='function'){
-            ThemeManager.toast(r.success?'✅ تم تسجيل الحضور':r.message, r.success?'success':'error');
-          }
-          if(r.success){
-            setTimeout(()=>{ window.location.href='student-dashboard.html'; },1200);
-          }
-        })();
-      }else{
-        // المساعد/Admin يمسح باركود حضور → يفتح صفحة الحضور للمجموعة
-        if(typeof ThemeManager?.toast==='function'){
-          ThemeManager.toast('📋 ده باركود حضور للطالب — يمسحه من داشبورده','warning');
+    let groupsOptions = teachers.map(t => `<option value="${t.group.id}">${t.group.name} (${t.teacher.name})</option>`).join('');
+    
+    const gids = teachers.map(t => t.group.id);
+    const allHw = DataService.getHomework ? DataService.getHomework() : [];
+    const offlineHw = allHw.filter(h => gids.includes(h.groupId) && h.paper);
+    
+    let hwOptions = '<option value="">-- بدون تسجيل واجب ورقي --</option>' + 
+        offlineHw.map(h => {
+            const g = DataService.getGroups().find(gr => gr.id === h.groupId);
+            return `<option value="${h.id}" data-max="${h.totalPoints || 10}">${h.title} (${g?.name || ''})</option>`;
+        }).join('');
+
+    const body = `
+        <div class="smart-student-header">
+            <div class="smart-student-name">${student.name}</div>
+            <div class="text-sm text-muted">الكود: <strong style="font-family:var(--font-en);">${student.code}</strong> · ${student.grade || ''}</div>
+        </div>
+        
+        <div class="smart-action-box">
+            <label style="display:flex; align-items:center; gap:12px; cursor:pointer;">
+                <input type="checkbox" id="smartAttend" checked style="width:24px; height:24px; accent-color:var(--success); flex-shrink:0;">
+                <div>
+                    <strong style="color:var(--success); font-size:15px;">✓ تسجيل حضور اليوم</strong>
+                    <div class="text-xs text-muted" style="margin-top:2px;">سيتم احتساب الحصة ضمن حصص الشهر تلقائياً</div>
+                </div>
+            </label>
+            <div class="form-group" style="margin-top:12px; margin-bottom:0;">
+                <select id="smartGroup" class="form-select" ${teachers.length === 1 ? 'disabled' : ''}>
+                    ${groupsOptions}
+                </select>
+            </div>
+        </div>
+
+        <div class="smart-hw-box">
+            <label class="text-sm" style="font-weight:800; color:var(--warning); display:block; margin-bottom:8px;">📝 تسجيل درجة واجب ورقي (اختياري)</label>
+            <div class="form-group" style="margin-bottom:8px;">
+                <select id="smartHwSelect" class="form-select" onchange="window.updateSmartHwMax()">
+                    ${hwOptions}
+                </select>
+            </div>
+            <div class="form-group" id="smartHwGradeWrap" style="display:none; margin-bottom:0;">
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <input type="number" id="smartHwGrade" class="form-input" min="0" step="0.5" placeholder="الدرجة">
+                    <span class="text-sm" style="font-weight:800; color:var(--warning);" id="smartHwMaxLabel">/ 10</span>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn btn-primary btn-lg w-full" onclick="window.submitSmartScan('${student.id}')" style="margin-top:8px; font-size:16px; padding:14px;">
+            💾 حفظ الحضور والدرجة
+        </button>
+        <button class="btn btn-ghost w-full" onclick="window.closeSmartModal()" style="margin-top:8px;">إلغاء</button>
+    `;
+    
+    document.getElementById('smartModalBody').innerHTML = body;
+    document.getElementById('smartScanModal').classList.add('active');
+    scanning = false;
+    window.updateSmartHwMax();
+};
+
+window.updateSmartHwMax = function() {
+    const sel = document.getElementById('smartHwSelect');
+    const wrap = document.getElementById('smartHwGradeWrap');
+    const lbl = document.getElementById('smartHwMaxLabel');
+    if (!sel) return;
+    const opt = sel.options[sel.selectedIndex];
+    if (opt && opt.value) {
+        wrap.style.display = 'block';
+        const max = opt.getAttribute('data-max') || 10;
+        lbl.textContent = '/ ' + max;
+        document.getElementById('smartHwGrade').max = max;
+    } else {
+        wrap.style.display = 'none';
+    }
+};
+
+window.closeSmartModal = function() {
+    document.getElementById('smartScanModal').classList.remove('active');
+    scanning = true;
+    requestAnimationFrame(window.tick);
+};
+
+window.submitSmartScan = async function(studentId) {
+    const attend = document.getElementById('smartAttend').checked;
+    const groupId = document.getElementById('smartGroup').value;
+    const hwId = document.getElementById('smartHwSelect').value;
+    const hwGrade = document.getElementById('smartHwGrade').value;
+    
+    let successCount = 0;
+    
+    if (attend && groupId) {
+        try {
+            const group = DataService.getGroups().find(g => g.id === groupId);
+            await DataService.submitAttendance({
+                groupId: groupId,
+                groupName: group?.name || '',
+                submittedBy: currentUser.id,
+                records: [{ studentId: studentId, status: 'present' }]
+            });
+            successCount++;
+        } catch(e) { console.error('Att error', e); }
+    }
+    
+    if (hwId && hwGrade) {
+        try {
+            const score = parseFloat(hwGrade);
+            const hw = DataService.getHomeworkById ? DataService.getHomeworkById(hwId) : null;
+            if (hw) {
+                const d = DataService._getData();
+                d.submissions = d.submissions || [];
+                let sub = d.submissions.find(s => s.homeworkId === hwId && s.studentId === studentId);
+                if (!sub) {
+                    sub = {
+                        id: 'sub_' + Date.now(),
+                        homeworkId: hwId,
+                        studentId: studentId,
+                        score: score,
+                        maxScore: hw.totalPoints || 10,
+                        status: 'graded',
+                        offline: true,
+                        gradedBy: currentUser.id,
+                        submittedAt: new Date().toISOString()
+                    };
+                    d.submissions.push(sub);
+                } else {
+                    sub.score = score;
+                    sub.status = 'graded';
+                    sub.offline = true;
+                    sub.gradedBy = currentUser.id;
+                }
+                DataService._saveData(d);
+                successCount++;
+            }
+        } catch(e) { console.error('HW error', e); }
+    }
+    
+    if (successCount > 0) {
+        ThemeManager.toast('✅ تم الحفظ بنجاح (الحضور + الدرجة)', 'success');
+    } else {
+        ThemeManager.toast('⚠️ لم يتم تحديد أي إجراء', 'warning');
+    }
+    
+    window.closeSmartModal();
+};
+// ==========================================
+
+// ✅ معالجة الباركود الشاملة (مع المنطق الصحيح للتوجيه)
+window.handleScan = function(data) {
+    try {
+        data = String(data || '').trim();
+        if (!data) return;
+
+        // 1. باركود حضور (EDUFLOW-ATT) - يمسحه الطالب لتسجيل الحضور
+        if (data.includes('EDUFLOW-ATT:')) {
+            const code = data.split('EDUFLOW-ATT:')[1] || '';
+            if (currentUser?.role === 'student') {
+                (async () => {
+                    const r = await DataService.checkInByCode(currentUser.id, code);
+                    ThemeManager.toast(r.success ? '✅ تم تسجيل الحضور' : r.message, r.success ? 'success' : 'error');
+                    if (r.success) setTimeout(() => { window.location.href = 'student-dashboard.html'; }, 1200);
+                })();
+            } else {
+                ThemeManager.toast('📋 هذا باركود حضور، يجب أن يمسحه الطالب من هاتفه', 'warning');
+            }
+            return;
         }
-      }
-      return;
+
+        // 2. البحث عن كود (طالب أو ولي أمر)
+        const m = data.match(/code=([A-Za-z0-9-]+)/i) || data.match(/(EDU-[A-Z0-9-]+)/i);
+        const code = m ? m[1] : data;
+
+        const allUsers = DataService.getUsers ? DataService.getUsers() : [];
+        const student = allUsers.find(u => u.role === 'student' && (u.code === code || u.id === code));
+        const parent = allUsers.find(u => u.role === 'parent' && (u.phone === code || u.id === code || u.parentPhone === code));
+
+        if (!student && !parent) {
+            ThemeManager.toast('❌ لم يتم العثور على طالب أو ولي أمر بهذا الكود', 'error');
+            return;
+        }
+
+        // ==========================================
+        // 🎯 التوجيه بناءً على صلاحية المستخدم الحالي:
+        // ==========================================
+
+        // A. الطالب يمسح الباركود
+        if (currentUser?.role === 'student') {
+            if (student && currentUser.id === student.id) {
+                // ✅ الطالب يمسح باركوده الخاص → يوديه للدشابورد
+                window.location.href = 'student-dashboard.html';
+            } else {
+                ThemeManager.toast('⚠️ لا يمكنك مسح باركود طالب آخر', 'error');
+            }
+            return;
+        }
+
+        // B. ولي الأمر يمسح الباركود
+        if (currentUser?.role === 'parent') {
+            if (parent && currentUser.id === parent.id) {
+                // ✅ ولي الأمر يمسح باركوده الخاص
+                window.location.href = 'parent-dashboard.html';
+            } else if (student) {
+                // ✅ ولي الأمر يمسح باركود ابنه → يتحقق من الربط ويوديه لدشابورد ولي الأمر
+                const isMyChild = currentUser.studentIds?.includes(student.id) || 
+                                  student.parentPhone === currentUser.phone ||
+                                  student.parentPhone === currentUser.parentPhone;
+                if (isMyChild) {
+                    window.location.href = `parent-dashboard.html?studentId=${student.id}`;
+                } else {
+                    ThemeManager.toast('⚠️ هذا الطالب غير مرتبط بحسابك', 'error');
+                }
+            }
+            return;
+        }
+
+        // C. مساعد / أدمن / مدرس → فتح النافذة الذكية
+        if (currentUser?.role === 'assistant' || currentUser?.role === 'super_admin' || currentUser?.role === 'teacher') {
+            if (student) {
+                window.openSmartModal(student);
+            } else if (parent) {
+                ThemeManager.toast('ℹ️ هذا باركود ولي أمر، ابحث عن الطالب المرتبط به', 'info');
+            }
+            return;
+        }
+
+    } catch (e) {
+        console.error(e);
+        ThemeManager.toast('خطأ في معالجة الباركود', 'error');
     }
-    
-    // 🆕 باركود طالب
-    const m=data.match(/code=([A-Za-z0-9-]+)/i)||data.match(/(EDU-[A-Z0-9-]+)/i);
-    const code=m?m[1]:data;
-    
-    // لو المساعد/Admin → يفتح بروفايل الطالب
-    if(currentUser?.role==='assistant'||currentUser?.role==='super_admin'||currentUser?.role==='teacher'){
-      scanning=false;
-      window.location.href='assistant-dashboard.html?openStudent='+encodeURIComponent(code);
-    }else{
-      // الطالب يمسح باركود طالب تاني؟ (مش شائع)
-      scanning=false;
-      window.location.href='student-qr.html?code='+encodeURIComponent(code);
-    }
-  }catch(e){
-    console.error(e);
-    if(typeof ThemeManager?.toast==='function') ThemeManager.toast('خطأ في معالجة الباركود','error');
-  }
 };
 
 window.addEventListener('beforeunload',function(){
@@ -287,7 +495,6 @@ window.addEventListener('beforeunload',function(){
   }catch(e){}
 });
 
-// ✅ دعم اختصار Enter في حقل الإدخال اليدوي
 document.addEventListener('keydown',function(e){
   if(e.key==='Enter' && document.activeElement?.id==='manualCode'){
     window.goManual();

@@ -1,345 +1,734 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>طباعة باركودات - EduFlow by Habbash Group</title>
-  <link rel="stylesheet" href="css/eduflow-theme.css">
-  <style>
-    .print-controls{max-width:900px;margin:20px auto;padding:16px;position:relative;z-index:1}
-    .page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:10px;flex-wrap:wrap}
-    .back-btn{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 14px;color:var(--text);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:13px;transition:all .2s}
-    .back-btn:hover{border-color:var(--primary);color:var(--primary)}
-    .brand-mini{display:flex;align-items:center;gap:8px}
-    .brand-mini-logo{width:40px;height:40px;border-radius:10px;background:var(--grad);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;box-shadow:var(--glow)}
-    .brand-mini-text{font-size:15px;font-weight:800;color:var(--primary)}
-    .brand-mini-sub{font-size:10px;color:var(--text-muted);display:block;margin-top:2px}
-    .qr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:900px;margin:0 auto;padding:0 16px 30px}
-    .qr-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 6px;text-align:center;break-inside:avoid;transition:all .2s}
-    .qr-card:hover{border-color:var(--primary-border);transform:translateY(-2px)}
-    .qr-card img{width:100%;max-width:130px;border-radius:6px;background:#fff;padding:4px}
-    .qr-name{font-weight:800;font-size:11px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .qr-codeline{font-family:var(--font-en);font-weight:800;font-size:12px;color:var(--primary);margin-top:4px;letter-spacing:1px}
-    .qr-brand{font-size:9px;color:var(--text-muted);margin-top:2px;display:flex;align-items:center;justify-content:center;gap:4px}
-    .qr-brand .dot{width:4px;height:4px;border-radius:50%;background:var(--text-muted)}
-    .card-actions{display:flex;gap:4px;justify-content:center;margin-top:6px}
-    .card-actions button{flex:1;max-width:90px}
-    
-    /* 🆕 Parent Badge */
-    .parent-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:9999px;background:linear-gradient(135deg,rgba(251,191,36,.15),rgba(245,158,11,.15));border:1px solid rgba(251,191,36,.3);color:var(--text-secondary);font-size:10px;font-weight:700;margin-top:6px}
-    
-    /* 🆕 Print Size Options */
-    .size-options{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
-    .size-opt{padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);cursor:pointer;font-size:12px;font-weight:700;transition:all .2s}
-    .size-opt.active{background:var(--primary);color:#fff;border-color:var(--primary)}
-    
-    @media print{
-      .print-controls,.bg-grid,.orb,.card-actions,.page-header{display:none!important}
-      body{background:#fff!important}
-      .qr-grid{grid-template-columns:repeat(4,1fr);gap:3mm;padding:0;max-width:100%}
-      .qr-card{border:1px solid #999;border-radius:6px;background:#fff;padding:2mm 1mm;height:6.2cm;display:flex;flex-direction:column;justify-content:center;align-items:center;page-break-inside:avoid}
-      .qr-card img{max-width:3.2cm}
-      .qr-name{font-size:9pt;color:#000;font-weight:800}
-      .qr-codeline{font-size:10pt;color:#000;font-weight:800}
-      .qr-brand{font-size:7pt;color:#666;display:flex;gap:3px;align-items:center}
-      .qr-brand .dot{width:3px;height:3px;background:#999;border-radius:50%;display:inline-block}
-    }
-    @media(max-width:640px){
-      .qr-grid{grid-template-columns:repeat(2,1fr)}
-      .page-header{flex-direction:column;align-items:flex-start}
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>طباعة باركودات الطلاب - EduFlow by Habbash Group</title>
+<link rel="stylesheet" href="css/eduflow-theme.css">
+<style>
+body{padding:20px;}
+.toolbar{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:var(--shadow-sm);}
+.toolbar-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;}
+.toolbar-title{display:flex;align-items:center;gap:10px;}
+.toolbar-title-icon{font-size:28px;}
+.toolbar-title h2{margin:0;font-size:18px;}
+.toolbar-title p{margin:2px 0 0 0;font-size:12px;color:var(--text-muted);}
+.toolbar-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.filters-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;}
+@media(max-width:640px){.filters-row{grid-template-columns:1fr;}}
+.filter-group{display:flex;flex-direction:column;gap:4px;}
+.filter-group label{font-size:11px;font-weight:700;color:var(--text-muted);}
+.size-options{display:flex;gap:6px;flex-wrap:wrap;padding:10px;background:var(--surface-hover);border-radius:8px;margin-bottom:12px;}
+.size-opt{padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;transition:all .2s;display:flex;align-items:center;gap:6px;}
+.size-opt:hover{border-color:var(--primary-border);}
+.size-opt.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.size-opt .size-icon{font-size:16px;}
+.stats-bar{display:flex;gap:12px;flex-wrap:wrap;padding:10px;background:var(--info-bg);border:1px solid var(--info-border);border-radius:8px;margin-bottom:12px;font-size:12px;color:var(--info);}
+.stats-bar strong{font-family:var(--font-en);font-size:14px;}
+.action-buttons{display:flex;gap:8px;flex-wrap:wrap;}
+.btn-xl{padding:12px 20px;font-size:14px;font-weight:800;display:inline-flex;align-items:center;gap:8px;}
+.btn-export{background:linear-gradient(135deg,#10b981,#059669);color:#fff;}
+.btn-export:hover{background:linear-gradient(135deg,#059669,#047857);}
+.btn-zip{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;}
+.btn-zip:hover{background:linear-gradient(135deg,#d97706,#b45309);}
+.btn-preview{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;}
+.btn-preview:hover{background:linear-gradient(135deg,#8b5cf6,#7c3aed);}
+.qr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.qr-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;position:relative;transition:all .2s;break-inside:avoid;page-break-inside:avoid;}
+.qr-card:hover{border-color:var(--primary-border);box-shadow:var(--shadow-sm);}
+.qr-card.teacher-card{border:2px solid var(--primary);background:linear-gradient(135deg,var(--surface),var(--primary-bg));}
+.qr-card.group-card{border:2px solid #25d366;background:linear-gradient(135deg,var(--surface),rgba(37,211,102,.08));}
+.qr-card-type{position:absolute;top:6px;right:6px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:9999px;background:var(--primary);color:#fff;}
+.qr-card-type.teacher{background:var(--primary);}
+.qr-card-type.group{background:#25d366;}
+.qr-card-type.student{background:var(--info);}
+.qr-name{font-size:14px;font-weight:800;margin-bottom:6px;color:var(--text);}
+.qr-card img{width:100%;max-width:140px;aspect-ratio:1;border-radius:8px;margin:6px auto;display:block;background:#fff;padding:4px;}
+.qr-codeline{font-family:var(--font-en);font-size:14px;font-weight:800;letter-spacing:2px;color:var(--primary);margin:6px 0;}
+.qr-brand{font-size:10px;color:var(--text-muted);margin-top:4px;display:flex;align-items:center;justify-content:center;gap:4px;}
+.qr-brand .dot{width:4px;height:4px;border-radius:50%;background:var(--primary);}
+.qr-meta{font-size:10px;color:var(--text-muted);margin-top:4px;line-height:1.4;}
+.card-actions{display:flex;gap:4px;justify-content:center;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);}
+.card-actions .btn{font-size:10px;padding:4px 8px;}
+.selection-check{position:absolute;top:8px;left:8px;width:20px;height:20px;cursor:pointer;}
+.selection-check input{width:100%;height:100%;cursor:pointer;}
+/* Preview Modal */
+.preview-container{max-height:70vh;overflow-y:auto;padding:16px;background:var(--surface-hover);border-radius:8px;}
+.preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+@media(max-width:768px){.preview-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:480px){.preview-grid{grid-template-columns:1fr;}}
+/* Print Styles */
+@media print{
+  body{padding:0;background:#fff;}
+  .toolbar,.no-print,.card-actions,.selection-check{display:none!important;}
+  .qr-grid{grid-template-columns:repeat(4,1fr);gap:8px;}
+  .qr-card{border:1px solid #ccc;page-break-inside:avoid;padding:8px;}
+  .qr-card img{max-width:3.2cm;}
+  .qr-name{font-size:9pt;}
+  .qr-codeline{font-size:10pt;}
+  .qr-brand,.qr-meta{font-size:7pt;}
+  @page{margin:1cm;}
+}
+/* Print size variants */
+@media print{
+  body.print-small .qr-grid{grid-template-columns:repeat(6,1fr);}
+  body.print-small .qr-card img{max-width:2.2cm;}
+  body.print-small .qr-card{padding:4px;}
+  body.print-small .qr-name{font-size:7pt;}
+  body.print-small .qr-codeline{font-size:8pt;}
+  body.print-large .qr-grid{grid-template-columns:repeat(3,1fr);}
+  body.print-large .qr-card img{max-width:4.5cm;}
+  body.print-large .qr-card{padding:12px;}
+  body.print-large .qr-name{font-size:11pt;}
+  body.print-large .qr-codeline{font-size:12pt;}
+  body.print-pocket .qr-grid{grid-template-columns:repeat(2,1fr);}
+  body.print-pocket .qr-card{padding:14px;min-height:12cm;}
+  body.print-pocket .qr-card img{max-width:6cm;}
+  body.print-pocket .qr-name{font-size:14pt;}
+  body.print-pocket .qr-codeline{font-size:16pt;}
+  body.print-a3 .qr-grid{grid-template-columns:repeat(6,1fr);}
+  body.print-a3 .qr-card img{max-width:4cm;}
+  @page size-a3{size:A3;}
+  @page size-a4{size:A4;}
+  @page size-letter{size:letter;}
+}
+/* Empty State */
+.empty-state{text-align:center;padding:60px 20px;grid-column:1/-1;}
+.empty-state-icon{font-size:64px;margin-bottom:12px;opacity:.5;}
+.empty-state-title{font-size:18px;font-weight:800;margin-bottom:6px;}
+.empty-state-text{font-size:13px;color:var(--text-muted);}
+</style>
 </head>
 <body data-theme="dark">
-  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div>
-  
-  <div class="print-controls">
-    <div class="page-header">
-      <a href="javascript:history.back()" class="back-btn">
-        <span>←</span>
-        <span>رجوع</span>
-      </a>
-      <div class="brand-mini">
-        <div class="brand-mini-logo">🎓</div>
-        <div>
-          <div class="brand-mini-text">EduFlow</div>
-          <span class="brand-mini-sub">by Habbash Group</span>
-        </div>
+<div class="bg-grid"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<div class="toolbar no-print">
+  <div class="toolbar-header">
+    <div class="toolbar-title">
+      <div class="toolbar-title-icon">🖨️</div>
+      <div>
+        <h2>طباعة باركودات الطلاب</h2>
+        <p>كل باركود بيفتح بطاقة الطالب على الموقع — اطبع أو صدّر</p>
       </div>
     </div>
-    
-    <div class="card">
-      <h2 style="margin-bottom:4px;">🖨️ طباعة باركودات الطلاب</h2>
-      <p class="text-sm text-muted" style="margin-bottom:14px;">
-        كل باركود بيفتح بطاقة الطالب على الموقع المنشور — اطبع صفحة كاملة أو كارت واحد
-        <span class="parent-badge" style="margin-right:6px;">🏢 Habbash Group</span>
-      </p>
-      
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group">
-          <label>المجموعة</label>
-          <select id="prGroup" class="form-select" onchange="window.renderGrid()"></select>
-        </div>
-        <div class="form-group">
-          <label>بحث (اسم/كود)</label>
-          <input type="text" id="prSearch" class="form-input" placeholder="ابحث عن طالب..." onkeyup="window.renderGrid()">
-        </div>
-      </div>
-      
-      <div class="size-options">
-        <span style="font-size:12px;color:var(--text-muted);align-self:center;font-weight:700;">حجم الطباعة:</span>
-        <button class="size-opt active" onclick="window.setPrintSize('a4',this)" data-size="a4">📄 A4 (4×4)</button>
-        <button class="size-opt" onclick="window.setPrintSize('small',this)" data-size="small">🏷️ بطاقات صغيرة (6×4)</button>
-        <button class="size-opt" onclick="window.setPrintSize('large',this)" data-size="large">📋 بطاقات كبيرة (3×3)</button>
-      </div>
-      
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
-        <button class="btn btn-primary" onclick="window.print()">🖨️ طباعة الصفحة</button>
-        <button class="btn btn-secondary" onclick="window.downloadAllQR()">⬇️ تحميل الكل (ZIP)</button>
-        <span class="text-sm text-muted" id="countLabel" style="align-self:center;"></span>
-      </div>
+    <div class="toolbar-actions">
+      <button class="btn btn-ghost btn-sm" onclick="window.goBack()">← رجوع</button>
+      <button class="btn btn-secondary btn-sm" id="themeToggle">🌓</button>
     </div>
   </div>
   
-  <div class="qr-grid" id="qrGrid"></div>
+  <div class="filters-row">
+    <div class="filter-group">
+      <label>👥 المجموعة</label>
+      <select id="prGroup" class="form-select" onchange="window.renderGrid()">
+        <option value="all">🌍 كل الطلاب</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>🔍 بحث (اسم / كود)</label>
+      <input type="text" id="prSearch" class="form-input" placeholder="ابحث عن طالب..." onkeyup="window.renderGrid()">
+    </div>
+    <div class="filter-group">
+      <label>🎯 نوع البطاقات</label>
+      <select id="prType" class="form-select" onchange="window.renderGrid()">
+        <option value="students">🎓 طلاب فقط</option>
+        <option value="all">🎓 طلاب + 👨‍🏫 مدرس + 💬 واتساب</option>
+        <option value="teachers">👨‍🏫 مدرس فقط</option>
+        <option value="groups">💬 واتساب جروبات</option>
+      </select>
+    </div>
+  </div>
+  
+  <div class="size-options">
+    <span style="align-self:center;font-weight:700;font-size:12px;color:var(--text-muted);margin-left:4px;">📏 حجم الطباعة:</span>
+    <button class="size-opt active" data-size="a4" onclick="window.setPrintSize('a4',this)">
+      <span class="size-icon">📄</span> A4 قياسي (4×4)
+    </button>
+    <button class="size-opt" data-size="small" onclick="window.setPrintSize('small',this)">
+      <span class="size-icon">🏷️</span> صغيرة (6×4)
+    </button>
+    <button class="size-opt" data-size="large" onclick="window.setPrintSize('large',this)">
+      <span class="size-icon">📋</span> كبيرة (3×3)
+    </button>
+    <button class="size-opt" data-size="pocket" onclick="window.setPrintSize('pocket',this)">
+      <span class="size-icon">💳</span> جيب (2×2)
+    </button>
+    <button class="size-opt" data-size="a3" onclick="window.setPrintSize('a3',this)">
+      <span class="size-icon">📰</span> A3 (6×6)
+    </button>
+  </div>
+  
+  <div class="stats-bar" id="statsBar">
+    <span>📊 <strong id="totalCount">0</strong> بطاقة</span>
+    <span>🎓 <strong id="studentsCount">0</strong> طالب</span>
+    <span>👨‍🏫 <strong id="teachersCount">0</strong> مدرس</span>
+    <span>💬 <strong id="groupsCount">0</strong> جروب</span>
+    <span style="margin-inline-start:auto;">✅ <strong id="selectedCount">0</strong> مختار</span>
+  </div>
+  
+  <div class="action-buttons">
+    <button class="btn btn-primary btn-xl" onclick="window.printSelected()">
+      🖨️ طباعة المختارة
+    </button>
+    <button class="btn btn-primary btn-xl" onclick="window.printAll()">
+      🖨️ طباعة الكل
+    </button>
+    <button class="btn btn-preview btn-xl" onclick="window.showPreview()">
+      👁️ معاينة قبل الطباعة
+    </button>
+    <button class="btn btn-export btn-xl" onclick="window.exportCSV()">
+      📊 تصدير CSV
+    </button>
+    <button class="btn btn-zip btn-xl" onclick="window.downloadAllAsZip()">
+      📦 تحميل ZIP
+    </button>
+    <button class="btn btn-secondary btn-xl" onclick="window.selectAll()">
+      ✅ تحديد الكل
+    </button>
+    <button class="btn btn-ghost btn-xl" onclick="window.deselectAll()">
+      ❌ إلغاء التحديد
+    </button>
+  </div>
+</div>
 
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-  <script src="js/config.js"></script>
-  <script src="js/firebase-service.js"></script>
-  <script src="js/data-service.js"></script>
-  <script src="js/operations-service.js"></script>
-  <script src="js/ui-helpers.js"></script>
-  <script src="js/drive-service.js"></script>
-  <script src="js/theme-manager.js"></script>
-  <script src="js/auth-service.js"></script>
+<div class="qr-grid" id="qrGrid"></div>
 
-  <script>
-    // ✅ الرابط المنشور ثابت — الباركود مش هيشاور على IP محلي أبداً
-    const SITE_BASE = 'https://eduflow-nine-dusky.vercel.app/';
-    const qrData = code => SITE_BASE + 'student-qr.html?code=' + encodeURIComponent(code);
-    const qrImg = (code,size) => 'https://api.qrserver.com/v1/create-qr-code/?size=' + size + 'x' + size + '&data=' + encodeURIComponent(qrData(code));
+<!-- Preview Modal -->
+<div id="previewModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;padding:20px;overflow-y:auto;">
+  <div style="max-width:1200px;margin:0 auto;background:var(--surface);border-radius:16px;padding:20px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="margin:0;">👁️ معاينة الطباعة</h3>
+      <button class="btn btn-ghost btn-icon" onclick="window.closePreview()">✕</button>
+    </div>
+    <div class="preview-container" id="previewContainer"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="window.closePreview()">إلغاء</button>
+      <button class="btn btn-primary" onclick="window.printFromPreview()">🖨️ طباعة الآن</button>
+    </div>
+  </div>
+</div>
 
-    let currentUser = null;
-    let currentPrintSize = 'a4';
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/firebase-service.js"></script>
+<script src="js/data-service.js"></script>
+<script src="js/operations-service.js"></script>
+<script src="js/ui-helpers.js"></script>
+<script src="js/drive-service.js"></script>
+<script src="js/theme-manager.js"></script>
+<script src="js/auth-service.js"></script>
 
-    (async function boot(){
-      try{
-        if(typeof DataService?.init === 'function') await DataService.init();
-        currentUser = AuthService?.getCurrentUser ? AuthService.getCurrentUser() : null;
-        if(!currentUser){ window.location.href='login.html'; return; }
-        window.buildGroupSelect();
-        const s = new URLSearchParams(location.search).get('search');
-        if(s){ const el = document.getElementById('prSearch'); if(el) el.value = s; }
-        window.renderGrid();
-      }catch(err){
-        console.error('Boot error', err);
-        const grid = document.getElementById('qrGrid');
-        if(grid) grid.innerHTML = '<div class="card" style="grid-column:1/-1;">خطأ: ' + err.message + '</div>';
-      }
-    })();
+<script>
+const SITE_BASE = 'https://eduflow-nine-dusky.vercel.app/';
+const qrData = (code, type='student') => {
+  if(type === 'teacher') return SITE_BASE + 'teacher-dashboard.html';
+  if(type === 'group') return SITE_BASE; // أو رابط واتساب
+  return SITE_BASE + 'student-qr.html?code=' + encodeURIComponent(code);
+};
+const qrImg = (code, size, type='student') => 
+  'https://api.qrserver.com/v1/create-qr-code/?size=' + size + 'x' + size + 
+  '&data=' + encodeURIComponent(qrData(code, type)) +
+  '&bgcolor=ffffff&color=6366f1&margin=8';
 
-    window.buildGroupSelect = function(){
-      try{
-        const sel = document.getElementById('prGroup');
-        if(!sel) return;
-        let groups = [];
-        if(currentUser && typeof Ops?.groupsInScope === 'function') groups = Ops.groupsInScope(currentUser.id) || [];
-        if(!groups.length) groups = typeof DataService?.getGroups === 'function' ? DataService.getGroups() : [];
-        sel.innerHTML = '<option value="all">🌍 كل الطلاب</option>' + groups.map(g => '<option value="' + g.id + '">' + g.name + '</option>').join('');
-      }catch(e){ console.error('buildGroupSelect error', e); }
-    };
+let currentUser = null;
+let currentPrintSize = 'a4';
+let selectedCards = new Set();
+let allCards = [];
 
-    // 🆕 تغيير حجم الطباعة
-    window.setPrintSize = function(size, btn){
-      currentPrintSize = size;
-      document.querySelectorAll('.size-opt').forEach(b => b.classList.remove('active'));
-      btn?.classList.add('active');
-      
-      const grid = document.getElementById('qrGrid');
-      if(!grid) return;
-      
-      // تغيير عدد الأعمدة بناءً على الحجم
-      if(size === 'small'){
-        grid.style.gridTemplateColumns = 'repeat(6, 1fr)';
-      } else if(size === 'large'){
-        grid.style.gridTemplateColumns = 'repeat(3, 1fr)';
-      } else {
-        grid.style.gridTemplateColumns = 'repeat(4, 1fr)';
-      }
-      
-      // تحديث الطباعة
-      const styleEl = document.getElementById('print-size-style');
-      if(styleEl) styleEl.remove();
-      
-      const style = document.createElement('style');
-      style.id = 'print-size-style';
-      if(size === 'small'){
-        style.textContent = '@media print{.qr-grid{grid-template-columns:repeat(6,1fr)}.qr-card{height:4.5cm}.qr-card img{max-width:2.2cm}}';
-      } else if(size === 'large'){
-        style.textContent = '@media print{.qr-grid{grid-template-columns:repeat(3,1fr)}.qr-card{height:8cm}.qr-card img{max-width:4.5cm}.qr-name{font-size:11pt}.qr-codeline{font-size:12pt}}';
-      } else {
-        style.textContent = '@media print{.qr-grid{grid-template-columns:repeat(4,1fr)}.qr-card{height:6.2cm}.qr-card img{max-width:3.2cm}.qr-name{font-size:9pt}.qr-codeline{font-size:10pt}}';
-      }
-      document.head.appendChild(style);
-      
-      if(typeof ThemeManager?.toast === 'function'){
-        const labels = {a4:'📄 A4 قياسي', small:'🏷️ بطاقات صغيرة', large:'📋 بطاقات كبيرة'};
-        ThemeManager.toast(labels[size], 'info');
-      }
-    };
-
-    window.renderGrid = function(){
-      try{
-        const sel = document.getElementById('prGroup');
-        const q = (document.getElementById('prSearch')?.value || '').toLowerCase();
-        const gid = sel ? sel.value : 'all';
-        let students = gid === 'all'
-          ? (DataService?.getStudents ? DataService.getStudents() : [])
-          : (DataService?.getStudentsByGroup ? DataService.getStudentsByGroup(gid) : []);
-        
-        // فلترة حسب Scope
-        if(currentUser && typeof Ops?.studentsInScope === 'function'){
-          const scopedIds = Ops.studentsInScope(currentUser.id).map(s => s.id);
-          students = students.filter(s => scopedIds.includes(s.id));
-        }
-        
-        if(q) students = students.filter(s => (s.name||'').toLowerCase().includes(q) || (s.code||'').toLowerCase().includes(q));
-        students = students.filter(s => s.code);
-        
-        const label = document.getElementById('countLabel');
-        if(label) label.textContent = students.length + ' طالب';
-        
-        const grid = document.getElementById('qrGrid');
-        if(!grid) return;
-        if(!students.length){ grid.innerHTML = '<div class="card" style="grid-column:1/-1;text-align:center;padding:30px;">لا طلاب مطابقين</div>'; return; }
-        
-        grid.innerHTML = students.map(s => {
-          const safeName = (s.name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
-          return '<div class="qr-card">' +
-            '<div class="qr-name">' + safeName + '</div>' +
-            '<img src="' + qrImg(s.code, 140) + '" alt="' + s.code + '" loading="lazy">' +
-            '<div class="qr-codeline">' + s.code + '</div>' +
-            '<div class="qr-brand">EduFlow <span class="dot"></span> Habbash Group</div>' +
-            '<div class="card-actions">' +
-              '<button class="btn btn-secondary btn-sm" title="طباعة ده بس" onclick="window.printSingle(\'' + s.code + '\',\'' + (s.name||'').replace(/'/g,'\\\'') + '\')">🖨️ طباعة</button>' +
-              '<button class="btn btn-ghost btn-sm" title="تحميل PNG" onclick="window.downloadQR(\'' + s.code + '\',\'' + safeName + '\')">⬇️</button>' +
-            '</div></div>';
-        }).join('');
-      }catch(e){
-        console.error('renderGrid error', e);
-        const grid = document.getElementById('qrGrid');
-        if(grid) grid.innerHTML = '<div class="card" style="grid-column:1/-1;">خطأ في التحميل</div>';
-      }
-    };
-
-    // 🖨️ طباعة كارت واحد — بناء DOM مباشر
-    window.printSingle = function(code, name){
-      try{
-        const w = window.open('', '_blank', 'width=480,height=700');
-        if(!w){ if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('اسمح بالنوافذ المنبثقة','warning'); return; }
-        const d = w.document;
-        d.documentElement.setAttribute('dir','rtl');
-        d.title = code;
-        const st = d.createElement('style');
-        st.textContent = `
-          body{font-family:Cairo,Arial,sans-serif;text-align:center;padding:24px;color:#000;background:#fff}
-          .logo{font-size:14px;color:#666;margin-bottom:16px}
-          img{width:260px;height:260px;margin:12px auto;display:block}
-          .n{font-weight:800;font-size:22px;margin-top:12px}
-          .c{font-family:monospace;font-size:24px;letter-spacing:3px;margin-top:8px;color:#6366f1;font-weight:800}
-          .b{font-size:11px;color:#555;margin-top:8px;padding-top:10px;border-top:1px solid #ddd}
-          .sub{font-size:10px;color:#999;margin-top:4px}
-        `;
-        d.head.appendChild(st);
-        
-        const logo = d.createElement('div'); 
-        logo.className = 'logo'; 
-        logo.innerHTML = '🎓 <strong>EduFlow</strong> by <strong>Habbash Group</strong>';
-        
-        const n = d.createElement('div'); 
-        n.className = 'n'; 
-        n.textContent = name || 'طالب';
-        
-        const img = d.createElement('img'); 
-        img.src = qrImg(code, 300);
-        
-        const c = d.createElement('div'); 
-        c.className = 'c'; 
-        c.textContent = code;
-        
-        const b = d.createElement('div'); 
-        b.className = 'b'; 
-        b.innerHTML = 'بطاقة طالب — امسح الباركود للدخول السريع';
-        
-        const sub = d.createElement('div');
-        sub.className = 'sub';
-        sub.textContent = '© Habbash Group';
-        
-        d.body.appendChild(logo);
-        d.body.appendChild(n);
-        d.body.appendChild(img);
-        d.body.appendChild(c);
-        d.body.appendChild(b);
-        d.body.appendChild(sub);
-        
-        img.onload = function(){ setTimeout(function(){ w.focus(); w.print(); }, 250); };
-        setTimeout(function(){ w.focus(); w.print(); }, 1500);
-      }catch(e){ console.error('printSingle error', e); }
-    };
-
-    // ⬇️ تحميل PNG
-    window.downloadQR = async function(code, name){
-      try{
-        const r = await fetch(qrImg(code, 300));
-        const b = await r.blob();
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(b);
-        a.download = 'QR_' + code + '_' + (name||'').replace(/\s+/g,'_') + '.png';
-        document.body.appendChild(a); 
-        a.click(); 
-        a.remove();
-        setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
-        if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('✅ تم تحميل الباركود','success');
-      }catch(e){
-        window.open(qrImg(code, 300), '_blank');
-      }
-    };
+(async function boot(){
+  try{
+    if(typeof DataService?.init === 'function') await DataService.init();
+    currentUser = AuthService?.getCurrentUser ? AuthService.getCurrentUser() : null;
+    if(!currentUser){ window.location.href='login.html'; return; }
     
-    // 🆕 تحميل كل الباركودات (ZIP) - تجريبي
-    window.downloadAllQR = async function(){
+    window.buildGroupSelect();
+    
+    // استعلام البحث من URL
+    const s = new URLSearchParams(location.search).get('search');
+    if(s){ const el = document.getElementById('prSearch'); if(el) el.value = s; }
+    
+    window.renderGrid();
+  }catch(err){
+    console.error('Boot error', err);
+    const grid = document.getElementById('qrGrid');
+    if(grid) grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-title">خطأ في التحميل</div><div class="empty-state-text">'+err.message+'</div></div>';
+  }
+})();
+
+window.goBack = function(){
+  if(document.referrer && document.referrer.includes(location.origin)){
+    history.back();
+  } else {
+    window.location.href = currentUser?.role === 'teacher' ? 'teacher-dashboard.html' : 'assistant-dashboard.html';
+  }
+};
+
+window.buildGroupSelect = function(){
+  try{
+    const sel = document.getElementById('prGroup');
+    if(!sel) return;
+    let groups = [];
+    if(currentUser && typeof Ops?.groupsInScope === 'function') groups = Ops.groupsInScope(currentUser.id) || [];
+    if(!groups.length) groups = typeof DataService?.getGroups === 'function' ? DataService.getGroups() : [];
+    sel.innerHTML = '<option value="all">🌍 كل الطلاب</option>' + 
+      groups.map(g => '<option value="' + g.id + '">' + g.name + '</option>').join('');
+  }catch(e){ console.error('buildGroupSelect error', e); }
+};
+
+window.setPrintSize = function(size, btn){
+  currentPrintSize = size;
+  document.querySelectorAll('.size-opt').forEach(b => b.classList.remove('active'));
+  btn?.classList.add('active');
+  
+  // تنظيف الكلاسات القديمة
+  document.body.classList.remove('print-small','print-large','print-pocket','print-a3');
+  if(size !== 'a4') document.body.classList.add('print-' + size);
+  
+  if(typeof ThemeManager?.toast === 'function'){
+    const labels = {
+      a4:'📄 A4 قياسي (4×4)',
+      small:'🏷️ صغيرة (6×4)',
+      large:'📋 كبيرة (3×3)',
+      pocket:'💳 جيب (2×2)',
+      a3:'📰 A3 كبيرة (6×6)'
+    };
+    ThemeManager.toast(labels[size], 'info');
+  }
+};
+
+window.renderGrid = function(){
+  try{
+    const sel = document.getElementById('prGroup');
+    const q = (document.getElementById('prSearch')?.value || '').toLowerCase();
+    const gid = sel ? sel.value : 'all';
+    const type = document.getElementById('prType')?.value || 'students';
+    
+    let students = gid === 'all'
+      ? (DataService?.getStudents ? DataService.getStudents() : [])
+      : (DataService?.getStudentsByGroup ? DataService.getStudentsByGroup(gid) : []);
+    
+    // فلترة حسب Scope
+    if(currentUser && typeof Ops?.studentsInScope === 'function'){
+      const scopedIds = Ops.studentsInScope(currentUser.id).map(s => s.id);
+      students = students.filter(s => scopedIds.includes(s.id));
+    }
+    
+    if(q) students = students.filter(s => 
+      (s.name||'').toLowerCase().includes(q) || 
+      (s.code||'').toLowerCase().includes(q)
+    );
+    students = students.filter(s => s.code);
+    
+    allCards = [];
+    
+    // إضافة الطلاب
+    if(type === 'students' || type === 'all'){
+      students.forEach(s => {
+        allCards.push({
+          type: 'student',
+          id: s.id,
+          code: s.code,
+          name: s.name,
+          meta: (s.grade || '') + (s.phone ? ' · ' + s.phone : '')
+        });
+      });
+    }
+    
+    // إضافة المدرس
+    if(type === 'teachers' || type === 'all'){
+      if(currentUser && currentUser.role === 'teacher'){
+        allCards.push({
+          type: 'teacher',
+          id: currentUser.id,
+          code: currentUser.code || currentUser.id,
+          name: currentUser.name,
+          meta: 'مدرس · ' + (currentUser.subject || '')
+        });
+      }
+    }
+    
+    // إضافة جروبات الواتساب
+    if(type === 'groups' || type === 'all'){
+      let groups = gid === 'all'
+        ? (DataService?.getGroups ? DataService.getGroups() : [])
+        : (DataService?.getGroups ? DataService.getGroups().filter(g => g.id === gid) : []);
+      
+      if(currentUser && typeof Ops?.groupsInScope === 'function'){
+        const scopedGroupIds = Ops.groupsInScope(currentUser.id).map(g => g.id);
+        groups = groups.filter(g => scopedGroupIds.includes(g.id));
+      }
+      
+      groups.filter(g => g.whatsappLink).forEach(g => {
+        allCards.push({
+          type: 'group',
+          id: g.id,
+          code: g.id,
+          name: g.name,
+          meta: '💬 واتساب جروب',
+          whatsappLink: g.whatsappLink
+        });
+      });
+    }
+    
+    // تحديث الإحصائيات
+    const studentsCount = allCards.filter(c => c.type === 'student').length;
+    const teachersCount = allCards.filter(c => c.type === 'teacher').length;
+    const groupsCount = allCards.filter(c => c.type === 'group').length;
+    
+    document.getElementById('totalCount').textContent = allCards.length;
+    document.getElementById('studentsCount').textContent = studentsCount;
+    document.getElementById('teachersCount').textContent = teachersCount;
+    document.getElementById('groupsCount').textContent = groupsCount;
+    updateSelectedCount();
+    
+    const grid = document.getElementById('qrGrid');
+    if(!grid) return;
+    
+    if(!allCards.length){
+      grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-title">لا توجد بطاقات</div><div class="empty-state-text">جرب تغيير الفلتر أو البحث</div></div>';
+      return;
+    }
+    
+    grid.innerHTML = allCards.map(card => {
+      const safeName = (card.name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+      const qrUrl = card.type === 'group' ? card.whatsappLink : qrData(card.code, card.type);
+      const imgSrc = qrImg(card.code, 140, card.type);
+      const cardClass = card.type === 'teacher' ? 'teacher-card' : card.type === 'group' ? 'group-card' : '';
+      const typeLabel = card.type === 'teacher' ? 'مدرس' : card.type === 'group' ? 'واتساب' : 'طالب';
+      
+      return '<div class="qr-card ' + cardClass + '" data-id="' + card.id + '" data-type="' + card.type + '">' +
+        '<label class="selection-check no-print"><input type="checkbox" ' + (selectedCards.has(card.id) ? 'checked' : '') + ' onchange="window.toggleSelection(\'' + card.id + '\', this.checked)"></label>' +
+        '<span class="qr-card-type ' + card.type + '">' + typeLabel + '</span>' +
+        '<div class="qr-name">' + safeName + '</div>' +
+        '<img src="' + imgSrc + '" alt="' + card.code + '" loading="lazy">' +
+        '<div class="qr-codeline">' + card.code + '</div>' +
+        '<div class="qr-meta">' + (card.meta || '') + '</div>' +
+        '<div class="qr-brand">EduFlow <span class="dot"></span> Habbash Group</div>' +
+        '<div class="card-actions no-print">' +
+          '<button class="btn btn-secondary btn-sm" onclick="window.printSingleCard(\'' + card.id + '\')">🖨️</button>' +
+          '<button class="btn btn-ghost btn-sm" onclick="window.downloadSingleCard(\'' + card.id + '\')">⬇️</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }catch(e){
+    console.error('renderGrid error', e);
+    const grid = document.getElementById('qrGrid');
+    if(grid) grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-title">خطأ في التحميل</div></div>';
+  }
+};
+
+window.toggleSelection = function(id, checked){
+  if(checked) selectedCards.add(id);
+  else selectedCards.delete(id);
+  updateSelectedCount();
+};
+
+window.updateSelectedCount = function(){
+  const el = document.getElementById('selectedCount');
+  if(el) el.textContent = selectedCards.size;
+};
+
+window.selectAll = function(){
+  allCards.forEach(c => selectedCards.add(c.id));
+  document.querySelectorAll('.selection-check input').forEach(cb => cb.checked = true);
+  updateSelectedCount();
+  if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('✅ تم تحديد الكل', 'success');
+};
+
+window.deselectAll = function(){
+  selectedCards.clear();
+  document.querySelectorAll('.selection-check input').forEach(cb => cb.checked = false);
+  updateSelectedCount();
+};
+
+window.printSingleCard = function(id){
+  const card = allCards.find(c => c.id === id);
+  if(!card) return;
+  
+  const w = window.open('', '_blank', 'width=500,height=700');
+  if(!w){ if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('اسمح بالنوافذ المنبثقة','warning'); return; }
+  
+  const d = w.document;
+  d.documentElement.setAttribute('dir','rtl');
+  d.title = card.name;
+  
+  const st = d.createElement('style');
+  st.textContent = `
+    body{font-family:Cairo,Arial,sans-serif;text-align:center;padding:24px;color:#000;background:#fff;margin:0;}
+    .logo{font-size:14px;color:#666;margin-bottom:16px;}
+    .type-badge{display:inline-block;padding:4px 12px;border-radius:9999px;font-size:11px;font-weight:700;color:#fff;margin-bottom:12px;}
+    .type-student{background:#3b82f6;}
+    .type-teacher{background:#6366f1;}
+    .type-group{background:#25d366;}
+    img{width:260px;height:260px;margin:12px auto;display:block;background:#fff;padding:12px;border-radius:12px;border:2px solid #e5e7eb;}
+    .n{font-weight:800;font-size:24px;margin-top:12px;}
+    .c{font-family:monospace;font-size:26px;letter-spacing:3px;margin-top:8px;color:#6366f1;font-weight:800;}
+    .m{font-size:12px;color:#666;margin-top:8px;}
+    .b{font-size:11px;color:#555;margin-top:12px;padding-top:10px;border-top:1px solid #ddd;}
+    .sub{font-size:10px;color:#999;margin-top:4px;}
+  `;
+  d.head.appendChild(st);
+  
+  const typeLabels = {student:'طالب',teacher:'مدرس',group:'واتساب جروب'};
+  
+  const logo = d.createElement('div'); 
+  logo.className = 'logo'; 
+  logo.innerHTML = '🎓 <strong>EduFlow</strong> by <strong>Habbash Group</strong>';
+  
+  const badge = d.createElement('div');
+  badge.className = 'type-badge type-' + card.type;
+  badge.textContent = typeLabels[card.type];
+  
+  const n = d.createElement('div'); 
+  n.className = 'n'; 
+  n.textContent = card.name || '-';
+  
+  const img = d.createElement('img'); 
+  img.src = qrImg(card.code, 300, card.type);
+  
+  const c = d.createElement('div'); 
+  c.className = 'c'; 
+  c.textContent = card.code;
+  
+  const m = d.createElement('div');
+  m.className = 'm';
+  m.textContent = card.meta || '';
+  
+  const b = d.createElement('div'); 
+  b.className = 'b'; 
+  b.innerHTML = card.type === 'group' ? '💬 امسح الباركود للانضمام للجروب' : '📱 امسح الباركود للدخول السريع';
+  
+  const sub = d.createElement('div');
+  sub.className = 'sub';
+  sub.textContent = '© Habbash Group · ' + new Date().getFullYear();
+  
+  d.body.appendChild(logo);
+  d.body.appendChild(badge);
+  d.body.appendChild(n);
+  d.body.appendChild(img);
+  d.body.appendChild(c);
+  d.body.appendChild(m);
+  d.body.appendChild(b);
+  d.body.appendChild(sub);
+  
+  img.onload = function(){ setTimeout(function(){ w.focus(); w.print(); }, 250); };
+  setTimeout(function(){ w.focus(); w.print(); }, 1500);
+};
+
+window.downloadSingleCard = async function(id){
+  const card = allCards.find(c => c.id === id);
+  if(!card) return;
+  
+  try{
+    const r = await fetch(qrImg(card.code, 300, card.type));
+    const b = await r.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    a.download = 'QR_' + card.type + '_' + card.code + '_' + (card.name||'').replace(/\s+/g,'_') + '.png';
+    document.body.appendChild(a); 
+    a.click(); 
+    a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('✅ تم تحميل الباركود','success');
+  }catch(e){
+    window.open(qrImg(card.code, 300, card.type), '_blank');
+  }
+};
+
+window.printAll = function(){
+  if(!allCards.length){
+    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('لا توجد بطاقات للطباعة','warning');
+    return;
+  }
+  selectedCards.clear();
+  allCards.forEach(c => selectedCards.add(c.id));
+  document.querySelectorAll('.selection-check input').forEach(cb => cb.checked = true);
+  updateSelectedCount();
+  setTimeout(() => window.print(), 100);
+};
+
+window.printSelected = function(){
+  if(!selectedCards.size){
+    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('حدد بطاقات أولاً','warning');
+    return;
+  }
+  // إخفاء غير المحددة للطباعة
+  document.querySelectorAll('.qr-card').forEach(card => {
+    const id = card.dataset.id;
+    card.style.display = selectedCards.has(id) ? '' : 'none';
+  });
+  setTimeout(() => {
+    window.print();
+    // إعادة الإظهار بعد الطباعة
+    setTimeout(() => {
+      document.querySelectorAll('.qr-card').forEach(card => card.style.display = '');
+    }, 500);
+  }, 100);
+};
+
+window.showPreview = function(){
+  const cards = selectedCards.size 
+    ? allCards.filter(c => selectedCards.has(c.id))
+    : allCards;
+  
+  if(!cards.length){
+    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('لا توجد بطاقات للمعاينة','warning');
+    return;
+  }
+  
+  const container = document.getElementById('previewContainer');
+  container.innerHTML = cards.map(card => {
+    const typeLabels = {student:'طالب',teacher:'مدرس',group:'واتساب'};
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">' +
+      '<div style="font-size:10px;color:var(--primary);font-weight:700;margin-bottom:4px;">' + typeLabels[card.type] + '</div>' +
+      '<div style="font-weight:800;margin-bottom:6px;">' + card.name + '</div>' +
+      '<img src="' + qrImg(card.code, 120, card.type) + '" style="width:100px;height:100px;margin:6px auto;display:block;">' +
+      '<div style="font-family:monospace;font-weight:800;color:var(--primary);font-size:12px;">' + card.code + '</div>' +
+      '<div style="font-size:10px;color:var(--text-muted);margin-top:4px;">' + (card.meta || '') + '</div>' +
+    '</div>';
+  }).join('');
+  
+  document.getElementById('previewModal').style.display = 'block';
+};
+
+window.closePreview = function(){
+  document.getElementById('previewModal').style.display = 'none';
+};
+
+window.printFromPreview = function(){
+  window.closePreview();
+  if(selectedCards.size){
+    window.printSelected();
+  } else {
+    window.printAll();
+  }
+};
+
+window.exportCSV = function(){
+  if(!allCards.length){
+    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('لا توجد بيانات للتصدير','warning');
+    return;
+  }
+  
+  const headers = ['النوع','الاسم','الكود','المرحلة/الصف','الهاتف','الرابط'];
+  const rows = allCards.map(c => {
+    const typeLabels = {student:'طالب',teacher:'مدرس',group:'واتساب جروب'};
+    return [
+      typeLabels[c.type],
+      c.name,
+      c.code,
+      c.meta || '',
+      '',
+      qrData(c.code, c.type)
+    ];
+  });
+  
+  const csv = '\uFEFF' + [headers, ...rows]
+    .map(row => row.map(cell => '"' + String(cell).replace(/"/g,'""') + '"').join(','))
+    .join('\n');
+  
+  const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'EduFlow_Codes_' + new Date().toISOString().split('T')[0] + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  
+  if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('✅ تم تصدير ' + allCards.length + ' بطاقة','success');
+};
+
+window.downloadAllAsZip = async function(){
+  if(!allCards.length){
+    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('لا توجد بطاقات للتحميل','warning');
+    return;
+  }
+  
+  if(typeof JSZip === 'undefined'){
+    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('مكتبة JSZip غير محملة','error');
+    return;
+  }
+  
+  if(typeof ThemeManager?.toast === 'function'){
+    ThemeManager.toast('📦 جاري تجهيز ' + allCards.length + ' باركود...','info');
+  }
+  
+  try{
+    const zip = new JSZip();
+    const folder = zip.folder('EduFlow_QR_Codes');
+    
+    // إضافة CSV
+    const csvHeaders = ['النوع','الاسم','الكود','الرابط'];
+    const csvRows = allCards.map(c => {
+      const typeLabels = {student:'طالب',teacher:'مدرس',group:'واتساب'};
+      return [typeLabels[c.type], c.name, c.code, qrData(c.code, c.type)];
+    });
+    const csv = '\uFEFF' + [csvHeaders, ...csvRows]
+      .map(row => row.map(cell => '"' + String(cell).replace(/"/g,'""') + '"').join(','))
+      .join('\n');
+    folder.file('codes.csv', csv);
+    
+    // تحميل كل الباركودات
+    for(let i = 0; i < allCards.length; i++){
+      const card = allCards[i];
       try{
-        const cards = document.querySelectorAll('.qr-card');
-        if(!cards.length){
-          if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('لا يوجد باركودات للتحميل','warning');
-          return;
-        }
+        const response = await fetch(qrImg(card.code, 300, card.type));
+        const blob = await response.blob();
+        const fileName = card.type + '_' + card.code + '_' + (card.name||'').replace(/[^a-zA-Z0-9\u0600-\u06FF]/g,'_') + '.png';
+        folder.file(fileName, blob);
         
-        if(typeof ThemeManager?.toast === 'function'){
-          ThemeManager.toast('📦 جاري تحميل الباركودات... افتح كل واحدة يدوياً لو مش مدعوم','info');
-        }
-        
-        // تحميل أول 10 باركودات كحد أقصى (لتجنب حظر المتصفح)
-        const max = Math.min(cards.length, 10);
-        for(let i = 0; i < max; i++){
-          const card = cards[i];
-          const code = card.querySelector('.qr-codeline')?.textContent || '';
-          if(code){
-            await new Promise(r => setTimeout(r, 300));
-            window.downloadQR(code);
-          }
-        }
-        
-        if(cards.length > 10){
-          if(typeof ThemeManager?.toast === 'function'){
-            ThemeManager.toast(`تم تحميل أول 10 فقط من ${cards.length} — استخدم الطباعة للكل`,'warning');
-          }
+        if(typeof ThemeManager?.toast === 'function' && (i+1) % 5 === 0){
+          ThemeManager.toast('⏳ جاري التحميل... ' + (i+1) + '/' + allCards.length, 'info');
         }
       }catch(e){
-        console.error('downloadAllQR error', e);
+        console.error('Error downloading card', card.id, e);
       }
-    };
-  </script>
-  <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
+    }
+    
+    const content = await zip.generateAsync({type: 'blob'});
+    const url = URL.createObjectURL(content);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'EduFlow_QR_Codes_' + new Date().toISOString().split('T')[0] + '.zip';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    
+    if(typeof ThemeManager?.toast === 'function'){
+      ThemeManager.toast('✅ تم تحميل ' + allCards.length + ' باركود في ملف ZIP','success');
+    }
+  }catch(e){
+    console.error('ZIP error', e);
+    if(typeof ThemeManager?.toast === 'function'){
+      ThemeManager.toast('خطأ في إنشاء ملف ZIP: ' + e.message,'error');
+    }
+  }
+};
+
+// إغلاق المودال عند الضغط على الخلفية
+document.getElementById('previewModal')?.addEventListener('click', function(e){
+  if(e.target === this) window.closePreview();
+});
+
+// اختصارات الكيبورد
+document.addEventListener('keydown', function(e){
+  if(e.ctrlKey && e.key === 'p'){
+    e.preventDefault();
+    window.printAll();
+  }
+  if(e.key === 'Escape'){
+    window.closePreview();
+  }
+});
+</script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
 </body>
 </html>

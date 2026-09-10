@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Grader — المصحح الذكي</title>
+<style>
+:root{
+  --bg:#0f172a; --panel:#1e293b; --panel2:#273449; --line:#334155;
+  --txt:#e2e8f0; --mut:#94a3b8; --acc:#38bdf8; --ok:#34d399; --bad:#f87171;
+  --warn:#fbbf24; --chip:#334155;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Arial,sans-serif}
+body{background:var(--bg);color:var(--txt);min-height:100vh}
+header{position:sticky;top:0;z-index:20;background:rgba(15,23,42,.95);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px}
+header h1 .logo{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--acc),#818cf8);
+  display:inline-flex;align-items:center;justify-content:center;font-size:14px}
+.tabs{display:flex;gap:6px;background:var(--panel);padding:4px;border-radius:12px}
+.tabs button{border:0;background:transparent;color:var(--mut);padding:8px 16px;border-radius:9px;cursor:pointer;
+  font-size:14px;font-weight:600;transition:.15s}
+.tabs button.active{background:var(--acc);color:#062033}
+.tabs button:hover:not(.active){color:var(--txt)}
+main{max-width:1060px;margin:0 auto;padding:16px}
+section{display:none}
+section.on{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.card h2{font-size:15px;margin-bottom:12px;color:var(--txt);display:flex;align-items:center;gap:8px}
+.card h3{font-size:13px;color:var(--mut);margin:10px 0 6px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input[type=number],input[type=text],select{background:var(--panel2);border:1px solid var(--line);color:var(--txt);
+  padding:9px 12px;border-radius:9px;font-size:14px;outline:none}
+input:focus,select:focus{border-color:var(--acc)}
+label{font-size:13px;color:var(--mut)}
+.btn{border:0;border-radius:10px;padding:10px 18px;font-size:14px;font-weight:700;cursor:pointer;
+  display:inline-flex;align-items:center;gap:7px;transition:.15s}
+.btn:active{transform:scale(.97)}
+.btn-p{background:var(--acc);color:#062033}
+.btn-o{background:var(--ok);color:#04281c}
+.btn-d{background:var(--bad);color:#330a0a}
+.btn-g{background:var(--panel2);color:var(--txt);border:1px solid var(--line)}
+.btn-w{background:var(--warn);color:#3a2a02}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.hint{font-size:12.5px;color:var(--mut);line-height:1.6}
+.badge{display:inline-block;background:var(--chip);color:var(--txt);border-radius:999px;padding:3px 11px;font-size:12px}
+.canvasWrap{position:relative;background:#000;border-radius:12px;overflow:hidden;display:flex;justify-content:center}
+.canvasWrap canvas{display:block;max-width:100%;cursor:crosshair;touch-action:none}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}}
+video{display:none}
+/* تأكيد المفتاح */
+.confirmGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:10px}
+.qItem{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px}
+.qItem .qt{font-size:12px;color:var(--mut);margin-bottom:6px}
+.qItem .opts{display:flex;gap:5px}
+.optBtn{flex:1;padding:7px 0;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--mut);
+  cursor:pointer;font-weight:700;font-size:13px}
+.optBtn.sel{background:var(--ok);color:#04281c;border-color:var(--ok)}
+.optBtn.blank{background:var(--warn);color:#3a2a02;border-color:var(--warn)}
+/* اللايف */
+.liveScore{display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap;padding:12px}
+.bigScore{font-size:52px;font-weight:800;color:var(--acc)}
+.statBox{text-align:center;background:var(--panel2);border-radius:12px;padding:12px 20px;min-width:90px}
+.statBox .v{font-size:24px;font-weight:800}
+.statBox .l{font-size:12px;color:var(--mut)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;justify-content:center}
+.chip{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:13px;background:var(--chip);color:var(--mut)}
+.chip.ok{background:var(--ok);color:#04281c}
+.chip.bad{background:var(--bad);color:#330a0a}
+.chip.blank{background:var(--panel2);color:var(--mut);border:1px dashed var(--mut)}
+.chip.rev{background:var(--warn);color:#3a2a02;cursor:pointer}
+/* مودال المراجعة */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal.on{display:flex}
+.modalBox{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;max-width:560px;width:100%;max-height:85vh;overflow:auto}
+.revQ{background:var(--panel2);border-radius:12px;padding:12px;margin-bottom:12px}
+.revQ .crops{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.cropBox{text-align:center}
+.cropBox img{border-radius:8px;border:2px solid var(--line);background:#fff;image-rendering:pixelated}
+.cropBox.selImg img{border-color:var(--ok)}
+.cropBox .cl{font-size:12px;color:var(--mut)}
+/* جدول النتائج */
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:10px 12px;text-align:right;border-bottom:1px solid var(--line)}
+th{color:var(--mut);font-size:12.5px;font-weight:600}
+.pct{font-weight:800;color:var(--acc)}
+.pill{padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700}
+.pill.hi{background:rgba(52,211,153,.15);color:var(--ok)}
+.pill.mid{background:rgba(251,191,36,.15);color:var(--warn)}
+.pill.lo{background:rgba(248,113,113,.15);color:var(--bad)}
+.step{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.step .num{width:26px;height:26px;border-radius:50%;background:var(--acc);color:#062033;font-weight:800;
+  display:inline-flex;align-items:center;justify-content:center;font-size:14px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="logo">✓</span> Smart Grader</h1>
+  <div class="tabs">
+    <button class="active" data-tab="ref">١· المرجع</button>
+    <button data-tab="live">٢· التصحيح اللايف</button>
+    <button data-tab="res">٣· النتائج</button>
+  </div>
+  <div style="margin-inline-start:auto" class="row">
+    <label>المرجع النشط:</label>
+    <select id="activeRefSel"></select>
+  </div>
+</header>
+
+<main>
+
+<!-- ============ تبويب المرجع ============ -->
+<section id="tab-ref" class="on">
+  <div class="card">
+    <div class="step"><span class="num">1</span>
+      <b>صوّر / ارفع صورة الحل النموذجي</b> (إنت اللي معلّم الإجابات الصح عليها)
+    </div>
+    <div class="row">
+      <button class="btn btn-p" id="refCamBtn">📷 فتح الكاميرا</button>
+      <button class="btn btn-g" id="refCapBtn" disabled>⚪ التقاط الصورة</button>
+      <button class="btn btn-g">🖼️ رفع صورة
+        <input type="file" id="refFile" accept="image/*" style="display:none">
+      </button>
+      <button class="btn btn-d" id="refStopBtn" style="display:none">إيقاف الكاميرا</button>
+    </div>
+    <video id="video" playsinline muted></video>
+    <div class="canvasWrap" style="margin-top:12px"><canvas id="refCanvas"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="step"><span class="num">2</span><b>عاير شبكة الاختيارات</b></div>
+    <div class="row">
+      <label>عدد الأسئلة</label><input type="number" id="inRows" value="10" min="1" style="width:80px">
+      <label>عدد الاختيارات</label><input type="number" id="inCols" value="4" min="2" max="5" style="width:80px">
+      <label>رقم أول سؤال</label><input type="number" id="inStartQ" value="1" min="1" style="width:80px">
+    </div>
+    <p class="hint" style="margin-top:8px">
+      اضغط على الصورة: <b>المرة الأولى</b> على مركز أول اختيار (سؤال ١ - أ)،
+      و<b>المرة الثانية</b> على مركز آخر اختيار (آخر سؤال - آخر اختيار).
+    </p>
+    <div class="row" style="margin-top:8px">
+      <button class="btn btn-g" id="resetTapBtn">↺ إعادة التحديد</button>
+      <button class="btn btn-p" id="extractBtn" disabled>⚙️ استخراج المفتاح</button>
+      <label>الحساسية</label>
+      <input type="range" id="sensRange" min="0" max="100" value="50" style="width:140px">
+      <span class="badge" id="sensVal">تلقائي</span>
+    </div>
+  </div>
+
+  <div class="card" id="confirmCard" style="display:none">
+    <div class="step"><span class="num">3</span><b>راجع المفتاح المستخرج وصحّح أي خطأ</b></div>
+    <div class="row">
+      <label>اسم المرجع</label><input type="text" id="refName" placeholder="مثال: واجب الوحدة الأولى - ص١" style="flex:1;min-width:200px">
+      <button class="btn btn-o" id="saveRefBtn">💾 حفظ المرجع</button>
+    </div>
+    <div class="confirmGrid" id="confirmGrid"></div>
+  </div>
+
+  <div class="card">
+    <h2>📚 المراجع المحفوظة</h2>
+    <div id="refList" class="hint">لا توجد مراجع بعد.</div>
+  </div>
+</section>
+
+<!-- ============ تبويب اللايف ============ -->
+<section id="tab-live">
+  <div class="card">
+    <div class="row">
+      <button class="btn btn-p" id="liveCamBtn">📷 تشغيل الكاميرا</button>
+      <button class="btn btn-d" id="liveStopBtn" style="display:none">إيقاف</button>
+      <button class="btn btn-w" id="autoToggle">⚡ قراءة مستمرة: متوقف</button>
+      <button class="btn btn-g" id="liveShotBtn" disabled>⚪ التقاط وتصحيح</button>
+    </div>
+    <p class="hint" style="margin-top:8px">💡 ثبّت الموبايل على حامل فوق الكتاب عشان الشبكة تنضبط، وقلّب صفحات الطلبة.</p>
+    <div class="canvasWrap" style="margin-top:12px"><canvas id="liveCanvas"></canvas></div>
+  </div>
+
+  <div class="card" id="liveResultCard" style="display:none">
+    <div class="liveScore">
+      <div><div class="bigScore" id="liveScoreTxt">0/0</div>
+        <div style="text-align:center;color:var(--mut);font-size:13px">الدرجة</div></div>
+      <div class="statBox"><div class="v" style="color:var(--ok)" id="stOk">0</div><div class="l">صح</div></div>
+      <div class="statBox"><div class="v" style="color:var(--bad)" id="stBad">0</div><div class="l">خطأ</div></div>
+      <div class="statBox"><div class="v" id="stBlank">0</div><div class="l">فارغ</div></div>
+      <div class="statBox"><div class="v" style="color:var(--warn)" id="stRev">0</div><div class="l">مراجعة</div></div>
+    </div>
+    <div class="chips" id="liveChips"></div>
+    <div class="row" style="margin-top:14px;justify-content:center">
+      <input type="text" id="stuName" placeholder="اسم الطالب" style="flex:1;max-width:280px">
+      <button class="btn btn-o" id="saveResultBtn">💾 حفظ النتيجة والتالي</button>
+      <button class="btn btn-g" id="reviewBtn" style="display:none">🔍 مراجعة الأسئلة المعلَّمة</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ تبويب النتائج ============ -->
+<section id="tab-res">
+  <div class="card">
+    <div class="row">
+      <input type="text" id="searchBox" placeholder="🔍 ابحث عن طالب..." style="flex:1;min-width:180px">
+      <select id="sortBy">
+        <option value="order">الترتيب بالإدخال</option>
+        <option value="scoreDesc">الأعلى درجة</option>
+        <option value="scoreAsc">الأقل درجة</option>
+        <option value="name">بالاسم</option>
+      </select>
+      <button class="btn btn-p" id="csvBtn">⬇️ تصدير CSV</button>
+      <button class="btn btn-d" id="clearResBtn">🗑️ مسح الكل</button>
+    </div>
+  </div>
+  <div class="card">
+    <table>
+      <thead><tr><th>#</th><th>الطالب</th><th>الدرجة</th><th>النسبة</th><th>صح</th><th>خطأ</th><th>فارغ</th><th></th></tr></thead>
+      <tbody id="resBody"></tbody>
+    </table>
+    <p class="hint" id="resEmpty" style="text-align:center;padding:20px">لا توجد نتائج بعد.</p>
+  </div>
+</section>
+
+</main>
+
+<!-- مودال المراجعة -->
+<div class="modal" id="revModal">
+  <div class="modalBox">
+    <h2 style="font-size:16px;margin-bottom:6px">🔍 مراجعة الأسئلة المشكوك فيها</h2>
+    <p class="hint" style="margin-bottom:12px">اضغط على الاختيار الصحيح الفعلي. الخانة المحددة بإطار أخضر.</p>
+    <div id="revContent"></div>
+    <div class="row" style="justify-content:flex-end;margin-top:10px">
+      <button class="btn btn-o" id="revDoneBtn">✔ تم</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* =====================================================================
+   Smart Grader — مصحح ذكي لأوراق الاختيار من متعدد (من كتاب/كراسة)
+   يعمل بالكامل داخل المتصفح. لا خوادم، لا قواعد بيانات، لا حفظ دائم.
+   ===================================================================== */
+
+const LETTERS = ['أ','ب','ج','د','هـ'];
+
+// ---------- الحالة (في الذاكرة فقط) ----------
+const state = {
+  refs: [],          // المراجع: {id,name,startQ,rows,cols,p1,p2,key,img,natW,natH}
+  activeRefId: null,
+  results: {},       // اسم الطالب -> {name,correct,wrong,blank,review,total}
+  resOrder: [],      // ترتيب الإدخال
+  // مؤقتات المعايرة الحالية
+  cur: { img:null, natW:0, natH:0, p1:null, p2:null, rows:0, cols:0,
+         ratios:null, answers:null, flags:null, crops:null },
+  live: { stream:null, auto:false, timer:null, last:null },
+  refStream: null,
+  manualSens: null,  // null = تلقائي
+};
+
+const $ = id => document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const MAXSIDE = 1400; // أقصى بُعد للصورة (للأداء)
+
+// ---------- تبديل التبويبات ----------
+document.querySelectorAll('.tabs button').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('section').forEach(x=>x.classList.remove('on'));
+    b.classList.add('active');
+    $('tab-'+b.dataset.tab).classList.add('on');
+    if(b.dataset.tab==='live') startLiveLoop();
+    if(b.dataset.tab==='res') renderResults();
+  };
+});
+
+// =====================================================================
+//  أدوات المعالجة
+// =====================================================================
+function otsu(vals){ // vals: مصفوفة قيم 0..255
+  const hist=new Array(256).fill(0);
+  for(let i=0;i<vals.length;i++) hist[vals[i]|0]++;
+  const total=vals.length; let sum=0;
+  for(let i=0;i<256;i++) sum+=i*hist[i];
+  let sumB=0,wB=0,best=0,thr=127;
+  for(let t=0;t<256;t++){
+    wB+=hist[t]; if(!wB) continue;
+    const wF=total-wB; if(!wF) break;
+    sumB+=t*hist[t];
+    const mB=sumB/wB, mF=(sum-sumB)/wF;
+    const v=wB*wF*(mB-mF)*(mB-mF);
+    if(v>best){best=v;thr=t;}
+  }
+  return thr;
+}
+
+// يحوّل فيديو/صورة إلى canvas مصغّر
+function sourceToCanvas(src, isVideo){
+  const w = isVideo? src.videoWidth : src.naturalWidth;
+  const h = isVideo? src.videoHeight : src.naturalHeight;
+  if(!w||!h) return null;
+  const sc = Math.min(1, MAXSIDE/Math.max(w,h));
+  const c = document.createElement('canvas');
+  c.width=Math.round(w*sc); c.height=Math.round(h*sc);
+  c.getContext('2d').drawImage(src,0,0,c.width,c.height);
+  return c;
+}
+
+/* قراءة الشبكة: ترجع نسبة السواد لكل خانة
+   p1,p2 بالنقاط الفعلية على الـ canvas، rows صفوف، cols أعمدة */
+function readGrid(canvas, p1, p2, rows, cols){
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  const spX=(p2.x-p1.x)/(cols-1), spY=(p2.y-p1.y)/(rows-1);
+  const cellW=Math.abs(spX), cellH=Math.abs(spY);
+  // حدود المنطقة لأخذ الصورة مرة واحدة + حساب عتبة السواد
+  const pad=Math.max(cellW,cellH)*0.6;
+  const x0=clamp(Math.floor(Math.min(p1.x,p2.x)-pad),0,W-1);
+  const y0=clamp(Math.floor(Math.min(p1.y,p2.y)-pad),0,H-1);
+  const x1=clamp(Math.ceil (Math.max(p1.x,p2.x)+pad),1,W);
+  const y1=clamp(Math.ceil (Math.max(p1.y,p2.y)+pad),1,H);
+  const bw=x1-x0, bh=y1-y0;
+  const data=ctx.getImageData(x0,y0,bw,bh).data;
+  const gray=new Uint8Array(bw*bh);
+  for(let i=0;i<bw*bh;i++){const o=i*4;gray[i]=(data[o]*3+data[o+1]*4+data[o+2])>>3;}
+  const binThr=otsu(gray); // عتبة فصل الحبر عن الورق
+
+  // نسبة السواد في كل خانة (نأخذ 76% من الخانة لتجنب تسرب الجيران)
+  const inset=0.12;
+  const ratios=[]; const cells=[];
+  for(let i=0;i<rows;i++){
+    const rr=[]; const cc=[];
+    const cy=p1.y+spY*i;
+    for(let j=0;j<cols;j++){
+      const cx=p1.x+spX*j;
+      const sx0=Math.floor(cx-cellW*(0.5-inset)), sx1=Math.ceil(cx+cellW*(0.5-inset));
+      const sy0=Math.floor(cy-cellH*(0.5-inset)), sy1=Math.ceil(cy+cellH*(0.5-inset));
+      let dark=0,tot=0;
+      for(let y=sy0;y<sy1;y++){
+        if(y<0||y>=bh) continue;
+        for(let x=sx0;x<sx1;x++){
+          if(x<0||x>=bw) continue;
+          tot++; if(gray[(y-y0+y0)*0 + y*bw + x] < binThr) dark++;
+        }
+      }
+      const ratio=tot?dark/tot:0;
+      rr.push(ratio);
+      cc.push({cx,cy});
+    }
+    ratios.push(rr); cells.push(cc);
+  }
+  return {ratios, cells, binThr, cellW, cellH, spX, spY};
+}
+
+/* حساب عتبة "التعليم" من توزيع النسب (تلقائي) أو يدوي */
+function computeFillThr(ratios){
+  if(state.manualSens!=null) return state.manualSens;
+  const flat=[]; ratios.forEach(r=>r.forEach(v=>flat.push(Math.round(v*255))));
+  return otsu(flat)/255;
+}
+
+/* اتخاذ القرار لكل سؤال */
+function decide(ratios, fillThr){
+  const rows=ratios.length, cols=ratios[0].length;
+  const answers=[], flags=[];
+  for(let i=0;i<rows;i++){
+    const row=ratios[i];
+    const marked=[];
+    let maxj=0; for(let j=1;j<cols;j++) if(row[j]>row[maxj]) maxj=j;
+    for(let j=0;j<cols;j++) if(row[j]>=fillThr) marked.push(j);
+    if(marked.length===0){ answers.push(null); flags.push({i,type:'blank'}); }
+    else if(marked.length===1){ answers.push(marked[0]); flags.push({i,type:'ok'}); }
+    else { // أكتر من اختيار متعلَّم -> غالبًا شطب + إجابة جديدة -> مراجعة
+      answers.push(maxj); flags.push({i,type:'multiple',marked});
+    }
+  }
+  return {answers,flags};
+}
+
+/* اقتصاص خانة كصورة (للمراجعة) */
+function cropCell(srcCanvas, cell, cellW, cellH){
+  const s=1.6; // تكبير المنطقة للوضوح
+  const w=cellW*s, h=cellH*s;
+  const x=clamp(cell.cx-w/2,0,srcCanvas.width-w);
+  const y=clamp(cell.cy-h/2,0,srcCanvas.height-h);
+  const c=document.createElement('canvas');
+  const out=document.createElement('canvas');
+  const Z=2.2; out.width=Math.round(w*Z); out.height=Math.round(h*Z);
+  c.width=Math.round(w); c.height=Math.round(h);
+  c.getContext('2d').drawImage(srcCanvas,x,y,w,h,0,0,w,h);
+  out.getContext('2d').imageSmoothingEnabled=false;
+  out.getContext('2d').drawImage(c,0,0,c.width,c.height,0,0,out.width,out.height);
+  return out.toDataURL();
+}
+
+// =====================================================================
+//  تبويب المرجع — الكاميرا والرفع والمعايرة
+// =====================================================================
+async function startRefCam(){
+  try{
+    const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    state.refStream=s; const v=$('video'); v.srcObject=s; await v.play();
+    $('refCapBtn').disabled=false; $('refStopBtn').style.display='';
+    $('refCamBtn').style.display='none';
+    drawRefLive();
+  }catch(e){ alert('لم يتم السماح باستخدام الكاميرا. استخدم رفع صورة بدلًا منها.'); }
+}
+function stopRefCam(){
+  if(state.refStream){state.refStream.getTracks().forEach(t=>t.stop());state.refStream=null;}
+  $('refStopBtn').style.display='none'; $('refCamBtn').style.display=''; $('refCapBtn').disabled=true;
+}
+function drawRefLive(){
+  if(!state.refStream) return;
+  const v=$('video');
+  if(v.videoWidth){
+    const c=sourceToCanvas(v,true);
+    if(c){ setCurImage(c); }
+  }
+  requestAnimationFrame(drawRefLive);
+}
+$('refCamBtn').onclick=startRefCam;
+$('refStopBtn').onclick=stopRefCam;
+$('refCapBtn').onclick=()=>{ const c=sourceToCanvas($('video'),true); if(c){setCurImage(c); stopRefCam();} };
+$('refFile').parentElement.onclick=e=>{ if(e.target.tagName!=='INPUT') $('refFile').click(); };
+$('refFile').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const img=new Image();
+  img.onload=()=>{ const c=sourceToCanvas(img,false); if(c) setCurImage(c); URL.revokeObjectURL(img.src); };
+  img.src=URL.createObjectURL(f);
+};
+
+function setCurImage(canvas){
+  state.cur.img=canvas; state.cur.natW=canvas.width; state.cur.natH=canvas.height;
+  state.cur.p1=null; state.cur.p2=null; state.cur.answers=null;
+  $('extractBtn').disabled=true; $('confirmCard').style.display='none';
+  drawRefCanvas();
+}
+
+// رسم صورة المرجع + نقاط المعايرة + الشبكة
+function drawRefCanvas(){
+  const cv=$('refCanvas'), cur=state.cur;
+  if(!cur.img){cv.width=0;cv.height=0;return;}
+  const dispW=Math.min(700,cur.natW);
+  const sc=dispW/cur.natW;
+  cv.width=dispW; cv.height=Math.round(cur.natH*sc);
+  const g=cv.getContext('2d');
+  g.drawImage(cur.img,0,0,cv.width,cv.height);
+  const P=p=>p?{x:p.x*sc,y:p.y*sc}:null;
+  const p1=P(cur.p1), p2=P(cur.p2);
+  // نقطتا المعايرة
+  [ [p1,'#38bdf8','1'], [p2,'#34d399','2'] ].forEach(([p,col,lab])=>{
+    if(!p) return;
+    g.strokeStyle=col; g.lineWidth=2;
+    g.beginPath(); g.arc(p.x,p.y,12,0,7); g.stroke();
+    g.beginPath(); g.moveTo(p.x-18,p.y); g.lineTo(p.x+18,p.y);
+    g.moveTo(p.x,p.y-18); g.lineTo(p.x,p.y+18); g.stroke();
+    g.fillStyle=col; g.font='bold 12px sans-serif'; g.fillText(lab,p.x+14,p.y-10);
+  });
+  // الشبكة بعد اكتمال النقطتين
+  if(cur.p1&&cur.p2){
+    const rows=+$('inRows').value||1, cols=+$('inCols').value||2;
+    const spX=(p2.x-p1.x)/(cols-1), spY=(p2.y-p1.y)/(rows-1);
+    g.strokeStyle='rgba(251,191,36,.8)'; g.lineWidth=1;
+    for(let i=0;i<rows;i++)for(let j=0;j<cols;j++){
+      const x=p1.x+spX*j, y=p1.y+spY*i;
+      g.beginPath(); g.arc(x,y,Math.min(Math.abs(spX),Math.abs(spY))*0.3,0,7); g.stroke();
+    }
+    // تعليم الخلايا المختارة إن وُجد استخراج
+    if(cur.answers){
+      for(let i=0;i<rows;i++){
+        const j=cur.answers[i]; if(j==null) continue;
+        const x=p1.x+spX*j, y=p1.y+spY*i;
+        const flag=cur.flags[i];
+        g.strokeStyle= flag.type==='multiple' ? '#f87171' : '#34d399';
+        g.lineWidth=3;
+        g.strokeRect(x-spX*0.45,y-spY*0.45,spX*0.9,spY*0.9);
+      }
+    }
+  }
+}
+['inRows','inCols'].forEach(id=>$(id).addEventListener('input',drawRefCanvas));
+
+// ضغطات المعايرة على الصورة
+$('refCanvas').addEventListener('pointerdown',e=>{
+  const cv=$('refCanvas'), cur=state.cur;
+  if(!cur.img) return;
+  const r=cv.getBoundingClientRect();
+  const sc=cur.natW/cv.width;
+  const x=(e.clientX-r.left)*sc, y=(e.clientY-r.top)*sc;
+  if(!cur.p1){ cur.p1={x,y}; }
+  else if(!cur.p2){ cur.p2={x,y}; $('extractBtn').disabled=false; }
+  drawRefCanvas();
+});
+$('resetTapBtn').onclick=()=>{state.cur.p1=null;state.cur.p2=null;$('extractBtn').disabled=true;drawRefCanvas();};
+
+// الحساسية
+$('sensRange').oninput=e=>{
+  const v=+e.target.value;
+  if(v===50){state.manualSens=null;$('sensVal').textContent='تلقائي';}
+  else{state.manualSens=0.1+v/100*0.6;$('sensVal').textContent=state.manualSens.toFixed(2);}
+};
+
+// استخراج المفتاح
+$('extractBtn').onclick=()=>{
+  const cur=state.cur;
+  if(!cur.img||!cur.p1||!cur.p2) return;
+  const rows=+$('inRows').value||1, cols=+$('inCols').value||2;
+  const grid=readGrid(cur.img,cur.p1,cur.p2,rows,cols);
+  const fillThr=computeFillThr(grid.ratios);
+  const {answers,flags}=decide(grid.ratios,fillThr);
+  cur.rows=rows;cur.cols=cols;cur.ratios=grid.ratios;cur.answers=answers;cur.flags=flags;
+  cur.grid=grid;
+  renderConfirm(); drawRefCanvas();
+  $('confirmCard').style.display='';
+  $('confirmCard').scrollIntoView({behavior:'smooth'});
+};
+
+// عرض تأكيد المفتاح (قابل للتصحيح)
+function renderConfirm(){
+  const cur=state.cur, box=$('confirmGrid'); box.innerHTML='';
+  const startQ=+$('inStartQ').value||1;
+  for(let i=0;i<cur.rows;i++){
+    const div=document.createElement('div'); div.className='qItem';
+    const flag=cur.flags[i];
+    const tag= flag.type==='multiple'?' <span class="pill lo">مراجعة</span>'
+             : flag.type==='blank'?' <span class="pill mid">فارغ</span>':'';
+    div.innerHTML=`<div class="qt">سؤال ${startQ+i}${tag}</div><div class="opts"></div>`;
+    const opts=div.querySelector('.opts');
+    for(let j=0;j<cur.cols;j++){
+      const b=document.createElement('button');
+      b.className='optBtn'+(cur.answers[i]===j?' sel':'');
+      b.textContent=LETTERS[j];
+      b.onclick=()=>{cur.answers[i]= (cur.answers[i]===j? null : j); renderConfirm(); drawRefCanvas();};
+      opts.appendChild(b);
+    }
+    box.appendChild(div);
+  }
+}
+
+// حفظ المرجع
+$('saveRefBtn').onclick=()=>{
+  const cur=state.cur;
+  if(!cur.answers){alert('استخرج المفتاح أولًا');return;}
+  const name=$('refName').value.trim()||('مرجع '+(state.refs.length+1));
+  const ref={
+    id:Date.now(), name, startQ:+$('inStartQ').value||1,
+    rows:cur.rows, cols:cur.cols,
+    p1:{fx:cur.p1.x/cur.natW, fy:cur.p1.y/cur.natH},
+    p2:{fx:cur.p2.x/cur.natW, fy:cur.p2.y/cur.natH},
+    key:[...cur.answers],
+  };
+  state.refs.push(ref);
+  state.activeRefId=ref.id;
+  // تنظيف مؤقتات المعايرة
+  state.cur={img:null,natW:0,natH:0,p1:null,p2:null,rows:0,cols:0,ratios:null,answers:null,flags:null};
+  $('confirmCard').style.display='none'; $('extractBtn').disabled=true; $('refName').value='';
+  drawRefCanvas(); renderRefList(); renderActiveRefSel();
+  alert('تم حفظ المرجع: '+name);
+};
+
+function renderRefList(){
+  const box=$('refList');
+  if(!state.refs.length){box.textContent='لا توجد مراجع بعد.';return;}
+  box.innerHTML='';
+  state.refs.forEach(r=>{
+    const d=document.createElement('div');
+    d.className='row'; d.style.cssText='padding:8px;border-bottom:1px solid var(--line)';
+    const answered=r.key.filter(k=>k!=null).length;
+    d.innerHTML=`<span class="badge">${r.name}</span>
+      <span class="hint">أسئلة ${r.startQ}–${r.startQ+r.rows-1} · ${answered}/${r.rows} مُجابة</span>`;
+    const act=document.createElement('button');act.className='btn btn-g';act.style.padding='5px 12px';
+    act.textContent= state.activeRefId===r.id?'✓ نشط':'تنشيط';
+    act.onclick=()=>{state.activeRefId=r.id;renderRefList();renderActiveRefSel();};
+    const del=document.createElement('button');del.className='btn btn-d';del.style.padding='5px 12px';del.textContent='حذف';
+    del.onclick=()=>{if(confirm('حذف هذا المرجع؟')){state.refs=state.refs.filter(x=>x.id!==r.id);
+      if(state.activeRefId===r.id)state.activeRefId=state.refs[0]?state.refs[0].id:null;
+      renderRefList();renderActiveRefSel();}};
+    d.appendChild(act);d.appendChild(del);
+    box.appendChild(d);
+  });
+}
+function renderActiveRefSel(){
+  const sel=$('activeRefSel');sel.innerHTML='';
+  state.refs.forEach(r=>{const o=document.createElement('option');o.value=r.id;o.textContent=r.name;sel.appendChild(o);});
+  sel.value=state.activeRefId||'';
+}
+$('activeRefSel').onchange=e=>{state.activeRefId=+e.target.value;renderRefList();};
+function getActiveRef(){return state.refs.find(r=>r.id===state.activeRefId)||null;}
+
+// =====================================================================
+//  تبويب اللايف
+// =====================================================================
+async function startLiveCam(){
+  try{
+    const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    state.live.stream=s;const v=$('video');v.srcObject=s;await v.play();
+    $('liveStopBtn').style.display='';$('liveCamBtn').style.display='none';
+    $('liveShotBtn').disabled=false;
+    startLiveLoop();
+  }catch(e){alert('لم يتم السماح باستخدام الكاميرا.');}
+}
+function stopLiveCam(){
+  if(state.live.stream){state.live.stream.getTracks().forEach(t=>t.stop());state.live.stream=null;}
+  stopLiveLoop();
+  $('liveStopBtn').style.display='none';$('liveCamBtn').style.display='';$('liveShotBtn').disabled=true;
+}
+$('liveCamBtn').onclick=startLiveCam;
+$('liveStopBtn').onclick=stopLiveCam;
+$('liveShotBtn').onclick=()=>processLiveFrame();
+$('autoToggle').onclick=()=>{
+  state.live.auto=!state.live.auto;
+  $('autoToggle').textContent='⚡ قراءة مستمرة: '+(state.live.auto?'يعمل':'متوقف');
+  $('autoToggle').className='btn '+(state.live.auto?'btn-o':'btn-w');
+};
+
+function startLiveLoop(){
+  if(state.live.timer) return;
+  state.live.timer=setInterval(()=>{ if(state.live.auto) processLiveFrame(); else drawLiveOverlay(); },400);
+}
+function stopLiveLoop(){ if(state.live.timer){clearInterval(state.live.timer);state.live.timer=null;} }
+
+// يرسم إطار الكاميرا + شبكة المرجع النشط
+function drawLiveOverlay(readResult){
+  const cv=$('liveCanvas');
+  if(!state.live.stream){cv.width=0;return;}
+  const v=$('video'); if(!v.videoWidth)return;
+  const c=sourceToCanvas(v,true); if(!c)return;
+  const dispW=Math.min(700,c.width), sc=dispW/c.width;
+  cv.width=dispW; cv.height=Math.round(c.height*sc);
+  const g=cv.getContext('2d');
+  g.drawImage(c,0,0,cv.width,cv.height);
+  const ref=getActiveRef();
+  if(ref){
+    const p1={x:ref.p1.fx*c.width*sc, y:ref.p1.fy*c.height*sc};
+    const p2={x:ref.p2.fx*c.width*sc, y:ref.p2.fy*c.height*sc};
+    const spX=(p2.x-p1.x)/(ref.cols-1), spY=(p2.y-p1.y)/(ref.rows-1);
+    for(let i=0;i<ref.rows;i++)for(let j=0;j<ref.cols;j++){
+      const x=p1.x+spX*j, y=p1.y+spY*i;
+      g.strokeStyle='rgba(56,189,248,.5)';g.lineWidth=1;
+      g.beginPath();g.arc(x,y,Math.min(Math.abs(spX),Math.abs(spY))*0.3,0,7);g.stroke();
+    }
+    // تلوين النتائج إن وُجدت
+    if(readResult){
+      for(let i=0;i<ref.rows;i++){
+        const j=readResult.answers[i]; if(j==null)continue;
+        const x=p1.x+spX*j,y=p1.y+spY*i;
+        const ok= j===ref.key[i];
+        g.strokeStyle= ok?'#34d399':'#f87171'; g.lineWidth=3;
+        g.strokeRect(x-spX*0.45,y-spY*0.45,spX*0.9,spY*0.9);
+      }
+    }
+  } else {
+    g.fillStyle='rgba(0,0,0,.6)';g.fillRect(0,0,cv.width,40);
+    g.fillStyle='#fff';g.font='bold 15px sans-serif';g.textAlign='center';
+    g.fillText('⚠ لا يوجد مرجع نشط — احفظ مرجعًا من التبويب الأول',cv.width/2,26);
+  }
+}
+
+// معالجة الإطار الحالي
+function processLiveFrame(){
+  const ref=getActiveRef(); if(!ref){drawLiveOverlay();return;}
+  if(!state.live.stream) return;
+  const c=sourceToCanvas($('video'),true); if(!c)return;
+  const p1={x:ref.p1.fx*c.width, y:ref.p1.fy*c.height};
+  const p2={x:ref.p2.fx*c.width, y:ref.p2.fy*c.height};
+  const grid=readGrid(c,p1,p2,ref.rows,ref.cols);
+  const fillThr=computeFillThr(grid.ratios);
+  const {answers,flags}=decide(grid.ratios,fillThr);
+  // التصحيح مقابل المفتاح
+  let ok=0,bad=0,blank=0,rev=0;
+  const chips=[];
+  for(let i=0;i<ref.rows;i++){
+    const a=answers[i], k=ref.key[i], f=flags[i];
+    if(f.type==='multiple'){rev++;chips.push('rev');}
+    else if(a==null){blank++;chips.push('blank');}
+    else if(k==null){rev++;chips.push('rev');}
+    else if(a===k){ok++;chips.push('ok');}
+    else{bad++;chips.push('bad');}
+  }
+  const total=ref.rows;
+  state.live.last={answers,flags,chips,ok,bad,blank,rev,total,srcCanvas:c,grid,refId:ref.id};
+  // عرض النتيجة
+  $('liveResultCard').style.display='';
+  $('liveScoreTxt').textContent=`${ok}/${total}`;
+  $('stOk').textContent=ok;$('stBad').textContent=bad;$('stBlank').textContent=blank;$('stRev').textContent=rev;
+  const ch=$('liveChips');ch.innerHTML='';
+  chips.forEach((cls,i)=>{
+    const d=document.createElement('div');d.className='chip '+cls;
+    d.textContent=ref.startQ+i;
+    if(cls==='rev'){d.onclick=()=>openReview([i]);}
+    ch.appendChild(d);
+  });
+  $('reviewBtn').style.display= rev>0?'':'none';
+  drawLiveOverlay(state.live.last);
+}
+
+// مراجعة الأسئلة المشكوك فيها
+$('reviewBtn').onclick=()=>{
+  const L=state.live.last;if(!L)return;
+  const idx=L.flags.filter(f=>f.type==='multiple'||(L.answers[f.i]!=null&&L.refId&&getActiveRef().key[f.i]==null))
+    .map(f=>f.i);
+  openReview(idx);
+};
+function openReview(indices){
+  const L=state.live.last;if(!L)return;
+  const ref=getActiveRef();
+  const box=$('revContent');box.innerHTML='';
+  indices.forEach(i=>{
+    const div=document.createElement('div');div.className='revQ';
+    div.innerHTML=`<b>سؤال ${ref.startQ+i}</b> <span class="hint">— اختر الإجابة الفعلية:</span><div class="crops"></div>`;
+    const crops=div.querySelector('.crops');
+    for(let j=0;j<ref.cols;j++){
+      const cb=document.createElement('div');cb.className='cropBox'+(L.answers[i]===j?' selImg':'');
+      const img=document.createElement('img');
+      img.src=cropCell(L.srcCanvas,L.grid.cells[i][j],L.grid.cellW,L.grid.cellH);
+      img.style.width='64px';img.style.height='64px';img.style.objectFit='cover';
+      const lab=document.createElement('div');lab.className='cl';lab.textContent=LETTERS[j];
+      cb.appendChild(img);cb.appendChild(lab);
+      cb.onclick=()=>{
+        L.answers[i]=j;
+        // إعادة احتساب النتيجة
+        recomputeLive();
+        crops.querySelectorAll('.cropBox').forEach(x=>x.classList.remove('selImg'));
+        cb.classList.add('selImg');
+      };
+      crops.appendChild(cb);
+    }
+    box.appendChild(div);
+  });
+  $('revModal').classList.add('on');
+}
+$('revDoneBtn').onclick=()=>{$('revModal').classList.remove('on');};
+
+function recomputeLive(){
+  const L=state.live.last,ref=getActiveRef();
+  let ok=0,bad=0,blank=0,rev=0;const chips=[];
+  for(let i=0;i<ref.rows;i++){
+    const a=L.answers[i],k=ref.key[i];
+    if(a==null){blank++;chips.push('blank');}
+    else if(k==null){rev++;chips.push('rev');}
+    else if(a===k){ok++;chips.push('ok');}
+    else{bad++;chips.push('bad');}
+  }
+  L.ok=ok;L.bad=bad;L.blank=blank;L.rev=0;L.chips=chips;
+  // تحديث الواجهة
+  $('liveScoreTxt').textContent=`${ok}/${ref.rows}`;
+  $('stOk').textContent=ok;$('stBad').textContent=bad;$('stBlank').textContent=blank;$('stRev').textContent=0;
+  const ch=$('liveChips');ch.innerHTML='';
+  chips.forEach((cls,i)=>{const d=document.createElement('div');d.className='chip '+cls;d.textContent=ref.startQ+i;ch.appendChild(d);});
+  $('reviewBtn').style.display='none';
+  drawLiveOverlay(L);
+}
+
+// حفظ نتيجة الطالب
+$('saveResultBtn').onclick=()=>{
+  const L=state.live.last;if(!L){alert('صوّر ورقة أولًا');return;}
+  const name=$('stuName').value.trim();
+  if(!name){alert('اكتب اسم الطالب');$('stuName').focus();return;}
+  const ref=getActiveRef();
+  if(!state.results[name]){state.results[name]={name,correct:0,wrong:0,blank:0,total:0};state.resOrder.push(name);}
+  const r=state.results[name];
+  r.correct+=L.ok; r.wrong+=L.bad; r.blank+=L.blank; r.total+=L.total;
+  $('stuName').value='';
+  $('liveResultCard').style.display='none';
+  state.live.last=null;
+  // جاهز للتالي فورًا
+  $('stuName').focus();
+};
+
+// =====================================================================
+//  تبويب النتائج
+// =====================================================================
+function renderResults(){
+  const q=($('searchBox').value||'').toLowerCase();
+  const sort=$('sortBy').value;
+  let rows=state.resOrder.map(n=>state.results[n]);
+  if(q) rows=rows.filter(r=>r.name.toLowerCase().includes(q));
+  if(sort==='scoreDesc')rows.sort((a,b)=>(b.correct/b.total)-(a.correct/a.total));
+  else if(sort==='scoreAsc')rows.sort((a,b)=>(a.correct/a.total)-(b.correct/b.total));
+  else if(sort==='name')rows.sort((a,b)=>a.name.localeCompare(b.name,'ar'));
+  const tb=$('resBody');tb.innerHTML='';
+  $('resEmpty').style.display=rows.length?'none':'';
+  rows.forEach((r,idx)=>{
+    const pct=r.total?Math.round(r.correct/r.total*100):0;
+    const cls=pct>=85?'hi':(pct>=50?'mid':'lo');
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${idx+1}</td><td>${r.name}</td><td>${r.correct}/${r.total}</td>
+      <td><span class="pill ${cls} pct">${pct}%</span></td>
+      <td>${r.correct}</td><td>${r.wrong}</td><td>${r.blank}</td>
+      <td><button class="btn btn-d" style="padding:4px 10px" data-n="${r.name}">حذف</button></td>`;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    const n=b.dataset.n;if(confirm('حذف نتيجة '+n+'؟')){delete state.results[n];
+      state.resOrder=state.resOrder.filter(x=>x!==n);renderResults();}
+  });
+}
+$('searchBox').oninput=renderResults;
+$('sortBy').onchange=renderResults;
+$('clearResBtn').onclick=()=>{if(confirm('مسح كل النتائج؟')){state.results={};state.resOrder=[];renderResults();}};
+$('csvBtn').onclick=()=>{
+  let csv='\uFEFFالطالب,الدرجة,الإجمالي,النسبة,صح,خطأ,فارغ\n';
+  state.resOrder.forEach(n=>{const r=state.results[n];
+    const pct=r.total?Math.round(r.correct/r.total*100):0;
+    csv+=`${r.name},${r.correct},${r.total},${pct}%,${r.correct},${r.wrong},${r.blank}\n`;});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download='نتائج_التصحيح.csv';a.click();
+};
+</script>
+</body>
+</html>

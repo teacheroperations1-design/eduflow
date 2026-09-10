@@ -53,6 +53,18 @@
 .teacher-hero-name{font-size:18px;font-weight:800;margin-bottom:2px}
 .teacher-hero-subject{font-size:13px;color:var(--text-muted);margin-bottom:4px}
 .teacher-hero-group{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:var(--primary-bg);color:var(--primary);border-radius:9999px;font-size:11px;font-weight:700}
+
+/* 🆕 أيقونات السوشيال ميديا والواتساب */
+.teacher-socials{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.teacher-social-link{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;text-decoration:none;font-size:16px;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+.teacher-social-link:hover{transform:scale(1.15);box-shadow:0 4px 12px rgba(0,0,0,.25);}
+.social-fb{background:#1877f2;}
+.social-yt{background:#ff0000;}
+.social-tt{background:#000;}
+.social-ig{background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);}
+.social-web{background:var(--primary);}
+.social-wa{background:#25d366;}
+
 .teacher-hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;position:relative}
 .teacher-hero-stat{text-align:center;padding:10px;background:var(--surface-hover);border-radius:10px}
 .teacher-hero-stat-value{font-size:18px;font-weight:800;font-family:var(--font-en);color:var(--primary)}
@@ -69,8 +81,8 @@
 .teacher-points-summary{background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(139,92,246,.08));border:1px solid var(--primary-border);border-radius:10px;padding:12px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;position:relative}
 .teacher-points-summary .label{font-size:12px;color:var(--text-secondary)}
 .teacher-points-summary .value{font-size:24px;font-weight:900;font-family:var(--font-en);color:var(--primary)}
-.wa-btn{background:#25d366;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
-.wa-btn:hover{background:#1ebe5a;transform:translateY(-1px)}
+.wa-btn{background:#25d366;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px;text-decoration:none;box-shadow:0 2px 8px rgba(37,211,102,.3);}
+.wa-btn:hover{background:#1ebe5a;transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,211,102,.4);}
 
 /* Leaderboard */
 .leader-row{display:flex;gap:12px;align-items:center;padding:10px 14px;background:var(--surface-hover);border-radius:8px;margin-bottom:6px}
@@ -131,6 +143,7 @@
   .teacher-hero-stats{grid-template-columns:1fr 1fr}
   .teacher-hero-header{flex-direction:column;text-align:center}
   .teacher-hero-photo{width:80px;height:80px}
+  .teacher-socials{justify-content:center;}
   .child-hero{flex-direction:column;text-align:center}
   .child-hero-stats{justify-content:center}
 }
@@ -257,6 +270,31 @@
 <script src="js/auth-service.js"></script>
 
 <script>
+  /* 🆕 View-As: لو الرابط فيه ?viewas= خد الهوية دي كالمستخدم الحالي للتبويب ده */
+(function(){
+  try{
+    const vid=new URLSearchParams(location.search).get('viewas');
+    if(!vid) return;
+    const u=(window.DataService&&DataService.getUsers?DataService.getUsers():[]).find(x=>x.id===vid);
+    if(!u) return;
+    window.__VIEWAS_USER=u;
+    if(window.AuthService){
+      AuthService.getCurrentUser=function(){ return window.__VIEWAS_USER; };
+      if(typeof AuthService.requireRole==='function'){
+        AuthService.requireRole=function(roles){
+          if(!roles||roles.includes(u.role)) return true;
+          location.href='login.html'; return false;
+        };
+      }
+      const origLogout=(typeof AuthService.logout==='function')?AuthService.logout.bind(AuthService):null;
+      AuthService.logout=function(){
+        window.__VIEWAS_USER=null;
+        try{ sessionStorage.removeItem('eduflow_viewas'); }catch(e){}
+        if(origLogout) origLogout(); else location.href='login.html';
+      };
+    }
+  }catch(e){}
+})();
 const DAYS=[{en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},{en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'},{en:'Saturday',ar:'السبت'}];
 const dayAr=en=>(DAYS.find(d=>d.en===en)||{}).ar||en;
 const T=tm=>DataService?.formatTime12?DataService.formatTime12(tm):tm;
@@ -282,13 +320,11 @@ let currentUser=null, activeChild=null, selectedTeacherId=null;
     const codeParam=(params.get('studentCode')||'').trim();
     const sidParam=(params.get('studentId')||'').trim();
 
-    // 1) 🆕 دخول مباشر بالرابط القادم من لوحة الطالب (بدون أي باسوورد)
     if(codeParam){
       const st = DataService?.findStudentByCode ? DataService.findStudentByCode(codeParam) : null;
       if(st){ window.enterAsParent(st, currentUser?.role==='student'); return; }
     }
 
-    // 2) دعم الرابط القديم studentId (تحويل من جلسة طالب/ولي أمر)
     if(sidParam){
       const st = DataService?.getUserById ? DataService.getUserById(sidParam) : null;
       if(st && (currentUser?.role==='student' || currentUser?.role==='parent')){
@@ -297,13 +333,11 @@ let currentUser=null, activeChild=null, selectedTeacherId=null;
       }
     }
 
-    // 3) ولي أمر مسجل دخوله بالفعل
     if(currentUser && currentUser.role==='parent'){
       window.setupParentUI();
       return;
     }
 
-    // 4) لا يوجد جلسة ولا رابط → فورم الكود فقط (بدون باسوورد)
     document.getElementById('loginWrap').style.display='block';
     document.getElementById('dashWrap').style.display='none';
   }catch(err){
@@ -312,10 +346,8 @@ let currentUser=null, activeChild=null, selectedTeacherId=null;
   }
 })();
 
-// 🆕 إنشاء جلسة ولي أمر فوراً بدون أي تحقق من باسوورد
 window.enterAsParent=function(st, handoff){
   try{
-    // لو كنا في جلسة طالب على نفس الجهاز → نحفظها للرجوع
     if(handoff && currentUser && currentUser.role==='student'){
       sessionStorage.setItem('eduflow_handoff_prev', JSON.stringify(currentUser));
     }
@@ -343,7 +375,6 @@ window.enterAsParent=function(st, handoff){
   }catch(e){ console.error('enterAsParent',e); }
 };
 
-// 🆕 تجهيز واجهة ولي الأمر
 window.setupParentUI=function(){
   try{
     document.getElementById('loginWrap').style.display='none';
@@ -357,7 +388,6 @@ window.setupParentUI=function(){
   }catch(e){ console.error(e); }
 };
 
-// 🆕 الرجوع لجلسة الطالب الأصلية (لو الدخول تم من جهازه)
 window.backToStudent=function(){
   try{
     const prev=sessionStorage.getItem('eduflow_handoff_prev');
@@ -369,7 +399,6 @@ window.backToStudent=function(){
   }catch(e){ location.href='student-dashboard.html'; }
 };
 
-// 🆕 الدخول الاحتياطي: كود الابن فقط — بدون باسوورد
 window.parentLogin=async function(){
   try{
     const code=document.getElementById('plCode')?.value.trim()||'';
@@ -449,7 +478,6 @@ window.pickChild=function(id){
   if(c){ activeChild=c; selectedTeacherId=null; window.renderAll(); }
 };
 
-// 🆕 إضافة ابن: بالكود فقط بدون باسوورد
 window.openAddChild=function(){
   if(typeof ThemeManager?.openModal==='function'){
     ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">➕ إضافة ابن</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="no-pass-info">💡 أدخل كود الابن فقط — بدون كلمة مرور</div><div class="form-group"><label>كود الابن</label><input type="text" id="acCode" class="form-input" placeholder="EDU-1234"></div><button class="btn btn-primary w-full" onclick="window.doAddChild()">💾 إضافة</button></div>`,'modal-sm');
@@ -474,7 +502,6 @@ window.doAddChild=async function(){
   }catch(e){}
 };
 
-// Picker للأستاذ (Chips)
 window.renderTeacherPicker=function(containerId){
   const el=document.getElementById(containerId); if(!el)return;
   const ts=window.myTeachers();
@@ -507,7 +534,7 @@ window.selectTeacher=function(tid){
   }
 };
 
-// بطاقات الأساتذة (Overview)
+// 🆕 بطاقات الأساتذة (Overview) مع السوشيال ميديا والواتساب
 window.renderTeachersCards=function(){
   const el=document.getElementById('teachersCardsList');
   if(!el) return;
@@ -526,6 +553,25 @@ window.renderTeachersCards=function(){
     const photo=st.teacher?.photoUrl?window.driveThumb(st.teacher.photoUrl):'';
     const attRate=st.stats.attendance.total?Math.round((st.stats.attendance.present/st.stats.attendance.total)*100):0;
     
+    // 🆕 استخراج روابط السوشيال ميديا
+    const fb = st.teacher?.socials?.facebook || st.teacher?.facebook;
+    const yt = st.teacher?.socials?.youtube || st.teacher?.youtube;
+    const tt = st.teacher?.socials?.tiktok || st.teacher?.tiktok;
+    const ig = st.teacher?.socials?.instagram || st.teacher?.instagram;
+    const web = st.teacher?.socials?.website || st.teacher?.website;
+    const waGroup = st.group?.whatsappLink;
+    
+    let socialsHtml = '<div class="teacher-socials">';
+    let hasSocials = false;
+    if(fb){ socialsHtml += `<a href="${fb}" target="_blank" class="teacher-social-link social-fb" title="فيسبوك">📘</a>`; hasSocials=true; }
+    if(yt){ socialsHtml += `<a href="${yt}" target="_blank" class="teacher-social-link social-yt" title="يوتيوب">📺</a>`; hasSocials=true; }
+    if(tt){ socialsHtml += `<a href="${tt}" target="_blank" class="teacher-social-link social-tt" title="تيك توك">🎵</a>`; hasSocials=true; }
+    if(ig){ socialsHtml += `<a href="${ig}" target="_blank" class="teacher-social-link social-ig" title="انستجرام">📷</a>`; hasSocials=true; }
+    if(web){ socialsHtml += `<a href="${web}" target="_blank" class="teacher-social-link social-web" title="الموقع">🌐</a>`; hasSocials=true; }
+    if(waGroup){ socialsHtml += `<a href="${waGroup}" target="_blank" class="teacher-social-link social-wa" title="جروب الواتساب">💬</a>`; hasSocials=true; }
+    socialsHtml += '</div>';
+    if(!hasSocials) socialsHtml = '';
+
     let billingHtml='';
     if(st.billing){
       if(st.billing.remaining>0){
@@ -543,8 +589,6 @@ window.renderTeachersCards=function(){
       }
     }
     
-    const waLink=st.group?.whatsappLink?`<a href="${st.group.whatsappLink}" target="_blank" class="wa-btn">💬 جروب الواتساب</a>`:'';
-    
     return `<div class="teacher-hero-card">
       <div class="teacher-hero-header">
         ${photo?`<img src="${photo}" class="teacher-hero-photo" onerror="this.outerHTML='<div class=\\'user-avatar\\' style=\\'width:72px;height:72px;font-size:24px;\\'>${st.teacher?.name?.charAt(0)||'?'}</div>'">`:`<div class="user-avatar" style="width:72px;height:72px;font-size:24px;">${st.teacher?.name?.charAt(0)||'?'}</div>`}
@@ -554,6 +598,7 @@ window.renderTeachersCards=function(){
           <div class="teacher-hero-group">
             👥 ${st.group?.name||'-'} · ${dayAr(st.group?.day)||''} ${T(st.group?.time)||''}
           </div>
+          ${socialsHtml}
         </div>
       </div>
       
@@ -587,13 +632,12 @@ window.renderTeachersCards=function(){
         <button class="btn btn-primary btn-sm" onclick="window.selectTeacher('${st.teacher.id}');window.showSection('grades');">📝 الدرجات</button>
         <button class="btn btn-primary btn-sm" onclick="window.selectTeacher('${st.teacher.id}');window.showSection('attendance');">📋 الحضور</button>
         <button class="btn btn-secondary btn-sm" onclick="window.selectTeacher('${st.teacher.id}');window.showSection('payments');">💰 الدفعات</button>
-        ${waLink}
+        ${waGroup ? `<a href="${waGroup}" target="_blank" class="wa-btn">💬 جروب الواتساب</a>` : ''}
       </div>
     </div>`;
   }).join('');
 };
 
-// نظرة عامة
 window.renderOverview=function(){
   try{
     if(!activeChild) return;
@@ -833,7 +877,6 @@ window.switchPTab=function(ev,id){
   document.getElementById('ptab-'+id)?.classList.add('active');
 };
 
-// الدرجات مع فلترة بالأستاذ
 window.loadGrades=function(){
   try{
     if(!activeChild) return;
@@ -919,7 +962,6 @@ window.loadGrades=function(){
   }catch(e){console.error('loadGrades error',e);}
 };
 
-// الحضور مع فلترة بالأستاذ
 window.loadAttendance=function(){
   try{
     if(!activeChild) return;
@@ -976,7 +1018,6 @@ window.loadAttendance=function(){
   }catch(e){console.error('loadAttendance error',e);}
 };
 
-// المدفوعات مع فلترة بالأستاذ
 window.loadPayments=function(){
   try{
     if(!activeChild) return;
