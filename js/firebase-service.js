@@ -15,6 +15,11 @@ const FirebaseService = {
       if(!this._app){
         this._app = firebase.apps.length ? firebase.app() : firebase.initializeApp(cfg);
         this._db = firebase.firestore(this._app);
+        try {
+  firebase.firestore().enablePersistence({ synchronizeTabs: true }).catch(function(err){
+    console.warn('Persistence:', err.code);
+  });
+} catch(e){}
       }
       this.connected = navigator.onLine !== false;
       this._loadQueue();

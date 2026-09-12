@@ -1,4 +1,19 @@
 // js/auth-service.js — إدارة المصادقة والصلاحيات
+// 🆕 تخزين موحّد (session + local) — إصلاح الدخول على كل الأجهزة والصفحات
+window.setEduUser = function(u){
+  try {
+    const raw = JSON.stringify(u);
+    sessionStorage.setItem('eduflow_user', raw);
+    localStorage.setItem('eduflow_user', raw);
+  } catch(e){}
+};
+window.clearEduUser = function(){
+  try {
+    sessionStorage.removeItem('eduflow_user');
+    localStorage.removeItem('eduflow_user');
+    sessionStorage.removeItem('eduflow_view_as');
+  } catch(e){}
+};
 const AuthService = {
   
   /**
@@ -21,7 +36,7 @@ const AuthService = {
     // 1) التحقق محلياً أولاً (من قاعدة البيانات المحلية)
     const local = DataService.authenticate(identifier, password);
     if (local) {
-      sessionStorage.setItem('eduflow_user', JSON.stringify(local));
+      window.setEduUser(local);
       return { success: true, user: local, source: 'local' };
     }
     
@@ -30,7 +45,7 @@ const AuthService = {
       try {
         const r = await FirebaseService.signIn(identifier, password);
         if (r) {
-          sessionStorage.setItem('eduflow_user', JSON.stringify(r));
+          window.setEduUser(r);
           return { success: true, user: r, source: 'firebase' };
         }
       } catch (e) { 
@@ -49,7 +64,7 @@ const AuthService = {
     if (!s) return { success: false, message: 'كود الطالب غير صحيح' };
     if (s.password && s.password !== password) return { success: false, message: 'كلمة المرور غير صحيحة' };
     
-    sessionStorage.setItem('eduflow_user', JSON.stringify(s));
+    window.setEduUser(s);
     return { success: true, user: s };
   },
 
@@ -70,7 +85,7 @@ const AuthService = {
       viaChildCode: true
     };
     
-    sessionStorage.setItem('eduflow_user', JSON.stringify(parent));
+    window.setEduUser(parent);
     return { success: true, user: parent };
   },
 
@@ -78,8 +93,7 @@ const AuthService = {
    * تسجيل الخروج
    */
   async logout() {
-    sessionStorage.removeItem('eduflow_user');
-    sessionStorage.removeItem('eduflow_view_as');
+    window.clearEduUser();
     if (window.FirebaseService?.connected) {
       try { await FirebaseService.signOut(); } catch(e) {}
     }
@@ -170,7 +184,7 @@ const AuthService = {
 
     await DataService.markTeacherRegisterLinkUsed(linkCode, teacher.id);
 
-    sessionStorage.setItem('eduflow_user', JSON.stringify(teacher));
+    window.setEduUser(teacher);
     return { success: true, user: teacher, code: teacher.id };
   }
 };

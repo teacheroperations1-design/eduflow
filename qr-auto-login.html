@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>جاري تسجيل الدخول...</title>
+<link rel="stylesheet" href="css/eduflow-theme.css">
+<style>
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    background: var(--bg);
+    font-family: var(--font-ar);
+}
+.loader-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+.loader-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    animation: bounce 1.5s infinite;
+}
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    margin: 20px auto;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.error-card {
+    background: var(--danger-bg);
+    border: 2px solid var(--danger);
+    color: var(--danger);
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 16px;
+}
+</style>
+</head>
+<body data-theme="dark">
+
+<div class="loader-card" id="loaderCard">
+    <div class="loader-icon">🎓</div>
+    <h2 id="statusTitle">جاري التحقق من الباركود...</h2>
+    <p id="statusMsg" class="text-muted">لحظات قليلة ونفتح حسابك</p>
+    <div class="spinner"></div>
+    <div id="errorBox"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="js/config.js"></script>
+<script src="js/firebase-service.js"></script>
+<script src="js/data-service.js"></script>
+<script src="js/operations-service.js"></script>
+<script src="js/theme-manager.js"></script>
+
+<script>
+(async function autoLogin() {
+    try {
+        // 1. تهيئة البيانات
+        if (typeof DataService?.init === 'function') await DataService.init();
+        if (window.Ops && typeof Ops.init === 'function') await Ops.init();
+        
+        // 2. استخراج كود الطالب من الرابط
+        const params = new URLSearchParams(location.search);
+        let code = params.get('code') || params.get('c') || '';
+        
+        // لو الباركود يحتوي على صيغة مثل EDU-XXXX أو code=XXXX
+        if (!code) {
+            const raw = params.get('data') || params.get('q') || location.hash.slice(1);
+            const m = String(raw || '').match(/code=([A-Za-z0-9-]+)/i) || String(raw || '').match(/(EDU-[A-Za-z0-9-]+)/i);
+            if (m) code = m[1];
+            else code = raw;
+        }
+        
+        if (!code) {
+            showError('❌ لا يوجد كود طالب في الباركود');
+            return;
+        }
+        
+        document.getElementById('statusMsg').textContent = `🔍 جاري البحث عن الكود: ${code}`;
+        
+        // 3. البحث عن الطالب
+        const users = DataService.getUsers ? DataService.getUsers() : [];
+        const student = users.find(u => 
+            u.role === 'student' && 
+            (u.code || '').toUpperCase() === code.toUpperCase()
+        );
+        
+        if (!student) {
+            showError(`❌ لم يتم العثور على طالب بالكود: ${code}<br>تأكد من صحة الباركود`);
+            return;
+        }
+        
+        // 4. ✅ تم العثور على الطالب - تسجيل الدخول التلقائي
+        document.getElementById('statusTitle').textContent = `أهلاً ${student.name} 👋`;
+        document.getElementById('statusMsg').textContent = 'جاري فتح حسابك...';
+        
+        // حفظ هوية الطالب في sessionStorage (نفس تقنية View-As)
+        try {
+            sessionStorage.setItem('eduflow_viewas', JSON.stringify(student));
+        } catch(e) {}
+        
+        // 5. إعادة التوجيه إلى داشبورد الطالب
+        setTimeout(() => {
+            window.location.href = `student-dashboard.html?viewas=${encodeURIComponent(student.id)}`;
+        }, 800);
+        
+    } catch (err) {
+        console.error('Auto-login error:', err);
+        showError('حدث خطأ أثناء تسجيل الدخول: ' + err.message);
+    }
+})();
+
+function showError(msg) {
+    document.getElementById('statusTitle').textContent = '⚠️ تعذر تسجيل الدخول';
+    document.querySelector('.spinner').style.display = 'none';
+    document.getElementById('errorBox').innerHTML = `
+        <div class="error-card">
+            <p>${msg}</p>
+            <a href="login.html" class="btn btn-primary" style="margin-top:12px;display:inline-block;">
+                ← الرجوع لتسجيل الدخول العادي
+            </a>
+        </div>
+    `;
+}
+</script>
+
+</body>
+</html>

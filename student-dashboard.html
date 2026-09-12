@@ -688,6 +688,15 @@ setInterval(function(){ try{ window.renderFloatNotifs(); }catch(e){} },30000);
 (async function boot(){
   try{
     if(typeof DataService?.init==='function') await DataService.init();
+    // 🆕 لو الرابط فيه viewas/license/code ومفيش جلسة → سجّل دخول تلقائي بعد تحميل البيانات
+    try{
+      const p=new URLSearchParams(location.search);
+      const vid=p.get('viewas')||p.get('license')||p.get('code');
+      if(vid && !AuthService?.getCurrentUser()){
+        const u=(DataService.getUsers?DataService.getUsers():[]).find(x=>x.id===vid||(x.code||'').toUpperCase()===String(vid).toUpperCase());
+        if(u){ if(window.setEduUser) window.setEduUser(u); else sessionStorage.setItem('eduflow_user',JSON.stringify(u)); }
+      }
+    }catch(e){}
     currentUser=AuthService?.getCurrentUser?AuthService.getCurrentUser():null;
     if(!currentUser){ window.location.href='login.html'; return; }
     if(currentUser.role === 'parent'){

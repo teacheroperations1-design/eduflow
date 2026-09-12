@@ -184,8 +184,11 @@ window.startCamera=async function(){
     scanning=true;
     requestAnimationFrame(window.tick);
   }catch(e){
+    console.error('Camera error:', e);
     const st=document.getElementById('scanStatus');
-    if(st) st.innerHTML='⚠️ الكاميرا غير متاحة — استخدم الإدخال اليدوي أو رفع صورة';
+    if(st) st.innerHTML = window.isSecureContext
+      ? '⚠️ المتصفح رفض الكاميرا — من إعدادات الموقع اسمح بالكاميرا، أو استخدم رفع صورة / الإدخال اليدوي'
+      : '⚠️ الكاميرا محتاجة HTTPS — افتح الموقع عبر https أو استخدم رفع صورة / الإدخال اليدوي';
     scanning=false;
   }
 };
@@ -466,6 +469,25 @@ window.handleScan = function(data) {
 
         if (!student && !parent) {
             ThemeManager.toast('❌ لم يتم العثور على طالب أو ولي أمر بهذا الكود', 'error');
+            return;
+        }
+
+        // 🆕 الباركود = رخصة دخول: لو مفيش جلسة، سجّل دخول تلقائي ودخل على طول
+        if (!currentUser && student) {
+            try {
+                if (window.setEduUser) window.setEduUser(student);
+                else sessionStorage.setItem('eduflow_user', JSON.stringify(student));
+                ThemeManager.toast('✅ أهلاً ' + student.name + ' — جاري فتح حسابك', 'success');
+                setTimeout(() => { window.location.href = 'student-dashboard.html'; }, 700);
+            } catch (e) { window.location.href = 'student-dashboard.html'; }
+            return;
+        }
+        if (!currentUser && parent) {
+            try {
+                if (window.setEduUser) window.setEduUser(parent);
+                else sessionStorage.setItem('eduflow_user', JSON.stringify(parent));
+                setTimeout(() => { window.location.href = 'parent-dashboard.html'; }, 700);
+            } catch (e) { window.location.href = 'parent-dashboard.html'; }
             return;
         }
 

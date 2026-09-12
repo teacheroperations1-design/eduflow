@@ -1173,7 +1173,8 @@ window.tab=function(t,btn){
 
 function enter(u){
   try{
-    sessionStorage.setItem('eduflow_user', JSON.stringify(u));
+    if(window.setEduUser) window.setEduUser(u);
+    else sessionStorage.setItem('eduflow_user', JSON.stringify(u));
     safeToast('أهلاً '+u.name,'success');
     if(u.role==='student' && String(u.password)==='1234'){
       setTimeout(()=>safeToast('⚠️ كلمة المرور الافتراضية 1234 — يُفضل تغييرها','warning'),1500);
@@ -1191,18 +1192,37 @@ window.doMainLogin=async function(e){
     const id=document.getElementById('mainId')?.value.trim()||'';
     const pass=document.getElementById('mainPass')?.value||'';
     if(!id||!pass){ safeToast('أكمل البيانات','error'); return false; }
-    
+
+    // 1) محلياً
     if(typeof DataService?.authenticateSmart==='function'){
-      const u = await DataService.authenticateSmart(id,pass);
+      const u=await DataService.authenticateSmart(id,pass);
       if(u){ enter(u); return false; }
     }
     if(id.toUpperCase().startsWith('EDU-') && typeof DataService?.findStudentByCode==='function'){
-      const s = await DataService.findStudentByCode(id);
+      const s=await DataService.findStudentByCode(id);
       if(s && String(s.password)===String(pass)){ enter(s); return false; }
     }
     if(typeof DataService?.authenticate==='function'){
-      const u = await DataService.authenticate(id,pass);
+      const u=await DataService.authenticate(id,pass);
       if(u){ enter(u); return false; }
+    }
+
+    // 2) 🆕 fallback من Firebase Firestore (للموقع المنشور)
+    if(window.FirebaseService?.connected && window.firebase){
+      try{
+        let doc=null;
+        const snap=await firebase.firestore().collection('users').where('email','==',id.toLowerCase()).limit(1).get();
+        if(!snap.empty) doc=snap.docs[0];
+        else{
+          const snap2=await firebase.firestore().collection('users').where('code','==',id.toUpperCase()).limit(1).get();
+          if(!snap2.empty) doc=snap2.docs[0];
+        }
+        if(doc){
+          const u={id:doc.id,...doc.data()};
+          if(String(u.password||'')===String(pass)){ enter(u); return false; }
+          safeToast('كلمة المرور غير صحيحة','error'); return false;
+        }
+      }catch(fe){ console.warn('Firebase fallback:',fe); }
     }
     safeToast('بيانات الدخول غير صحيحة','error');
   }catch(err){
