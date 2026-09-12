@@ -159,8 +159,8 @@ const ctx=canvas.getContext('2d',{willReadFrequently:true});
 (async function boot(){
   try{
     if(typeof DataService?.init==='function') await DataService.init();
-    currentUser = AuthService?.getCurrentUser ? AuthService.getCurrentUser() : null;
-    if(!currentUser){ window.location.href='login.html'; return; }
+    currentUser=AuthService?.getCurrentUser?AuthService.getCurrentUser():null;
+    
     window.startCamera();
   }catch(e){ console.error(e); }
 })();
@@ -291,7 +291,7 @@ window.openSmartModal = function(student) {
     
     const gids = teachers.map(t => t.group.id);
     const allHw = DataService.getHomework ? DataService.getHomework() : [];
-    const offlineHw = allHw.filter(h => gids.includes(h.groupId) && h.paper);
+    const offlineHw = allHw.filter(h => gids.includes(h.groupId) && (h.paper || h.offline));
     
     let hwOptions = '<option value="">-- بدون تسجيل واجب ورقي --</option>' + 
         offlineHw.map(h => {
@@ -407,6 +407,7 @@ window.submitSmartScan = async function(studentId) {
                         maxScore: hw.totalPoints || 10,
                         status: 'graded',
                         offline: true,
+                        paper: true,
                         gradedBy: currentUser.id,
                         submittedAt: new Date().toISOString()
                     };
@@ -415,6 +416,7 @@ window.submitSmartScan = async function(studentId) {
                     sub.score = score;
                     sub.status = 'graded';
                     sub.offline = true;
+                    sub.paper = true;
                     sub.gradedBy = currentUser.id;
                 }
                 DataService._saveData(d);
