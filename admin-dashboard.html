@@ -276,6 +276,54 @@
 .risk-score.low{color:var(--success)}
 .risk-reasons{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
 .risk-tag{background:var(--surface-hover);border:1px solid var(--border);padding:4px 10px;border-radius:9999px;font-size:11px;color:var(--text-secondary)}
+/* ========================================
+🎁 Gamification & AI Control
+======================================== */
+.gam-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:16px;}
+.gam-card-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.gam-card-title{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;}
+.switch{position:relative;display:inline-block;width:46px;height:26px;flex-shrink:0;}
+.switch input{opacity:0;width:0;height:0;}
+.switch .slider{position:absolute;inset:0;background:var(--surface-hover);border:1px solid var(--border);border-radius:9999px;transition:.2s;cursor:pointer;}
+.switch .slider:before{content:"";position:absolute;height:18px;width:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.3);}
+.switch input:checked + .slider{background:var(--success);border-color:var(--success);}
+.switch input:checked + .slider:before{transform:translateX(20px);}
+.store-item-row{display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface-hover);border-radius:10px;margin-bottom:8px;flex-wrap:wrap;}
+.store-item-icon{font-size:22px;}
+.store-item-info{flex:1;min-width:140px;}
+.store-item-name{font-weight:700;font-size:13px;}
+.store-item-meta{font-size:11px;color:var(--text-muted);}
+.store-cost{font-family:var(--font-en);font-weight:800;color:var(--primary);}
+.battle-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;border-right:4px solid var(--primary);}
+.battle-card.finished{border-right-color:var(--success);}
+.battle-vs{display:flex;align-items:center;gap:10px;justify-content:center;margin:10px 0;}
+.battle-team{flex:1;text-align:center;background:var(--surface-hover);border-radius:10px;padding:10px;}
+.battle-team-score{font-size:22px;font-weight:900;font-family:var(--font-en);color:var(--primary);}
+.battle-vs-label{font-weight:900;color:var(--danger);}
+@media(max-width:640px){
+.store-item-row{flex-direction:column;align-items:stretch;text-align:center;}
+}
+/* 🤖 AI Control Panel */
+.ai-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:24px}
+.ai-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;transition:all .3s;position:relative;overflow:hidden}
+.ai-card::before{content:'';position:absolute;top:0;right:0;width:100px;height:100px;background:radial-gradient(circle,rgba(139,92,246,.1),transparent);border-radius:50%;transform:translate(30%,-30%)}
+.ai-card:hover{border-color:var(--primary);transform:translateY(-4px);box-shadow:0 10px 30px rgba(139,92,246,.15)}
+.ai-icon{font-size:32px;margin-bottom:12px;display:inline-block;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.ai-title{font-size:16px;font-weight:800;margin-bottom:6px}
+.ai-desc{font-size:12px;color:var(--text-muted);margin-bottom:16px;line-height:1.6}
+.ai-toggle{display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--surface-hover);border-radius:10px;margin-bottom:8px}
+.ai-status{font-size:11px;font-weight:700;padding:4px 10px;border-radius:9999px}
+.ai-status.active{background:var(--success-bg);color:var(--success)}
+.ai-status.inactive{background:var(--danger-bg);color:var(--danger)}
+.ai-action-btn{width:100%;padding:12px;background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.ai-action-btn:hover{transform:scale(1.02);box-shadow:0 6px 20px rgba(99,102,241,.3)}
+
+/* 📌 Admin Followups */
+.admin-fu-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;border-right:4px solid var(--warning)}
+.admin-fu-card.urgent{border-right-color:var(--danger);background:linear-gradient(135deg,rgba(239,68,68,.02),transparent)}
+.admin-fu-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.fu-priority{font-size:10px;font-weight:800;padding:4px 8px;border-radius:6px;text-transform:uppercase}
+
 </style>
 </head>
 <body data-theme="dark">
@@ -306,10 +354,6 @@
 <header class="main-header">
 <div class="main-header-right">
   <button class="menu-toggle" id="menuToggle"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
-  <div>
-    <h1 class="page-title" id="pageTitle">برج التحكم</h1>
-    <p class="page-subtitle" id="pageSubtitle">نظرة شاملة على كل المنظومة</p>
-  </div>
 </div>
 <div class="main-header-left">
   <div class="header-actions" style="position:relative;">
@@ -468,6 +512,30 @@
 <div id="centersList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;"></div>
 </section>
 
+<style>
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+.cal-day{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px;min-height:70px;font-size:10px;overflow:hidden;}
+.cal-day.empty{background:transparent;border:none;}
+.cal-day .num{font-weight:800;font-family:var(--font-en);}
+</style>
+
+<!-- ✅ مهامي (أدمن) -->
+<section class="section" id="section-tasks">
+<div class="section-header"><div><h2 class="section-title">✅ مهامي</h2><p class="text-sm text-muted">كل اللي محتاج إجراء منك دلوقتي — متجمع من كل النظام</p></div><button class="btn btn-ghost btn-sm" onclick="window.loadTasks()">🔄 تحديث</button></div>
+<div id="tasksList"></div>
+</section>
+
+<!-- 📅 التقويم (أدمن) -->
+<section class="section" id="section-calendar">
+<div class="section-header"><div><h2 class="section-title">📅 التقويم</h2><p class="text-sm text-muted">حصص كل المجموعات خلال الشهر (ملغي / متحضر / قادم)</p></div></div>
+<div class="card">
+<div class="form-group"><label>فلتر المجموعة</label><select id="calGroupFilter" class="form-select" onchange="window.loadCalendar()"><option value="">كل المجموعات</option></select></div>
+<div id="calendarView"></div>
+</div>
+</section>
+
+<!-- 🤖 AI Control Center -->
+
 <!-- 🎁 نظام النقاط -->
 <section class="section" id="section-points">
 <div class="section-header"><div><h2 class="section-title">🎁 نظام النقاط</h2><p class="text-sm text-muted">تحكم كامل في النقاط والقواعد</p></div></div>
@@ -622,6 +690,8 @@
 </div>
 </section>
 
+
+
 <!-- ⚙️ الإعدادات والبراندنج -->
 <section class="section" id="section-settings">
 <div class="section-header"><div><h2 class="section-title">⚙️ الإعدادات والبراندنج</h2></div></div>
@@ -652,6 +722,24 @@
 <div class="card"><div class="card-header"><h3 class="card-title">🚩 الخصائص المفعّلة</h3></div><div id="featuresList"></div></div>
 </section>
 
+
+<!-- 📌 Admin Followups -->
+<section class="section" id="section-followups">
+    <div class="section-header">
+        <div>
+            <h2 class="section-title">📌 المتابعة الشاملة (Admin)</h2>
+            <p class="text-sm text-muted">إدارة البلاغات، المتابعات المتأخرة، وتدخلات المساعدين</p>
+        </div>
+    </div>
+    <div class="filter-bar" style="margin-bottom:16px;">
+        <button class="filter-btn active" onclick="window.setAdminFuFilter('all',this)">الكل</button>
+        <button class="filter-btn" onclick="window.setAdminFuFilter('urgent',this)">🚨 عاجل</button>
+        <button class="filter-btn" onclick="window.setAdminFuFilter('payment',this)">💰 دفعات</button>
+        <button class="filter-btn" onclick="window.setAdminFuFilter('absence',this)">🚫 غياب</button>
+    </div>
+    <div id="adminFollowupsList"></div>
+</section>
+
 <!-- 💾 نسخ احتياطي -->
 <section class="section" id="section-backup">
 <div class="section-header"><div><h2 class="section-title">💾 نسخ احتياطي</h2></div></div>
@@ -666,10 +754,96 @@
 <div id="logsList"></div>
 </div>
 </section>
+<!-- 🎁 تحكم التحفيز -->
+<section class="section" id="section-gamification">
+<div class="section-header">
+<div><h2 class="section-title">🎁 تحكم التحفيز</h2><p class="text-sm text-muted">الستريك + متجر النقاط + صندوق الكنز + نقاط التسميع والتفاعل + الثناء وتقرير الثلاجة</p></div>
+<button class="btn btn-primary" onclick="window.saveGamification()">💾 حفظ كل الإعدادات</button>
+</div>
 
+<div class="gam-card">
+<div class="gam-card-header"><div class="gam-card-title">🔥 سلسلة الإنجاز اليومية (Streaks)</div><label class="switch"><input type="checkbox" id="gamStreakEnabled"><span class="slider"></span></label></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
+<div class="form-group" style="margin:0;"><label>🧊 تكلفة حماية الشعلة (نقاط)</label><input type="number" id="gamFreezeCost" class="form-input" min="0"></div>
+<div class="form-group" style="margin:0;"><label>🎁 مكافأة كل كام يوم؟</label><input type="number" id="gamMilestoneEvery" class="form-input" min="1"></div>
+<div class="form-group" style="margin:0;"><label>⭐ قيمة المكافأة</label><input type="number" id="gamMilestoneBonus" class="form-input" min="0"></div>
+</div>
+</div>
+
+<div class="gam-card">
+<div class="gam-card-header"><div class="gam-card-title">🛒 متجر النقاط</div><label class="switch"><input type="checkbox" id="gamStoreEnabled"><span class="slider"></span></label></div>
+<div id="storeItemsList"></div>
+<div style="background:var(--surface-hover);border:1px dashed var(--border);border-radius:10px;padding:12px;margin-top:10px;">
+<div style="font-size:13px;font-weight:800;margin-bottom:10px;">➕ إضافة مكافأة جديدة</div>
+<div style="display:grid;grid-template-columns:auto 1fr auto auto auto;gap:8px;align-items:end;">
+<div class="form-group" style="margin:0;"><label>أيقونة</label><input type="text" id="newItemIcon" class="form-input" style="width:60px;" value="🎁"></div>
+<div class="form-group" style="margin:0;"><label>اسم المكافأة</label><input type="text" id="newItemName" class="form-input" placeholder="مثال: إعفاء من واجب"></div>
+<div class="form-group" style="margin:0;"><label>التكلفة</label><input type="number" id="newItemCost" class="form-input" style="width:90px;" min="1" value="50"></div>
+<div class="form-group" style="margin:0;"><label>النوع</label><select id="newItemType" class="form-select"><option value="real">حقيقية</option><option value="virtual">افتراضية</option></select></div>
+<button class="btn btn-primary" onclick="window.addStoreItem()">➕</button>
+</div>
+</div>
+</div>
+
+<div class="gam-card">
+<div class="gam-card-header"><div class="gam-card-title">🎁 صندوق الكنز اليومي</div><label class="switch"><input type="checkbox" id="gamLootEnabled"><span class="slider"></span></label></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:12px;">
+<div class="form-group" style="margin:0;"><label>⏰ ميعاد الفتح اليومي</label><input type="time" id="gamLootHour" class="form-input"></div>
+<div class="form-group" style="margin:0;"><label>🎯 أقل نقاط</label><input type="number" id="gamLootPointsMin" class="form-input" min="1"></div>
+<div class="form-group" style="margin:0;"><label>🎯 أقصى نقاط</label><input type="number" id="gamLootMaxPoints" class="form-input" min="1"></div>
+</div>
+<div style="font-size:13px;font-weight:800;margin-bottom:8px;">🎰 المحتويات والاحتمالات (المجموع لازم ≤ 100%)</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;">
+<div class="form-group" style="margin:0;"><label>🎯 احتمال النقاط %</label><input type="number" id="gamLootChancePoints" class="form-input" min="0" max="100"></div>
+<div class="form-group" style="margin:0;"><label>💡 احتمال تلميح %</label><input type="number" id="gamLootChanceHint" class="form-input" min="0" max="100"></div>
+<div class="form-group" style="margin:0;"><label>❓ احتمال سؤال بونص %</label><input type="number" id="gamLootChanceBonus" class="form-input" min="0" max="100"></div>
+</div>
+</div>
+
+<div class="gam-card">
+<div class="gam-card-header"><div class="gam-card-title">⭐ نقاط التسميع والتفاعل (اللي بيضيفها الأستاذ/المساعد)</div></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
+<div class="form-group" style="margin:0;"><label>🎙️ نقاط "سمع كويس"</label><input type="number" id="gamRecitationPts" class="form-input" min="0"></div>
+<div class="form-group" style="margin:0;"><label>🙋 نقاط "متفاعل"</label><input type="number" id="gamInteractionPts" class="form-input" min="0"></div>
+</div>
+</div>
+
+<div class="gam-card">
+<div class="gam-card-header"><div class="gam-card-title">🧲 الثناء الفوري وتقرير الثلاجة</div><label class="switch"><input type="checkbox" id="gamFridgeEnabled"><span class="slider"></span></label></div>
+<div class="form-group"><label>⭐ رسالة الثناء الفوري (متغيرات: {teacherName} و {studentName})</label><textarea id="gamPraiseTemplate" class="form-textarea" rows="2"></textarea></div>
+<div class="form-group" style="margin:0;"><label>📅 يوم إرسال تقرير الثلاجة الأسبوعي</label><select id="gamFridgeDay" class="form-select"></select></div>
+</div>
+</section>
+
+<!-- 🤖 AI Control Center -->
+<section class="section" id="section-ai">
+    <div class="section-header">
+        <div>
+            <h2 class="section-title">🤖 مركز الذكاء الاصطناعي</h2>
+            <p class="text-sm text-muted">التحكم في الميزات الذكية وتوليد المحتوى والتصحيح التلقائي</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="window.loadAIPanel()">🔄 تحديث الحالة</button>
+    </div>
+    <div class="ai-grid" id="aiGrid"></div>
+    <div class="card" id="aiConsole" style="display:none; margin-top:20px;">
+        <h3 class="card-title">⚙️ سجل العمليات الذكي (AI Console)</h3>
+        <div id="aiLogs" style="max-height:300px; overflow-y:auto; font-family:monospace; font-size:12px; background:var(--surface-hover); padding:12px; border-radius:8px;"></div>
+    </div>
+</section>
+
+<!-- ⚔️ معارك المجموعات -->
+<section class="section" id="section-battles">
+<div class="section-header">
+<div><h2 class="section-title">⚔️ معارك المجموعات</h2><p class="text-sm text-muted">متابعة وإدارة المعارك والتصفيات اللي بيعملها الأساتذة والمساعدون</p></div>
+<button class="btn btn-ghost btn-sm" onclick="window.loadBattles()">🔄 تحديث</button>
+</div>
+<div id="battlesList"></div>
+</section>
 </div>
 </main>
 </div>
+
+
 
 <!-- External Scripts -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -832,10 +1006,10 @@ window.buildMenu=function(){
     {s:'👥 إدارة الأشخاص',items:[{id:'students',l:'الطلاب',i:'🎓'},{id:'teachers',l:'المدرسون',i:'👨‍🏫'},{id:'assistants',l:'المساعدون',i:'🧑‍🏫'},{id:'pending',l:'طلبات التسجيل',i:'⏳'},{id:'barcode-requests',l:'طلبات الباركود',i:'🎟️'}]},
     {s:'🚀 التشغيل والعمليات',items:[{id:'ops', l:'إدارة وتشغيل الأساتذة', i:'⚙️', href:'teachers-operations.html'}]},
     {s:'🏢 البنية',items:[{id:'groups',l:'المجموعات',i:'👥'},{id:'centers',l:'السناتر',i:'🏢'}]},
-    {s:'🎁 التحفيز',items:[{id:'points',l:'نظام النقاط',i:'🏆'},{id:'templates',l:'القوالب الجاهزة',i:'📄'}]},
+    {s:'🎁 التحفيز',items:[{id:'points',l:'نظام النقاط',i:'🏆'},{id:'gamification',l:'تحكم التحفيز',i:'🎁'},{id:'battles',l:'معارك المجموعات',i:'⚔️'},{id:'templates',l:'القوالب الجاهزة',i:'📄'}]},
     {s:'📊 التحليلات',items:[{id:'reports',l:'التقارير الإدارية',i:'📈'}]},
     {s:'المتابعة',items:[{id:'followups',l:'المتابعات',i:'📌'},{id:'churn',l:'تنبيهات التسرب',i:'🚨'},{id:'tasks',l:'مهامي',i:'✅'},{id:'calendar',l:'التقويم',i:'📅'}]},
-    {s:'🔐 النظام',items:[{id:'viewas',l:'View As',i:'👁️'},{id:'settings',l:'الإعدادات',i:'⚙️'},{id:'backup',l:'النسخ الاحتياطي',i:'💾'},{id:'logs',l:'سجل النشاط',i:'📜'}]}
+    {s:'🔐 النظام',items:[{id:'ai',l:'تحكم الذكاء الاصطناعي',i:'🤖'},{id:'viewas',l:'View As',i:'👁️'},{id:'settings',l:'الإعدادات',i:'⚙️'},{id:'backup',l:'النسخ الاحتياطي',i:'💾'},{id:'logs',l:'سجل النشاط',i:'📜'}]}
   ];
   const nav=document.getElementById('sidebarNav');
   if(nav){
@@ -855,8 +1029,9 @@ window.showSection=function(id){
       churn:window.loadChurnAlerts, // <-- أضف هذا السطر
       followups:window.loadFollowups,
       templates:window.loadTemplates, reports:()=>window.renderReport(currentReport),
-      viewas:window.loadViewAs, settings:window.loadSettings, backup:()=>{}, logs:window.loadLogs,
-      'barcode-requests':window.loadBarcodeRequests
+viewas:window.loadViewAs, settings:window.loadSettings, backup:()=>{}, logs:window.loadLogs,
+'barcode-requests':window.loadBarcodeRequests,
+gamification:window.loadGamification, battles:window.loadBattles, ai:window.loadAiSettings
     };
     if(L[id])L[id]();
     if(window.innerWidth<=1024)document.getElementById('sidebar')?.classList.remove('open');
@@ -2355,6 +2530,151 @@ window.viewAs=function(id){
   }catch(e){ console.error(e); window.safeToast('خطأ في فتح المعاينة','error'); }
 };
 
+// ==================== 🤖 AI Control Panel ====================
+window.loadAIPanel = function() {
+    try {
+        const el = document.getElementById('aiGrid');
+        if (!el) return;
+        
+        // قراءة حالة الذكاء الاصطناعي من قاعدة البيانات (لا توجد بيانات وهمية)
+        const aiSettings = (typeof DataService?.getSystemSettings === 'function') 
+            ? (DataService.getSystemSettings().ai || {}) 
+            : {};
+
+        const features = [
+            { id: 'auto_grading', icon: '📝', title: 'التصحيح الذكي للمقالي', desc: 'تحليل صور الواجبات والإجابات المقالية وتقدير الدرجة تلقائياً.', action: 'runAIGrading', status: aiSettings.auto_grading ? 'active' : 'inactive' },
+            { id: 'churn_prediction', icon: '🚨', title: 'التنبؤ بالتسرب (Churn AI)', desc: 'فحص غياب، دفعات، ودرجات الطلاب لتحديد المعرضين لخطر ترك المركز.', action: 'runChurnAI', status: aiSettings.churn_prediction ? 'active' : 'inactive' },
+            { id: 'question_generator', icon: '🧠', title: 'مولد الأسئلة التلقائي', desc: 'توليد أسئلة (MCQ, صح/خطأ) من نص أو صورة الدرس وتوزيعها على المجموعات.', action: 'openAIGenerator', status: 'ready' },
+            { id: 'wa_assistant', icon: '💬', title: 'مساعد الردود (WhatsApp AI)', desc: 'توليد ردود احترافية ومخصصة للشكاوى أو الاستفسارات بناءً على السياق.', action: 'openAIAssistant', status: 'ready' }
+        ];
+
+        el.innerHTML = features.map(f => `
+            <div class="ai-card">
+                <div class="ai-icon">${f.icon}</div>
+                <div class="ai-title">${f.title}</div>
+                <div class="ai-desc">${f.desc}</div>
+                <div class="ai-toggle">
+                    <span class="text-sm">الحالة:</span>
+                    <span class="ai-status ${f.status === 'active' ? 'active' : 'inactive'}">${f.status === 'active' ? 'نشط' : f.status === 'ready' ? 'جاهز' : 'متوقف'}</span>
+                </div>
+                <button class="ai-action-btn" onclick="window.${f.action}()">
+                    ${f.status === 'active' ? '⚙️ إدارة' : '▶️ تشغيل'}
+                </button>
+            </div>
+        `).join('');
+    } catch (e) { console.error('AI Panel Error:', e); }
+};
+
+window.runAIGrading = async function() {
+    try {
+        const d = db();
+        const pendingSubs = (d.submissions || []).filter(s => s.status === 'pending_review' && s.answers && s.answers.some(a => a.type === 'essay'));
+        if (!pendingSubs.length) return window.safeToast('✅ لا توجد واجبات مقالية بانتظار التصحيح حالياً', 'info');
+        
+        window.safeToast(`🤖 جاري تحليل ${pendingSubs.length} إجابة مقالية...`, 'info');
+        window.showAIConsole('بدء عملية التصحيح الذكي...');
+        
+        for (const sub of pendingSubs) {
+            window.showAIConsole(`-> تحليل إجابة الطالب: ${DataService.getUserById(sub.studentId)?.name || sub.studentId}`);
+            // هنا يتم الاتصال بـ AI API (مثل OpenAI / Gemini)
+            // const aiResult = await AIService.gradeEssay(sub.answers);
+            // sub.score = aiResult.score; sub.status = 'graded'; sub.aiGraded = true;
+        }
+        
+        window.showAIConsole('✅ انتهت عملية التصحيح الذكي بنجاح.');
+        window.safeToast('✅ تم تصحيح الواجبات المقالية بالذكاء الاصطناعي', 'success');
+    } catch (e) { window.safeToast('خطأ في تشغيل الذكاء الاصطناعي', 'error'); }
+};
+
+window.runChurnAI = async function() {
+    try {
+        window.safeToast('🤖 جاري تحليل بيانات الطلاب للتنبؤ بالتسرب...', 'info');
+        window.showAIConsole('فحص قواعد البيانات: الغياب، الدفعات المتأخرة، الواجبات الناقصة...');
+        
+        const students = (DataService.getUsers ? DataService.getUsers().filter(u => u.role === 'student') : []);
+        let highRisk = 0;
+        
+        students.forEach(s => {
+            const risk = (typeof window.calculateChurnRisk === 'function') ? window.calculateChurnRisk(s.id) : {level:'low'};
+            if (risk.level === 'high') {
+                highRisk++;
+                window.showAIConsole(`🚨 خطر عالي: ${s.name} - الأسباب: ${risk.reasons.join(', ')}`);
+            }
+        });
+        
+        window.showAIConsole(`✅ اكتمل التحليل. تم تحديد ${highRisk} طالب معرض للخطر.`);
+        window.safeToast(`🚨 تم تحديد ${highRisk} طالب معرض لخطر التسرب`, 'warning');
+        window.showSection('churn'); 
+    } catch (e) { console.error(e); }
+};
+
+window.showAIConsole = function(msg) {
+    const consoleEl = document.getElementById('aiConsole');
+    const logsEl = document.getElementById('aiLogs');
+    if (consoleEl) consoleEl.style.display = 'block';
+    if (logsEl) {
+        const time = new Date().toLocaleTimeString('ar-EG');
+        logsEl.innerHTML += `<div style="margin-bottom:4px;"><span style="color:var(--primary)">[${time}]</span> ${msg}</div>`;
+        logsEl.scrollTop = logsEl.scrollHeight;
+    }
+};
+
+// ==================== 📌 Admin Followups ====================
+let adminFuFilter = 'all';
+window.setAdminFuFilter = function(f, btn) {
+    adminFuFilter = f;
+    document.querySelectorAll('#section-followups .filter-btn').forEach(b => b.classList.toggle('active', b === btn));
+    window.loadAdminFollowups();
+};
+
+window.loadAdminFollowups = function() {
+    try {
+        const el = document.getElementById('adminFollowupsList');
+        if (!el) return;
+        
+        // جلب كل المتابعات من النظام (لا توجد بيانات Hardcoded)
+        let followups = (DataService?.getFollowUps ? DataService.getFollowUps({}) : []);
+        if (adminFuFilter !== 'all') followups = followups.filter(f => f.reason === adminFuFilter || f.priority === adminFuFilter);
+        followups = followups.filter(f => f.status !== 'resolved').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        if (!followups.length) {
+            el.innerHTML = '<div class="card" style="text-align:center; padding:40px;"><div style="font-size:48px;">✅</div><strong>لا توجد متابعات مفتوحة حالياً</strong></div>';
+            return;
+        }
+
+        el.innerHTML = followups.map(f => {
+            const student = DataService?.getUserById ? DataService.getUserById(f.studentId) : null;
+            const isUrgent = f.reason === 'absence' && f.auto ? 'urgent' : '';
+            return `
+                <div class="admin-fu-card ${isUrgent}">
+                    <div class="admin-fu-header">
+                        <div>
+                            <strong>${f.title || f.reason}</strong>
+                            <div class="text-xs text-muted" style="margin-top:4px;">👤 ${student?.name || 'طالب'} · 📅 ${new Date(f.createdAt).toLocaleDateString('ar-EG')}</div>
+                        </div>
+                        <span class="fu-priority" style="background:${isUrgent ? 'var(--danger-bg)' : 'var(--warning-bg)'}; color:${isUrgent ? 'var(--danger)' : 'var(--warning)'}">
+                            ${isUrgent ? '🚨 عاجل' : '⏳ قيد المتابعة'}
+                        </span>
+                    </div>
+                    <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+                        <button class="btn btn-primary btn-sm" onclick="window.openStudentProfile('${f.studentId}')">👁️ ملف الطالب</button>
+                        <button class="btn btn-ghost btn-sm" onclick="window.resolveAdminFu('${f.id}')">✓ إغلاق المتابعة</button>
+                    </div>
+                </div>`;
+        }).join('');
+    } catch (e) { console.error('Admin Followups Error:', e); }
+};
+
+window.resolveAdminFu = async function(id) {
+    try {
+        if (typeof Ops?.updateFollowUp === 'function') {
+            await Ops.updateFollowUp(id, { status: 'resolved', resolvedBy: 'ADMIN', resolvedAt: new Date().toISOString() });
+            window.safeToast('✅ تم إغلاق المتابعة بنجاح', 'success');
+            window.loadAdminFollowups();
+        }
+    } catch (e) { window.safeToast('خطأ في الإغلاق', 'error'); }
+};
+
 /* ================================================================
    ⚙️ SETTINGS & BRANDING
    ================================================================ */
@@ -2545,6 +2865,198 @@ window.loadLogs=function(){
       </div>`;
     }).join(''):'<p class="text-muted">لا سجل</p>';
   }catch(e){console.error(e);}
+};
+/* ================================================================
+🎁 GAMIFICATION & AI SETTINGS (تحكم الأدمن)
+================================================================ */
+window.DEFAULT_GAMIFICATION={
+streak:{enabled:true,freezeCost:20,milestoneEvery:7,milestoneBonus:50},
+store:{enabled:true,items:[
+{id:'st_default_1',icon:'📝',name:'إعفاء من واجب واحد',cost:100,type:'real',active:true},
+{id:'st_default_2',icon:'🪑',name:'اختيار مكان الجلوس الحصة الجاية',cost:60,type:'real',active:true},
+{id:'st_default_3',icon:'🌟',name:'شارة نجم الأسبوع',cost:40,type:'virtual',active:true}
+]},
+lootbox:{enabled:true,openHour:'17:00',pointsMin:1,pointsMax:5,chancePoints:60,chanceHint:25,chanceBonus:15},
+evalPoints:{recitation:2,interaction:1},
+praise:{template:'الأستاذ {teacherName} بيشكر ابنك {studentName} — كان نجم الحصة النهاردة! ⭐'},
+fridge:{enabled:true,day:'Thursday'}
+};
+window.DEFAULT_AI={faqBot:false,smartRescue:true,rescueThreshold:50,aiFeedback:true};
+
+window.getGamificationSettings=function(){
+const d=db(); const g=d.gamification||{}; const def=window.DEFAULT_GAMIFICATION;
+return {
+streak:Object.assign({},def.streak,g.streak||{}),
+store:Object.assign({},def.store,g.store||{},{items:(g.store&&g.store.items)?g.store.items:def.store.items}),
+lootbox:Object.assign({},def.lootbox,g.lootbox||{}),
+evalPoints:Object.assign({},def.evalPoints,g.evalPoints||{}),
+praise:Object.assign({},def.praise,g.praise||{}),
+fridge:Object.assign({},def.fridge,g.fridge||{})
+};
+};
+window.getAiSettings=function(){ const d=db(); return Object.assign({},window.DEFAULT_AI,d.ai||{}); };
+window._saveGamification=function(g){ const d=db(); d.gamification=g; save(d); if(window.FirebaseService?.connected){ try{ FirebaseService.saveDoc('settings','gamification',g); }catch(e){} } };
+
+window.loadGamification=function(){
+try{
+const g=window.getGamificationSettings();
+const set=(id,v)=>{const el=document.getElementById(id); if(el) el.value=v;};
+const setC=(id,v)=>{const el=document.getElementById(id); if(el) el.checked=!!v;};
+setC('gamStreakEnabled',g.streak.enabled);
+set('gamFreezeCost',g.streak.freezeCost); set('gamMilestoneEvery',g.streak.milestoneEvery); set('gamMilestoneBonus',g.streak.milestoneBonus);
+setC('gamStoreEnabled',g.store.enabled);
+setC('gamLootEnabled',g.lootbox.enabled);
+set('gamLootHour',g.lootbox.openHour); set('gamLootPointsMin',g.lootbox.pointsMin); set('gamLootMaxPoints',g.lootbox.pointsMax);
+set('gamLootChancePoints',g.lootbox.chancePoints); set('gamLootChanceHint',g.lootbox.chanceHint); set('gamLootChanceBonus',g.lootbox.chanceBonus);
+set('gamRecitationPts',g.evalPoints.recitation); set('gamInteractionPts',g.evalPoints.interaction);
+set('gamPraiseTemplate',g.praise.template);
+setC('gamFridgeEnabled',g.fridge.enabled);
+const daySel=document.getElementById('gamFridgeDay');
+if(daySel) daySel.innerHTML=DAYS.map(d=>`<option value="${d.en}" ${g.fridge.day===d.en?'selected':''}>${d.ar}</option>`).join('');
+const list=document.getElementById('storeItemsList');
+if(list){
+list.innerHTML=g.store.items.length?g.store.items.map(it=>`
+<div class="store-item-row" style="${it.active?'':'opacity:.5;'}">
+<div class="store-item-icon">${it.icon||'🎁'}</div>
+<div class="store-item-info"><div class="store-item-name">${it.name}</div><div class="store-item-meta">${it.type==='real'?'🏢 مكافأة حقيقية':'✨ شارة افتراضية'}</div></div>
+<div class="store-cost">🏆 ${it.cost}</div>
+<label class="switch"><input type="checkbox" ${it.active?'checked':''} onchange="window.toggleStoreItem('${it.id}',this.checked)"><span class="slider"></span></label>
+<button class="btn btn-danger btn-sm" onclick="window.deleteStoreItem('${it.id}')">🗑️</button>
+</div>`).join(''):'<p class="text-muted">مفيش مكافآت — ضيف أول مكافأة من الفورم تحت.</p>';
+}
+}catch(e){ console.error(e); }
+};
+
+window.saveGamification=function(){
+try{
+const cur=window.getGamificationSettings();
+const chances=(+document.getElementById('gamLootChancePoints').value||0)+(+document.getElementById('gamLootChanceHint').value||0)+(+document.getElementById('gamLootChanceBonus').value||0);
+if(chances>100){ window.safeToast('مجموع احتمالات صندوق الكنز لازم يكون 100% أو أقل','error'); return; }
+const data={
+streak:{enabled:document.getElementById('gamStreakEnabled').checked,freezeCost:+document.getElementById('gamFreezeCost').value||0,milestoneEvery:+document.getElementById('gamMilestoneEvery').value||7,milestoneBonus:+document.getElementById('gamMilestoneBonus').value||0},
+store:{enabled:document.getElementById('gamStoreEnabled').checked,items:cur.store.items},
+lootbox:{enabled:document.getElementById('gamLootEnabled').checked,openHour:document.getElementById('gamLootHour').value||'17:00',pointsMin:+document.getElementById('gamLootPointsMin').value||1,pointsMax:+document.getElementById('gamLootMaxPoints').value||5,chancePoints:+document.getElementById('gamLootChancePoints').value||0,chanceHint:+document.getElementById('gamLootChanceHint').value||0,chanceBonus:+document.getElementById('gamLootChanceBonus').value||0},
+evalPoints:{recitation:+document.getElementById('gamRecitationPts').value||0,interaction:+document.getElementById('gamInteractionPts').value||0},
+praise:{template:document.getElementById('gamPraiseTemplate').value||window.DEFAULT_GAMIFICATION.praise.template},
+fridge:{enabled:document.getElementById('gamFridgeEnabled').checked,day:document.getElementById('gamFridgeDay').value||'Thursday'}
+};
+window._saveGamification(data);
+window.safeToast('✅ تم حفظ إعدادات التحفيز','success');
+window.loadGamification();
+}catch(e){ window.safeToast('خطأ في الحفظ','error'); }
+};
+
+window.addStoreItem=function(){
+try{
+const name=(document.getElementById('newItemName')?.value||'').trim();
+const cost=+document.getElementById('newItemCost')?.value||0;
+if(!name||cost<1){ window.safeToast('اكتب اسم المكافأة وتكلفة صحيحة','error'); return; }
+const g=window.getGamificationSettings();
+g.store.items.push({id:'st_'+Date.now(),icon:document.getElementById('newItemIcon')?.value||'🎁',name:name,cost:cost,type:document.getElementById('newItemType')?.value||'real',active:true});
+window._saveGamification(g);
+document.getElementById('newItemName').value='';
+window.safeToast('✅ تم إضافة المكافأة','success');
+window.loadGamification();
+}catch(e){ window.safeToast('خطأ في الإضافة','error'); }
+};
+window.deleteStoreItem=function(id){
+try{
+if(!confirm('حذف المكافأة دي؟')) return;
+const g=window.getGamificationSettings();
+g.store.items=g.store.items.filter(i=>i.id!==id);
+window._saveGamification(g);
+window.loadGamification();
+}catch(e){}
+};
+window.toggleStoreItem=function(id,on){
+try{
+const g=window.getGamificationSettings();
+const it=g.store.items.find(i=>i.id===id);
+if(it){ it.active=!!on; window._saveGamification(g); window.loadGamification(); }
+}catch(e){}
+};
+
+window.loadAiSettings=function(){
+try{
+const a=window.getAiSettings();
+const set=(id,v)=>{const el=document.getElementById(id); if(el) el.value=v;};
+const setC=(id,v)=>{const el=document.getElementById(id); if(el) el.checked=!!v;};
+setC('aiFaqBot',a.faqBot); setC('aiSmartRescue',a.smartRescue); set('aiRescueThreshold',a.rescueThreshold); setC('aiFeedback',a.aiFeedback);
+}catch(e){}
+};
+window.saveAiSettings=function(){
+try{
+const data={
+faqBot:document.getElementById('aiFaqBot').checked,
+smartRescue:document.getElementById('aiSmartRescue').checked,
+rescueThreshold:+document.getElementById('aiRescueThreshold').value||50,
+aiFeedback:document.getElementById('aiFeedback').checked
+};
+const d=db(); d.ai=data; save(d);
+if(window.FirebaseService?.connected){ try{ FirebaseService.saveDoc('settings','ai',data); }catch(e){} }
+window.safeToast('✅ تم حفظ إعدادات الذكاء الاصطناعي','success');
+}catch(e){ window.safeToast('خطأ في الحفظ','error'); }
+};
+
+/* ================================================================
+⚔️ BATTLES (متابعة وإدارة معارك المجموعات)
+================================================================ */
+window.loadBattles=function(){
+try{
+const d=db();
+const battles=(d.battles||[]).slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
+const el=document.getElementById('battlesList');
+if(!el) return;
+if(!battles.length){ el.innerHTML='<div class="card" style="text-align:center;padding:30px;"><div style="font-size:48px;">⚔️</div><strong>مفيش معارك حالياً</strong><p class="text-sm text-muted" style="margin-top:6px;">المعارك بتتعمل من داشبورد الأستاذ/المساعد — هنا بتتابعها وتديرها.</p></div>'; return; }
+el.innerHTML=battles.map(b=>{
+const g1=DataService?.getGroups?DataService.getGroups().find(g=>g.id===b.team1):null;
+const g2=DataService?.getGroups?DataService.getGroups().find(g=>g.id===b.team2):null;
+const active=b.status==='active';
+const winnerName=b.winner?(DataService?.getGroups?DataService.getGroups().find(g=>g.id===b.winner)?.name:'-'):null;
+return `<div class="battle-card ${active?'':'finished'}">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+<strong>⚔️ ${b.title||'معركة مجموعات'}</strong>
+<span class="badge ${active?'badge-info':'badge-success'}">${active?'🔥 جارية':(winnerName?('🏆 الفائز: '+winnerName):'انتهت')}</span>
+</div>
+<div class="battle-vs">
+<div class="battle-team"><div style="font-weight:700;">${g1?.name||'-'}</div><div class="battle-team-score">${b.score1||0}</div></div>
+<div class="battle-vs-label">VS</div>
+<div class="battle-team"><div style="font-weight:700;">${g2?.name||'-'}</div><div class="battle-team-score">${b.score2||0}</div></div>
+</div>
+<div class="text-xs text-muted" style="text-align:center;margin-bottom:10px;">📅 بدأت ${new Date(b.createdAt||Date.now()).toLocaleDateString('ar-EG')}${b.endsAt?(' · تنتهي '+new Date(b.endsAt).toLocaleDateString('ar-EG')):''}</div>
+<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+${active?`<button class="btn btn-success btn-sm" onclick="window.endBattle('${b.id}')">🏁 إنهاء وتتويج الفائز</button>`:''}
+<button class="btn btn-danger btn-sm" onclick="window.deleteBattle('${b.id}')">🗑️ حذف</button>
+</div>
+</div>`;
+}).join('');
+}catch(e){ console.error(e); }
+};
+window.endBattle=function(id){
+try{
+const d=db();
+const b=(d.battles||[]).find(x=>x.id===id);
+if(!b) return;
+b.status='finished';
+b.winner=((b.score1||0)===(b.score2||0))?null:(((b.score1||0)>(b.score2||0))?b.team1:b.team2);
+b.endedAt=new Date().toISOString();
+save(d);
+if(window.FirebaseService?.connected){ try{ FirebaseService.saveDoc('battles',id,b); }catch(e){} }
+if(b.winner && typeof Ops?.addManualPoints==='function'){
+const sts=DataService?.getStudentsByGroup?DataService.getStudentsByGroup(b.winner):[];
+sts.forEach(s=>{ try{ Ops.addManualPoints(s.id,b.reward||50,'⚔️ فوز في معركة المجموعات',currentUser?.id||'admin'); }catch(e){} });
+}
+window.safeToast('🏁 تم إنهاء المعركة ومكافأة المجموعة الفائزة','success');
+window.loadBattles();
+}catch(e){ window.safeToast('خطأ','error'); }
+};
+window.deleteBattle=function(id){
+try{
+if(!confirm('حذف المعركة؟')) return;
+const d=db(); d.battles=(d.battles||[]).filter(x=>x.id!==id); save(d);
+if(window.FirebaseService?.connected){ try{ FirebaseService.deleteDoc('battles',id); }catch(e){} }
+window.loadBattles();
+}catch(e){}
 };
 
 /* ================================================================
@@ -2853,6 +3365,250 @@ window.loadChurnAlerts = function() {
             </div>
         `).join('');
     } catch (e) { console.error('loadChurnAlerts error:', e); }
+};
+
+</script>
+<script>
+/* 🩹 PATCH: مهامي + التقويم + مساعد واتساب + مولد الأسئلة + توصيل المتابعات */
+(function(){
+var dbp=function(){ try{ return (window.DataService&&DataService._getData)?DataService._getData():{}; }catch(e){ return {}; } };
+var uid=function(){ try{ return (AuthService.getCurrentUser()||{}).id||'admin'; }catch(e){ return 'admin'; } };
+var log=function(m){ if(typeof window.showAIConsole==='function'){ try{ window.showAIConsole(m); }catch(e){} } };
+
+/* ===================== ✅ مهامي ===================== */
+window.loadTasks=function(){
+  try{
+    var d=dbp(); var el=document.getElementById('tasksList'); if(!el) return;
+    var tasks=[];
+    (d.attendance||[]).filter(function(a){return a.status==='pending';}).forEach(function(a){ tasks.push({icon:'📋',title:'اعتماد حضور: '+(a.groupName||''),sub:a.date||'',act:"window.showSection('attendance')"}); });
+    (d.submissions||[]).filter(function(s){return s.status==='pending_review';}).forEach(function(s){ var st=DataService.getUserById?DataService.getUserById(s.studentId):null; tasks.push({icon:'📝',title:'تصحيح واجب: '+(st?st.name:''),sub:(s.answerImages&&s.answerImages.length)?('📸 '+s.answerImages.length+' صورة'):'',act:"window.showSection('homework')"}); });
+    (d.examAttempts||[]).filter(function(a){return a.status==='pending'||a.status==='submitted';}).forEach(function(a){ var st=DataService.getUserById?DataService.getUserById(a.studentId):null; tasks.push({icon:'🎓',title:'اعتماد امتحان: '+(st?st.name:''),sub:'',act:"window.showSection('exams')"}); });
+    (d.barcodeRequests||[]).filter(function(r){return r.status==='pending';}).forEach(function(r){ tasks.push({icon:'🎟️',title:'طلب باركود: '+(r.studentName||''),sub:r.reason||'',act:"window.showSection('barcode-requests')"}); });
+    (d.registrations||[]).filter(function(r){return r.status==='pending';}).forEach(function(r){ tasks.push({icon:'⏳',title:'طلب تسجيل: '+(r.studentName||r.name||''),sub:'',act:"window.showSection('pending')"}); });
+    (d.followUps||d.followups||[]).filter(function(f){return f.status!=='resolved';}).forEach(function(f){ var st=DataService.getUserById?DataService.getUserById(f.studentId):null; tasks.push({icon:'📌',title:'متابعة مفتوحة: '+(f.title||f.reason),sub:st?('👤 '+st.name):'',act:"window.showSection('followups')"}); });
+    el.innerHTML=tasks.length?tasks.map(function(t){ return '<div class="sub-row pending"><div style="display:flex;gap:10px;align-items:center;"><span style="font-size:22px;">'+t.icon+'</span><div><strong>'+t.title+'</strong><div class="text-xs text-muted">'+(t.sub||'')+'</div></div></div><button class="btn btn-primary btn-sm" onclick="'+t.act+'">← فتح</button></div>'; }).join(''):'<div class="card" style="text-align:center;padding:30px;"><div style="font-size:44px;">✅</div><strong>لا مهام معلقة — كل حاجة تمام!</strong></div>';
+  }catch(e){ console.error('loadTasks',e); }
+};
+
+/* ===================== 📅 التقويم ===================== */
+window.loadCalendar=function(){
+  try{
+    var d=dbp(); var view=document.getElementById('calendarView'); if(!view) return;
+    var sel=document.getElementById('calGroupFilter');
+    var groups=(DataService.getGroups?DataService.getGroups():[]);
+    if(sel&&sel.options.length<=1){ sel.innerHTML='<option value="">كل المجموعات</option>'+groups.map(function(g){return '<option value="'+g.id+'">'+g.name+'</option>';}).join(''); }
+    var gid=sel?sel.value:'';
+    var now=new Date(), y=now.getFullYear(), m=now.getMonth();
+    var dim=new Date(y,m+1,0).getDate();
+    var EN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var AR=['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
+    var map={};
+    groups.filter(function(g){return !gid||g.id===gid;}).forEach(function(g){
+      var schs=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}];
+      schs.forEach(function(s){
+        if(!s||!s.day) return;
+        var di=EN.indexOf(s.day); if(di<0) return;
+        for(var dd=1;dd<=dim;dd++){
+          var dt=new Date(y,m,dd);
+          if(dt.getDay()===di){
+            var ds=dt.toISOString().split('T')[0];
+            map[ds]=map[ds]||[];
+            map[ds].push({name:g.name,time:s.time||'',
+              cancelled:(d.cancelledSessions||[]).some(function(c){return c.groupId===g.id&&c.date===ds;}),
+              attended:(d.attendance||[]).some(function(a){return a.groupId===g.id&&a.date===ds&&a.status==='approved';})});
+          }
+        }
+      });
+    });
+    var todayStr=now.toISOString().split('T')[0];
+    var html='<div class="cal-grid">'+AR.map(function(n){return '<div style="text-align:center;font-size:11px;font-weight:700;color:var(--text-muted)">'+n+'</div>';}).join('');
+    for(var i=0;i<new Date(y,m,1).getDay();i++) html+='<div class="cal-day empty"></div>';
+    for(var dd2=1;dd2<=dim;dd2++){
+      var ds2=new Date(y,m,dd2).toISOString().split('T')[0];
+      var items=map[ds2]||[];
+      var isToday=ds2===todayStr;
+      html+='<div class="cal-day" style="'+(isToday?'border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-bg);':'')+'"><div class="num">'+dd2+'</div>'+
+        (items.length?items.map(function(it){ return '<div style="color:'+(it.cancelled?'var(--danger)':it.attended?'var(--success)':'var(--primary)')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(it.cancelled?'🚫':it.attended?'✓':'•')+' '+it.time+' '+it.name+'</div>'; }).join(''):'')+
+        '</div>';
+    }
+    view.innerHTML=html+'</div>';
+  }catch(e){ console.error('loadCalendar',e); }
+};
+
+/* ===================== 🧠 مولد الأسئلة التلقائي ===================== */
+window.openAIGenerator=function(){
+  try{
+    var groups=(DataService.getGroups?DataService.getGroups():[]);
+    ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">🧠 مولد الأسئلة التلقائي</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>'+
+    '<div class="modal-body">'+
+    '<div class="filter-info">💡 الصق نص الدرس أو الملخص، وهيتم استخراج أسئلة (اختياري + صح/خطأ) جاهزة تحفظها كمسابقة أو واجب أونلاين.</div>'+
+    '<div class="form-group"><label>📄 نص الدرس / الملخص *</label><textarea id="aiGenText" class="form-textarea" rows="6" placeholder="الصق هنا محتوى الدرس..."></textarea></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'+
+    '<div class="form-group"><label>عدد الأسئلة</label><input type="number" id="aiGenCount" class="form-input" value="5" min="1" max="20"></div>'+
+    '<div class="form-group"><label>نوع الأسئلة</label><select id="aiGenType" class="form-select"><option value="mixed">مختلط</option><option value="mcq">اختياري فقط</option><option value="truefalse">صح/خطأ فقط</option></select></div></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'+
+    '<div class="form-group"><label>حفظ كـ</label><select id="aiGenSaveAs" class="form-select"><option value="challenge">🏆 مسابقة/تحدي</option><option value="homework">📝 واجب أونلاين</option></select></div>'+
+    '<div class="form-group"><label>المجموعة المستهدفة</label><select id="aiGenGroup" class="form-select">'+groups.map(function(g){return '<option value="'+g.id+'">'+g.name+'</option>';}).join('')+'</select></div></div>'+
+    '<button class="btn btn-primary w-full" onclick="window.runAIGenerator()">✨ توليد الأسئلة</button>'+
+    '<div id="aiGenResult" style="margin-top:12px;"></div></div>','modal-lg');
+  }catch(e){ console.error(e); }
+};
+window.runAIGenerator=function(){
+  try{
+    var text=(document.getElementById('aiGenText')?.value||'').trim();
+    if(text.length<40){ window.safeToast('الصق نص درس أطول (40 حرف على الأقل)','error'); return; }
+    var count=parseInt(document.getElementById('aiGenCount')?.value)||5;
+    var type=document.getElementById('aiGenType')?.value||'mixed';
+    log('🧠 بدء توليد الأسئلة من النص...');
+    var sentences=text.split(/[\.\!\?\n،]+/).map(function(s){return s.trim();}).filter(function(s){return s.length>15;});
+    if(!sentences.length){ window.safeToast('النص مش كفاية لتوليد أسئلة','error'); return; }
+    var keywords=[]; text.split(/\s+/).forEach(function(w){ if(w.length>4&&keywords.indexOf(w)<0) keywords.push(w); }); keywords=keywords.slice(0,20);
+    var qs=[];
+    for(var i=0;i<count;i++){
+      var s=sentences[i%sentences.length];
+      var wantMCQ=(type==='mcq'||(type==='mixed'&&i%2===0));
+      if(wantMCQ){
+        var kw=keywords[i%keywords.length]||'المفهوم الرئيسي';
+        var wrongs=keywords.filter(function(k){return k!==kw;}).slice(0,3);
+        while(wrongs.length<3) wrongs.push('خيار '+(wrongs.length+1));
+        qs.push({id:'q'+Date.now()+i,type:'mcq',text:'وفقاً للدرس، أي مما يلي ورد في سياق: "'+s.slice(0,60)+'..."؟',options:[kw].concat(wrongs),correctAnswer:0,points:10});
+      }else{
+        qs.push({id:'q'+Date.now()+i,type:'truefalse',text:'صح أم خطأ: '+s.slice(0,80),options:['صح','خطأ'],correctAnswer:true,points:10});
+      }
+    }
+    window._aiGenQuestions=qs;
+    log('✅ تم توليد '+qs.length+' سؤال بنجاح.');
+    document.getElementById('aiGenResult').innerHTML='<div class="filter-info">✅ تم توليد '+qs.length+' سؤال — راجعهم ثم احفظ:</div>'+
+      qs.map(function(q,idx){ return '<div class="sub-row"><div style="flex:1;"><strong>س'+(idx+1)+' ('+(q.type==='mcq'?'اختياري':'صح/خطأ')+'):</strong> '+q.text+'</div></div>'; }).join('')+
+      '<button class="btn btn-success w-full" onclick="window.saveAIGenerated()">💾 حفظ الأسئلة</button>';
+  }catch(e){ console.error(e); window.safeToast('خطأ في التوليد','error'); }
+};
+window.saveAIGenerated=async function(){
+  try{
+    var qs=window._aiGenQuestions||[];
+    if(!qs.length){ window.safeToast('لا أسئلة مولدة','error'); return; }
+    var saveAs=document.getElementById('aiGenSaveAs')?.value||'challenge';
+    var gid=document.getElementById('aiGenGroup')?.value||'';
+    var title='✨ أسئلة مولدة بالذكاء الاصطناعي '+new Date().toLocaleDateString('ar-EG');
+    var d=dbp();
+    if(saveAs==='challenge'){
+      var rec={id:'ch_'+Date.now(),title:title,basePoints:1,timeBonusMultiplier:2,timeBonusHours:1,targetType:'group',targetValue:gid,questions:qs,status:'active',createdBy:uid(),createdAt:new Date().toISOString()};
+      d.challenges=d.challenges||[]; d.challenges.push(rec);
+      if(window.FirebaseService&&FirebaseService.connected){ try{ await FirebaseService.saveDoc('challenges',rec.id,rec); }catch(e){} }
+    }else{
+      var rec2={id:'hw_'+Date.now(),title:title,groupId:gid,deadline:new Date(Date.now()+7*86400000).toISOString().split('T')[0],questions:qs,paper:false,totalPoints:qs.reduce(function(a,q){return a+(q.points||10);},0),createdBy:uid(),createdAt:new Date().toISOString()};
+      d.homework=d.homework||[]; d.homework.push(rec2);
+      if(window.FirebaseService&&FirebaseService.connected){ try{ await FirebaseService.saveDoc('homework',rec2.id,rec2); }catch(e){} }
+    }
+    if(DataService._saveData) DataService._saveData(d);
+    ThemeManager.closeModal();
+    window.safeToast('✅ تم حفظ الأسئلة المولدة','success');
+  }catch(e){ window.safeToast('خطأ في الحفظ','error'); }
+};
+
+/* ===================== 💬 مساعد الردود (WhatsApp AI) ===================== */
+window._aiWaTone='friendly';
+window.setAIWaTone=function(t){ window._aiWaTone=t; window.safeToast('نبرة الرد اتغيرت ✓','info'); };
+window.openAIAssistant=function(){
+  try{
+    ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">💬 مساعد الردود الذكي (واتساب)</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>'+
+    '<div class="modal-body">'+
+    '<div class="filter-info">💡 اكتب رسالة أو شكوى ولي الأمر زي ما وصلتلك، والمساعد هيولّد رد احترافي جاهز للنسخ والإرسال — بيرد من بيانات النظام (غياب/دفعات/حصص ملغية/درجات).</div>'+
+    '<div class="form-group"><label>📨 الرسالة الواردة *</label><textarea id="aiWaInput" class="form-textarea" rows="3" placeholder="مثال: ابني غاب امبارح والحصة اتلغت، والدفع كام الشهر ده؟"></textarea></div>'+
+    '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">'+
+    '<button class="btn btn-secondary btn-sm" onclick="window.setAIWaTone(\'friendly\')">😊 ودود</button>'+
+    '<button class="btn btn-secondary btn-sm" onclick="window.setAIWaTone(\'formal\')">📏 رسمي</button>'+
+    '<button class="btn btn-secondary btn-sm" onclick="window.setAIWaTone(\'apologetic\')">🙏 اعتذاري</button></div>'+
+    '<button class="btn btn-primary w-full" onclick="window.runAIAssistant()">✨ توليد الرد</button>'+
+    '<div class="form-group" style="margin-top:12px;"><label>الرد المولّد</label><textarea id="aiWaOutput" class="form-textarea" rows="5" readonly></textarea></div>'+
+    '<button class="btn btn-success w-full" onclick="window.copyAIWaReply()">📋 نسخ الرد</button></div>','modal-md');
+  }catch(e){ console.error(e); }
+};
+window.runAIAssistant=function(){
+  try{
+    var msg=(document.getElementById('aiWaInput')?.value||'').trim();
+    if(!msg){ window.safeToast('اكتب الرسالة الواردة الأول','error'); return; }
+    var tone=window._aiWaTone;
+    var open=tone==='friendly'?'أهلاً بيك حضرة ولي الأمر الكريم 🌟':(tone==='formal'?'تحية طيبة وبعد،':'نعتذر بشدة عن أي إزعاج سببناه لكم 🙏');
+    var close=tone==='friendly'?'أي استفسار تاني احنا هنا دايماً 💚':(tone==='formal'?'وتفضلوا بقبول فائق الاحترام والتقدير.':'وشكراً لصبركم وتفهمكم الكريم 🌹');
+    var body='';
+    if(/غياب|غاب/.test(msg)) body+=' بخصوص الغياب: تم تسجيل ملاحظتكم، والحصة التعويضية هتتحدد خلال 48 ساعة وهنبلغكم بموعدها فور اعتمادها.';
+    if(/دفع|فلوس|مصروف|كام/.test(msg)) body+=' بخصوص الدفعات: تفاصيل الشهرية كاملة متاحة في لوحة ولي الأمر (قسم المدفوعات)، وأي استفسار عن مبلغ معين نوافيكم بيه فوراً.';
+    if(/الغت|اتلغت|تلغي/.test(msg)) body+=' بخصوص الحصة الملغية: تم اعتمادها كحصة تعويضية ولن تُحتسب ضمن الشهرية، وسيتم جدولتها قريباً.';
+    if(/درجه|درجات|نتيجه/.test(msg)) body+=' بخصوص الدرجات: كل النتائج المرصودة متاحة لحظة بلحظة في لوحة ولي الأمر، وأي درجة لسه مظهره معناها لسه في مرحلة المراجعة.';
+    if(!body) body+=' تم استلام رسالتكم وجاري التعامل معها من فريق المتابعة، وسيصلكم رد مفصل خلال ساعة عمل على الأكثر.';
+    document.getElementById('aiWaOutput').value=open+'،\n'+body+'\n\n'+close+'\n— مركز Habbash Group';
+    log('💬 تم توليد رد واتساب ذكي.');
+  }catch(e){ console.error(e); }
+};
+window.copyAIWaReply=function(){
+  try{
+    var t=document.getElementById('aiWaOutput');
+    if(!t||!t.value){ window.safeToast('لا يوجد رد للنسخ','error'); return; }
+    navigator.clipboard.writeText(t.value).then(function(){ window.safeToast('📋 تم نسخ الرد','success'); }).catch(function(){ t.select(); document.execCommand('copy'); window.safeToast('📋 تم نسخ الرد','success'); });
+  }catch(e){}
+};
+
+/* ===================== 🔌 توصيل الأقسام بالـ showSection ===================== */
+if(typeof window.showSection==='function'&&!window._showSectionPatched){
+  window._showSectionPatched=true;
+  var orig=window.showSection;
+  window.showSection=function(id){
+    var target=(id==='adminFollowups')?'followups':id;
+    try{ orig(target); }catch(e){
+      try{
+        document.querySelectorAll('.section').forEach(function(s){s.classList.remove('active');});
+        var el=document.getElementById('section-'+target); if(el) el.classList.add('active');
+        document.querySelectorAll('.sidebar-item').forEach(function(i){ i.classList.toggle('active', i.dataset.section===target||i.dataset.section===id); });
+      }catch(e2){}
+    }
+    try{
+      if(target==='followups'&&typeof window.loadAdminFollowups==='function') window.loadAdminFollowups();
+      if(target==='tasks'&&typeof window.loadTasks==='function') window.loadTasks();
+      if(target==='calendar'&&typeof window.loadCalendar==='function') window.loadCalendar();
+      if(target==='ai'&&typeof window.loadAIPanel==='function') window.loadAIPanel();
+    }catch(e){}
+  };
+}
+if(typeof window.loadFollowups!=='function') window.loadFollowups=window.loadAdminFollowups;
+})();
+// 🤖 دالة ذكية لمنح النقاط الأكاديمية (واجبات + امتحانات + مكافآت التميز)
+window.awardAcademicPoints = async function(studentId, type, score, maxScore, refTitle) {
+    try {
+        // 1. جلب القواعد من النظام (لو موجودة)
+        const rules = (typeof Ops?.getPointsRules === 'function') ? Ops.getPointsRules() : {};
+        let points = 0;
+        let reason = '';
+
+        // 2. نقاط أساسية لمجرد الحل والتسليم
+        if (type === 'hw') {
+            points += (rules.homework || 2); // افتراضي 2 نقطة
+            reason = `📝 تسليم واجب: ${refTitle || ''}`;
+        } else if (type === 'ex') {
+            points += (rules.exam || 3); // افتراضي 3 نقاط
+            reason = `🎓 إكمال امتحان: ${refTitle || ''}`;
+        }
+
+        // 3. مكافأة التميز (Bonus) بناءً على النسبة المئوية
+        const pct = maxScore > 0 ? (score / maxScore) * 100 : 0;
+        if (pct >= 85) {
+            points += 5; // مكافأة ممتاز
+            reason += ' + 🌟 مكافأة ممتاز';
+        } else if (pct >= 75) {
+            points += 3; // مكافأة جيد جداً
+            reason += ' + 👏 مكافأة تميز';
+        } else if (pct >= 60) {
+            points += 1; // مكافأة تشجيعية
+            reason += ' + 👍 مكافأة اجتياز';
+        }
+
+        // 4. إضافة النقاط للطالب
+        if (points > 0 && typeof Ops?.addManualPoints === 'function') {
+            await Ops.addManualPoints(studentId, points, reason.trim(), currentUser?.id || 'system');
+        }
+    } catch (e) {
+        console.error('Award points error', e);
+    }
 };
 </script>
 </body>

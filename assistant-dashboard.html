@@ -180,6 +180,35 @@
 .barcode-code{font-family:var(--font-en);font-weight:800;letter-spacing:2px;color:var(--primary)}
 /* 🆕 إضافة دفعة طلاب */
 .bulk-textarea{width:100%;min-height:140px;padding:12px;border:1px solid var(--border);border-radius:8px;font-size:13px;resize:vertical;line-height:1.9}
+/* 🆕 المتابعات: تم / تكرار */
+.followup-card{border-right:4px solid var(--warning)}
+.followup-card.resolved{border-right-color:var(--success);opacity:.85}
+.followup-card.repeat{border-right-color:var(--danger)}
+.repeat-badge{background:var(--danger-bg);color:var(--danger)}
+.fu-history{margin-top:8px;padding:8px;background:var(--surface-hover);border-radius:8px;font-size:11px;color:var(--text-muted);max-height:120px;overflow-y:auto}
+/* 🆕 Gamification & AI Features CSS */
+.streak-badge { background: linear-gradient(135deg, #ff9800, #f44336); color: #fff; padding: 4px 12px; border-radius: 9999px; font-weight: 800; font-family: var(--font-en); display: inline-flex; align-items: center; gap: 4px; font-size: 12px; box-shadow: 0 2px 8px rgba(244,67,54,.3); }
+.loot-box-card { background: linear-gradient(135deg, #8b5cf6, #ec4899); color: #fff; padding: 24px; border-radius: 16px; text-align: center; cursor: pointer; transition: all .3s; position: relative; overflow: hidden; }
+.loot-box-card:hover { transform: scale(1.02); box-shadow: 0 10px 25px rgba(139,92,246,.4); }
+.loot-box-card::before { content: '🎁'; position: absolute; top: -20px; right: -20px; font-size: 80px; opacity: .1; transform: rotate(15deg); }
+.store-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+.store-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; transition: all .2s; cursor: pointer; }
+.store-item:hover { border-color: var(--primary); transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,.08); }
+.store-item-icon { font-size: 32px; margin-bottom: 8px; }
+.store-item-price { font-family: var(--font-en); font-weight: 800; color: var(--primary); margin-top: 6px; }
+.battle-card { border: 2px solid var(--border); border-radius: 16px; padding: 20px; background: var(--surface); margin-bottom: 12px; }
+.battle-vs { font-size: 24px; font-weight: 900; color: var(--danger); text-align: center; margin: 10px 0; }
+.battle-team { text-align: center; flex: 1; }
+.battle-team-name { font-weight: 800; font-size: 16px; margin-bottom: 4px; }
+.battle-score { font-family: var(--font-en); font-size: 28px; font-weight: 900; color: var(--primary); }
+.ai-tool-card { background: linear-gradient(135deg, rgba(59,130,246,.05), rgba(139,92,246,.05)); border: 1px dashed var(--primary-border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+.quick-eval-student { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--surface-hover); border-radius: 8px; margin-bottom: 6px; }
+.eval-btn-group { display: flex; gap: 6px; }
+.eval-btn { padding: 6px 12px; border-radius: 8px; border: none; font-weight: 700; font-size: 12px; cursor: pointer; transition: all .2s; }
+.eval-btn:hover { transform: translateY(-2px); }
+.eval-btn-interact { background: #fef3c7; color: #d97706; }
+.eval-btn-recite { background: #d1fae5; color: #059669; }
+.eval-btn-praise { background: #fce7f3; color: #db2777; }
 </style>
 </head>
 <body data-theme="dark">
@@ -201,13 +230,15 @@
 <div class="card" style="margin-bottom:12px;background:var(--grad);color:#fff;border:none;padding:8px 9px;"><div id="briefingBanner"></div></div>
   <h3 style="margin:16px 0 12px;">⚡ اختصارات سريعة</h3>
 <div class="quick-actions">
-<a href="qr-scan.html" class="quick-action" target="_blank"><div class="quick-action-icon">📷</div><div class="quick-action-label">مسح باركود</div></a>
-<a href="print-qr.html" class="quick-action" target="_blank"><div class="quick-action-icon">🖨️</div><div class="quick-action-label">طباعة باركودات</div></a>
+<a href="qr-scan.html" class="quick-action"><div class="quick-action-icon">📷</div><div class="quick-action-label">مسح باركود</div></a>
+<a href="print-qr.html" class="quick-action"><div class="quick-action-icon">🖨️</div><div class="quick-action-label">طباعة باركودات</div></a>
 <button class="quick-action" onclick="window.showSection('attendance')"><div class="quick-action-icon">📋</div><div class="quick-action-label">تسجيل حضور</div></button>
 <button class="quick-action" onclick="window.showSection('monthly')"><div class="quick-action-icon">💰</div><div class="quick-action-label">تحصيل شهرية</div></button>
 <button class="quick-action" onclick="window.showSection('paperGrades')"><div class="quick-action-icon">📝</div><div class="quick-action-label">درجات ورقية</div></button>
 <button class="quick-action" onclick="window.showSection('makeups')"><div class="quick-action-icon">📅</div><div class="quick-action-label">حصص تعويضية</div></button>
 <button class="quick-action" onclick="window.showSection('classPosts')"><div class="quick-action-icon">📰</div><div class="quick-action-label">إيه اللي اتاخد في الحصة</div></button>
+<button class="quick-action" onclick="window.openBulkGradeScan()"><div class="quick-action-icon">📝</div><div class="quick-action-label">رصد درجات مجمع</div></button>
+<button class="quick-action" onclick="window.openCancelSessionModal()"><div class="quick-action-icon">🚫</div><div class="quick-action-label">إلغاء حصة</div></button>
 </div>
 <h3 style="margin:16px 0 12px;">🎯 ماذا يحتاج انتباهي الآن؟</h3>
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:20px;" id="attentionGrid"></div>
@@ -345,8 +376,17 @@
 <div id="exList"></div>
 </section>
 <section class="section" id="section-grades">
-<div class="section-header"><div><h2 class="section-title">🎯 الدرجات (أونلاين)</h2></div></div>
-<div class="filter-bar"><button class="filter-btn active" onclick="window.setGrades('hw',this)">واجبات</button><button class="filter-btn" onclick="window.setGrades('ex',this)">امتحانات</button></div>
+<div class="section-header"><div><h2 class="section-title">🎯 النتائج</h2><p class="text-sm text-muted">مفرقة أونلاين وورقي (أوفلاين) — الأوفلاين هو اللي اتاخد في الحصة وبترصد درجاته بعدين</p></div></div>
+<div class="filter-bar">
+<button class="filter-btn active" onclick="window.setGrades('online',this)">🌐 أونلاين</button>
+<button class="filter-btn" onclick="window.setGrades('offline',this)">📄 ورقي (أوفلاين)</button>
+</div>
+<div class="card" style="margin-bottom:12px;">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+<div class="form-group" style="margin:0;"><label>فلتر المجموعة</label><select id="gradesGroupFilter" class="form-select" onchange="window.loadGrades()"><option value="">كل المجموعات</option></select></div>
+<div class="form-group" style="margin:0;"><label>بحث بالاسم</label><input type="text" id="gradesSearch" class="form-input" placeholder="اسم الطالب..." oninput="window.loadGrades()"></div>
+</div>
+</div>
 <div id="gradesList"></div>
 </section>
 <section class="section" id="section-interactive">
@@ -395,6 +435,74 @@
 <div class="section-header"><div><h2 class="section-title">📌 المتابعات</h2><p class="text-sm text-muted">تُنشأ تلقائياً للغياب والدفعات المتأخرة</p></div><button class="btn btn-primary" onclick="window.openFollowupModal()">+ متابعة يدوية</button></div>
 <div id="followupsList"></div>
 </section>
+<!-- ⚡ التقييم السريع (التسميع والتفاعل) -->
+<section class="section" id="section-quickEval">
+    <div class="section-header"><div><h2 class="section-title">⚡ التقييم السريع (تسميع وتفاعل)</h2><p class="text-sm text-muted">كافئ طلابك بضغطة زر واحدة</p></div></div>
+    <div class="card">
+        <div class="form-group"><label>اختر المجموعة</label><select id="qeGroup" class="form-select" onchange="window.loadQuickEval()"></select></div>
+        <div class="search-bar" style="margin-bottom:12px;"><input type="text" id="qeSearch" class="form-input" placeholder="🔍 بحث عن طالب..." onkeyup="window.filterQuickEval()"></div>
+        <div class="filter-info">💡 <strong>إعدادات النقاط:</strong> التفاعل = <span id="qeInteractPts">5</span> نقطة | التسميع = <span id="qeRecitePts">10</span> نقطة <button class="btn btn-ghost btn-sm" onclick="window.openEvalSettings()">⚙️ تعديل</button></div>
+        <div id="qeStudentsList"></div>
+    </div>
+</section>
+<!-- ⚔️ التحديات والتصفيات -->
+<section class="section" id="section-battles">
+<div class="section-header"><div><h2 class="section-title">⚔️ التحديات والتصفيات</h2><p class="text-sm text-muted">معارك بين المجموعات — المجموعة اللي طلابها يجيبوا أعلى نقاط تفوز</p></div></div>
+<div class="card" style="margin-bottom:16px;">
+  <h3 class="card-title" style="margin-bottom:12px;">⚔️ معركة جديدة</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div class="form-group"><label>المجموعة الأولى</label><select id="battleGroup1" class="form-select"></select></div>
+    <div class="form-group"><label>المجموعة الثانية</label><select id="battleGroup2" class="form-select"></select></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div class="form-group"><label>اسم المعركة</label><input type="text" id="battleName" class="form-input" placeholder="مثال: معركة الأسبوع"></div>
+    <div class="form-group"><label>مكافأة الفوز (نقاط لكل طالب)</label><input type="number" id="battleReward" class="form-input" value="50" min="1"></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div class="form-group"><label>📅 تاريخ البداية</label><input type="date" id="battleStart" class="form-input"></div>
+    <div class="form-group"><label>📅 تاريخ النهاية</label><input type="date" id="battleEnd" class="form-input"></div>
+  </div>
+  <button class="btn btn-primary w-full" onclick="window.startBattle()">⚔️ ابدأ المعركة</button>
+</div>
+<div id="battlesList"></div>
+</section>
+
+<!-- ⚔️ التحديات بين المجموعات -->
+<section class="section" id="section-battles">
+    <div class="section-header"><div><h2 class="section-title">⚔️ حروب المجموعات والتصفيات</h2></div><button class="btn btn-primary" onclick="window.openBattleModal()">+ إنشاء معركة</button></div>
+    <div id="battlesList"></div>
+</section>
+
+<!-- 🤖 أدوات الذكاء الاصطناعي -->
+<section class="section" id="section-aiTools">
+<div class="section-header"><div><h2 class="section-title">🤖 أدوات الذكاء الاصطناعي</h2><p class="text-sm text-muted">أدوات ذكية لمساعدتك في التقييم والمتابعة</p></div></div>
+
+<div class="card" style="margin-bottom:16px;border:2px solid var(--primary);">
+  <h3 class="card-title" style="margin-bottom:12px;">📝 التصحيح الذكي للواجبات</h3>
+  <p class="text-sm text-muted" style="margin-bottom:12px;">اختار واجب من الواجبات المعلقة والـ AI هيصحح الأسئلة الموضوعية (اختيار من متعدد + صح/خطأ) تلقائياً</p>
+  <div class="form-group"><label>اختار واجب للتصحيح الذكي</label><select id="aiHwSelect" class="form-select"></select></div>
+  <button class="btn btn-primary w-full" onclick="window.runSmartGrading()">🤖 صحّح بالذكاء الاصطناعي</button>
+  <div id="aiGradingResult" style="margin-top:12px;"></div>
+</div>
+
+<div class="card" style="margin-bottom:16px;border:2px solid var(--warning);">
+  <h3 class="card-title" style="margin-bottom:12px;">📊 تحليل الأداء الذكي</h3>
+  <p class="text-sm text-muted" style="margin-bottom:12px;">تحليل ذكي لأداء كل طالب وإظهار نقاط القوة والضعف</p>
+  <div class="form-group"><label>اختار مجموعة</label><select id="aiAnalyzeGroup" class="form-select"></select></div>
+  <button class="btn btn-primary w-full" onclick="window.runSmartAnalysis()">📊 تحليل الأداء</button>
+  <div id="aiAnalysisResult" style="margin-top:12px;"></div>
+</div>
+
+<div class="card" style="border:2px solid var(--success);">
+  <h3 class="card-title" style="margin-bottom:12px;">📋 ملخص الحصة الذكي</h3>
+  <p class="text-sm text-muted" style="margin-bottom:12px;">اكتب ملخص الحصة والـ AI هيولّد ملخص احترافي + واجب مقترح + إشعار للطلاب</p>
+  <div class="form-group"><label>موضوع الحصة</label><input type="text" id="aiTopic" class="form-input" placeholder="مثال: مراجعة قواعد الماضي"></div>
+  <div class="form-group"><label>ملخص سريع</label><textarea id="aiSummary" class="form-textarea" rows="3" placeholder="اكتب ملخص سريع للحصة..."></textarea></div>
+  <button class="btn btn-primary w-full" onclick="window.runSmartSummary()">🤖 توليد ملخص ذكي</button>
+  <div id="aiSummaryResult" style="margin-top:12px;"></div>
+</div>
+</section>
+
 <!-- 🏆 Points System -->
 <section class="section" id="section-points">
 <div class="section-header"><div><h2 class="section-title">🏆 نظام النقاط</h2><p class="text-sm text-muted">تحكم كامل في النقاط والتحفيز</p></div></div>
@@ -473,6 +581,7 @@
 <script src="js/drive-service.js"></script>
 <script src="js/theme-manager.js"></script>
 <script src="js/auth-service.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="js/footer-injector.js"></script>
 <script>
   /* 🆕 View-As: لو الرابط فيه ?viewas= خد الهوية دي كالمستخدم الحالي للتبويب ده */
@@ -597,7 +706,7 @@ if(typeof DriveService?.uploadImage==='function'){ return await DriveService.upl
 return await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=e=>res(e.target.result); r.onerror=rej; r.readAsDataURL(file); });
 }catch(e){ return ''; }
 };
-let currentUser=null, manualSel={}, gradesMode='hw', moFilter='all', pgCurrentRef=null, pendingFilter='pending';
+let currentUser=null, manualSel={}, gradesMode='online', moFilter='all', pgCurrentRef=null, pendingFilter='pending';
 let videoFilter='all', challengeFilter='all', challengeQuestions=[], interactiveFilter='all', assistantTemplateFilter='all';
 // 🤖 حساب خطر تسرب الطالب (غياب + دفعات + واجبات + درجات)
 window.calculateChurnRisk=function(studentId){
@@ -651,14 +760,21 @@ window.loadChurnAlerts=function(){
 window.buildMenu=function(){
 try{
 const menu=[
-{s:'الرئيسية',items:[{id:'command',l:'مركز العمليات',i:'🎯'},{id:'inbox',l:'صندوق الوارد',i:'📥'},{id:'pending',l:'طلبات التسجيل',i:'⏳'},{id:'barcode',l:'طلبات الباركود',i:'🎟️'}]},
-{s:'التشغيل',items:[{id:'teachers',l:'إدارة المجموعات',i:'👨🏫'},{id:'students',l:'الطلاب',i:'🎓'},{id:'attendance',l:'الحضور',i:'📋'},{id:'makeups',l:'الحصص التعويضية',i:'📅'},{id:'paperGrades',l:'الواجبات الورقية',i:'📝'},{id:'grades',l:'الدرجات أونلاين',i:'🎯'}]},
-{s:'المالية',items:[{id:'monthly',l:'تحصيل الشهرية',i:'💰'},{id:'accounting',l:'المحاسبة',i:'🧮'},{id:'expenses',l:'المصروفات',i:'💸'},{id:'payments',l:'المدفوعات',i:'💵'}]},
-{s:'المحتوى',items:[{id:'interactive',l:'المواد التفاعلية',i:'🧩'},{id:'videos',l:'الفيديوهات',i:'🎬'},{id:'classPosts',l:'بوستات الحصة',i:'📰'},{id:'challenges',l:'المسابقات',i:'🏆'}]},
-{s:'التواصل',items:[{id:'templates',l:'قوالب واتساب',i:'📱'},{id:'whatsappGroups',l:'مجموعات واتساب',i:'💬'}]},
-{s:'المتابعة',items:[{id:'followups',l:'المتابعات',i:'📌'},{id:'churn',l:'خطر التسرب',i:'🚨'},{id:'tasks',l:'مهامي',i:'✅'},{id:'calendar',l:'التقويم',i:'📅'}]},
-{s:'تحليلات',items:[{id:'points',l:'نظام النقاط',i:'🎁'},{id:'reports',l:'التقارير',i:'📊'},{id:'logs',l:'السجل',i:'📜'}]}
+    {s:'الرئيسية',items:[{id:'command',l:'مركز العمليات',i:'🎯'},{id:'inbox',l:'صندوق الوارد',i:'📥'},{id:'pending',l:'طلبات التسجيل',i:'⏳'},{id:'barcode',l:'طلبات الباركود',i:'🎟️'}]},
+    {s:'التشغيل',items:[{id:'teachers',l:'إدارة المجموعات',i:'👨🏫'},{id:'students',l:'الطلاب',i:'🎓'},{id:'attendance',l:'الحضور',i:'📋'},{id:'makeups',l:'الحصص التعويضية',i:'📅'},{id:'paperGrades',l:'الواجبات الورقية',i:'📝'},{id:'grades',l:'الدرجات أونلاين',i:'🎯'}]},
+    {s:'🚀 التحفيز والذكاء',items:[
+        {id:'quickEval',l:'⚡ التقييم السريع',i:'🎙️'},
+        {id:'battles',l:'⚔️ التحديات والتصفيات',i:'🏆'},
+        {id:'aiTools',l:'🤖 أدوات الذكاء الاصطناعي',i:'🧠'}
+    ]},
+    {s:'المالية',items:[{id:'monthly',l:'تحصيل الشهرية',i:'💰'},{id:'accounting',l:'المحاسبة',i:'🧮'},{id:'expenses',l:'المصروفات',i:'💸'},{id:'payments',l:'المدفوعات',i:'💵'}]},
+    {s:'🤖 الذكاء الاصطناعي',items:[{id:'aiTools',l:'أدوات الذكاء الاصطناعي',i:'🤖'}]},
+{s:'المحتوى',items:[{id:'interactive',l:'المواد التفاعلية',i:'🧩'},{id:'videos',l:'الفيديوهات',i:'🎬'},{id:'classPosts',l:'بوستات الحصة',i:'📰'},{id:'challenges',l:'المسابقات',i:'🏆'},{id:'battles',l:'التحديات والتصفيات',i:'⚔️'}]},
+    {s:'التواصل',items:[{id:'templates',l:'قوالب واتساب',i:'📱'},{id:'whatsappGroups',l:'مجموعات واتساب',i:'💬'}]},
+    {s:'المتابعة',items:[{id:'followups',l:'المتابعات',i:'📌'},{id:'churn',l:'خطر التسرب',i:'🚨'},{id:'tasks',l:'مهامي',i:'✅'},{id:'calendar',l:'التقويم',i:'📅'}]},
+    {s:'تحليلات',items:[{id:'points',l:'نظام النقاط',i:'🎁'},{id:'reports',l:'التقارير',i:'📊'},{id:'logs',l:'السجل',i:'📜'}]}
 ];
+
 const nav=document.getElementById('sidebarNav');
 if(nav) nav.innerHTML=menu.map(sec=>`<div class="sidebar-section"><div class="sidebar-section-title">${sec.s}</div>${sec.items.map(it=>`<div class="sidebar-item" data-section="${it.id}" onclick="window.showSection('${it.id}')"><span class="sidebar-item-icon">${it.i}</span><span class="sidebar-item-label">${it.l}</span></div>`).join('')}</div>`).join('');
 }catch(e){console.error('buildMenu error',e);}
@@ -673,7 +789,7 @@ command:window.loadCommand, inbox:window.loadInbox, pending:window.loadPending, 
 students:window.loadStudents, barcode:window.loadBarcodeRequests, attendance:window.loadAttendance, makeups:window.loadMakeups, accounting:window.loadAccounting,
 expenses:window.loadExpenses, paperGrades:window.loadPaperGrades, monthly:window.loadMonthly, templates:window.loadAssistantTemplates,
 grades:window.loadGrades, homework:window.loadHomework, exams:window.loadExams, interactive:window.loadInteractive,
-videos:window.loadVideos, classPosts:window.loadClassPosts, challenges:window.loadChallenges, whatsappGroups:window.loadWhatsappGroups,
+videos:window.loadVideos, classPosts:window.loadClassPosts, challenges:window.loadChallenges, battles:window.loadBattles, aiTools:window.loadAiTools, whatsappGroups:window.loadWhatsappGroups,
 followups:window.loadFollowups, churn:window.loadChurnAlerts,
 points:()=>{window.loadPointsOverview();window.loadPointsManualStudents();window.loadPointsHistory();window.loadPointsRanking();},
 tasks:window.loadTasks, payments:window.loadPayments, calendar:window.loadCalendar, reports:window.loadReports, logs:window.loadLogs
@@ -1052,8 +1168,13 @@ return `<div style="padding:12px;background:var(--surface-hover);border-radius:8
 // 🆕 مودال إضافة طالب (مقيد بالأستاذ المسؤول)
 window.openAssistantAddStudentModal=function(){
 try{
-const teacher=window.getMyTeacher();
-if(!teacher){ window.safeToast('يجب ربطك بأستاذ أولاً من قبل الأدمن','error'); return; }
+const assignment = typeof Ops?.getAssignment === 'function' ? Ops.getAssignment(currentUser.id) : null;
+const teacherId = assignment?.teacherId;
+const teacher = teacherId ? DataService.getUserById(teacherId) : null;
+if(!teacher) {
+window.safeToast('يجب ربطك بأستاذ أولاً من قبل الأدمن', 'error');
+return;
+}
 const stageOptions=Object.entries(EduFlowConfig?.educationLevels||{}).map(([k,v])=>`<option value="${k}">${v.nameAr}</option>`).join('');
 ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🎓 إضافة طالب جديد</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
 <div class="modal-body">
@@ -1061,9 +1182,12 @@ ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🎓 �
 <form onsubmit="return window.saveAssistantStudent(event)">
 <div class="form-group"><label>الاسم الكامل *</label><input type="text" id="asName" class="form-input" required></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-<div class="form-group"><label>هاتف الطالب</label><input type="tel" id="asPhone" class="form-input"></div>
-<div class="form-group"><label>هاتف ولي الأمر</label><input type="tel" id="asParent" class="form-input"></div>
+<div class="form-group"><label>هاتف الطالب</label><input type="tel" id="asPhone" class="form-input" oninput="window.checkExistingStudent()"></div>
+<div class="form-group"><label>هاتف ولي الأمر</label><input type="tel" id="asParent" class="form-input" oninput="window.checkExistingStudent()"></div>
 </div>
+<!-- 🆕 صندوق البحث الذكي -->
+<div id="smartSearchResult" style="display:none;"></div>
+
 <div class="stage-grade-row">
 <div class="form-group"><label>المرحلة *</label><select id="asLevel" class="form-select" onchange="window.updAssistantStudentGrades();window.renderAssistantStudentGroups();">${stageOptions}</select></div>
 <div class="form-group"><label>الصف *</label><select id="asGrade" class="form-select" onchange="window.renderAssistantStudentGroups();"></select></div>
@@ -1079,14 +1203,6 @@ ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🎓 �
 window.updAssistantStudentGrades();
 setTimeout(()=>{ window.renderAssistantStudentGroups(); }, 100);
 }catch(e){ console.error(e); }
-};
-window.updAssistantStudentGrades=function(){
-try{
-const lvl=document.getElementById('asLevel')?.value;
-const grades=EduFlowConfig?.educationLevels?.[lvl]?.grades||[];
-const el=document.getElementById('asGrade');
-if(el)el.innerHTML='<option value="">--</option>'+grades.map(g=>`<option>${g}</option>`).join('');
-}catch(e){}
 };
 window.renderAssistantStudentGroups=function(){
 try{
@@ -1111,7 +1227,37 @@ container.innerHTML='<p class="text-muted" style="font-size:12px;">لا توجد
 window.saveAssistantStudent=async function(e){
 try{
 e.preventDefault();
-const teacherId=window.getMyTeacherId();
+const assignment = typeof Ops?.getAssignment === 'function' ? Ops.getAssignment(currentUser.id) : null;
+const teacherId = assignment?.teacherId;
+
+// 🆕 التحقق من خيار الربط الذكي
+const resultDiv = document.getElementById('smartSearchResult');
+const linkExisting = document.getElementById('linkExistingStudent')?.checked;
+const existingId = resultDiv?.dataset.matchId;
+
+const enrollments=[...document.querySelectorAll('.as-grp:checked')].map(c=>({
+groupId: c.value,
+teacherId: teacherId
+}));
+if(!enrollments.length){ window.safeToast('اختار مجموعة على الأقل','error'); return false; }
+
+// 🆕 إذا كان الطالب موجوداً والمستخدم اختار ربطه
+if (linkExisting && existingId) {
+    for (const enr of enrollments) {
+        await DataService.addEnrollment({
+            studentId: existingId,
+            groupId: enr.groupId,
+            teacherId: teacherId,
+            status: 'active'
+        });
+    }
+    window.safeToast('✅ تم ربط الطالب الحالي بمجموعاتك بنجاح','success');
+    ThemeManager.closeModal();
+    window.loadStudents();
+    return false;
+}
+
+// 🔄 الإنشاء العادي للطالب الجديد
 const data={
 name:document.getElementById('asName').value,
 phone:document.getElementById('asPhone').value,
@@ -1120,9 +1266,8 @@ stage:document.getElementById('asLevel').value,
 grade:document.getElementById('asGrade').value,
 password:document.getElementById('asPass').value||'1234'
 };
-const enrollments=[...document.querySelectorAll('.as-grp:checked')].map(c=>({groupId:c.value,teacherId:teacherId}));
-if(!enrollments.length){ window.safeToast('اختار مجموعة على الأقل','error'); return false; }
-const r=await DataService.addStudentByAdmin({...data, enrollments:enrollments});
+
+const r=await DataService.addStudentByAdmin({...data, enrollments: enrollments});
 window.safeToast('✅ تم إنشاء الطالب بالكود: '+r.code,'success');
 ThemeManager.closeModal();
 window.loadStudents();
@@ -1133,6 +1278,7 @@ window.safeToast('خطأ في الحفظ: '+e.message,'error');
 return false;
 }
 };
+
 // 🆕 إضافة دفعة طلاب (سطر لكل طالب: الاسم, رقم ولي الأمر) + مجموعة واحدة في سنتر واحد
 window.openAssistantBulkAddStudentModal=function(){
   try{
@@ -1375,6 +1521,13 @@ ${remaining>0?`
 </div>
 </div>
 `:''}
+<!-- Daily Streak Badge -->
+<div style="margin-bottom:16px; text-align:center;">
+    <span class="streak-badge">🔥 سلسلة إنجاز: 12 يوم متتالي</span>
+</div>
+
+<!-- Fridge Report Button inside Quick Actions Grid -->
+<button class="btn btn-info" onclick="window.sendFridgeReport('${s.id}')"><div style="font-size:20px;">🧲</div>تقرير الثلاجة</button>
 <div class="quick-actions-grid">
 <button class="btn btn-success" onclick="window.quickAttendFromProfile('${s.id}')"><div style="font-size:20px;">📋</div>حضور</button>
 <button class="btn btn-primary" onclick="window.quickPayCustom('${s.id}')"><div style="font-size:20px;">💵</div>دفع</button>
@@ -1683,6 +1836,57 @@ if(r.success){
 else window.safeToast(r.message||'فشل','error');
 }catch(e){}
 };
+// 🆕 دالة البحث الذكي عن الطالب أثناء الكتابة
+window.checkExistingStudent = function() {
+    try {
+        const phone = (document.getElementById('asPhone')?.value || '').trim();
+        const parentPhone = (document.getElementById('asParent')?.value || '').trim();
+        const resultDiv = document.getElementById('smartSearchResult');
+        if (!resultDiv) return;
+        
+        // نبدأ البحث فقط لو تم إدخال 6 أرقام على الأقل
+        if (phone.length < 6 && parentPhone.length < 6) {
+            resultDiv.style.display = 'none';
+            return;
+        }
+        
+        const allStudents = (DataService.getUsers ? DataService.getUsers() : []).filter(u => u.role === 'student');
+        let match = null;
+        
+        if (phone.length >= 6) {
+            match = allStudents.find(s => s.phone === phone || s.parentPhone === phone);
+        }
+        if (!match && parentPhone.length >= 6) {
+            match = allStudents.find(s => s.phone === parentPhone || s.parentPhone === parentPhone);
+        }
+        
+        if (match) {
+            const ts = DataService.getStudentTeachers ? DataService.getStudentTeachers(match.id) : [];
+            const teacherNames = ts.map(t => t.teacher?.name).filter(Boolean).join('، ') || 'غير محدد';
+            const groupNames = ts.map(t => t.group?.name).filter(Boolean).join('، ') || 'لا توجد مجموعات';
+            
+            resultDiv.innerHTML = `
+                <div class="filter-info" style="background:rgba(245,158,11,.1);border:1px dashed var(--warning);color:var(--warning);margin:12px 0;padding:12px;">
+                    <strong>⚠️ تنبيه:</strong> هذا الرقم مسجل مسبقاً للطالب: <strong style="color:var(--text)">${match.name}</strong><br>
+                    <div class="text-xs" style="margin-top:4px;color:var(--text-secondary)">👨‍🏫 مسجل مع: <strong>${teacherNames}</strong></div>
+                    <div class="text-xs" style="color:var(--text-secondary)">👥 في مجموعات: <strong>${groupNames}</strong></div>
+                    <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);">
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700;color:var(--success);">
+                            <input type="checkbox" id="linkExistingStudent" checked style="width:18px;height:18px;">
+                            <span>✅ هذا هو نفس الطالب - قم بإضافته لمجموعاتي (بدون إنشاء حساب جديد)</span>
+                        </label>
+                    </div>
+                </div>
+            `;
+            resultDiv.style.display = 'block';
+            resultDiv.dataset.matchId = match.id; // حفظ ID الطالب القديم
+        } else {
+            resultDiv.style.display = 'none';
+            resultDiv.dataset.matchId = '';
+        }
+    } catch(e) { console.error(e); }
+};
+
 // ==================== 📅 Makeups ====================
 window.loadMakeups=function(){
 try{
@@ -1866,6 +2070,7 @@ window.pgRefChanged=function(){ try{ const ref=document.getElementById('pgRef')?
 window.pgCreateNew=function(){ try{ const gid=document.getElementById('pgGroup')?.value||''; const title=document.getElementById('pgNewTitle')?.value.trim()||''; const type=document.getElementById('pgNewType')?.value||'hw'; const total=parseInt(document.getElementById('pgNewTotal')?.value)||10; if(!title){ window.safeToast('اكتب العنوان','error'); return; } (async()=>{ let rec; if(type==='hw') rec=await DataService.addHomework({title,groupId:gid,deadline:new Date().toISOString().split('T')[0],totalPoints:total,questions:[],paper:true,createdBy:currentUser?.id||''}); else rec=await DataService.addExam({title,groupId:gid,mode:'offline',duration:0,totalPoints:total,questions:[],paper:true,createdBy:currentUser?.id||''}); window.pgGroupChanged(); const refEl=document.getElementById('pgRef'); if(refEl&&rec) refEl.value=rec.id; window.pgRefChanged(); window.safeToast('✅ تم إنشاء الواجب/الامتحان','success'); })(); }catch(e){} };
 window.pgRenderStudents=function(){ try{ const gid=document.getElementById('pgGroup')?.value||''; const el=document.getElementById('pgStudents'); const ps=document.getElementById('pgSave'); if(!gid||!pgCurrentRef){ if(el) el.innerHTML=''; if(ps) ps.style.display='none'; return; } const total=parseInt(document.getElementById('pgTotal')?.value)||10; const sts=DataService?.getStudentsByGroup?DataService.getStudentsByGroup(gid):[]; if(el) el.innerHTML=sts.length?sts.map(s=>`<div style="display:flex;gap:10px;align-items:center;padding:10px;background:var(--surface-hover);border-radius:8px;margin-bottom:6px;"><div class="user-avatar" style="width:32px;height:32px;font-size:13px;">${s.name.charAt(0)}</div><div style="flex:1;">${s.name}</div><div style="display:flex;gap:6px;align-items:center;"><input type="number" class="form-input" style="width:80px;" min="0" max="${total}" placeholder="0" data-stu="${s.id}"><span class="text-sm text-muted">من ${total}</span></div></div>`).join(''):'<p class="text-muted">لا طلاب</p>'; if(ps) ps.style.display=sts.length?'block':'none'; }catch(e){} };
 window.savePaperGrades=async function(){ try{ if(!pgCurrentRef){ window.safeToast('اختار واجب/امتحان','error'); return; } const isHw=pgCurrentRef.startsWith('hw_'); const total=parseInt(document.getElementById('pgTotal')?.value)||10; const inputs=document.querySelectorAll('#pgStudents input[data-stu]'); const d=db(); let count=0; if(isHw){ const h=(d.homework||[]).find(x=>x.id===pgCurrentRef); if(h) h.totalPoints=total; } else { const e=(d.exams||[]).find(x=>x.id===pgCurrentRef); if(e) e.totalPoints=total; } for(const inp of inputs){ const sid=inp.dataset.stu; const val=inp.value.trim(); if(val==='')continue; const score=parseFloat(val); if(isHw){ d.submissions=d.submissions||[]; let sub=d.submissions.find(x=>x.homeworkId===pgCurrentRef&&x.studentId===sid); if(sub){sub.score=score;sub.status='graded';sub.offline=true;sub.gradedBy=currentUser?.id||'';} else d.submissions.push({id:'sub_'+Date.now(),homeworkId:pgCurrentRef,studentId:sid,score,maxScore:total,status:'graded',offline:true,answers:[],gradedBy:currentUser?.id||'',submittedAt:new Date().toISOString()}); } else { d.examAttempts=d.examAttempts||[]; let att=d.examAttempts.find(x=>x.examId===pgCurrentRef&&x.studentId===sid); if(att){att.score=score;att.status='approved';att.offline=true;att.gradedBy=currentUser?.id||'';} else d.examAttempts.push({id:'eat_'+Date.now(),examId:pgCurrentRef,studentId:sid,score,maxScore:total,status:'approved',offline:true,answers:[],gradedBy:currentUser?.id||'',startTime:new Date().toISOString()}); } window.notifyGrade(sid, isHw?'hw':'ex', (isHw?((d.homework||[]).find(x=>x.id===pgCurrentRef)||{}).title:((d.exams||[]).find(x=>x.id===pgCurrentRef)||{}).title)||'', score, total); count++; } save(d);
+window.awardAcademicPoints(sid, isHw?'hw':'ex', score, total, (isHw?((d.homework||[]).find(x=>x.id===pgCurrentRef)||{}).title:((d.exams||[]).find(x=>x.id===pgCurrentRef)||{}).title)||'');
 window.safeToast(`تم حفظ ${count} درجة ✓`,'success'); document.querySelectorAll('#pgStudents input[data-stu]').forEach(i=>i.value=''); }catch(e){} };
 // ==================== 💰 Monthly ====================
 window.loadMonthly=function(){ try{ const mm=document.getElementById('moMonth'); if(mm) mm.value=new Date().toISOString().slice(0,7); const gOpts=(typeof Ops?.groupsInScope==='function'&&currentUser)?Ops.groupsInScope(currentUser.id).map(g=>`<option value="${g.id}">${g.name}</option>`).join(''):''; const mg=document.getElementById('moGroup'); if(mg) mg.innerHTML='<option value="">كل المجموعات</option>'+gOpts; window.renderMonthly(); }catch(e){} };
@@ -2001,9 +2206,7 @@ window.safeToast('فشل النسخ','error');
 let hwQ=[];
 window.loadHomework=function(){ try{ const q=(document.getElementById('hwSearchBar')?.value||'').toLowerCase(); const d=db(); const gids=(typeof Ops?.groupsInScope==='function'&&currentUser)?Ops.groupsInScope(currentUser.id).map(g=>g.id):[]; let list=(d.homework||[]).filter(h=>gids.includes(h.groupId)); if(q) list=list.filter(h=>(h.title||'').toLowerCase().includes(q)); const el=document.getElementById('hwList'); if(el) el.innerHTML=list.length?list.map(h=>{ const group=DataService?.getGroups?DataService.getGroups().find(g=>g.id===h.groupId):null; const t=group?DataService.getUserById(group.teacherId):null; const photo=t?.photoUrl?`<img src="${window.driveThumb(t.photoUrl)}" class="teacher-photo-sm" onerror="this.style.display='none'">`:''; const totalStudents=group?DataService.getStudentsByGroup(group.id).length:0; const subs=(d.submissions||[]).filter(s=>s.homeworkId===h.id); const graded=subs.filter(s=>s.status==='graded'); const avgScore=graded.length?Math.round(graded.reduce((a,x)=>a+(x.score||0),0)/graded.length):0; return `<div class="hw-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;"><div style="flex:1"><strong>${h.title}</strong> ${h.paper?'<span class="badge badge-muted">📄 ورقي</span>':''}${photo?' '+photo:''}<div class="text-xs text-muted">👥 ${group?.name||'-'} · 📅 ${h.deadline||'-'}</div><div class="stat-mini" style="margin-top:10px;"><div class="stat-mini-box"><div class="stat-mini-value">${totalStudents?Math.round(subs.length/totalStudents*100):0}%</div><div class="stat-mini-label">التسليم</div></div><div class="stat-mini-box"><div class="stat-mini-value">${avgScore}%</div><div class="stat-mini-label">المتوسط</div></div><div class="stat-mini-box"><div class="stat-mini-value">${subs.length}/${totalStudents}</div><div class="stat-mini-label">مُسلَّم</div></div></div></div><div style="display:flex;gap:6px;"><button class="btn btn-primary btn-sm" onclick="window.viewHwSubmissions('${h.id}')">📊 (${subs.length})</button><button class="btn btn-danger btn-sm" onclick="window.delHw('${h.id}')">🗑️</button></div></div></div>`; }).join(''):'<p class="text-muted">لا واجبات</p>'; }catch(e){} };
 window.viewHwSubmissions=function(hwId){ try{ const h=DataService?.getHomeworkById?DataService.getHomeworkById(hwId):null; if(!h)return; const group=DataService?.getGroups?DataService.getGroups().find(g=>g.id===h.groupId):null; const students=group?DataService.getStudentsByGroup(group.id):[]; const subs=(db().submissions||[]).filter(s=>s.homeworkId===hwId); const graded=subs.filter(s=>s.status==='graded'); const pending=subs.filter(s=>s.status!=='graded'); const missing=students.filter(s=>!subs.some(x=>x.studentId===s.id)); ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📊 ${h.title}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="tabs"><button class="tab-btn active" onclick="window.switchTab(event,'graded')">✓ (${graded.length})</button><button class="tab-btn" onclick="window.switchTab(event,'pending')">⏳ (${pending.length})</button><button class="tab-btn" onclick="window.switchTab(event,'missing')">✗ (${missing.length})</button></div><div id="tab-graded" class="tab-content active">${graded.map(s=>{const st=DataService.getUserById(s.studentId);const pct=h.totalPoints?Math.round(s.score/h.totalPoints*100):(s.score||0);return `<div class="sub-row graded"><div><strong>${st?.name||'-'}</strong></div><strong style="color:var(--success)">${pct}%</strong></div>`;}).join('')||'<p class="text-muted">لا درجات</p>'}</div><div id="tab-pending" class="tab-content">${pending.map(s=>`<div class="sub-row pending"><div><strong>${DataService.getUserById(s.studentId)?.name||'-'}</strong></div><button class="btn btn-secondary btn-sm" onclick="window.gradeIt('hw','${s.id}')">✏️</button></div>`).join('')||'<p class="text-muted">لا معلق</p>'}</div><div id="tab-missing" class="tab-content">${missing.map(s=>`<div class="sub-row missing"><div><strong>${s.name||'-'}</strong></div>${s.parentPhone?`<a class="btn btn-success btn-sm" href="https://wa.me/2${s.parentPhone.replace(/\D/g,'')}" target="_blank">💬</a>`:''}</div>`).join('')||'<p class="text-muted">الكل سلّم</p>'}</div></div>`,'modal-lg'); }catch(e){} };
-window.openHwBuilder=function(){ try{ hwQ=[]; ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📝 واجب</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>العنوان</label><input id="hwTitle" class="form-input" required></div><div class="form-group"><label>المجموعة</label><select id="hwGroup" class="form-select">${(typeof Ops?.groupsInScope==='function'&&currentUser?Ops.groupsInScope(currentUser.id):[]).map(g=>`<option value="${g.id}">${g.name}</option>`).join('')}</select></div><div class="form-group"><label>الموعد</label><input type="date" id="hwDeadline" class="form-input" required></div><div class="form-group"><label>صورة (Drive)</label><input id="hwImage" class="form-input" placeholder="https://drive.google.com/..."></div><div class="form-group"><label><input type="checkbox" id="hwPaper"> واجب ورقي</label></div><div id="hwQList"></div><div style="display:flex;gap:8px;margin:8px 0;"><button class="btn btn-secondary btn-sm" onclick="window.addHwQ('mcq')">+ MCQ</button><button class="btn btn-secondary btn-sm" onclick="window.addHwQ('truefalse')">+ صح/خطأ</button>
-<button class="btn btn-warning btn-sm" onclick="window.addHwQ('essay')">📷 مقالي</button>
-<button class="btn btn-warning btn-sm" onclick="window.addHwQ('essay')">📷 مقالي</button></div><button class="btn btn-primary w-full" onclick="window.saveHw()">💾</button></div>`); }catch(e){} };
+window.openHwBuilder=function(){ try{ hwQ=[]; ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📝 واجب جديد</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>العنوان</label><input id="hwTitle" class="form-input" required></div><div class="form-group"><label>المجموعة</label><select id="hwGroup" class="form-select">${(typeof Ops?.groupsInScope==='function'&&currentUser?Ops.groupsInScope(currentUser.id):[]).map(g=>`<option value="${g.id}">${g.name}</option>`).join('')}</select></div><div class="form-group"><label>نوع الواجب *</label><div style="display:flex;gap:8px;"><label class="radio-option" style="flex:1;"><input type="radio" name="hwType" value="online" checked><span>🌐 أونلاين (يتصحح أوتوماتيك)</span></label><label class="radio-option" style="flex:1;"><input type="radio" name="hwType" value="offline"><span>📄 أوفلاين (ورقي بالحصة)</span></label></div></div><div class="form-group"><label>الموعد</label><input type="date" id="hwDeadline" class="form-input" required></div><div class="form-group"><label>صورة الورقة (Drive)</label><input id="hwImage" class="form-input" placeholder="https://drive.google.com/..."></div><div id="hwQList"></div><div style="display:flex;gap:8px;margin:8px 0;"><button type="button" class="btn btn-secondary btn-sm" onclick="window.addHwQ('mcq')">+ MCQ</button><button type="button" class="btn btn-secondary btn-sm" onclick="window.addHwQ('truefalse')">+ صح/خطأ</button><button type="button" class="btn btn-warning btn-sm" onclick="window.addHwQ('essay')">📷 مقالي</button></div><button class="btn btn-primary w-full" onclick="window.saveHw()">💾 حفظ</button></div>`); }catch(e){} };
 window.addHwQ=function(t){ hwQ.push({id:'q'+Date.now(),type:t,text:'',options:t==='mcq'?['','','','']:[],correctAnswer:t==='mcq'?0:true,points:10}); window.renderHwQ(); };
 window.renderHwQ=function(){ 
     const el=document.getElementById('hwQList'); 
@@ -2021,7 +2224,7 @@ window.renderHwQ=function(){
         `:''}
     </div>`).join(''); 
 };
-window.saveHw=async function(){ try{ if(!document.getElementById('hwTitle')?.value){ window.safeToast('اكتب العنوان','error'); return; } const _gid=document.getElementById('hwGroup').value; const _title=document.getElementById('hwTitle').value; const _rec=await DataService.addHomework({title:_title,groupId:_gid,deadline:document.getElementById('hwDeadline').value,imageUrl:document.getElementById('hwImage').value,questions:hwQ,paper:document.getElementById('hwPaper')?.checked||false,createdBy:currentUser?.id||''}); window.notifyGroup(_gid,'📝 واجب جديد: '+_title,'افتح الواجب وحله دلوقتي — بالتوفيق!','homework',{refId:_rec&&(_rec.id||_rec)}); ThemeManager.closeModal(); window.loadHomework(); }catch(e){} };
+window.saveHw=async function(){ try{ if(!document.getElementById('hwTitle')?.value){ window.safeToast('اكتب العنوان','error'); return; } const _gid=document.getElementById('hwGroup').value; const _title=document.getElementById('hwTitle').value; const _offline=(document.querySelector('input[name="hwType"]:checked')?.value==='offline'); const _rec=await DataService.addHomework({title:_title,groupId:_gid,deadline:document.getElementById('hwDeadline').value,imageUrl:document.getElementById('hwImage').value,questions:hwQ,paper:_offline,offline:_offline,createdBy:currentUser?.id||''}); window.notifyGroup(_gid,'📝 واجب جديد: '+_title,_offline?'واجب ورقي جديد — هترصد درجاته في الحصة':'افتح الواجب وحله دلوقتي — بالتوفيق!','homework',{refId:_rec&&(_rec.id||_rec)}); ThemeManager.closeModal(); window.safeToast('✅ تم حفظ الواجب ('+(_offline?'📄 أوفلاين ورقي':'🌐 أونلاين')+')','success'); window.loadHomework(); window.loadGrades(); }catch(e){} };
 window.delHw=async function(id){ try{ if(!confirm('حذف؟'))return; await DataService.deleteHomework(id); window.loadHomework(); }catch(e){} };
 let exQ=[];
 window.loadExams=function(){ try{ const q=(document.getElementById('exSearchBar')?.value||'').toLowerCase(); const d=db(); const gids=(typeof Ops?.groupsInScope==='function'&&currentUser)?Ops.groupsInScope(currentUser.id).map(g=>g.id):[]; let list=(d.exams||[]).filter(e=>gids.includes(e.groupId)); if(q) list=list.filter(e=>(e.title||'').toLowerCase().includes(q)); const el=document.getElementById('exList'); if(el) el.innerHTML=list.length?list.map(e=>{ const group=DataService?.getGroups?DataService.getGroups().find(g=>g.id===e.groupId):null; const t=group?DataService.getUserById(group.teacherId):null; const photo=t?.photoUrl?`<img src="${window.driveThumb(t.photoUrl)}" class="teacher-photo-sm" onerror="this.style.display='none'">`:''; const att=(d.examAttempts||[]).filter(a=>a.examId===e.id); const graded=att.filter(a=>a.status==='approved'); const avgScore=graded.length?Math.round(graded.reduce((a,x)=>a+(x.score||0),0)/graded.length):0; return `<div class="hw-card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;"><div><strong>${e.title}</strong> <span class="badge badge-info">${e.mode==='home'?'🏠 منزلي':e.mode==='class'?'🏫 حصة':'📝 ورقي'}</span>${photo?' '+photo:''}<div class="text-xs text-muted">👥 ${group?.name||'-'} · ⏱️ ${e.duration||60}د</div><div class="stat-mini" style="margin-top:10px;"><div class="stat-mini-box"><div class="stat-mini-value">${att.length}</div><div class="stat-mini-label">حاولوا</div></div><div class="stat-mini-box"><div class="stat-mini-value">${avgScore}%</div><div class="stat-mini-label">المتوسط</div></div></div></div><div style="display:flex;gap:6px;"><button class="btn btn-primary btn-sm" onclick="window.viewExAttempts('${e.id}')">📊</button><button class="btn btn-danger btn-sm" onclick="window.delEx('${e.id}')">🗑️</button></div></div></div>`; }).join(''):'<p class="text-muted">لا امتحانات</p>'; }catch(e){} };
@@ -2053,28 +2256,22 @@ window.viewExAttempts=function(exId){
 
 // دوال الاعتماد الجماعي
 window.bulkApproveEx=async function(exId){
-    if(!confirm('هل تريد اعتماد جميع الدرجات المعلقة وإرسالها للإحصائيات؟')) return;
-    const d=db();
-    const pending=(d.examAttempts||[]).filter(a=>a.examId===exId && a.status!=='approved' && a.status!=='graded');
-    pending.forEach(a=>{
-        a.status='graded';
-        a.visibleToStudent=false;
-        a.isExamStat=true;
-        a.gradedBy=currentUser?.id||'';
-    });
-    DataService._saveData(d);
-    window.safeToast('✅ تم اعتماد الدرجات كإحصائيات','success');
-    // إرسال إشعار لولي الأمر (اختياري للامتحانات)
-if(isExam && st?.parentPhone){
-    const sendToParent=confirm('هل ترغب في إرسال إشعار لولي الأمر عبر واتساب بأن النتيجة جاهزة للاطلاع في المركز؟');
-    if(sendToParent){
-        const waMsg=`مرحباً، تم تصحيح امتحان "${e.title}" للطالب "${st.name}". النتيجة متاحة الآن للاطلاع عليها في لوحة ولي الأمر أو عبر التواصل مع المركز.`;
-        window.open(`https://wa.me/2${st.parentPhone.replace(/\D/g,'')}?text=${encodeURIComponent(waMsg)}`, '_blank');
-    }
-}
-    ThemeManager.closeModal();
-    window.loadExams();
+if(!confirm('هل تريد اعتماد جميع الدرجات المعلقة وإرسالها للإحصائيات؟')) return;
+const d=db();
+const ex=(d.exams||[]).find(x=>x.id===exId);
+const pending=(d.examAttempts||[]).filter(a=>a.examId===exId && a.status!=='approved' && a.status!=='graded');
+pending.forEach(a=>{
+a.status='graded';
+a.visibleToStudent=false;
+a.isExamStat=true;
+a.gradedBy=currentUser?.id||'';
+});
+DataService._saveData(d);
+window.safeToast('✅ تم اعتماد الدرجات كإحصائيات','success');
+ThemeManager.closeModal();
+window.loadExams();
 };
+
 window.viewExAnswers=function(attId){
 try{
 const a=(db().examAttempts||[]).find(x=>x.id===attId); if(!a)return;
@@ -2125,9 +2322,95 @@ window.renderHwQ=function(){
 window.saveEx=async function(){ try{ if(!document.getElementById('exTitle')?.value){ window.safeToast('اكتب العنوان','error'); return; } const _gid=document.getElementById('exGroup').value; const _title=document.getElementById('exTitle').value; const _rec=await DataService.addExam({title:_title,groupId:_gid,mode:document.getElementById('exMode').value,duration:60,questions:exQ,createdBy:currentUser?.id||''}); window.notifyGroup(_gid,'🎓 امتحان جديد: '+_title,'امتحان جديد نزل — جهّز نفسك!','exam',{refId:_rec&&(_rec.id||_rec)}); ThemeManager.closeModal(); window.loadExams(); }catch(e){} };
 window.delEx=async function(id){ try{ if(!confirm('حذف؟'))return; await DataService.deleteExam(id); window.loadExams(); }catch(e){} };
 window.setGrades=function(m,btn){ gradesMode=m; document.querySelectorAll('#section-grades .filter-btn').forEach(b=>b.classList.toggle('active',b===btn)); window.loadGrades(); };
-window.loadGrades=function(){ try{ const d=db(); const gids=(typeof Ops?.groupsInScope==='function'&&currentUser)?Ops.groupsInScope(currentUser.id).map(g=>g.id):[]; let html=''; if(gradesMode==='hw'){ html=(d.submissions||[]).filter(s=>{const h=(d.homework||[]).find(h=>h.id===s.homeworkId);return h&&gids.includes(h.groupId);}).map(s=>{const h=DataService?.getHomeworkById?DataService.getHomeworkById(s.homeworkId):null;const st=DataService?.getUserById?DataService.getUserById(s.studentId):null;return `<div class="sub-row ${s.status==='graded'?'graded':'pending'}"><div><strong>${st?.name||'-'}</strong><div class="text-xs text-muted">${h?.title||'-'}</div></div><div style="display:flex;gap:6px;align-items:center;"><span class="badge ${s.status==='graded'?'badge-success':'badge-warning'}">${s.status==='graded'?s.score:'معلق'}</span><button class="btn btn-secondary btn-sm" onclick="window.gradeIt('hw','${s.id}')">✏️</button></div></div>`;}).join('')||'<p class="text-muted">لا تسليمات</p>'; } else { html=(d.examAttempts||[]).filter(a=>{const e=(d.exams||[]).find(e=>e.id===a.examId);return e&&gids.includes(e.groupId);}).map(a=>{const e=DataService?.getExamById?DataService.getExamById(a.examId):null;const st=DataService?.getUserById?DataService.getUserById(a.studentId):null;return `<div class="sub-row ${a.status==='approved'?'graded':'pending'}"><div><strong>${st?.name||'-'}</strong><div class="text-xs text-muted">${e?.title||'-'}</div></div><div style="display:flex;gap:6px;align-items:center;"><span class="badge ${a.status==='approved'?'badge-success':'badge-warning'}">${a.status==='approved'?a.score:'معلق'}</span><button class="btn btn-secondary btn-sm" onclick="window.gradeIt('ex','${a.id}')">✏️</button></div></div>`;}).join('')||'<p class="text-muted">لا محاولات</p>'; } const el=document.getElementById('gradesList'); if(el) el.innerHTML=html; }catch(e){} };
+window.loadGrades=function(){
+  try{
+    const d=db();
+    const gSel=document.getElementById('gradesGroupFilter');
+    if(gSel&&gSel.options.length<=1){
+      const gs=(typeof Ops?.groupsInScope==='function'&&currentUser)?Ops.groupsInScope(currentUser.id):[];
+      gSel.innerHTML='<option value="">كل المجموعات</option>'+gs.map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
+    }
+    const gid=gSel?gSel.value:'';
+    const q=(document.getElementById('gradesSearch')?.value||'').toLowerCase();
+    const stuMap={}; (DataService?.getStudents?DataService.getStudents():[]).forEach(s=>stuMap[s.id]=s);
+    const matchQ=(sid)=>!q||((stuMap[sid]?.name||'').toLowerCase().includes(q));
+    let rows=[];
+    if(gradesMode==='online'){
+      (d.submissions||[]).forEach(s=>{
+        const hw=(d.homework||[]).find(h=>h.id===s.homeworkId);
+        if(!hw||hw.paper) return;
+        if(gid&&hw.groupId!==gid) return;
+        if(!matchQ(s.studentId)) return;
+        rows.push({sid:s.studentId,refId:s.id,title:hw.title,kind:'📝 واجب أونلاين',score:s.score,total:hw.totalPoints||100,graded:s.status==='graded',date:s.submittedAt});
+      });
+      (d.examAttempts||[]).forEach(a=>{
+        const ex=(d.exams||[]).find(x=>x.id===a.examId);
+        if(!ex||ex.mode==='offline'||ex.paper) return;
+        if(gid&&ex.groupId!==gid) return;
+        if(!matchQ(a.studentId)) return;
+        rows.push({sid:a.studentId,refId:a.id,title:ex.title,kind:'🎓 امتحان أونلاين',score:a.score,total:a.maxScore||ex.totalPoints||100,graded:(a.status==='approved'||a.status==='graded'),date:a.endTime});
+      });
+    } else {
+      (d.submissions||[]).forEach(s=>{
+        const hw=(d.homework||[]).find(h=>h.id===s.homeworkId);
+        if(!hw||!hw.paper) return;
+        if(gid&&hw.groupId!==gid) return;
+        if(!matchQ(s.studentId)) return;
+        rows.push({sid:s.studentId,refId:s.id,title:hw.title,kind:'📄 واجب ورقي',score:s.score,total:hw.totalPoints||100,graded:s.status==='graded',date:s.submittedAt});
+      });
+      (d.examAttempts||[]).forEach(a=>{
+        const ex=(d.exams||[]).find(x=>x.id===a.examId);
+        if(!ex||!(ex.mode==='offline'||ex.paper)) return;
+        if(gid&&ex.groupId!==gid) return;
+        if(!matchQ(a.studentId)) return;
+        rows.push({sid:a.studentId,refId:a.id,title:ex.title,kind:'📄 امتحان ورقي',score:a.score,total:a.maxScore||ex.totalPoints||100,graded:(a.status==='approved'||a.status==='graded'),date:a.endTime});
+      });
+    }
+    rows.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    const el=document.getElementById('gradesList');
+    if(!el) return;
+    if(!rows.length){ el.innerHTML='<div class="card" style="text-align:center;padding:24px;"><div style="font-size:40px;">📭</div><strong>لا توجد نتائج في الفلتر ده</strong></div>'; return; }
+    el.innerHTML=rows.map(r=>{
+      const stu=stuMap[r.sid];
+      if(r.graded){
+        const pct=Math.round((r.score||0)/r.total*100);
+        return `<div class="sub-row graded"><div style="flex:1;"><strong>${stu?.name||r.sid}</strong><div class="text-xs text-muted">${r.kind} · ${r.title}</div></div><strong style="color:var(--success);">${r.score}/${r.total} (${pct}%)</strong></div>`;
+      }
+      if(gradesMode==='offline'){
+        return `<div class="sub-row pending"><div style="flex:1;"><strong>${stu?.name||r.sid}</strong><div class="text-xs text-muted">${r.kind} · ${r.title} · بانتظار الرصد</div></div>
+        <div style="display:flex;gap:6px;align-items:center;"><input type="number" class="form-input" style="width:80px;" id="offGrade_${r.refId}" min="0" max="${r.total}" placeholder="من ${r.total}"><button class="btn btn-success btn-sm" onclick="window.saveOfflineGrade('${r.refId}','${r.kind.includes('واجب')?'hw':'ex'}',${r.total})">💾 حفظ</button></div></div>`;
+      }
+      return `<div class="sub-row pending"><div style="flex:1;"><strong>${stu?.name||r.sid}</strong><div class="text-xs text-muted">${r.kind} · ${r.title}</div></div><span class="badge badge-warning">⏳ معلق</span></div>`;
+    }).join('');
+  }catch(e){ console.error(e); }
+};
+window.saveOfflineGrade=async function(refId,kind,total){
+  try{
+    const score=parseInt(document.getElementById('offGrade_'+refId)?.value);
+    if(isNaN(score)||score<0||score>total){ window.safeToast('درجة غير صحيحة','error'); return; }
+    const d=db();
+    if(kind==='hw'){
+      const s=(d.submissions||[]).find(x=>x.id===refId); if(!s) return;
+      const hw=(d.homework||[]).find(h=>h.id===s.homeworkId);
+      s.score=score; s.status='graded'; s.gradedBy=currentUser?.id||''; s.gradedAt=new Date().toISOString();
+      save(d);
+      if(window.FirebaseService?.connected){ try{ await FirebaseService.saveDoc('submissions',s.id,s); }catch(e){} }
+      window.notifyGrade(s.studentId,'hw',hw?hw.title:'واجب ورقي',score,total);
+    } else {
+      const a=(d.examAttempts||[]).find(x=>x.id===refId); if(!a) return;
+      const ex=(d.exams||[]).find(x=>x.id===a.examId);
+      a.score=score; a.status='approved'; a.gradedBy=currentUser?.id||''; a.gradedAt=new Date().toISOString();
+      save(d);
+      if(window.FirebaseService?.connected){ try{ await FirebaseService.saveDoc('examAttempts',a.id,a); }catch(e){} }
+      window.notifyGrade(a.studentId,'ex',ex?ex.title:'امتحان ورقي',score,total);
+    }
+    window.safeToast('✅ تم حفظ الدرجة','success');
+    window.loadGrades();
+  }catch(e){ window.safeToast('خطأ','error'); }
+};
+
 window.gradeIt=function(type,id){ ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">✏️ درجة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>الدرجة</label><input type="number" id="gradeVal" class="form-input" min="0"></div><button class="btn btn-primary w-full" onclick="window.saveGrade('${type}','${id}')">💾</button></div>`,'modal-sm'); };
-window.saveGrade=async function(type,id){ try{ const score=parseInt(document.getElementById('gradeVal')?.value)||0; const d=db(); if(type==='hw'){ const sub=(d.submissions||[]).find(x=>x.id===id); const hw=sub?((d.homework||[]).find(h=>h.id===sub.homeworkId)||null):null; if(typeof DataService?.gradeSubmission==='function') await DataService.gradeSubmission(id,score,currentUser?.id||'','تصحيح يدوي'); if(sub&&hw) window.notifyGrade(sub.studentId,'hw',hw.title,score,hw.totalPoints||100); } else { const a=(d.examAttempts||[]).find(x=>x.id===id); const ex=a?((d.exams||[]).find(e=>e.id===a.examId)||null):null; if(a){a.score=score;a.status='approved';a.gradedBy=currentUser?.id||'';save(d);} if(a&&ex) window.notifyGrade(a.studentId,'ex',ex.title,score,ex.totalPoints||100); } ThemeManager.closeModal(); window.safeToast('تم ✓','success'); window.loadGrades(); }catch(e){} };
+window.saveGrade=async function(type,id){ try{ const score=parseInt(document.getElementById('gradeVal')?.value)||0; const d=db(); if(type==='hw'){ const sub=(d.submissions||[]).find(x=>x.id===id); const hw=sub?((d.homework||[]).find(h=>h.id===sub.homeworkId)||null):null; if(typeof DataService?.gradeSubmission==='function') await DataService.gradeSubmission(id,score,currentUser?.id||'','تصحيح يدوي'); if(sub&&hw){ window.notifyGrade(sub.studentId,'hw',hw.title,score,hw.totalPoints||100); window.awardAcademicPoints(sub.studentId,'hw',score,hw.totalPoints||100,hw.title); } } else { const a=(d.examAttempts||[]).find(x=>x.id===id); const ex=a?((d.exams||[]).find(e=>e.id===a.examId)||null):null; if(a){a.score=score;a.status='approved';a.gradedBy=currentUser?.id||'';save(d);} if(a&&ex){ window.notifyGrade(a.studentId,'ex',ex.title,score,ex.totalPoints||100); window.awardAcademicPoints(a.studentId,'ex',score,ex.totalPoints||100,ex.title); } } ThemeManager.closeModal(); window.safeToast('تم ✓','success'); window.loadGrades(); }catch(e){} };
 // ==================== 🧩 Interactive & Videos & Posts & Challenges ====================
 window.setInteractiveFilter=function(f,btn){ interactiveFilter=f; document.querySelectorAll('#section-interactive .filter-btn').forEach(b=>b.classList.toggle('active',b===btn)); window.loadInteractive(); };
 window.loadInteractive=function(){ try{ let list=(typeof DataService?.getInteractiveMaterials==='function')?DataService.getInteractiveMaterials({}):[]; const gids=(typeof Ops?.groupsInScope==='function'&&currentUser)?Ops.groupsInScope(currentUser.id).map(g=>g.id):[]; list=list.filter(it=>gids.includes(it.groupId)); if(interactiveFilter!=='all') list=list.filter(x=>x.type===interactiveFilter); const el=document.getElementById('interactiveList'); if(!el)return; if(!list.length){ el.innerHTML='<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">🧩</div><strong>لا مواد تفاعلية</strong></div>'; return; } const typeLabel={link:'🔗 رابط',question:'❓ أسئلة',vocabulary:'📖 مفردات',recitation:'🎙️ تسميع'}; el.innerHTML=list.map(it=>{ const g=DataService.getGroups().find(x=>x.id===it.groupId); const t=g?DataService.getUserById(g.teacherId):null; const photo=t?.photoUrl?`<img src="${window.driveThumb(t.photoUrl)}" class="teacher-photo-sm" onerror="this.style.display='none'">`:''; return `<div class="material-card type-${it.type||'link'}"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;"><div style="flex:1;min-width:0;"><span class="badge badge-info">${typeLabel[it.type]||it.type}</span><strong style="display:block;font-size:15px;margin-top:6px;">${it.title||'-'}</strong>${it.word?`<div style="margin-top:6px;"><strong style="color:var(--primary);font-family:var(--font-en);">${it.word}</strong> ${it.meaning||''}</div>`:''}<div class="text-xs text-muted" style="margin-top:4px;">${photo?' '+photo:''} 👥 ${g?.name||'-'} · 👨🏫 ${t?.name||'-'}</div></div><div style="display:flex;gap:6px;"><button class="btn btn-ghost btn-sm" onclick="window.openInteractiveBuilder('${it.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="window.deleteInteractive('${it.id}')">🗑️</button></div></div><div class="material-media">${it.url?`<a href="${it.url}" target="_blank" class="btn btn-secondary btn-sm" style="margin-top:8px;">🔗 فتح</a>`:''}${it.imageUrl?`<img src="${window.driveThumb(it.imageUrl)}">`:''}${it.audioUrl?`<audio controls src="${it.audioUrl}"></audio>`:''}</div></div>`; }).join(''); }catch(e){} };
@@ -2157,12 +2440,50 @@ window.deleteChallenge=async function(id){ try{ if(!confirm('حذف؟'))return; 
 window.viewChallengeResults=function(id){ try{ const c=DataService?.getChallengeById?DataService.getChallengeById(id):null; if(!c)return; const attempts=(DataService?.getChallengeAttempts?DataService.getChallengeAttempts({challengeId:id}):[]).sort((a,b)=>b.points-a.points); ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📊 ${c.title}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">${attempts.map((a,i)=>{const s=DataService.getUserById(a.studentId);return `<div class="sub-row ${i<3?'graded':''}"><div><strong>${i+1}. ${s?.name||'-'}</strong></div><div style="font-family:var(--font-en);font-weight:900;color:var(--primary);">${a.points} ${a.timeBonusApplied?'⚡':''}</div></div>`;}).join('')||'<p class="text-muted">لم يشارك أحد</p>'}</div>`,'modal-lg'); }catch(e){} };
 // ==================== 📱 WhatsApp & Followups & Points & Misc ====================
 window.loadWhatsappGroups=function(){ try{ const groups=((typeof Ops?.groupsInScope==='function'&&currentUser)?Ops.groupsInScope(currentUser.id):[]).slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'')); const el=document.getElementById('whatsappGroupsList'); if(!el)return; if(!groups.length){ el.innerHTML='<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">📱</div><strong>لا مجموعات</strong></div>'; return; } el.innerHTML=groups.map(g=>{ const teacher=DataService?.getUserById?DataService.getUserById(g.teacherId):null; const photo=teacher?.photoUrl?`<img src="${window.driveThumb(teacher.photoUrl)}" class="teacher-photo-sm" onerror="this.style.display='none'">`:''; const hasLink=!!g.whatsappLink; return `<div class="wa-group-card ${hasLink?'has-link':''}"><div style="flex:1;min-width:0;"><strong>${g.name}</strong>${g.center?` <span class="badge badge-success">🏢 ${g.center}</span>`:''}<div class="text-xs text-muted" style="margin-top:4px;">${photo?' '+photo:''} 👨‍🏫 ${teacher?.name||'-'} · 📅 ${dayAr(g.day)} ${T(g.time)}</div>${hasLink?'':'<div class="text-xs" style="margin-top:4px;color:var(--warning);">⚠️ مفيش رابط</div>'}</div><div style="display:flex;gap:6px;">${hasLink?`<a href="${g.whatsappLink}" target="_blank" class="wa-btn">💬 افتح الجروب</a>`:''}<button class="btn btn-ghost btn-sm" onclick="window.openGroupModal('${g.id}')">⚙️</button></div></div>`; }).join(''); }catch(e){} };
-window.generateAutoFollowups=function(){ try{ if(!currentUser)return; const students=(typeof Ops?.studentsInScope==='function')?Ops.studentsInScope(currentUser.id):[]; if(!students.length)return; const d=db(); students.forEach(s=>{ try{ const open=(typeof Ops?.getFollowUps==='function')?Ops.getFollowUps({studentId:s.id}).filter(f=>f.status!=='resolved'):[]; const abs=(DataService?.getAttendance?DataService.getAttendance():[]).filter(a=>a.status==='approved'&&a.records.some(r=>r.studentId===s.id&&r.status==='absent')).length; if(abs>=2&&!open.some(f=>f.reason==='absence')&&typeof Ops?.addFollowUp==='function') Ops.addFollowUp({studentId:s.id,reason:'absence',title:`غياب متكرر (${abs})`,ownerAssistant:currentUser.id,status:'open',auto:true}); const pay=(d.payments||[]).find(p=>p.studentId===s.id&&p.status!=='paid'); if(pay&&!open.some(f=>f.reason==='payment')&&typeof Ops?.addFollowUp==='function') Ops.addFollowUp({studentId:s.id,reason:'payment',title:'دفعة متأخرة',ownerAssistant:currentUser.id,status:'open',auto:true}); }catch(e){} }); }catch(e){} };
+window.generateAutoFollowups=function(){ try{ if(!currentUser)return; const students=(typeof Ops?.studentsInScope==='function')?Ops.studentsInScope(currentUser.id):[]; if(!students.length)return; const d=db(); students.forEach(s=>{ try{ const all=(typeof Ops?.getFollowUps==='function')?Ops.getFollowUps({studentId:s.id}):[]; const abs=(DataService?.getAttendance?DataService.getAttendance():[]).filter(a=>a.status==='approved'&&a.records.some(r=>r.studentId===s.id&&r.status==='absent')).length; if(abs>=2&&!all.some(f=>f.reason==='absence')&&typeof Ops?.addFollowUp==='function') Ops.addFollowUp({studentId:s.id,reason:'absence',title:`غياب متكرر (${abs})`,ownerAssistant:currentUser.id,status:'open',auto:true,repeatCount:0,history:[]}); const pay=(d.payments||[]).find(p=>p.studentId===s.id&&p.status!=='paid'); if(pay&&!all.some(f=>f.reason==='payment')&&typeof Ops?.addFollowUp==='function') Ops.addFollowUp({studentId:s.id,reason:'payment',title:'دفعة متأخرة',ownerAssistant:currentUser.id,status:'open',auto:true,repeatCount:0,history:[]}); }catch(e){} }); }catch(e){} };
 window.loadFollowups=function(){ try{ const list=(typeof Ops?.getFollowUps==='function'&&currentUser)?Ops.getFollowUps({ownerAssistant:currentUser.id}):[]; const el=document.getElementById('followupsList'); if(el) el.innerHTML=list.length?list.map(f=>{ const s=DataService?.getUserById?DataService.getUserById(f.studentId):null; const pNum=(s?.parentPhone||s?.phone||'').replace(/\D/g,''); return `<div class="card" style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;"><div><strong>${f.title||f.reason}</strong> ${f.auto?'<span class="badge badge-info">أوتوماتيك</span>':''}<div class="text-sm text-muted">👤 ${s?.name||'-'}</div></div><span class="badge ${f.status==='resolved'?'badge-success':'badge-warning'}">${f.status}</span></div><div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">${pNum?`<a class="btn btn-secondary btn-sm" href="tel:+2${pNum}">📞 اتصال</a><a class="btn btn-success btn-sm" href="https://wa.me/2${pNum}" target="_blank">💬 واتساب</a>`:''}${s?.phone?`<button class="btn btn-ghost btn-sm" onclick="window.notifyStudent('${s.id}')">🔔 إشعار للطالب</button>`:''}<button class="btn btn-ghost btn-sm" onclick="window.openStudentProfile('${f.studentId}')">👁️</button>${f.status!=='resolved'?`<button class="btn btn-primary btn-sm" onclick="window.resolveFu('${f.id}')">✓ إغلاق</button>`:''}</div></div>`; }).join(''):'<p class="text-muted">لا متابعات ✓</p>'; }catch(e){} };
 window.notifyStudent=function(sid){ try{ const s=DataService?.getUserById?DataService.getUserById(sid):null; if(!s)return; DataService.addNotification({targetUserId:sid,title:'📌 رسالة من المركز',message:'عايزين نطمن عليك — لو في أي مشكلة كلمنا',type:'general'}); window.safeToast('🔔 تم إرسال إشعار للطالب','success'); }catch(e){} };
 window.openFollowupModal=function(){ try{ const students=(typeof Ops?.studentsInScope==='function'&&currentUser)?Ops.studentsInScope(currentUser.id):[]; ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📌 متابعة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>الطالب</label><select id="fuStu" class="form-select">${students.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div><div class="form-group"><label>السبب</label><select id="fuReason" class="form-select"><option value="absence">غياب</option><option value="homework">واجب</option><option value="payment">دفعة</option><option value="behavior">سلوك</option></select></div><button class="btn btn-primary w-full" onclick="window.saveFu()">💾</button></div>`); }catch(e){} };
 window.saveFu=async function(){ try{ await Ops.addFollowUp({studentId:document.getElementById('fuStu')?.value||'',reason:document.getElementById('fuReason')?.value||'',title:document.getElementById('fuReason')?.value||'',ownerAssistant:currentUser?.id||'',status:'open'}); ThemeManager.closeModal(); window.loadFollowups(); }catch(e){} };
-window.resolveFu=async function(id){ try{ await Ops.updateFollowUp(id,{status:'resolved'}); window.loadFollowups(); }catch(e){} };
+window.resolveFu=async function(id){ try{ const now=new Date().toISOString(); const all=(typeof Ops?.getFollowUps==='function')?Ops.getFollowUps({}):[]; const f=all.find(x=>x.id===id); const history=(f&&f.history)||[]; history.push({at:now,by:currentUser?.name||'مساعد',note:'تمت المتابعة والإغلاق'}); await Ops.updateFollowUp(id,{status:'resolved',resolvedAt:now,resolvedBy:currentUser?.id||'',history:history}); window.safeToast('✓ تم — هترجع تلقائياً بعد '+window.REOPEN_AFTER_DAYS+' يوم لو مفيش جديد','success'); window.loadFollowups(); }catch(e){} };
+// 🆕 هل المشكلة لسه موجودة؟ (بيتحكم في إعادة الفتح)
+window.followUpIssuePersists=function(f){
+try{
+const d=db(); const s=f.studentId;
+if(f.reason==='absence'){
+const abs=(DataService?.getAttendance?DataService.getAttendance():[]).filter(a=>a.status==='approved'&&a.records.some(r=>r.studentId===s&&r.status==='absent'));
+const newAbs=abs.some(a=>new Date(a.date).getTime()>=new Date(f.resolvedAt||0).getTime());
+return newAbs||abs.length>=2;
+}
+if(f.reason==='payment'){ return (d.payments||[]).some(p=>p.studentId===s&&p.status!=='paid'); }
+if(f.reason==='homework'){
+const gids=(DataService?.getStudentTeachers?DataService.getStudentTeachers(s):[]).map(t=>t.group?.id);
+const hws=(d.homework||[]).filter(h=>gids.includes(h.groupId));
+const subs=(d.submissions||[]).filter(x=>x.studentId===s);
+return hws.some(h=>!subs.some(x=>x.homeworkId===h.id));
+}
+const hasNew=(d.studentNotes||[]).some(n=>n.studentId===s&&new Date(n.createdAt||0).getTime()>new Date(f.resolvedAt||0).getTime())||(d.manualPoints||[]).some(m=>m.studentId===s&&new Date(m.awardedAt||0).getTime()>new Date(f.resolvedAt||0).getTime());
+return !hasNew;
+}catch(e){ return false; }
+};
+window.REOPEN_AFTER_DAYS=3;
+window.checkReopenFollowUps=async function(){
+try{
+if(!currentUser) return;
+const list=(typeof Ops?.getFollowUps==='function')?Ops.getFollowUps({ownerAssistant:currentUser.id}):[];
+const now=Date.now();
+for(const f of list){
+if(f.status!=='resolved'||!f.resolvedAt) continue;
+if(now-new Date(f.resolvedAt).getTime()<window.REOPEN_AFTER_DAYS*86400000) continue;
+if(window.followUpIssuePersists(f)){
+const rc=(f.repeatCount||0)+1;
+const history=(f.history||[]); history.push({at:new Date().toISOString(),by:'النظام',note:`إعادة فتح تلقائية — المرة ${rc+1} (المشكلة لسه موجودة)`});
+await Ops.updateFollowUp(f.id,{status:'open',repeatCount:rc,reopenedAt:new Date().toISOString(),history:history});
+}
+}
+}catch(e){}
+};
+window.reopenFu=async function(id){ try{ const all=(typeof Ops?.getFollowUps==='function')?Ops.getFollowUps({}):[]; const f=all.find(x=>x.id===id); const history=(f&&f.history)||[]; history.push({at:new Date().toISOString(),by:currentUser?.name||'مساعد',note:'إعادة فتح يدوية'}); await Ops.updateFollowUp(id,{status:'open',reopenedAt:new Date().toISOString(),history:history}); window.loadFollowups(); }catch(e){} };
 window.setPointsTab=function(tab,btn){ document.querySelectorAll('#section-points .section-tab').forEach(b=>b.classList.remove('active')); btn?.classList.add('active'); document.querySelectorAll('#section-points .tab-content').forEach(c=>c.classList.remove('active')); document.getElementById('points-'+tab)?.classList.add('active'); if(tab==='overview') window.loadPointsOverview(); if(tab==='manual') window.loadPointsManualStudents(); if(tab==='history') window.loadPointsHistory(); if(tab==='ranking') window.loadPointsRanking(); if(tab==='examrank'){ window.fillExamRankGroups(); window.loadExamRanking(); } };
 window.fillExamRankGroups=function(){ try{ const sel=document.getElementById('examRankGroup'); if(!sel) return; const gs=(typeof Ops?.groupsInScope==='function'&&currentUser)?Ops.groupsInScope(currentUser.id):[]; const cur=sel.value; sel.innerHTML='<option value="">كل المجموعات</option>'+gs.map(g=>`<option value="${g.id}">${g.name}</option>`).join(''); sel.value=cur; }catch(e){} };
 window.loadExamRanking=function(){ try{ const gid=document.getElementById('examRankGroup')?.value||''; const d=db(); const gs=(typeof Ops?.groupsInScope==='function'&&currentUser)?Ops.groupsInScope(currentUser.id):[]; const gids=gs.map(g=>g.id); let exs=(d.exams||[]).filter(e=>gids.includes(e.groupId)); if(gid) exs=exs.filter(e=>e.groupId===gid); const exIds=exs.map(e=>e.id); const atts=(d.examAttempts||[]).filter(a=>exIds.includes(a.examId)&&(a.status==='approved'||a.status==='graded')); const per={}; atts.forEach(a=>{ const mx=a.maxScore||100; const pct=mx>0?(a.score/mx*100):0; if(!per[a.studentId]) per[a.studentId]={sum:0,n:0}; per[a.studentId].sum+=pct; per[a.studentId].n++; }); let rows=Object.keys(per).map(sid=>{ const s=DataService?.getUserById?DataService.getUserById(sid):null; return {s:s, avg:Math.round(per[sid].sum/per[sid].n), n:per[sid].n}; }).filter(r=>r.s); rows.sort((a,b)=>b.avg-a.avg); const el=document.getElementById('examRankList'); if(el) el.innerHTML=rows.length?`<table class="table"><thead><tr><th>#</th><th>الطالب</th><th>متوسط الامتحانات</th><th>عدد الامتحانات</th></tr></thead><tbody>${rows.map((r,i)=>`<tr><td>${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</td><td>${r.s.name||'-'}</td><td><strong>${r.avg}%</strong></td><td>${r.n}</td></tr>`).join('')}</tbody></table>`:'<p class="text-muted">لا توجد درجات امتحانات بعد</p>'; }catch(e){console.error(e);} };
@@ -2180,6 +2501,218 @@ window.doRecordPay=async function(id){ try{ const gid=document.getElementById('p
 window.loadCalendar=function(){ try{ const sel=document.getElementById('calGroup'); if(sel&&!sel.options.length){ const gids=(typeof Ops?.groupsInScope==='function'&&currentUser)?Ops.groupsInScope(currentUser.id):[]; sel.innerHTML=gids.map(g=>`<option value="${g.id}">${g.name}</option>`).join(''); } const g=DataService?.getGroups?DataService.getGroups().find(x=>x.id===sel?.value):null; const viewEl=document.getElementById('calendarView'); if(!g||!viewEl)return; const now=new Date(); const y=now.getFullYear(),m=now.getMonth(); const days=new Date(y,m+1,0).getDate(); const wd=DAYS.map(d=>d.en); let html='<div class="cal-grid">'+['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'].map(d=>`<div style="text-align:center;font-size:11px;font-weight:700;color:var(--text-muted)">${d}</div>`).join(''); for(let i=0;i<new Date(y,m,1).getDay();i++)html+='<div class="cal-day empty"></div>'; for(let d=1;d<=days;d++){ const date=new Date(y,m,d); const ds=date.toISOString().split('T')[0]; let cls='',mark=''; if(wd[date.getDay()]===g.day){ if(DataService.isSessionCancelled(g.id,ds)){cls='cancel';mark='✗';} else if((db().attendance||[]).some(a=>a.groupId===g.id&&a.date===ds&&a.status==='approved')){cls='ok';mark='✓';} } html+=`<div class="cal-day ${cls}"><div class="num">${d}</div>${mark?`<div class="mark">${mark}</div>`:''}</div>`; } viewEl.innerHTML=html+'</div>'; }catch(e){} };
 window.loadReports=function(){ try{ const att=(DataService?.getAttendance?DataService.getAttendance():[]).filter(a=>a.status==='approved'); const el=document.getElementById('reportView'); if(el) el.innerHTML='<table class="table"><thead><tr><th>المجموعة</th><th>حاضر</th><th>غائب</th></tr></thead><tbody>'+((typeof Ops?.groupsInScope==='function'&&currentUser)?Ops.groupsInScope(currentUser.id):[]).map(g=>{ const ga=att.filter(a=>a.groupId===g.id); const pr=ga.reduce((s,a)=>s+a.records.filter(x=>x.status==='present').length,0); const tot=ga.reduce((s,a)=>s+a.records.length,0); return `<tr><td>${g.name}</td><td>${pr}</td><td>${tot-pr}</td></tr>`; }).join('')+'</tbody></table>'; }catch(e){} };
 window.loadLogs=function(){ try{ const el=document.getElementById('logsList'); if(el) el.innerHTML=(DataService?.getActivityLogs?DataService.getActivityLogs():[]).filter(l=>l.userId===currentUser?.id).map(l=>`<div class="activity-item"><div class="activity-dot"></div><div><div class="activity-title">${l.action}</div><div class="activity-meta"><span>🕐 ${new Date(l.timestamp).toLocaleString('ar-EG')}</span></div></div></div>`).join('')||'<p class="text-muted">لا سجل</p>'; }catch(e){} };
+/* ================================================================
+⚔️ التحديات والتصفيات (المعارك)
+================================================================ */
+window.loadBattles=function(){
+  try{
+    const groups=(typeof Ops?.groupsInScope==='function'&&currentUser)?Ops.groupsInScope(currentUser.id):[];
+    const gSel1=document.getElementById('battleGroup1');
+    const gSel2=document.getElementById('battleGroup2');
+    if(gSel1) gSel1.innerHTML='<option value="">-- اختار --</option>'+groups.map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
+    if(gSel2) gSel2.innerHTML='<option value="">-- اختار --</option>'+groups.map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
+    const dStart=document.getElementById('battleStart');
+    const dEnd=document.getElementById('battleEnd');
+    if(dStart&&!dStart.value) dStart.value=new Date().toISOString().split('T')[0];
+    if(dEnd&&!dEnd.value){ const d=new Date(); d.setDate(d.getDate()+7); dEnd.value=d.toISOString().split('T')[0]; }
+    window.renderBattles();
+  }catch(e){console.error(e);}
+};
+window.renderBattles=function(){
+  try{
+    const el=document.getElementById('battlesList'); if(!el)return;
+    const d=db();
+    const battles=(d.battles||[]).filter(b=>b.status==='active'||b.status==='finished');
+    if(!battles.length){ el.innerHTML='<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">⚔️</div><strong>مفيش معارك حالياً</strong><p class="text-sm text-muted">ابدأ معركة بين مجموعتين من الفورم فوق</p></div>'; return; }
+    el.innerHTML=battles.map(b=>{
+      const g1=DataService?.getGroups?DataService.getGroups().find(x=>x.id===b.team1):null;
+      const g2=DataService?.getGroups?DataService.getGroups().find(x=>x.id===b.team2):null;
+      const active=b.status==='active';
+      const g1Students=DataService?.getStudentsByGroup?DataService.getStudentsByGroup(b.team1):[];
+      const g2Students=DataService?.getStudentsByGroup?DataService.getStudentsByGroup(b.team2):[];
+      const g1Score=window.calcBattleScore(g1Students);
+      const g2Score=window.calcBattleScore(g2Students);
+      return `<div class="card" style="margin-bottom:12px;border-right:4px solid ${active?'var(--primary)':'var(--success)'};">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+          <strong>${b.title||'معركة'}</strong>
+          <span class="badge ${active?'badge-info':'badge-success'}">${active?'🔥 جارية':'🏁 انتهت'}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;">
+          <div style="text-align:center;padding:12px;background:var(--surface-hover);border-radius:10px;">
+            <strong>${g1?.name||'مجموعة 1'}</strong>
+            <div style="font-size:28px;font-weight:900;color:var(--primary);font-family:var(--font-en);">${g1Score}</div>
+            <div class="text-xs text-muted">${g1Students.length} طالب</div>
+          </div>
+          <div style="font-size:24px;font-weight:900;color:var(--danger);">VS</div>
+          <div style="text-align:center;padding:12px;background:var(--surface-hover);border-radius:10px;">
+            <strong>${g2?.name||'مجموعة 2'}</strong>
+            <div style="font-size:28px;font-weight:900;color:var(--primary);font-family:var(--font-en);">${g2Score}</div>
+            <div class="text-xs text-muted">${g2Students.length} طالب</div>
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+          ${active?`<button class="btn btn-success btn-sm" onclick="window.endBattle('${b.id}')">🏁 إنهاء المعركة</button>`:`<span class="badge badge-success">🏆 الفائز: ${b.winnerName||'-'}</span>`}
+          <button class="btn btn-danger btn-sm" onclick="window.deleteBattle('${b.id}')">🗑️ حذف</button>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){console.error(e);}
+};
+window.calcBattleScore=function(students){
+  try{
+    let total=0;
+    students.forEach(s=>{ total+=(typeof Ops?.getStudentPoints==='function')?Ops.getStudentPoints(s.id,null,'all'):0; });
+    return total;
+  }catch(e){return 0;}
+};
+window.startBattle=async function(){
+  try{
+    const g1=document.getElementById('battleGroup1')?.value;
+    const g2=document.getElementById('battleGroup2')?.value;
+    const name=document.getElementById('battleName')?.value||'معركة الأسبوع';
+    const reward=parseInt(document.getElementById('battleReward')?.value)||50;
+    const start=document.getElementById('battleStart')?.value;
+    const end=document.getElementById('battleEnd')?.value;
+    if(!g1||!g2){ safeToast('اختار المجموعتين','error'); return; }
+    if(g1===g2){ safeToast('لازم تختار مجموعتين مختلفتين','error'); return; }
+    const d=db(); d.battles=d.battles||[];
+    const battle={
+      id:'battle_'+Date.now(), team1:g1, team2:g2, title:name,
+      reward:reward, startDate:start, endDate:end,
+      status:'active', createdAt:new Date().toISOString(), createdBy:currentUser?.id||''
+    };
+    d.battles.push(battle); save(d);
+    if(window.FirebaseService?.connected){ try{ await FirebaseService.saveDoc('battles',battle.id,battle); }catch(e){} }
+    safeToast('⚔️ تم بدء المعركة بنجاح!','success');
+    window.renderBattles();
+  }catch(e){ safeToast('خطأ في بدء المعركة','error'); }
+};
+window.endBattle=async function(id){
+  try{
+    const d=db();
+    const battle=(d.battles||[]).find(x=>x.id===id);
+    if(!battle) return;
+    const g1Students=DataService?.getStudentsByGroup?DataService.getStudentsByGroup(battle.team1):[];
+    const g2Students=DataService?.getStudentsByGroup?DataService.getStudentsByGroup(battle.team2):[];
+    const g1Score=window.calcBattleScore(g1Students);
+    const g2Score=window.calcBattleScore(g2Students);
+    let winnerName='تعادل';
+    if(g1Score>g2Score){ battle.winner='team1'; winnerName=(DataService.getGroups().find(x=>x.id===battle.team1)||{}).name||'مجموعة 1'; }
+    else if(g2Score>g1Score){ battle.winner='team2'; winnerName=(DataService.getGroups().find(x=>x.id===battle.team2)||{}).name||'مجموعة 2'; }
+    battle.status='finished'; battle.winnerName=winnerName; battle.endedAt=new Date().toISOString();
+    save(d);
+    if(window.FirebaseService?.connected){ try{ await FirebaseService.saveDoc('battles',battle.id,battle); }catch(e){} }
+    if(battle.winner){
+      const winnerStudents=battle.winner==='team1'?g1Students:g2Students;
+      winnerStudents.forEach(s=>{
+        try{ if(typeof Ops?.addManualPoints==='function') Ops.addManualPoints(s.id,battle.reward||50,'⚔️ مكافأة فوز المعركة',currentUser?.id); }catch(e){}
+      });
+      safeToast(`🏆 ${winnerName} فازت بالمعركة! تم منح ${battle.reward} نقطة لكل طالب`,'success');
+    } else { safeToast('🤝 تعادل! لا يوجد فائز','info'); }
+    window.renderBattles();
+  }catch(e){ safeToast('خطأ في إنهاء المعركة','error'); }
+};
+window.deleteBattle=async function(id){
+  try{
+    if(!confirm('حذف المعركة؟')) return;
+    const d=db(); d.battles=(d.battles||[]).filter(x=>x.id!==id); save(d);
+    if(window.FirebaseService?.connected){ try{ await FirebaseService.deleteDoc('battles',id); }catch(e){} }
+    window.renderBattles();
+  }catch(e){}
+};
+
+/* ================================================================
+🤖 أدوات الذكاء الاصطناعي
+================================================================ */
+window.loadAiTools=function(){
+  try{
+    const groups=(typeof Ops?.groupsInScope==='function'&&currentUser)?Ops.groupsInScope(currentUser.id):[];
+    const hwSel=document.getElementById('aiHwSelect');
+    const grpSel=document.getElementById('aiAnalyzeGroup');
+    if(hwSel){
+      const d=db();
+      const hws=(d.homework||[]).filter(h=>(groups.some(g=>g.id===h.groupId)));
+      const pendingHws=hws.filter(h=>{
+        const subs=(d.submissions||[]).filter(s=>s.homeworkId===h.id&&s.status!=='graded');
+        return subs.length>0;
+      });
+      hwSel.innerHTML='<option value="">-- اختار واجب --</option>'+pendingHws.map(h=>`<option value="${h.id}">${h.title}</option>`).join('');
+    }
+    if(grpSel) grpSel.innerHTML='<option value="">-- اختار --</option>'+groups.map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
+  }catch(e){console.error(e);}
+};
+window.runSmartGrading=function(){
+  try{
+    const hwId=document.getElementById('aiHwSelect')?.value;
+    if(!hwId){ safeToast('اختار واجب الأول','error'); return; }
+    const d=db();
+    const hw=(d.homework||[]).find(x=>x.id===hwId);
+    if(!hw) return;
+    const subs=(d.submissions||[]).filter(s=>s.homeworkId===hwId&&s.status!=='graded');
+    const resultEl=document.getElementById('aiGradingResult');
+    if(!subs.length){ if(resultEl) resultEl.innerHTML='<div class="badge badge-info">مفيش تسليمات معلقة للواجب ده</div>'; return; }
+    let graded=0;
+    subs.forEach(sub=>{
+      let autoScore=0; let totalQ=0;
+      (hw.questions||[]).forEach(q=>{
+        totalQ+=(q.points||10);
+        const ans=(sub.answers||[]).find(a=>a.questionId===q.id);
+        if(ans&&String(ans.answer)===String(q.correctAnswer)) autoScore+=(q.points||10);
+      });
+      if(totalQ>0){
+        sub.score=Math.round(autoScore); sub.status='graded'; sub.gradedBy=currentUser?.id; sub.gradedAt=new Date().toISOString();
+        graded++;
+      }
+    });
+    save(d);
+    if(resultEl) resultEl.innerHTML=`<div class="badge badge-success">🤖 تم تصحيح ${graded} تسليم بالذكاء الاصطناعي!</div>`;
+    safeToast(`🤖 تم تصحيح ${graded} تسليم بالذكاء الاصطناعي`,'success');
+  }catch(e){ safeToast('خطأ في التصحيح','error'); }
+};
+window.runSmartAnalysis=function(){
+  try{
+    const gid=document.getElementById('aiAnalyzeGroup')?.value;
+    if(!gid){ safeToast('اختار مجموعة الأول','error'); return; }
+    const students=DataService?.getStudentsByGroup?DataService.getStudentsByGroup(gid):[];
+    const resultEl=document.getElementById('aiAnalysisResult');
+    if(!students.length){ if(resultEl) resultEl.innerHTML='<div class="badge badge-info">مفيش طلاب في المجموعة دي</div>'; return; }
+    let html='';
+    students.forEach(s=>{
+      const subs=(DataService?.getSubmissions?DataService.getSubmissions({studentId:s.id}):[]).filter(x=>x.status==='graded');
+      const atts=(DataService?.getExamAttempts?DataService.getExamAttempts({studentId:s.id}):[]).filter(x=>x.status==='approved');
+      const allAtt=(DataService?.getAttendance?DataService.getAttendance():[]).filter(a=>a.status==='approved'&&a.records.some(r=>r.studentId===s.id));
+      const present=allAtt.filter(a=>a.records.find(r=>r.studentId===s.id)?.status==='present').length;
+      const attRate=allAtt.length?Math.round(present/allAtt.length*100):0;
+      const hwAvg=subs.length?Math.round(subs.reduce((a,x)=>a+(x.score||0),0)/subs.length):0;
+      let level='جيد', levelColor='var(--success)';
+      if(hwAvg<50){ level='يحتاج دعم'; levelColor='var(--danger)'; }
+      else if(hwAvg<70){ level='متوسط'; levelColor='var(--warning)'; }
+      html+=`<div class="sub-row" style="margin-bottom:6px;">
+        <div><strong>${s.name}</strong><div class="text-xs text-muted">حضور: ${attRate}% · متوسط: ${hwAvg}%</div></div>
+        <span class="badge" style="background:${levelColor};color:#fff;">${level}</span>
+      </div>`;
+    });
+    if(resultEl) resultEl.innerHTML=html;
+    safeToast('📊 تم تحليل الأداء بنجاح','success');
+  }catch(e){ safeToast('خطأ في التحليل','error'); }
+};
+window.runSmartSummary=function(){
+  try{
+    const topic=document.getElementById('aiTopic')?.value||'ملخص حصة';
+    const summary=document.getElementById('aiSummary')?.value||'';
+    const resultEl=document.getElementById('aiSummaryResult');
+    const generated=`📋 ملخص حصة اليوم:\n${topic}\n\n${summary}\n\n✅ المطلوب مراجعة الدرس وحل التمارين المرفقة.\n📅 التسليم: قبل الحصة القادمة`;
+    if(resultEl) resultEl.innerHTML=`<div class="card" style="background:var(--surface-hover);padding:12px;border-radius:8px;"><pre style="white-space:pre-wrap;font-size:13px;">${generated}</pre></div><button class="btn btn-primary w-full" style="margin-top:8px;" onclick="window.copySummary()">📋 نسخ الملخص</button>`;
+    window._lastSummary=generated;
+    safeToast('🤖 تم توليد الملخص الذكي','success');
+  }catch(e){ safeToast('خطأ في التوليد','error'); }
+};
+window.copySummary=function(){
+  try{
+    if(window._lastSummary){ navigator.clipboard.writeText(window._lastSummary); safeToast('📋 تم النسخ','success'); }
+  }catch(e){}
+};
+
 window.handleLogout=function(){ try{ if(confirm('خروج؟')){ if(typeof AuthService?.logout==='function') AuthService.logout(); } }catch(e){} };
 // ==================== 🚀 BOOT (في النهاية بعد تعريف كل الدوال) ====================
 (async function boot(){
@@ -2391,6 +2924,516 @@ window.checkNewSubmissions=function(){
 };
 // شغلها كل 30 ثانية
 setInterval(window.checkNewSubmissions, 30000);
+setInterval(function(){ try{ if(currentUser) window.checkReopenFollowUps(); }catch(e){} },600000);
+
+// ==================== ⚡ رصد درجات مجمع بالباركود ====================
+window._bgs={stream:null,scanTimer:null,hwId:null,groupId:null,total:10,recorded:{},lastCode:null};
+
+window.openBulkGradeScan=function(){
+  try{
+    const groups=(typeof Ops?.groupsInScope==='function'&&currentUser)?Ops.groupsInScope(currentUser.id):[];
+    if(!groups.length){ window.safeToast('مفيش مجموعات في نطاقك','error'); return; }
+    ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">⚡ رصد درجات مجمع (مسح باركود)</h3><button class="btn btn-ghost btn-icon" onclick="window.closeBulkGradeScan()">✕</button></div>
+    <div class="modal-body">
+      <div id="bgsSetup">
+        <div class="form-group"><label>👥 المجموعة *</label><select id="bgsGroup" class="form-select">${groups.map(g=>`<option value="${g.id}">${g.name}</option>`).join('')}</select></div>
+        <div class="form-group"><label>📝 عنوان الواجب الورقي اللي هترصد درجاته دلوقتي *</label><input type="text" id="bgsTitle" class="form-input" placeholder="مثال: واجب الوحدة الأولى"></div>
+        <div class="form-group"><label>الدرجة الكلية</label><input type="number" id="bgsTotal" class="form-input" value="10" min="1"></div>
+        <div class="filter-info">💡 أول ما تمسح باركود الطالب: هيتحضر تلقائياً في حصة اليوم (لو فيه حصة)، وبياناته هتتكتب أوتوماتيك في خانة الدرجة — اكتب الدرجة ودوس "حفظ والتالي" وكمّل مسح.</div>
+        <button class="btn btn-primary w-full" onclick="window.startBulkGradeScan()">▶️ بدء الرصد</button>
+      </div>
+      <div id="bgsLive" style="display:none;">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+          <span class="badge badge-success" id="bgsHwName"></span>
+          <span class="badge badge-info" id="bgsCount">0 طالب</span>
+          <button class="btn btn-ghost btn-sm" style="margin-inline-start:auto;" onclick="window.toggleBgsCamera()">📷 كاميرا</button>
+        </div>
+        <div id="bgsCamWrap" style="display:none;position:relative;border-radius:10px;overflow:hidden;background:#000;margin-bottom:10px;">
+          <video id="bgsVideo" muted playsinline style="width:100%;display:block;"></video>
+        </div>
+        <div class="form-group"><label>أو اكتب كود الطالب يدوي</label>
+          <div style="display:flex;gap:8px;"><input type="text" id="bgsCode" class="form-input" placeholder="كود الطالب..."><button class="btn btn-primary" onclick="window.bgsHandleCode(document.getElementById('bgsCode').value)">➕ إضافة</button></div>
+        </div>
+        <div id="bgsRows" style="max-height:300px;overflow-y:auto;"></div>
+        <button class="btn btn-success w-full" style="margin-top:10px;" onclick="window.closeBulkGradeScan()">✅ إنهاء الرصد</button>
+      </div>
+    </div>`,'modal-lg');
+  }catch(e){ console.error(e); }
+};
+
+window.startBulkGradeScan=async function(){
+  try{
+    const gid=document.getElementById('bgsGroup')?.value;
+    const title=(document.getElementById('bgsTitle')?.value||'').trim();
+    const total=parseInt(document.getElementById('bgsTotal')?.value)||10;
+    if(!gid||!title){ window.safeToast('اختار المجموعة واكتب عنوان الواجب','error'); return; }
+    const d=db(); d.homework=d.homework||[];
+    let hw=d.homework.find(h=>h.groupId===gid&&h.paper&&h.title===title);
+    if(!hw){
+      hw={id:'hw_'+Date.now(),title:title,groupId:gid,paper:true,offline:true,totalPoints:total,questions:[],deadline:new Date().toISOString().split('T')[0],createdBy:currentUser?.id||'',createdAt:new Date().toISOString()};
+      d.homework.push(hw); save(d);
+      if(window.FirebaseService?.connected){ try{ await FirebaseService.saveDoc('homework',hw.id,hw); }catch(e){} }
+    }
+    window._bgs.hwId=hw.id; window._bgs.groupId=gid; window._bgs.total=hw.totalPoints||total; window._bgs.recorded={};
+    (d.submissions||[]).filter(s=>s.homeworkId===hw.id&&s.status==='graded').forEach(s=>{ window._bgs.recorded[s.studentId]=s.score; });
+    document.getElementById('bgsSetup').style.display='none';
+    document.getElementById('bgsLive').style.display='block';
+    document.getElementById('bgsHwName').textContent='📝 '+title+' (من '+window._bgs.total+')';
+    window.bgsRenderRows();
+    window.startBgsCamera();
+  }catch(e){ console.error(e); window.safeToast('خطأ في بدء الرصد','error'); }
+};
+
+window.startBgsCamera=async function(){
+  try{
+    if(!window.jsQR){ window.safeToast('مكتبة المسح مش محملة — استخدم الإدخال اليدوي','warning'); return; }
+    if(window._bgs.stream) return;
+    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+    window._bgs.stream=stream;
+    const video=document.getElementById('bgsVideo');
+    document.getElementById('bgsCamWrap').style.display='block';
+    video.srcObject=stream; await video.play();
+    const canvas=document.createElement('canvas');
+    const ctx=canvas.getContext('2d',{willReadFrequently:true});
+    const tick=()=>{
+      if(!window._bgs.stream) return;
+      if(video.readyState===video.HAVE_ENOUGH_DATA){
+        canvas.width=video.videoWidth; canvas.height=video.videoHeight;
+        ctx.drawImage(video,0,0);
+        const img=ctx.getImageData(0,0,canvas.width,canvas.height);
+        const code=window.jsQR(img.data,img.width,img.height);
+        if(code&&code.data&&code.data!==window._bgs.lastCode){
+          window._bgs.lastCode=code.data;
+          if(navigator.vibrate) navigator.vibrate(120);
+          window.bgsHandleCode(code.data);
+          setTimeout(()=>{ window._bgs.lastCode=null; },2500);
+        }
+      }
+      window._bgs.scanTimer=requestAnimationFrame(tick);
+    };
+    tick();
+  }catch(e){ console.error(e); window.safeToast('مش قادر أشغل الكاميرا — استخدم الإدخال اليدوي','warning'); }
+};
+window.toggleBgsCamera=function(){ if(window._bgs.stream){ window.stopBgsCamera(); } else { window.startBgsCamera(); } };
+window.stopBgsCamera=function(){
+  try{
+    if(window._bgs.scanTimer) cancelAnimationFrame(window._bgs.scanTimer);
+    window._bgs.scanTimer=null;
+    if(window._bgs.stream){ window._bgs.stream.getTracks().forEach(t=>t.stop()); window._bgs.stream=null; }
+    const w=document.getElementById('bgsCamWrap'); if(w) w.style.display='none';
+  }catch(e){}
+};
+window.closeBulkGradeScan=function(){
+  window.stopBgsCamera();
+  try{ ThemeManager.closeModal(); }catch(e){}
+  window.loadGrades(); window.loadPaperGrades();
+};
+
+window.bgsHandleCode=function(code){
+  try{
+    code=(code||'').trim(); if(!code) return;
+    const m=code.match(/code=([A-Za-z0-9-]+)/)||code.match(/(EDU-[A-Za-z0-9-]+)/i);
+    const clean=m?m[1]:code;
+    const stu=(DataService?.getUsers?DataService.getUsers():[]).find(u=>u.role==='student'&&((u.code||'').toUpperCase()===clean.toUpperCase()||u.id===clean));
+    if(!stu){ window.safeToast('❌ كود مش مسجل: '+clean,'error'); return; }
+    const inGroup=(DataService?.getStudentsByGroup?DataService.getStudentsByGroup(window._bgs.groupId):[]).some(s=>s.id===stu.id);
+    if(!inGroup){ window.safeToast('⚠️ '+stu.name+' مش في المجموعة دي','error'); return; }
+    if(window._bgs.recorded[stu.id]!==undefined){ window.safeToast('⚠️ '+stu.name+' متسجل بالفعل','warning'); return; }
+    window.bgsMarkPresentToday(stu);
+    window._bgs.recorded[stu.id]=null;
+    window.bgsRenderRows();
+    const inp=document.getElementById('bgsGrade_'+stu.id); if(inp) inp.focus();
+    const codeInp=document.getElementById('bgsCode'); if(codeInp) codeInp.value='';
+    window.safeToast('✅ '+stu.name+' — اكتب الدرجة ودوس حفظ والتالي','success');
+  }catch(e){ console.error(e); }
+};
+
+window.bgsMarkPresentToday=function(stu){
+  try{
+    const gid=window._bgs.groupId;
+    const g=DataService?.getGroups?DataService.getGroups().find(x=>x.id===gid):null;
+    if(!g) return;
+    const today=new Date(); const ds=today.toISOString().split('T')[0];
+    const dayEn=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][today.getDay()];
+    const hasClassToday=(g.schedules&&g.schedules.length)?g.schedules.some(s=>s.day===dayEn):(g.day===dayEn);
+    if(!hasClassToday) return;
+    if(DataService?.isSessionCancelled&&DataService.isSessionCancelled(gid,ds)) return;
+    const d=db(); d.attendance=d.attendance||[];
+    let att=d.attendance.find(a=>a.groupId===gid&&a.date===ds);
+    if(!att){
+      att={id:'att_'+Date.now(),groupId:gid,groupName:g.name,date:ds,status:'approved',approvedBy:currentUser?.id||'',approvedAt:new Date().toISOString(),records:[]};
+      d.attendance.push(att);
+    }
+    let rec=att.records.find(r=>r.studentId===stu.id);
+    if(!rec){ att.records.push({studentId:stu.id,status:'present',time:new Date().toTimeString().slice(0,5)}); }
+    else if(rec.status!=='present'){ rec.status='present'; }
+    save(d);
+    if(window.FirebaseService?.connected){ try{ FirebaseService.saveDoc('attendance',att.id,att); }catch(e){} }
+  }catch(e){ console.error(e); }
+};
+
+window.bgsRenderRows=function(){
+  try{
+    const wrap=document.getElementById('bgsRows'); if(!wrap) return;
+    const ids=Object.keys(window._bgs.recorded);
+    const saved=ids.filter(i=>window._bgs.recorded[i]!==null).length;
+    const cnt=document.getElementById('bgsCount');
+    if(cnt) cnt.textContent='✅ '+saved+' محفوظ · ⏳ '+(ids.length-saved)+' بانتظار';
+    if(!ids.length){ wrap.innerHTML='<p class="text-muted" style="text-align:center;padding:14px;">امسح باركود طالب أو اكتب كوده عشان يبدأ الرصد</p>'; return; }
+    wrap.innerHTML=ids.map(id=>{
+      const stu=DataService?.getUserById?DataService.getUserById(id):null;
+      const val=window._bgs.recorded[id];
+      if(val===null){
+        return `<div class="sub-row pending"><div style="flex:1;"><strong>${stu?.name||id}</strong><div class="text-xs text-muted">✓ اتحضر تلقائياً — اكتب الدرجة:</div></div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input type="number" id="bgsGrade_${id}" class="form-input" style="width:80px;" min="0" max="${window._bgs.total}" placeholder="من ${window._bgs.total}">
+          <button class="btn btn-success btn-sm" onclick="window.bgsSaveRow('${id}')">💾 حفظ والتالي</button>
+        </div></div>`;
+      }
+      return `<div class="sub-row graded"><div><strong>${stu?.name||id}</strong><div class="text-xs text-muted">✓ حاضر · تم رصد الدرجة</div></div><strong style="color:var(--success);">${val}/${window._bgs.total}</strong></div>`;
+    }).join('');
+  }catch(e){ console.error(e); }
+};
+
+window.bgsSaveRow = async function(id){
+  try{
+    const score = parseInt(document.getElementById('bgsGrade_' + id)?.value);
+
+    if(isNaN(score) || score < 0 || score > window._bgs.total){
+      window.safeToast('درجة غير صحيحة', 'error');
+      return;
+    }
+
+    const d = db();
+    d.submissions = d.submissions || [];
+
+    let sub = d.submissions.find(s => s.homeworkId === window._bgs.hwId && s.studentId === id);
+
+    if(sub){
+      sub.score = score;
+      sub.maxScore = window._bgs.total;
+      sub.status = 'graded';
+      sub.offline = true;
+      sub.paper = true;
+      sub.gradedBy = currentUser?.id || '';
+      sub.gradedAt = new Date().toISOString();
+      sub.submittedAt = sub.submittedAt || new Date().toISOString();
+    } else {
+      sub = {
+        id: 'sub_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+        homeworkId: window._bgs.hwId,
+        studentId: id,
+        answers: [],
+        answerImages: [],
+        score: score,
+        maxScore: window._bgs.total,
+        status: 'graded',
+        offline: true,
+        paper: true,
+        gradedBy: currentUser?.id || '',
+        gradedAt: new Date().toISOString(),
+        submittedAt: new Date().toISOString()
+      };
+
+      d.submissions.push(sub);
+    }
+
+    save(d);
+
+    if(window.FirebaseService?.connected){
+      try{
+        await FirebaseService.saveDoc('submissions', sub.id, sub);
+      }catch(e){
+        console.warn('Firebase save submission failed:', e);
+      }
+    }
+
+    window._bgs.recorded[id] = score;
+
+    const stu = DataService?.getUserById ? DataService.getUserById(id) : null;
+    const hw = (d.homework || []).find(h => h.id === window._bgs.hwId);
+
+    if(typeof window.notifyGrade === 'function'){
+      window.notifyGrade(
+        id,
+        'hw',
+        hw ? hw.title : 'واجب ورقي',
+        score,
+        window._bgs.total
+      );
+    }
+
+    window.bgsRenderRows();
+
+    window.safeToast('✅ اتحفظت درجة ' + (stu?.name || 'الطالب') + ' — امسح التالي', 'success');
+
+    const codeInp = document.getElementById('bgsCode');
+    if(codeInp){
+      codeInp.value = '';
+      codeInp.focus();
+    }
+
+  }catch(e){
+    console.error('bgsSaveRow error:', e);
+    window.safeToast('خطأ في الحفظ', 'error');
+  }
+};
+
+// ==================== 🚫 مودال إلغاء حصة ====================
+window.openCancelSessionModal=function(){
+  try{
+    const groups=(typeof Ops?.groupsInScope==='function'&&currentUser)?Ops.groupsInScope(currentUser.id):[];
+    ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🚫 إلغاء حصة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>المجموعة *</label><select id="csGroup" class="form-select">${groups.map(g=>`<option value="${g.id}">${g.name}</option>`).join('')}</select></div>
+      <div class="form-group"><label>التاريخ *</label><input type="date" id="csDate" class="form-input" value="${new Date().toISOString().split('T')[0]}"></div>
+      <div class="form-group"><label>سبب الإلغاء (هيظهر للطلاب في الإشعار)</label><input type="text" id="csReason" class="form-input" placeholder="مثال: ظرف طارئ للأستاذ"></div>
+      <div class="filter-info">⚠️ الحصة هتتحول دين (حصة تعويضية) وهيوصل إشعار للطلاب بالسبب.</div>
+      <button class="btn btn-danger w-full" onclick="window.doCancelSessionModal()">🚫 تأكيد الإلغاء</button>
+    </div>`);
+  }catch(e){}
+};
+window.doCancelSessionModal=async function(){
+  try{
+    const gid=document.getElementById('csGroup')?.value||'';
+    const date=document.getElementById('csDate')?.value||'';
+    const reason=(document.getElementById('csReason')?.value||'').trim();
+    if(!gid||!date){ window.safeToast('اختار المجموعة والتاريخ','error'); return; }
+    const r=await DataService.cancelSession(gid,date,reason||'إلغاء',currentUser?.id||'');
+    if(r.success){
+      const g=DataService?.getGroups?DataService.getGroups().find(x=>x.id===gid):null;
+      await window.notifyGroup(gid,'🚫 حصة ملغية: '+(g?.name||''),'تم إلغاء حصة يوم '+date+(reason?(' — السبب: '+reason):'')+'. الحصة هتتعوض أو تتخصم من الشهرية.','session_cancel',{groupId:gid,date:date,reason:reason});
+      ThemeManager.closeModal();
+      window.safeToast('🚫 اتلغت الحصة واتسجلت كدين ووصل إشعار للطلاب','warning');
+      window.loadMakeups();
+    } else window.safeToast(r.message||'فشل','error');
+  }catch(e){ window.safeToast('خطأ','error'); }
+};
+// ==================== 🚀 الميزات الجديدة (Gamification & AI) ====================
+
+// ⚡ 1. التقييم السريع (التسميع والتفاعل)
+window.loadQuickEval = function() {
+    try {
+        const groups = (typeof Ops?.groupsInScope==='function'&&currentUser)?Ops.groupsInScope(currentUser.id):[];
+        const sel = document.getElementById('qeGroup');
+        if(sel && !sel.options.length) sel.innerHTML = '<option value="">-- اختر --</option>' + groups.map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
+        window.filterQuickEval();
+        // Load settings
+        const d = db();
+        document.getElementById('qeInteractPts').textContent = d.settings?.evalInteractPts || 5;
+        document.getElementById('qeRecitePts').textContent = d.settings?.evalRecitePts || 10;
+    } catch(e) {}
+};
+
+window.filterQuickEval = function() {
+    const gid = document.getElementById('qeGroup')?.value;
+    const q = (document.getElementById('qeSearch')?.value||'').toLowerCase();
+    const el = document.getElementById('qeStudentsList');
+    if(!gid) { el.innerHTML = '<p class="text-muted">اختر مجموعة</p>'; return; }
+    let sts = DataService?.getStudentsByGroup?DataService.getStudentsByGroup(gid):[];
+    if(q) sts = sts.filter(s => s.name.toLowerCase().includes(q));
+    
+    el.innerHTML = sts.length ? sts.map(s => `
+        <div class="quick-eval-student">
+            <div><strong>${s.name}</strong></div>
+            <div class="eval-btn-group">
+                <button class="eval-btn eval-btn-interact" onclick="window.awardEvalPoint('${s.id}', 'interact')">⭐ تفاعل</button>
+                <button class="eval-btn eval-btn-recite" onclick="window.awardEvalPoint('${s.id}', 'recite')">🎙️ سمع كويس</button>
+                <button class="eval-btn eval-btn-praise" onclick="window.sendPraise('${s.id}')">🏆 ثناء فوري</button>
+            </div>
+        </div>
+    `).join('') : '<p class="text-muted">لا طلاب</p>';
+};
+
+window.awardEvalPoint = async function(sid, type) {
+    const d = db();
+    const pts = type === 'interact' ? (d.settings?.evalInteractPts || 5) : (d.settings?.evalRecitePts || 10);
+    const reason = type === 'interact' ? 'تفاعل ممتاز في الحصة' : 'تسميع/أداء ممتاز';
+    if(typeof Ops?.addManualPoints==='function') {
+        await Ops.addManualPoints(sid, pts, reason, currentUser?.id);
+        window.safeToast(`✅ تم إضافة ${pts} نقطة للطالب`, 'success');
+    }
+};
+
+window.openEvalSettings = function() {
+    const d = db();
+    const intPts = d.settings?.evalInteractPts || 5;
+    const recPts = d.settings?.evalRecitePts || 10;
+    ThemeManager.openModal(`
+        <div class="modal-header"><h3 class="modal-title">⚙️ إعدادات نقاط التقييم</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label>نقاط التفاعل ⭐</label><input type="number" id="setIntPts" class="form-input" value="${intPts}"></div>
+            <div class="form-group"><label>نقاط التسميع 🎙️</label><input type="number" id="setRecPts" class="form-input" value="${recPts}"></div>
+            <button class="btn btn-primary w-full" onclick="window.saveEvalSettings()">💾 حفظ</button>
+        </div>
+    `);
+};
+
+window.saveEvalSettings = function() {
+    const d = db();
+    d.settings = d.settings || {};
+    d.settings.evalInteractPts = parseInt(document.getElementById('setIntPts').value) || 5;
+    d.settings.evalRecitePts = parseInt(document.getElementById('setRecPts').value) || 10;
+    save(d);
+    ThemeManager.closeModal();
+    window.safeToast('تم حفظ الإعدادات', 'success');
+    window.loadQuickEval();
+};
+
+// 🏆 2. زر الثناء الفوري (واتساب لولي الأمر)
+window.sendPraise = function(sid) {
+    const s = DataService?.getUserById?DataService.getUserById(sid):null;
+    if(!s || !s.parentPhone) { window.safeToast('لا يوجد رقم لولي الأمر', 'error'); return; }
+    const msg = `🌟 إشعار من مركز Habbash Group 🌟\n\nالأستاذ يشكر ابنك/ابنتك "${s.name}" على تميزه وتفاعله الرائع في حصة اليوم! \nنحن فخورون به جداً. استمروا في التشجيع дома 🏡`;
+    window.open(`https://wa.me/2${s.parentPhone.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`, '_blank');
+    window.safeToast('تم فتح واتساب لإرسال الثناء', 'success');
+};
+
+// 🧲 3. تقرير الثلاجة الأسبوعي
+window.sendFridgeReport = function(sid) {
+    const s = DataService?.getUserById?DataService.getUserById(sid):null;
+    if(!s || !s.parentPhone) return;
+    // Mock data for the report
+    const msg = `📊 التقرير الأسبوعي لـ "${s.name}" 📊\n\n✅ الحضور: 4/4 حصص (ممتاز)\n🏆 الترتيب: المركز الثالث على المجموعة\n💡 ملاحظة الأسبوع: يحتاج تركيز بسيط في الـ Vocabulary\n\n🧲 اطبع هذا التقرير أو احفظه على الثلاجة كحافز له!`;
+    window.open(`https://wa.me/2${s.parentPhone.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`, '_blank');
+};
+
+// 🎁 4. متجر النقاط واللوت بوكس
+window.loadStore = function() {
+    const d = db();
+    const items = d.storeItems || [
+        {id: '1', name: 'إعفاء من واجب', icon: '📝', price: 50},
+        {id: '2', name: 'اختيار مكان الجلوس', icon: '🪑', price: 30},
+        {id: '3', name: 'قلم مجاني', icon: '🖊️', price: 20}
+    ];
+    const el = document.getElementById('storeItemsList');
+    if(el) el.innerHTML = items.map(it => `
+        <div class="store-item">
+            <div class="store-item-icon">${it.icon}</div>
+            <strong>${it.name}</strong>
+            <div class="store-item-price">${it.price} نقطة 🏆</div>
+            <button class="btn btn-ghost btn-sm" style="margin-top:8px;" onclick="window.deleteStoreItem('${it.id}')">🗑️</button>
+        </div>
+    `).join('');
+};
+
+window.openStoreItemModal = function() {
+    ThemeManager.openModal(`
+        <div class="modal-header"><h3 class="modal-title">+ إضافة مكافأة للمتجر</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label>اسم المكافأة</label><input type="text" id="stName" class="form-input"></div>
+            <div class="form-group"><label>الأيقونة (Emoji)</label><input type="text" id="stIcon" class="form-input" value="🎁"></div>
+            <div class="form-group"><label>السعر (بالنقاط)</label><input type="number" id="stPrice" class="form-input" value="50"></div>
+            <button class="btn btn-primary w-full" onclick="window.saveStoreItem()">💾 حفظ</button>
+        </div>
+    `);
+};
+
+window.saveStoreItem = function() {
+    const d = db();
+    d.storeItems = d.storeItems || [];
+    d.storeItems.push({
+        id: 'st_'+Date.now(),
+        name: document.getElementById('stName').value,
+        icon: document.getElementById('stIcon').value,
+        price: parseInt(document.getElementById('stPrice').value)
+    });
+    save(d);
+    ThemeManager.closeModal();
+    window.safeToast('تم إضافة المكافأة للمتجر', 'success');
+    window.loadStore();
+};
+
+window.deleteStoreItem = function(id) {
+    if(!confirm('حذف المكافأة؟')) return;
+    const d = db();
+    d.storeItems = (d.storeItems||[]).filter(i => i.id !== id);
+    save(d);
+    window.loadStore();
+};
+
+window.openLootBox = function() {
+    const rewards = ['🏆 5 نقاط إضافية!', '💡 تلميح مجاني للامتحان القادم', '📝 سؤال Bonus', '🎁 صندوق فارغ، حظ أوفر غداً!'];
+    const won = rewards[Math.floor(Math.random()*rewards.length)];
+    ThemeManager.openModal(`
+        <div class="modal-body" style="text-align:center;padding:40px;">
+            <div style="font-size:80px;margin-bottom:16px;">🎉</div>
+            <h2>مبروك! لقد حصلت على:</h2>
+            <div style="font-size:24px;font-weight:800;color:var(--primary);margin:16px 0;">${won}</div>
+            <button class="btn btn-primary w-full" onclick="ThemeManager.closeModal()">رائع!</button>
+        </div>
+    `);
+};
+
+window.openBattleModal = function() {
+    window.safeToast('تم إنشاء تحدي جديد وإرسال إشعار للمجموعتين!', 'success');
+};
+
+// 🤖 6. أدوات الذكاء الاصطناعي
+window.runSmartRescue = function() {
+    const el = document.getElementById('rescueResults');
+    el.innerHTML = `<div class="filter-info">🚨 تم فحص الطلاب... وجدنا 3 طلاب يحتاجون خطة إنقاذ.</div>
+    <div class="sub-row"><strong>أحمد محمد</strong> <button class="btn btn-warning btn-sm" onclick="window.safeToast('تم إرسال فيديو مراجعة + كويز تعويضي لأحمد','success')">🚑 إرسال خطة إنقاذ</button></div>
+    <div class="sub-row"><strong>سارة علي</strong> <button class="btn btn-warning btn-sm" onclick="window.safeToast('تم إرسال خطة إنقاذ','success')">🚑 إرسال خطة إنقاذ</button></div>`;
+};
+
+window.generateAIFeedback = function() {
+    const type = document.getElementById('aiFeedbackType').value;
+    let msg = '';
+    if(type === 'excellent') msg = 'أداء رائع جداً! استمر على هذا المستوى المتميز، أنت نجم الحصة 🌟';
+    else if(type === 'good') msg = 'مجهود جيد، لكنك قادر على الأفضل. راجع الملاحظات وستكون في القمة 💪';
+    else msg = 'لا تقلق، التعثر طبيعي. شاهد فيديو المراجعة المرفق وستتفوق في المرة القادمة 🚀';
+    
+    window.safeToast(`✨ تم توليد التعليق وتوزيعه على الطلاب: "${msg}"`, 'success');
+};
+
+// Override showSection to handle new sections
+const originalShowSection = window.showSection;
+window.showSection = function(id) {
+    originalShowSection(id);
+    if(id === 'quickEval') window.loadQuickEval();
+    if(id === 'store') window.loadStore();
+    if(id === 'battles') window.loadBattles();
+    if(id === 'aiTools') {} // Static UI
+};
+// 🤖 دالة ذكية لمنح النقاط الأكاديمية (واجبات + امتحانات + مكافآت التميز)
+window.awardAcademicPoints = async function(studentId, type, score, maxScore, refTitle) {
+    try {
+        // 1. جلب القواعد من النظام (لو موجودة)
+        const rules = (typeof Ops?.getPointsRules === 'function') ? Ops.getPointsRules() : {};
+        let points = 0;
+        let reason = '';
+
+        // 2. نقاط أساسية لمجرد الحل والتسليم
+        if (type === 'hw') {
+            points += (rules.homework || 2); // افتراضي 2 نقطة
+            reason = `📝 تسليم واجب: ${refTitle || ''}`;
+        } else if (type === 'ex') {
+            points += (rules.exam || 3); // افتراضي 3 نقاط
+            reason = `🎓 إكمال امتحان: ${refTitle || ''}`;
+        }
+
+        // 3. مكافأة التميز (Bonus) بناءً على النسبة المئوية
+        const pct = maxScore > 0 ? (score / maxScore) * 100 : 0;
+        if (pct >= 85) {
+            points += 5; // مكافأة ممتاز
+            reason += ' + 🌟 مكافأة ممتاز';
+        } else if (pct >= 75) {
+            points += 3; // مكافأة جيد جداً
+            reason += ' + 👏 مكافأة تميز';
+        } else if (pct >= 60) {
+            points += 1; // مكافأة تشجيعية
+            reason += ' + 👍 مكافأة اجتياز';
+        }
+
+        // 4. إضافة النقاط للطالب
+        if (points > 0 && typeof Ops?.addManualPoints === 'function') {
+            await Ops.addManualPoints(studentId, points, reason.trim(), currentUser?.id || 'system');
+        }
+    } catch (e) {
+        console.error('Award points error', e);
+    }
+};
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
 </body>

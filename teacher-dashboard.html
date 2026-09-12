@@ -7,7 +7,25 @@
 <link rel="stylesheet" href="css/eduflow-theme.css">
 <style>
 .sidebar{z-index:1200!important}
-.sidebar-overlay{z-index:1100!important;pointer-events:none!important}
+
+/* إلغاء البلور والتعتيم من طبقة الأوفرلاي */
+.sidebar-overlay {
+    z-index: 1100 !important;
+    pointer-events: none !important; /* يسمح بالضغط على العناصر اللي وراها */
+    backdrop-filter: none !important; /* إلغاء تأثير البلور */
+    -webkit-backdrop-filter: none !important;
+    background: transparent !important; /* إلغاء أي خلفية سوداء معتمة */
+    display: none !important; /* إخفاء الطبقة تماماً لو مش محتاجها */
+}
+
+/* إلغاء البلور لو الثيم بيضيفه على المحتوى الأساسي مباشرة */
+.sidebar.open ~ .main-content::before,
+.sidebar.open ~ .main-content {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    filter: none !important;
+    background: transparent !important;
+}
 .parent-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:9999px;background:linear-gradient(135deg,rgba(251,191,36,.15),rgba(245,158,11,.15));border:1px solid rgba(251,191,36,.3);color:var(--text-secondary);font-size:10px;font-weight:700;margin-right:6px;}
 .stat-mini{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
 .stat-mini-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
@@ -91,6 +109,23 @@
 .images-count-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:var(--info-bg);color:var(--info);border-radius:9999px;font-size:10px;font-weight:700;margin-right:4px}
 .publish-toggle{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface-hover);border-radius:8px;margin-top:8px;cursor:pointer;font-size:12px}
 .publish-toggle input{transform:scale(1.2)}
+/* 🆕 Gamification: streaks + quick eval + battles */
+.streak-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:9999px;background:linear-gradient(135deg,#ff9800,#f44336);color:#fff;font-weight:800;font-family:var(--font-en);font-size:12px;box-shadow:0 2px 8px rgba(244,67,54,.3);}
+.qe-student-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px;background:var(--surface-hover);border-radius:8px;margin-bottom:6px;flex-wrap:wrap;}
+.qe-student-info{flex:1;min-width:140px;}
+.eval-btn-group{display:flex;gap:6px;flex-wrap:wrap;}
+.eval-btn{padding:6px 12px;border-radius:8px;border:none;font-weight:700;font-size:12px;cursor:pointer;transition:all .2s;}
+.eval-btn:hover{transform:translateY(-2px);}
+.eval-btn-recite{background:#d1fae5;color:#059669;}
+.eval-btn-interact{background:#fef3c7;color:#d97706;}
+.eval-btn-praise{background:#fce7f3;color:#db2777;}
+.eval-btn-fridge{background:#e0e7ff;color:#4f46e5;}
+.battle-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;border-right:4px solid var(--primary);}
+.battle-card.finished{border-right-color:var(--success);}
+.battle-vs{display:flex;align-items:center;gap:10px;justify-content:center;margin:10px 0;}
+.battle-team{flex:1;text-align:center;background:var(--surface-hover);border-radius:10px;padding:10px;}
+.battle-team-score{font-size:22px;font-weight:900;font-family:var(--font-en);color:var(--primary);}
+.battle-vs-label{font-weight:900;color:var(--danger);}
 @media(max-width:640px){
   .detail-grid{grid-template-columns:1fr}
   .stat-mini{grid-template-columns:1fr 1fr}
@@ -168,6 +203,23 @@
 <div id="tab-hw" class="tab-content active"><div id="hwReportContent"></div></div>
 <div id="tab-ex" class="tab-content"><div id="exReportContent"></div></div>
 <div id="tab-students" class="tab-content"><div id="studentsReportContent"></div></div>
+</section>
+
+<section class="section" id="section-quickEval">
+<div class="section-header"><div><h2 class="section-title">⚡ التقييم السريع (تسميع وتفاعل)</h2><p class="text-sm text-muted">كافئ طلابك بضغطة زر — قيم النقاط محددها الأدمن</p></div></div>
+<div class="card">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+<div class="form-group" style="margin:0;"><label>المجموعة</label><select id="qeGroup" class="form-select" onchange="window.renderQuickEval()"></select></div>
+<div class="form-group" style="margin:0;"><label>🔍 بحث</label><input type="text" id="qeSearch" class="form-input" placeholder="اسم الطالب أو الكود..." onkeyup="window.renderQuickEval()"></div>
+</div>
+<div class="filter-info" id="qePointsInfo"></div>
+<div id="qeList"></div>
+</div>
+</section>
+
+<section class="section" id="section-battles">
+<div class="section-header"><div><h2 class="section-title">⚔️ معارك المجموعات</h2><p class="text-sm text-muted">منافسة بين مجموعتين — نقاط التقييم السريع والمسابقات بتتحسب في المعركة</p></div><button class="btn btn-primary btn-sm" onclick="window.openBattleModal()">+ معركة جديدة</button></div>
+<div id="battlesList"></div>
 </section>
 
 <section class="section" id="section-attendance">
@@ -331,6 +383,7 @@ window.buildMenu=function(){
     {s:'الرئيسية',items:[{id:'overview',l:'نظرة عامة',i:'📊'}]},
     {s:'إدارة المجموعات',items:[{id:'groups',l:'مجموعاتي',i:'👥'},{id:'students',l:'طلابي',i:'🎓'},{id:'attendance',l:'الحضور',i:'📋'},{id:'calendar',l:'التقويم',i:'📅'}]},
     {s:'التقييم',items:[{id:'homework',l:'الواجبات',i:'📝'},{id:'exams',l:'الامتحانات',i:'🎓'},{id:'grades-report',l:'تقرير الدرجات',i:'📊'}]},
+    {s:'🚀 التحفيز',items:[{id:'quickEval',l:'التقييم السريع',i:'⚡'},{id:'battles',l:'معارك المجموعات',i:'⚔️'}]},
     {s:'المحتوى',items:[{id:'videos',l:'الفيديوهات',i:'🎬'},{id:'classPosts',l:'بوستات الحصة',i:'📰'},{id:'challenges',l:'المسابقات',i:'🏆'},{id:'interactive',l:'مواد تفاعلية',i:'🧩'}]},
     {s:'أخرى',items:[{id:'whatsappGroups',l:'مجموعات واتساب',i:'📱'}]}
   ];
@@ -348,7 +401,8 @@ window.showSection=function(id){
       homework:window.loadHomework, exams:window.loadExams, 'grades-report':window.loadGradesReport,
       attendance:window.loadAttendance, calendar:window.loadCalendar, videos:window.loadVideos,
       classPosts:window.loadClassPosts, challenges:window.loadChallenges, interactive:window.loadInteractive,
-      whatsappGroups:window.loadWhatsappGroups, materials:window.loadMaterials
+      whatsappGroups:window.loadWhatsappGroups, materials:window.loadMaterials,
+      quickEval:window.loadQuickEval, battles:window.loadBattles
     };
     if(L[id]) L[id]();
     if(window.innerWidth<=1024) document.getElementById('sidebar')?.classList.remove('open');
@@ -570,6 +624,7 @@ window.loadStudents=function(){
             <strong>${s.name}</strong>
             <div class="text-xs text-muted">${s.code||''} · ${s.grade||''}</div>
             <div class="text-xs" style="color:var(--primary); margin-top:2px;">👥 ${groupsStr}</div>
+            <div style="margin-top:4px;">${window.streakBadgeHtml(s.id)}</div>
           </div>
           <button class="btn btn-primary btn-sm" onclick="window.openStudentProfile('${s.id}')">👁️ الملف</button>
         </div>`;
@@ -590,6 +645,7 @@ window.openStudentProfile=function(id){
     ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${s.name}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
     <div class="modal-body">
       <div class="detail-grid"><div class="detail-box"><div class="lbl">الكود</div><div class="val">${s.code||'-'}</div></div><div class="detail-box"><div class="lbl">الهاتف</div><div class="val">${s.phone||'-'}</div></div><div class="detail-box"><div class="lbl">ولي الأمر</div><div class="val">${s.parentPhone||'-'}</div></div><div class="detail-box"><div class="lbl">المرحلة</div><div class="val">${s.grade||'-'}</div></div></div>
+      <div style="margin:12px 0;text-align:center;">${window.streakBadgeHtml(id)}</div>
       ${ungradedHw.length?`<div class="quick-grade-section"><h3>⚡ واجبات غير مصححة</h3>${ungradedHw.map(({hw, sub})=>{
         const hasImages = sub.answerImages && sub.answerImages.length > 0;
         return `<div class="grade-row"><div class="hw-info"><div class="hw-title">${hw?.title||'-'} ${hasImages?`<span class="images-count-badge">📸 ${sub.answerImages.length}</span>`:''}</div><div class="hw-meta">من ${hw?.totalPoints||10}</div></div><div class="grade-input-group">${hasImages?`<button class="btn btn-ghost btn-sm" onclick="ThemeManager.closeModal();window.viewSubImages('${sub.id}')">👁️</button>`:''}<input type="number" class="grade-input" id="qg-${sub.id}" min="0" max="${hw?.totalPoints||10}"><button class="quick-btn quick-btn-success" onclick="window.quickGradeSub('${sub.id}',${hw?.totalPoints||10})">✓</button></div></div>`;
@@ -1335,6 +1391,320 @@ window.saveMaterial=async function(editId){
   }catch(e){ window.safeToast('خطأ','error'); }
 };
 window.deleteMaterial=async function(id){ try{ if(!confirm('حذف؟'))return; await DataService.deleteMaterial(id); window.loadMaterials(); }catch(e){} };
+
+/* ================================================================
+🎁 إعدادات التحفيز والذكاء (قراءة فقط — الأدمن هو اللي بيتحكم)
+================================================================ */
+window.GAM_DEFAULTS={streak:{enabled:true,freezeCost:20,milestoneEvery:7,milestoneBonus:50},store:{enabled:true,items:[]},lootbox:{enabled:true,openHour:'17:00',pointsMin:1,pointsMax:5,chancePoints:60,chanceHint:25,chanceBonus:15},evalPoints:{recitation:2,interaction:1},praise:{template:'الأستاذ {teacherName} بيشكر ابنك {studentName} — كان نجم الحصة النهاردة! ⭐'},fridge:{enabled:true,day:'Thursday'}};
+window.AI_DEFAULTS={faqBot:false,smartRescue:true,rescueThreshold:50,aiFeedback:true};
+window.getGamificationSettings=function(){ const g=db().gamification||{}; const d=window.GAM_DEFAULTS; return {streak:Object.assign({},d.streak,g.streak||{}),store:Object.assign({},d.store,g.store||{}),lootbox:Object.assign({},d.lootbox,g.lootbox||{}),evalPoints:Object.assign({},d.evalPoints,g.evalPoints||{}),praise:Object.assign({},d.praise,g.praise||{}),fridge:Object.assign({},d.fridge,g.fridge||{})}; };
+window.getAiSettings=function(){ return Object.assign({},window.AI_DEFAULTS,db().ai||{}); };
+
+/* ================================================================
+🔥 الستريك (محسوب من الحضور الفعلي — مش رقم ثابت)
+================================================================ */
+window.calculateStreak=function(sid){
+  try{
+    const cancelled={}; (db().cancelledSessions||[]).forEach(c=>{cancelled[c.groupId+'|'+c.date]=1;});
+    const atts=(db().attendance||[]).filter(a=>a.status==='approved'&&!cancelled[a.groupId+'|'+a.date]&&a.records.some(r=>r.studentId===sid));
+    if(!atts.length) return 0;
+    atts.sort((a,b)=>new Date(b.date)-new Date(a.date));
+    let streak=0;
+    for(const s of atts){
+      const r=s.records.find(r=>r.studentId===sid);
+      if(r&&r.status==='present') streak++; else break;
+    }
+    return streak;
+  }catch(e){ return 0; }
+};
+window.streakBadgeHtml=function(sid){
+  try{
+    const g=window.getGamificationSettings();
+    if(!g.streak.enabled) return '';
+    const n=window.calculateStreak(sid);
+    if(n<=0) return '<span class="badge badge-muted">🔥 ابدأ سلسلتك النهاردة!</span>';
+    return `<span class="streak-badge">🔥 ${n} حصة متتالية</span>`;
+  }catch(e){ return ''; }
+};
+
+/* ================================================================
+⚡ التقييم السريع (تسميع/tفاعل) + ثناء + تقرير ثلاجة
+================================================================ */
+window.addPointsToStudent=async function(sid,pts,reason){
+  const d=db(); d.manualPoints=d.manualPoints||[];
+  const rec={id:'mp_'+Date.now()+Math.random().toString(36).slice(2,6),studentId:sid,points:pts,reason:reason,awardedBy:currentUser.id,awardedAt:new Date().toISOString()};
+  d.manualPoints.push(rec); save(d);
+  if(window.FirebaseService?.connected){ try{ await FirebaseService.saveDoc('manualPoints',rec.id,rec); }catch(e){} }
+  return rec;
+};
+window.loadQuickEval=function(){
+  try{
+    const sel=document.getElementById('qeGroup');
+    if(sel){
+      const cur=sel.value;
+      const groups=DataService.getGroupsByTeacher(currentUser.id);
+      sel.innerHTML='<option value="">-- اختر مجموعة --</option>'+groups.map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
+      if(cur) sel.value=cur;
+    }
+    const g=window.getGamificationSettings();
+    const info=document.getElementById('qePointsInfo');
+    if(info) info.innerHTML=`💡 نقاط محددة من الأدمن: 🎙️ تسميع = <strong>${g.evalPoints.recitation}</strong> نقطة · 🙋 تفاعل = <strong>${g.evalPoints.interaction}</strong> نقطة${g.fridge.enabled?' · 🧲 تقرير الثلاجة مفعّل':''}`;
+    window.renderQuickEval();
+  }catch(e){ console.error(e); }
+};
+window.renderQuickEval=function(){
+  try{
+    const gid=document.getElementById('qeGroup')?.value||'';
+    const q=(document.getElementById('qeSearch')?.value||'').toLowerCase();
+    const el=document.getElementById('qeList');
+    if(!el) return;
+    if(!gid){ el.innerHTML='<p class="text-muted" style="text-align:center;padding:16px;">اختر مجموعة الأول</p>'; return; }
+    let sts=DataService.getStudentsByGroup(gid)||[];
+    if(q) sts=sts.filter(s=>(s.name||'').toLowerCase().includes(q)||(s.code||'').toLowerCase().includes(q));
+    if(!sts.length){ el.innerHTML='<p class="text-muted">لا طلاب مطابقين</p>'; return; }
+    const gset=window.getGamificationSettings();
+    el.innerHTML=sts.map(s=>`
+      <div class="qe-student-row">
+        <div class="qe-student-info"><strong>${s.name}</strong><div class="text-xs text-muted">${s.code||''}</div><div style="margin-top:4px;">${window.streakBadgeHtml(s.id)}</div></div>
+        <div class="eval-btn-group">
+          <button class="eval-btn eval-btn-recite" onclick="window.awardEvalPoint('${s.id}','recite')">🎙️ سمع كويس (+${gset.evalPoints.recitation})</button>
+          <button class="eval-btn eval-btn-interact" onclick="window.awardEvalPoint('${s.id}','interact')">🙋 متفاعل (+${gset.evalPoints.interaction})</button>
+          <button class="eval-btn eval-btn-praise" onclick="window.sendPraise('${s.id}')">⭐ ثناء فوري</button>
+          ${gset.fridge.enabled?`<button class="eval-btn eval-btn-fridge" onclick="window.sendFridgeReport('${s.id}')">🧲 تقرير</button>`:''}
+        </div>
+      </div>`).join('');
+  }catch(e){ console.error(e); }
+};
+window.awardEvalPoint=async function(sid,type){
+  try{
+    const g=window.getGamificationSettings();
+    const pts=type==='recite'?g.evalPoints.recitation:g.evalPoints.interaction;
+    if(!pts){ window.safeToast('نقاط النوع ده متصفّرة من الأدمن','warning'); return; }
+    const reason=type==='recite'?'🎙️ تسميع ممتاز':'🙋 تفاعل في الحصة';
+    const d=db();
+    if(type==='recite'){
+      await window.addPointsToStudent(sid,pts,reason);
+    } else {
+      d.interactionPoints=d.interactionPoints||[];
+      const rec={id:'ip_'+Date.now()+Math.random().toString(36).slice(2,6),studentId:sid,points:pts,note:reason,awardedBy:currentUser.id,awardedAt:new Date().toISOString()};
+      d.interactionPoints.push(rec); save(d);
+      if(window.FirebaseService?.connected){ try{ await FirebaseService.saveDoc('interactionPoints',rec.id,rec); }catch(e){} }
+    }
+    const stu=DataService.getUserById(sid);
+    window.safeToast(`✅ +${pts} نقطة لـ ${stu?.name||''} (${reason})`,'success');
+    if(typeof DataService?.addNotification==='function'){
+      DataService.addNotification({targetUserId:sid,title:'🎁 نقاط جديدة: +'+pts,message:reason+' — من الأستاذ '+(currentUser.name||''),type:'grade',meta:{kind:'points'}});
+    }
+  }catch(e){ window.safeToast('خطأ','error'); }
+};
+window.sendPraise=function(sid){
+  try{
+    const g=window.getGamificationSettings();
+    const s=DataService.getUserById(sid); if(!s) return;
+    const phone=(s.parentPhone||s.phone||'').replace(/\D/g,'');
+    if(!phone){ window.safeToast('مفيش رقم ولي أمر للطالب ده','warning'); return; }
+    const msg=(g.praise.template||'').replace(/\{teacherName\}/g,currentUser.name||'الأستاذ').replace(/\{studentName\}/g,s.name||'');
+    window.open('https://wa.me/2'+phone+'?text='+encodeURIComponent(msg),'_blank');
+    window.safeToast('⭐ تم فتح واتساب ولي الأمر برسالة الثناء','success');
+  }catch(e){ console.error(e); }
+};
+window.sendFridgeReport=function(sid){
+  try{
+    const g=window.getGamificationSettings();
+    if(!g.fridge.enabled){ window.safeToast('تقرير الثلاجة مقفول من الأدمن','warning'); return; }
+    const s=DataService.getUserById(sid); if(!s) return;
+    const phone=(s.parentPhone||s.phone||'').replace(/\D/g,'');
+    if(!phone){ window.safeToast('مفيش رقم ولي أمر','warning'); return; }
+    const weekAgo=Date.now()-7*86400000;
+    const atts=(db().attendance||[]).filter(a=>a.status==='approved'&&new Date(a.date).getTime()>=weekAgo&&a.records.some(r=>r.studentId===sid));
+    const present=atts.filter(a=>a.records.find(r=>r.studentId===sid)?.status==='present').length;
+    let rankLine='';
+    const myGroups=DataService.getGroupsByTeacher(currentUser.id).filter(gr=>(DataService.getStudentsByGroup(gr.id)||[]).some(x=>x.id===sid));
+    if(myGroups.length){
+      const gr=myGroups[0];
+      const rows=(DataService.getStudentsByGroup(gr.id)||[]).map(x=>({id:x.id,p:(typeof Ops?.getStudentPoints==='function')?Ops.getStudentPoints(x.id,null,'all'):0})).sort((a,b)=>b.p-a.p);
+      const idx=rows.findIndex(r=>r.id===sid);
+      if(idx>=0) rankLine=`🏆 ترتيبه: المركز ${idx+1} على مجموعة ${gr.name}`;
+    }
+    const subs=(db().submissions||[]).filter(x=>x.studentId===sid&&x.status==='graded');
+    const exAtts=(db().examAttempts||[]).filter(x=>x.studentId===sid&&x.status==='approved');
+    const hwAvg=subs.length?Math.round(subs.reduce((a,x)=>a+(x.score||0),0)/subs.length):null;
+    const exAvg=exAtts.length?Math.round(exAtts.reduce((a,x)=>a+(x.score||0),0)/exAtts.length):null;
+    let weak='';
+    if(hwAvg!==null&&exAvg!==null) weak=(hwAvg<exAvg)?'⚠️ نقطة ضعف: الواجبات محتاجة تركيز شوية':'⚠️ نقطة ضعف: الامتحانات محتاجة مراجعة';
+    else if(hwAvg!==null&&hwAvg<75) weak='⚠️ نقطة ضعف: الواجبات محتاجة تركيز شوية';
+    else if(exAvg!==null&&exAvg<75) weak='⚠️ نقطة ضعف: الامتحانات محتاجة مراجعة';
+    const streak=window.calculateStreak(sid);
+    const msg=`🧲 التقرير الأسبوعي من مركز Habbash Group\n\n👤 الطالب: ${s.name}\n✅ الحضور آخر أسبوع: ${present}/${atts.length} حصص\n🔥 سلسلة الإنجاز: ${streak} حصة متتالية\n${rankLine?rankLine+'\n':''}${weak?weak+'\n':''}\n🌟 شكراً لدعمكم المستمر لابنكم!`;
+    window.open('https://wa.me/2'+phone+'?text='+encodeURIComponent(msg),'_blank');
+    window.safeToast('🧲 تم فتح واتساب ولي الأمر بالتقرير الأسبوعي','success');
+  }catch(e){ console.error(e); }
+};
+
+/* ================================================================
+⚔️ معارك المجموعات (إنشاء + تصفيات + تتويج)
+================================================================ */
+window.computeBattleScores=function(b){
+  try{
+    const start=new Date(b.createdAt||0).getTime();
+    const end=b.endedAt?new Date(b.endedAt).getTime():Date.now();
+    const calc=(gid)=>{
+      const sids=(DataService.getStudentsByGroup(gid)||[]).map(s=>s.id);
+      let sum=0;
+      (db().manualPoints||[]).forEach(m=>{ const t=new Date(m.awardedAt||0).getTime(); if(sids.includes(m.studentId)&&t>=start&&t<=end) sum+=m.points||0; });
+      (db().interactionPoints||[]).forEach(m=>{ const t=new Date(m.awardedAt||0).getTime(); if(sids.includes(m.studentId)&&t>=start&&t<=end) sum+=m.points||0; });
+      (db().challengeAttempts||[]).forEach(a=>{ const t=new Date(a.attemptedAt||a.createdAt||0).getTime(); if(sids.includes(a.studentId)&&t>=start&&t<=end) sum+=a.points||0; });
+      return sum;
+    };
+    b.score1=calc(b.team1); b.score2=calc(b.team2);
+  }catch(e){}
+};
+window.loadBattles=function(){
+  try{
+    const myGroupIds=DataService.getGroupsByTeacher(currentUser.id).map(g=>g.id);
+    const battles=(db().battles||[]).filter(b=>myGroupIds.includes(b.team1)||myGroupIds.includes(b.team2)).sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
+    const el=document.getElementById('battlesList');
+    if(!el) return;
+    if(!battles.length){ el.innerHTML='<div class="card" style="text-align:center;padding:30px;"><div style="font-size:48px;">⚔️</div><strong>مفيش معارك حالياً</strong><p class="text-sm text-muted" style="margin-top:6px;">اعمل معركة بين مجموعتين — نقاط التقييم السريع والمسابقات هتتحسب فيها تلقائياً</p></div>'; return; }
+    el.innerHTML=battles.map(b=>{
+      window.computeBattleScores(b);
+      const g1=DataService.getGroups().find(g=>g.id===b.team1);
+      const g2=DataService.getGroups().find(g=>g.id===b.team2);
+      const active=b.status==='active';
+      const winnerName=b.winner?(DataService.getGroups().find(g=>g.id===b.winner)?.name||'-'):null;
+      return `<div class="battle-card ${active?'':'finished'}">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+          <strong>⚔️ ${b.title||'معركة مجموعات'}</strong>
+          <span class="badge ${active?'badge-info':'badge-success'}">${active?'🔥 جارية':(winnerName?('🏆 الفائز: '+winnerName):'🤝 تعادل')}</span>
+        </div>
+        <div class="battle-vs">
+          <div class="battle-team"><div style="font-weight:700;">${g1?.name||'-'}</div><div class="battle-team-score">${b.score1||0}</div></div>
+          <div class="battle-vs-label">VS</div>
+          <div class="battle-team"><div style="font-weight:700;">${g2?.name||'-'}</div><div class="battle-team-score">${b.score2||0}</div></div>
+        </div>
+        <div class="text-xs text-muted" style="text-align:center;margin-bottom:10px;">🎁 مكافأة الفوز: ${b.reward||50} نقطة لكل طالب بالفريق الفائز${b.endsAt?(' · ⏳ تنتهي '+new Date(b.endsAt).toLocaleDateString('ar-EG')):''}</div>
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+          ${active?`<button class="btn btn-success btn-sm" onclick="window.endBattle('${b.id}')">🏁 إنهاء وتتويج</button>`:''}
+          ${b.createdBy===currentUser.id?`<button class="btn btn-danger btn-sm" onclick="window.deleteBattle('${b.id}')">🗑️ حذف</button>`:''}
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){ console.error(e); }
+};
+window.openBattleModal=function(){
+  try{
+    const groups=DataService.getGroupsByTeacher(currentUser.id);
+    if(groups.length<2){ window.safeToast('محتاج مجموعتين على الأقل عشان تعمل معركة','warning'); return; }
+    ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">⚔️ معركة مجموعات جديدة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>عنوان المعركة</label><input type="text" id="btTitle" class="form-input" value="معركة أسبوع ${new Date().toLocaleDateString('ar-EG')}"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group"><label>🛡️ الفريق الأول</label><select id="btTeam1" class="form-select">${groups.map(g=>`<option value="${g.id}">${g.name}</option>`).join('')}</select></div>
+        <div class="form-group"><label>⚔️ الفريق الثاني</label><select id="btTeam2" class="form-select">${groups.map((g,i)=>`<option value="${g.id}" ${i===1?'selected':''}>${g.name}</option>`).join('')}</select></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group"><label>🎁 مكافأة لكل طالب بالفريق الفائز</label><input type="number" id="btReward" class="form-input" value="50" min="1"></div>
+        <div class="form-group"><label>⏳ تاريخ الانتهاء</label><input type="date" id="btEnds" class="form-input"></div>
+      </div>
+      <div class="filter-info">💡 النقاط المحسوبة: التقييم السريع (تسميع/تفاعل) + نقاط المسابقات خلال فترة المعركة.</div>
+      <button class="btn btn-primary w-full" onclick="window.saveBattle()">🚀 إطلاق المعركة</button>
+    </div>`);
+  }catch(e){ console.error(e); }
+};
+window.saveBattle=async function(){
+  try{
+    const t1=document.getElementById('btTeam1')?.value, t2=document.getElementById('btTeam2')?.value;
+    if(!t1||!t2||t1===t2){ window.safeToast('اختار مجموعتين مختلفتين','error'); return; }
+    const ends=document.getElementById('btEnds')?.value;
+    const title=document.getElementById('btTitle')?.value||'معركة مجموعات';
+    const b={id:'bt_'+Date.now(),title:title,team1:t1,team2:t2,reward:parseInt(document.getElementById('btReward')?.value)||50,status:'active',score1:0,score2:0,winner:null,createdBy:currentUser.id,createdAt:new Date().toISOString(),endsAt:ends?new Date(ends).toISOString():null};
+    const d=db(); d.battles=d.battles||[]; d.battles.push(b); save(d);
+    if(window.FirebaseService?.connected){ try{ await FirebaseService.saveDoc('battles',b.id,b); }catch(e){} }
+    if(typeof DataService?.addNotification==='function'){
+      [t1,t2].forEach(gid=>{
+        (DataService.getStudentsByGroup(gid)||[]).forEach(s=>{
+          DataService.addNotification({targetUserId:s.id,title:'⚔️ معركة مجموعات بدأت!',message:title+' — فريقك محتاج كل نقطة! نقاط التقييم السريع والمسابقات بتتحسب 🔥',type:'challenge',meta:{refId:b.id}});
+        });
+      });
+    }
+    ThemeManager.closeModal();
+    window.safeToast('⚔️ تم إطلاق المعركة وإشعار الطلاب','success');
+    window.loadBattles();
+  }catch(e){ window.safeToast('خطأ','error'); }
+};
+window.endBattle=async function(id){
+  try{
+    const d=db();
+    const b=(d.battles||[]).find(x=>x.id===id);
+    if(!b||b.status!=='active') return;
+    window.computeBattleScores(b);
+    b.status='finished'; b.endedAt=new Date().toISOString();
+    b.winner=(b.score1===b.score2)?null:((b.score1>b.score2)?b.team1:b.team2);
+    save(d);
+    if(window.FirebaseService?.connected){ try{ await FirebaseService.saveDoc('battles',id,b); }catch(e){} }
+    if(b.winner){
+      (DataService.getStudentsByGroup(b.winner)||[]).forEach(s=>{ window.addPointsToStudent(s.id,b.reward||50,'⚔️ فوز في معركة المجموعات'); });
+      window.safeToast('🏆 تم التتويج ومكافأة الفريق الفائز','success');
+    } else window.safeToast('🤝 تعادل — مفيش مكافأة','info');
+    window.loadBattles();
+  }catch(e){ window.safeToast('خطأ','error'); }
+};
+window.deleteBattle=async function(id){
+  try{
+    if(!confirm('حذف المعركة؟')) return;
+    const d=db(); d.battles=(d.battles||[]).filter(x=>x.id!==id); save(d);
+    if(window.FirebaseService?.connected){ try{ await FirebaseService.deleteDoc('battles',id); }catch(e){} }
+    window.loadBattles();
+  }catch(e){}
+};
+
+/* ================================================================
+🤖 التغذية الراجعة بالـ AI + الإنقاذ الذكي (حسب إعدادات الأدمن)
+================================================================ */
+window.aiCommentFor=function(pct,sid){
+  const s=DataService?.getUserById?DataService.getUserById(sid):null;
+  const name=s?.name||'يا بطل';
+  if(pct>=85) return `إجابة ممتازة يا ${name}! 🌟 مستوى رائع واستمرارك على كده هيخليك من الأوائل. كمّل بنفس الروح!`;
+  if(pct>=60) return `مجهود جيد يا ${name} 💪 انت قريب جداً من القمة. راجع النقاط اللي اتخطئت فيها وهتوصل للامتياز المرة الجاية.`;
+  return `يا ${name}، النتيجة دي مش مستواك الحقيقي 🚀 ابدأ بفيديو المراجعة القصير وبعدها الكويز التعويضي، وهترجع أقوى من الأول. أنا واثق فيك!`;
+};
+window.maybeSendAiFeedback=function(sid,kind,title,score,max,refId){
+  try{
+    const ai=window.getAiSettings();
+    const pct=Math.round((score/(max||1))*100);
+    if(ai.aiFeedback&&typeof DataService?.addNotification==='function'){
+      DataService.addNotification({targetUserId:sid,title:'🧠 تغذية راجعة: '+title,message:window.aiCommentFor(pct,sid),type:'grade',meta:{kind:kind,score:score,max:max,refId:refId}});
+    }
+    if(ai.smartRescue&&pct<(ai.rescueThreshold||50)){
+      if(typeof DataService?.addNotification==='function'){
+        DataService.addNotification({targetUserId:sid,title:'🚑 خطة إنقاذ ذكية: '+title,message:'لاحظنا إن النتيجة أقل من '+(ai.rescueThreshold||50)+'%. جهزنالك فيديو مراجعة قصير + كويز تعويضي — ادخل على قسم الفيديوهات والمسابقات وهتعوض درجاتك 💪',type:'video',meta:{kind:'rescue',refId:refId}});
+      }
+      window.safeToast('🚑 تم إرسال خطة إنقاذ تلقائية للطالب','info');
+    }
+  }catch(e){}
+};
+/* لفّ كل دوال رصد الدرجات عشان تبعت التغذية الراجعة/الإنقاذ تلقائياً */
+(function(){
+  ['quickGradeSub','saveHwGrade','gradeFromView','saveExGrade','gradeExFromView'].forEach(function(name){
+    const orig=window[name];
+    if(typeof orig!=='function') return;
+    window[name]=async function(id,max){
+      const r=await orig.apply(this,arguments);
+      try{
+        const d=db();
+        const isHw=!!(d.submissions||[]).find(x=>x.id===id);
+        const rec=isHw?(d.submissions||[]).find(x=>x.id===id):(d.examAttempts||[]).find(x=>x.id===id);
+        if(rec&&(rec.status==='graded'||rec.status==='approved')){
+          const ref=isHw?(d.homework||[]).find(h=>h.id===rec.homeworkId):(d.exams||[]).find(e=>e.id===rec.examId);
+          window.maybeSendAiFeedback(rec.studentId,isHw?'hw':'ex',ref?.title||'',rec.score||0,rec.maxScore||max||10,ref?.id||'');
+        }
+      }catch(e){}
+      return r;
+    };
+  });
+})();
+
+window.handleLogout=function(){ try{ if(confirm('خروج؟')){ if(typeof AuthService?.logout==='function') AuthService.logout(); } }catch(e){} };
 
 window.handleLogout=function(){ try{ if(confirm('خروج؟')){ if(typeof AuthService?.logout==='function') AuthService.logout(); } }catch(e){} };
 </script>

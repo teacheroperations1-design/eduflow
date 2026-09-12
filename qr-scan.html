@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>مسح باركود - EduFlow by Habbash Group</title>
 <link rel="stylesheet" href="css/eduflow-theme.css">
 <style>
@@ -122,6 +123,33 @@
 <script src="js/auth-service.js"></script>
 
 <script>
+  /* 🆕 موحّد البحث عن الطالب بالكود (يقبل حروف كبيرة/صغيرة + مسافات + studentId احتياطي) */
+window.normalizeCode=function(c){ return String(c||'').trim().toUpperCase().replace(/\s+/g,''); };
+window.resolveStudentByCode=function(code){
+  try{
+    const nc=window.normalizeCode(code);
+    const users=(DataService?.getUsers?DataService.getUsers():[])||[];
+    return users.find(u=>u.role==='student' && window.normalizeCode(u.code)===nc)
+        || users.find(u=>u.role==='student' && window.normalizeCode(u.studentId)===nc)
+        || null;
+  }catch(e){ return null; }
+};
+/* 🆕 إصلاح الطلاب اللي ملهمش كود (نفّذها مرة واحدة من console جهاز الإدارة) */
+window.fixMissingCodes=function(){
+  try{
+    const d=DataService._getData(); const used=new Set((d.users||[]).map(u=>u.code).filter(Boolean));
+    let n=0;
+    (d.users||[]).forEach(u=>{
+      if(u.role==='student' && !u.code){
+        let c; do{ c='EDU-'+Math.floor(1000+Math.random()*9000); }while(used.has(c));
+        u.code=c; used.add(c); n++;
+      }
+    });
+    DataService._saveData(d);
+    if(window.FirebaseService?.connected) FirebaseService.saveDoc('meta','codes_fixed',{at:new Date().toISOString(),fixed:n});
+    alert('✅ تم توليد أكواد لـ '+n+' طالب — اطبع الباركودات تاني');
+  }catch(e){ alert('خطأ: '+e.message); }
+};
 let currentUser=null, scanning=true, lastScan=0, stream=null;
 let useFrontCamera=false;
 const video=document.getElementById('preview');

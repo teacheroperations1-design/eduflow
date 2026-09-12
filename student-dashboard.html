@@ -22,6 +22,8 @@
 .result-stats-grid{grid-template-columns:1fr}
 .barcode-request-stats{grid-template-columns:1fr}
 .answer-images-grid{grid-template-columns:repeat(3,1fr)}
+.float-notif-stack{width:calc(100vw - 16px)!important;left:8px!important;transform:none!important}
+.store-grid{grid-template-columns:1fr!important;}
 }
 .sidebar.open ~ .main-content::before{content:'';position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1200;}
 .attention-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:all .2s;border-right:4px solid var(--primary)}
@@ -35,7 +37,7 @@
 .sub-row.missing{border-right:3px solid var(--danger);opacity:.75}
 .sub-row.due{border-right:3px solid var(--danger);background:rgba(239,68,68,.05)}
 .teacher-photo{width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);flex-shrink:0}
-.teacher-photo-sm{width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid var(--border)}
+.teacher-photo-sm{width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid var(--border);flex-shrink:0}
 .quick-actions{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:20px}
 .quick-action{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;cursor:pointer;transition:all .2s;text-decoration:none;color:var(--text)}
 .quick-action:hover{border-color:var(--primary-border);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.08)}
@@ -75,7 +77,8 @@
 .schedule-class{background:var(--surface-hover);padding:8px;border-radius:6px;margin-bottom:6px;border-right:3px solid var(--primary)}
 .video-iframe-wrap{position:relative;padding-bottom:56.25%;height:0;border-radius:10px;overflow:hidden;margin-top:10px;background:#000}
 .video-iframe-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}
-.post-image{width:100%;max-height:260px;object-fit:cover;border-radius:8px;margin-top:10px}
+.post-image{width:100%;max-height:260px;object-fit:cover;border-radius:8px;margin-top:10px;cursor:pointer;transition:all .2s;border:1px solid var(--border)}
+.post-image:hover{border-color:var(--primary);transform:scale(1.01)}
 .material-media{margin-top:10px;border-radius:10px;overflow:hidden;background:var(--surface-hover)}
 .material-media img{width:100%;max-height:220px;object-fit:cover;display:block}
 .material-media audio{width:100%;display:block;margin-top:6px}
@@ -92,6 +95,7 @@
 .barcode-fee{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--warning-bg);color:var(--warning);border-radius:9999px;font-size:11px;font-weight:700}
 .barcode-request-status{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:9999px;font-size:11px;font-weight:700}
 .status-pending{background:var(--warning-bg);color:var(--warning)}
+.status-prepared{background:var(--info-bg);color:var(--info)}
 .status-approved{background:var(--success-bg);color:var(--success)}
 .status-rejected{background:var(--danger-bg);color:var(--danger)}
 .barcode-request-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
@@ -116,13 +120,22 @@
 .hw-paper-img{width:100%;border-radius:10px;margin-bottom:12px;cursor:pointer;border:1px solid var(--border)}
 .hw-paper-img:hover{border-color:var(--primary)}
 .dua-card{background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(139,92,246,.1));border:1px solid var(--primary-border);border-radius:12px;text-align:center;padding:20px;margin-bottom:12px}
-/* 🆕 الإشعارات العائمة */
-.float-notif-stack{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:3000;display:flex;flex-direction:column;gap:10px;width:min(430px,calc(100vw - 20px));pointer-events:none;}
-.float-notif{pointer-events:auto;background:var(--surface);border:1px solid var(--border);border-right:5px solid var(--primary);border-radius:14px;padding:12px 14px;box-shadow:0 12px 32px rgba(0,0,0,.35);animation:fnIn .35s ease;}
+/* 🆕 الإشعارات العائمة المحسّنة */
+.float-notif-stack{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:3000;display:flex;flex-direction:column;gap:12px;width:min(480px,calc(100vw - 24px));pointer-events:none;}
+.float-notif{pointer-events:auto;background:#1a1d24;border:1px solid #2d3340;border-right:5px solid var(--primary);border-radius:16px;padding:16px;box-shadow:0 16px 40px rgba(0,0,0,.5);animation:fnIn .35s ease;color:#e5e7eb;}
+[data-theme="light"] .float-notif{background:#f8f9fa;border:1px solid #e5e7eb;box-shadow:0 16px 40px rgba(0,0,0,.15);color:#1f2937;}
 .float-notif.grade{border-right-color:var(--success);}
 .float-notif.danger{border-right-color:var(--danger);}
+.float-notif.challenge{border-right-color:#8b5cf6;}
+.float-notif.homework{border-right-color:#3b82f6;}
+.float-notif.exam{border-right-color:#f59e0b;}
 @keyframes fnIn{from{opacity:0;transform:translateY(-12px);}to{opacity:1;transform:translateY(0);}}
 .fn-grade{display:inline-block;margin-top:6px;padding:4px 12px;border-radius:9999px;background:var(--success-bg);color:var(--success);font-weight:800;font-family:var(--font-en);font-size:13px;}
+.fn-teacher-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(99,102,241,.15);color:#818cf8;border-radius:9999px;font-size:11px;font-weight:700;margin-top:4px;}
+[data-theme="light"] .fn-teacher-badge{background:rgba(99,102,241,.1);color:#4f46e5;}
+.fn-teacher-photo{width:20px;height:20px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,.2);}
+.fn-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.fn-actions .btn{font-size:12px;padding:6px 12px;}
 /* 🆕 كارت أقرب حصة */
 .next-class-card{display:flex;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:14px;}
 .next-class-card.live{border-color:var(--success);background:linear-gradient(135deg,rgba(34,197,94,.08),transparent);}
@@ -132,6 +145,24 @@
 .nc-count{font-family:var(--font-en);font-weight:900;font-size:20px;color:var(--primary);background:var(--primary-bg);padding:6px 12px;border-radius:10px;letter-spacing:1px;flex-shrink:0;}
 /* 🆕 كارت ولي الأمر المصغر */
 .parent-compact{background:linear-gradient(135deg,rgba(251,191,36,.08),rgba(245,158,11,.08));border:1px dashed rgba(251,191,36,.45);border-radius:12px;padding:10px 12px;margin-bottom:14px;}
+/* 🆕 مودال تكبير الصورة */
+.image-zoom-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:4000;display:flex;align-items:center;justify-content:center;padding:20px;cursor:pointer;}
+.image-zoom-overlay img{max-width:100%;max-height:90vh;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+.image-zoom-close{position:absolute;top:20px;right:20px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.image-zoom-close:hover{background:rgba(255,255,255,.3);transform:scale(1.1);}
+
+/* 🛒 متجر النقاط */
+.store-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-bottom:24px;}
+.store-item-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;display:flex;flex-direction:column;justify-content:space-between;transition:all .2s;text-align:center;position:relative;overflow:hidden;}
+.store-item-card:hover{border-color:var(--primary-border);transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,.08);}
+.store-item-card.disabled{opacity:.5;pointer-events:none;}
+.store-item-icon{font-size:48px;margin-bottom:12px;}
+.store-item-cost{font-size:22px;font-weight:900;color:var(--primary);font-family:var(--font-en);margin:12px 0;}
+.store-balance-card{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-radius:16px;padding:24px;text-align:center;margin-bottom:24px;position:relative;overflow:hidden;}
+.store-balance-card::before{content:'';position:absolute;top:-50%;right:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(255,255,255,.1) 0%,transparent 70%);animation:float 20s infinite linear;}
+@keyframes float{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+.store-balance-value{font-size:48px;font-weight:900;font-family:var(--font-en);line-height:1;margin-bottom:6px;position:relative;}
+.store-balance-label{font-size:14px;opacity:.9;position:relative;}
 </style>
 </head>
 <body data-theme="dark">
@@ -149,12 +180,13 @@
 <nav class="sidebar-nav" id="sidebarNav"></nav>
 <div class="sidebar-footer">
   <div class="sidebar-user">
-    <div class="sidebar-user-avatar" id="userAvatar">S</div>
-    <div>
-      <div class="sidebar-user-name" id="userName">Student</div>
-      <div class="sidebar-user-role" id="userRole">طالب</div>
-    </div>
+  <div class="sidebar-user" onclick="window.openStudentProfile()" style="cursor:pointer; transition: all 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+  <div class="sidebar-user-avatar" id="userAvatar">S</div>
+  <div>
+    <div class="sidebar-user-name" id="userName">Student</div>
+    <div class="sidebar-user-role" id="userRole">طالب</div>
   </div>
+</div>
   <button class="btn btn-ghost w-full" onclick="window.handleLogout()">🚪 خروج</button>
 </div>
 </aside>
@@ -184,13 +216,14 @@
 
 <h3 style="margin:16px 0 12px;">⚡ اختصارات سريعة</h3>
 <div class="quick-actions">
-  <button class="quick-action" onclick="window.showSection('attendance')"><div class="quick-action-icon">📋</div><div class="quick-action-label">تسجيل حضور</div></button>
   <button class="quick-action" onclick="window.showSection('homework')"><div class="quick-action-icon">📝</div><div class="quick-action-label">الواجبات</div></button>
   <button class="quick-action" onclick="window.showSection('exams')"><div class="quick-action-icon">🎓</div><div class="quick-action-label">الامتحانات</div></button>
   <button class="quick-action" onclick="window.showSection('results')"><div class="quick-action-icon">📊</div><div class="quick-action-label">النتائج</div></button>
   <button class="quick-action" onclick="window.showSection('points')"><div class="quick-action-icon">🏆</div><div class="quick-action-label">نقاطي</div></button>
+  <button class="quick-action" onclick="window.showSection('store')"><div class="quick-action-icon">🛒</div><div class="quick-action-label">المتجر</div></button>
   <button class="quick-action" onclick="window.showSection('teachers')"><div class="quick-action-icon">👨🏫</div><div class="quick-action-label">أساتذتي</div></button>
   <button class="quick-action" onclick="window.showSection('barcodeRequests')"><div class="quick-action-icon">🎟️</div><div class="quick-action-label">طلب باركود</div></button>
+  <button class="quick-action" onclick="window.showSection('attendance')"><div class="quick-action-icon">📋</div><div class="quick-action-label">تسجيل حضور</div></button>
 </div>
 
 <h3 style="margin:16px 0 12px;">🔔 ما الجديد؟</h3>
@@ -219,13 +252,13 @@
 
 <!-- 📝 الواجبات -->
 <section class="section" id="section-homework">
-<div class="section-header"><div><h2 class="section-title">📝 واجباتي</h2><p class="text-sm text-muted">افتح الواجب، شوف الورقة، وصوّر حلك وسلّمه</p></div></div>
+<div class="section-header"><div><h2 class="section-title">📝 واجباتي</h2><p class="text-sm text-muted">الواجبات الأونلاين والورقية — افتح، حلّ، وسلّم</p></div></div>
 <div id="homeworkList"></div>
 </section>
 
 <!-- 🎓 الامتحانات -->
 <section class="section" id="section-exams">
-<div class="section-header"><div><h2 class="section-title">🎓 امتحاناتي</h2></div></div>
+<div class="section-header"><div><h2 class="section-title">🎓 امتحاناتي</h2><p class="text-sm text-muted">الامتحانات الأونلاين ونتائج الأوفلاين — مفصّلة حسب كل أستاذ</p></div></div>
 <div id="examsList"></div>
 </section>
 
@@ -238,8 +271,8 @@
   </div>
 </div>
 <div class="tabs">
-  <button class="tab-btn active" onclick="window.switchResultMode(event,'online')">🌐 نتائج أونلاين</button>
-  <button class="tab-btn" onclick="window.switchResultMode(event,'paper')">📄 نتائج ورقي</button>
+  <button class="tab-btn active" onclick="window.switchResultMode(event,'paper')">📄 نتائج ورقي</button>
+  <button class="tab-btn" onclick="window.switchResultMode(event,'online')">🌐 نتائج أونلاين</button>
 </div>
 <div class="tabs">
   <button class="tab-btn active" id="tabBtnHw" onclick="window.switchResultTab(event,'hw')">📝 واجبات</button>
@@ -259,6 +292,17 @@
 <div id="myRankingCards" style="margin-bottom:16px;"></div>
 <div id="myGradeRankCard" style="margin-bottom:16px;"></div>
 <div class="card"><h3 class="card-title" style="margin-bottom:12px;">📜 سجل النقاط</h3><div id="pointsHistory" style="max-height:400px;overflow-y:auto;"></div></div>
+</section>
+
+<!-- 🛒 متجر النقاط -->
+<section class="section" id="section-store">
+<div class="section-header">
+  <div>
+    <h2 class="section-title">🛒 متجر النقاط</h2>
+    <p class="text-sm text-muted">استبدل نقاطك بمكافآت حقيقية وشارات افتراضية</p>
+  </div>
+</div>
+<div id="storeList"></div>
 </section>
 
 <!-- 🎟️ طلبات الباركود -->
@@ -284,7 +328,7 @@
 
 <!-- 👨‍🏫 أساتذتي -->
 <section class="section" id="section-teachers">
-<div class="section-header"><div><h2 class="section-title">👨‍ أساتذتي</h2></div></div>
+<div class="section-header"><div><h2 class="section-title">👨‍🏫 أساتذتي</h2></div></div>
 <div id="teachersList"></div>
 </section>
 
@@ -382,16 +426,24 @@ window.driveThumb=function(url){ try{ if(!url) return ''; const u=String(url); c
 window.ytId=function(url){ try{ const m=String(url||'').match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([\w-]{6,})/); return m?m[1]:null; }catch(e){ return null; } };
 
 let currentUser=null, activeStudentId=null;
-let resultMode = 'online';
+let resultMode = 'paper';
 let resultTab = 'hw';
 
 /* ================================================================
-   🆕 مساعدات: إطلاق الدرجات + رفع صور الحل
+   🆕 مساعدات: إطلاق الدرجات + رفع صور الحل + تكبير الصور
    ================================================================ */
-// الدرجة تظهر فقط لو الأستاذ/المساعد رصدها فعلياً (gradedBy) أو اتعلّمت released أو status=graded
+window.gradeMessage=function(score,max){
+  const pct=max>0?(score/max*100):0;
+  if(pct>=85) return '🌟 ممتاز! درجة تستحق التحية';
+  if(pct>=75) return '👏 جيد جداً! استمر';
+  if(pct>=60) return '👍 جيد — تقدر تعمل أحسن';
+  if(pct>=50) return '⚠️ مقبول — محتاج شوية مراجعة';
+  return '💪 محتاج مراجعة — كلم أستاذك';
+};
+
 window.isExamReleased=function(att){
   if(!att) return false;
-  // درجة الامتحان تظهر فقط لما الأستاذ/المساعد يرصدها أو ينشرها — التصحيح الأوتوماتيك للأونلاين مش كفاية
+  if(att.visibleToStudent === false) return false; // 🚨 احترام إخفاء الدرجة من الأستاذ
   return !!(att.released || att.published || att.gradedBy);
 };
 window.uploadStudentImages=async function(files){
@@ -404,27 +456,89 @@ window.uploadStudentImages=async function(files){
   }
   return urls;
 };
+
+/* 🆕 تكبير الصور في مودال كامل الشاشة */
+window.openImageZoom=function(src){
+  try{
+    const overlay=document.createElement('div');
+    overlay.className='image-zoom-overlay';
+    overlay.innerHTML=`<button class="image-zoom-close" onclick="this.parentElement.remove()">✕</button><img src="${src}" onclick="event.stopPropagation()">`;
+    overlay.addEventListener('click',function(){ overlay.remove(); });
+    document.body.appendChild(overlay);
+  }catch(e){ console.error(e); }
+};
+
 /* ================================================================
-   🆕 الإشعارات العائمة + تايمر أقرب حصة
+   🆕 الإشعارات العائمة المحسّنة (أكبر + أغمق + تأجيل + أستاذ)
    ================================================================ */
 window.getUnreadNotifs=function(){
   try{
     const d=db();
-    return (d.notifications||[]).filter(n=>n.targetUserId===activeStudentId && !n.read)
-      .sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
+    const snoozedUntil=d.notificationSnoozed||{};
+    const now=Date.now();
+    return (d.notifications||[]).filter(n=>{
+      if(n.targetUserId!==activeStudentId || n.read) return false;
+      if(snoozedUntil[n.id] && snoozedUntil[n.id]>now) return false;
+      return true;
+    }).sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
   }catch(e){ return []; }
 };
 window.notifIcon=function(n){
   const t=n.type||'';
-  if(t==='grade') return (n.meta&&n.meta.kind==='ex')?'🎓':'';
+  if(t==='grade') return (n.meta&&n.meta.kind==='ex')?'🎓':'📝';
   if(t==='session_cancel') return '🚫';
   if(t==='homework') return '📝';
   if(t==='exam') return '🎓';
   if(t==='post') return '📰';
   if(t==='video') return '🎬';
   if(t==='challenge') return '🏆';
+  if(t==='store_purchase') return '🛒';
   return '🔔';
 };
+
+/* 🆕 استنتاج الأستاذ من الإشعار */
+window.getNotifTeacher=function(n){
+  try{
+    const meta=n.meta||{};
+    if(meta.teacherId) return DataService?.getUserById?DataService.getUserById(meta.teacherId):null;
+    if(meta.groupId){
+      const g=DataService?.getGroups?.().find(x=>x.id===meta.groupId);
+      if(g) return DataService?.getUserById?DataService.getUserById(g.teacherId):null;
+    }
+    if(meta.kind==='hw' && meta.refId){
+      const hw=DataService?.getHomeworkById?DataService.getHomeworkById(meta.refId):null;
+      if(hw){
+        const g=DataService?.getGroups?.().find(x=>x.id===hw.groupId);
+        if(g) return DataService?.getUserById?DataService.getUserById(g.teacherId):null;
+      }
+    }
+    if(meta.kind==='ex' && meta.refId){
+      const ex=DataService?.getExamById?DataService.getExamById(meta.refId):null;
+      if(ex){
+        const g=DataService?.getGroups?.().find(x=>x.id===ex.groupId);
+        if(g) return DataService?.getUserById?DataService.getUserById(g.teacherId):null;
+      }
+    }
+    return null;
+  }catch(e){ return null; }
+};
+
+/* 🆕 استنتاج الرابط/الإجراء المناسب للإشعار */
+window.getNotifAction=function(n){
+  const meta=n.meta||{};
+  const t=n.type||'';
+  if(t==='challenge' && meta.refId) return {label:'🚀 الذهاب للمسابقة', action:`window.markNotifRead('${n.id}');window.showSection('challenges')`};
+  if(t==='grade' && meta.kind==='hw' && meta.refId) return {label:'📝 عرض الواجب', action:`window.markNotifRead('${n.id}');window.openHomework('${meta.refId}')`};
+  if(t==='grade' && meta.kind==='ex' && meta.refId) return {label:'🎓 عرض النتيجة', action:`window.markNotifRead('${n.id}');window.showSection('results');window.switchResultTab(null,'ex')`};
+  if(t==='homework' && meta.refId) return {label:'📝 ابدأ الواجب', action:`window.markNotifRead('${n.id}');window.openHomework('${meta.refId}')`};
+  if(t==='exam' && meta.refId) return {label:'🎓 ابدأ الامتحان', action:`window.markNotifRead('${n.id}');window.openExam('${meta.refId}')`};
+  if(t==='post') return {label:'📰 عرض الملخص', action:`window.markNotifRead('${n.id}');window.showSection('classPosts')`};
+  if(t==='video') return {label:'🎬 شاهد الفيديو', action:`window.markNotifRead('${n.id}');window.showSection('videos')`};
+  if(t==='store_purchase') return {label:'🛒 الذهاب للمتجر', action:`window.markNotifRead('${n.id}');window.showSection('store')`};
+  if(t==='grade') return {label:'📊 عرض النتائج', action:`window.markNotifRead('${n.id}');window.showSection('results')`};
+  return {label:'✓ تم', action:`window.markNotifRead('${n.id}')`};
+};
+
 window.renderFloatNotifs=function(){
   try{
     const stack=document.getElementById('floatNotifStack'); if(!stack) return;
@@ -432,17 +546,23 @@ window.renderFloatNotifs=function(){
     if(!list.length){ stack.innerHTML=''; return; }
     stack.innerHTML=list.map(n=>{
       const isGrade=n.type==='grade';
-      const goResults=isGrade?`<button class="btn btn-primary btn-sm" onclick="window.markNotifRead('${n.id}');window.showSection('results')">📊 الذهاب للنتائج</button>`:'';
-      return `<div class="float-notif ${n.type==='session_cancel'?'danger':isGrade?'grade':''}">
-        <div style="display:flex;gap:10px;align-items:flex-start;">
-          <div style="font-size:22px;">${window.notifIcon(n)}</div>
+      const teacher=window.getNotifTeacher(n);
+      const action=window.getNotifAction(n);
+      const teacherPhoto=teacher?.photoUrl?`<img src="${window.driveThumb(teacher.photoUrl)}" class="fn-teacher-photo">`:'<span style="font-size:14px;">👨‍🏫</span>';
+      const teacherBadge=teacher?`<div class="fn-teacher-badge">${teacherPhoto}<span>الأستاذ: ${teacher.name||'-'}</span></div>`:'';
+      const notifClass=n.type==='session_cancel'?'danger':isGrade?'grade':n.type;
+      return `<div class="float-notif ${notifClass}">
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="font-size:28px;flex-shrink:0;">${window.notifIcon(n)}</div>
           <div style="flex:1;min-width:0;">
-            <strong style="font-size:13px;display:block;">${n.title||''}</strong>
-            <div class="text-xs" style="margin-top:2px;line-height:1.6;">${n.message||''}</div>
+            <strong style="font-size:15px;display:block;line-height:1.4;">${n.title||''}</strong>
+            <div style="font-size:13px;margin-top:4px;line-height:1.6;opacity:.9;">${n.message||''}</div>
+            ${teacherBadge}
             ${isGrade&&n.meta?`<div class="fn-grade">${n.meta.score} / ${n.meta.max}</div>`:''}
-            <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
-              <button class="btn btn-success btn-sm" onclick="window.markNotifRead('${n.id}')">✓ تم</button>
-              ${goResults}
+            <div class="fn-actions">
+              <button class="btn btn-success" onclick="${action.action}">${action.label}</button>
+              <button class="btn btn-secondary" onclick="window.snoozeNotif('${n.id}')">⏰ تأجيل</button>
+              <button class="btn btn-ghost" style="color:#9ca3af;" onclick="window.markNotifRead('${n.id}')">✕</button>
             </div>
           </div>
         </div>
@@ -450,6 +570,7 @@ window.renderFloatNotifs=function(){
     }).join('');
   }catch(e){ console.error(e); }
 };
+
 window.markNotifRead=function(id){
   try{
     const d=db(); d.notifications=d.notifications||[];
@@ -458,6 +579,17 @@ window.markNotifRead=function(id){
     window.renderFloatNotifs();
   }catch(e){}
 };
+
+window.snoozeNotif=function(id){
+  try{
+    const d=db(); d.notificationSnoozed=d.notificationSnoozed||{};
+    d.notificationSnoozed[id]=Date.now()+(30*60*1000); // تأجيل 30 دقيقة
+    save(d);
+    safeToast('⏰ تم تأجيل الإشعار — هيرجعلك بعد 30 دقيقة','info');
+    window.renderFloatNotifs();
+  }catch(e){}
+};
+
 window.getMySessionsList=function(){
   try{
     const ts=DataService?.getStudentTeachers?DataService.getStudentTeachers(activeStudentId):[];
@@ -551,7 +683,7 @@ window._ncTick=function(){
   }catch(e){}
 };
 setInterval(function(){ try{ window._ncTick(); }catch(e){} },1000);
-setInterval(function(){ try{ if(document.getElementById('section-dashboard')?.classList.contains('active')) window.renderFloatNotifs(); }catch(e){} },30000);
+setInterval(function(){ try{ window.renderFloatNotifs(); }catch(e){} },30000);
 
 (async function boot(){
   try{
@@ -585,7 +717,7 @@ window.buildMenu=function(){
   const menu=[
     {s:'الرئيسية',items:[{id:'dashboard',l:'لوحة التحكم',i:'🎯'}]},
     {s:'التعلم',items:[{id:'attendance',l:'الحضور',i:'📋'},{id:'homework',l:'الواجبات',i:'📝'},{id:'exams',l:'الامتحانات',i:'🎓'},{id:'results',l:'النتائج',i:'📊'},{id:'classPosts',l:'بوستات الحصة',i:'📰'}]},
-    {s:'🏆 التحفيز',items:[{id:'points',l:'نقاطي',i:'🏆'},{id:'challenges',l:'المسابقات',i:'🏆'}]},
+    {s:'🏆 التحفيز',items:[{id:'points',l:'نقاطي',i:'🏆'},{id:'store',l:'المتجر',i:'🛒'},{id:'challenges',l:'المسابقات',i:'🏆'}]},
     {s:'المحتوى',items:[{id:'videos',l:'الفيديوهات',i:'🎬'},{id:'interactive',l:'المواد التفاعلية',i:'🧩'}]},
     {s:'الخدمات',items:[{id:'barcodeRequests',l:'طلبات الباركود',i:'🎟️'}]},
     {s:'أساتذتي',items:[{id:'teachers',l:'قائمة الأساتذة',i:'👨‍🏫'}]},
@@ -605,6 +737,7 @@ window.showSection=function(id){
     exams:window.loadExams,
     results:window.loadResults,
     points:window.loadPoints,
+    store:window.loadStore,
     teachers:window.loadTeachers,
     videos:window.loadVideos,
     challenges:window.loadChallenges,
@@ -627,7 +760,7 @@ window.loadDashboard=function(){
     pac.innerHTML = `
       <div class="parent-compact">
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-          <div style="font-size:24px;">👨‍👩‍</div>
+          <div style="font-size:24px;">👨‍👩‍👦</div>
           <div style="flex:1;min-width:160px;">
             <strong style="font-size:13px;">متابعة ولي الأمر</strong>
             <div class="text-xs text-muted">حضور ودرجات ونقاط ابنك لحظة بلحظة</div>
@@ -645,9 +778,12 @@ window.loadDashboard=function(){
   const att=allAtt.filter(a=>a.status==='approved'&&a.records.some(r=>r.studentId===activeStudentId));
   const pr=att.filter(a=>a.records.find(r=>r.studentId===activeStudentId)?.status==='present').length;
   const rate=att.length?Math.round(pr/att.length*100):0;
+  const streak = window.calculateStreak();
   document.getElementById('statsGrid').innerHTML=`
     <div class="attention-card" onclick="window.showSection('points')"><div class="attention-value">${points}</div><div>🏆 نقاطي</div></div>
+    <div class="attention-card" onclick="window.showSection('store')"><div class="attention-value">🛒</div><div>المتجر</div></div>
     <div class="attention-card" onclick="window.showSection('attendance')"><div class="attention-value">${rate}%</div><div>📋 نسبة الحضور</div></div>
+    <div class="attention-card" onclick="window.openStudentProfile()"><div class="attention-value">${streak} 🔥</div><div>سلسلة الحضور</div></div>
     <div class="attention-card" onclick="window.showSection('results')"><div class="attention-value">${groups.length}</div><div>👥 مجموعاتي</div></div>
   `;
   document.getElementById('myGroups').innerHTML=groups.length?groups.map(t=>{
@@ -655,7 +791,7 @@ window.loadDashboard=function(){
     const teacher = t.teacher;
     const photo=teacher?.photoUrl?`<img src="${window.driveThumb(teacher.photoUrl)}" class="teacher-photo-sm" onerror="this.style.display='none'">`:'';
     const sched=(g.schedules&&g.schedules.length)?g.schedules.map(s=>`${dayAr(s.day)} ${T(s.time)}`).join(' + '):`${dayAr(g.day)} ${T(g.time)}`;
-    return `<div class="card" style="margin-bottom:10px;"><div style="display:flex;gap:10px;align-items:center;"><strong>${g.name}</strong>${photo?' '+photo:''}<div class="text-xs text-muted" style="margin-right:auto;">👨‍🏫 ${teacher?.name||'-'} · 📅 ${sched}</div></div></div>`;
+    return `<div class="card" style="margin-bottom:10px;"><div style="display:flex;gap:10px;align-items:center;">${photo?' '+photo:''}<strong>${g.name}</strong><div class="text-xs text-muted" style="margin-right:auto;">👨‍🏫 ${teacher?.name||'-'} · 📅 ${sched}</div></div></div>`;
   }).join(''):'<p class="text-muted">لا توجد مجموعات</p>';
 };
 
@@ -671,9 +807,10 @@ window.loadWhatsNew = function() {
     .slice(0, 3);
   myHw.forEach(h => {
     const g = DataService?.getGroups?.().find(x => x.id === h.groupId);
+    const teacher = g ? DataService?.getUserById?.(g.teacherId) : null;
     notifications.push({
       type: 'homework', icon: h.paper?'📄':'📝', title: h.title,
-      message: `📅 ${h.deadline || '-'} · 👥 ${g?.name || '-'}`,
+      message: `👨‍🏫 ${teacher?.name||'-'} · 📅 ${h.deadline || '-'}`,
       action: `window.openHomework('${h.id}')`
     });
   });
@@ -683,18 +820,20 @@ window.loadWhatsNew = function() {
     .slice(0, 3);
   myEx.forEach(e => {
     const g = DataService?.getGroups?.().find(x => x.id === e.groupId);
+    const teacher = g ? DataService?.getUserById?.(g.teacherId) : null;
     notifications.push({
       type: 'exam', icon: '🎓', title: e.title,
-      message: `⏱️ ${e.duration || 60} دقيقة · 👥 ${g?.name || '-'}`,
+      message: `👨‍🏫 ${teacher?.name||'-'} · ⏱️ ${e.duration || 60} دقيقة`,
       action: `window.openExam('${e.id}')`
     });
   });
   const allPosts = DataService?.getClassPostsForStudent ? DataService.getClassPostsForStudent(activeStudentId) : [];
   allPosts.slice(0, 3).forEach(p => {
     const g = DataService?.getGroups?.().find(x => x.id === p.groupId);
+    const teacher = g ? DataService?.getUserById?.(g.teacherId) : null;
     notifications.push({
       type: 'post', icon: '📰', title: p.title || 'ملخص حصة',
-      message: `📅 ${p.date} · 👥 ${g?.name || '-'}`,
+      message: `👨‍🏫 ${teacher?.name||'-'} · 📅 ${p.date}`,
       action: `window.showSection('classPosts')`
     });
   });
@@ -749,7 +888,7 @@ window.submitCode=function(){
 };
 
 /* ================================================================
-   📝 الواجبات + 🆕 تسليم الحل بالصور
+   📝 الواجبات + 🆕 تسليم الحل بالصور + مراجعة أي وقت + أونلاين/أوفلاين
    ================================================================ */
 window.loadHomework=function(){
   const groups=(typeof DataService?.getStudentTeachers==='function')?DataService.getStudentTeachers(activeStudentId):[];
@@ -763,7 +902,7 @@ window.loadHomework=function(){
     const sub=subs.find(s=>s.homeworkId===h.id);
     const g=DataService?.getGroups?DataService.getGroups().find(x=>x.id===h.groupId):null;
     const teacher=g?DataService?.getUserById?.(g.teacherId):null;
-    const photo=teacher?.photoUrl?`<img src="${window.driveThumb(teacher.photoUrl)}" class="teacher-photo-sm" style="margin-left:6px;" onerror="this.style.display='none'">`:'';
+    const photo=teacher?.photoUrl?`<img src="${window.driveThumb(teacher.photoUrl)}" class="teacher-photo-sm" style="margin-left:6px;" onerror="this.style.display='none'">`:`<div class="user-avatar teacher-photo-sm" style="margin-left:6px;">👨‍🏫</div>`;
     let statusBadge;
     if(sub?.status==='graded') statusBadge=`<span class="badge badge-success">✓ ${Math.round(sub.score/(h.totalPoints||100)*100)}%</span>`;
     else if(sub) statusBadge=`<span class="badge badge-warning">${(sub.answerImages&&sub.answerImages.length)?'📸 مُسلَّم':'⏳'}</span>`;
@@ -773,8 +912,13 @@ window.loadHomework=function(){
         ${photo}
         <div style="min-width:0;flex:1;">
           <strong style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.title}</strong>
-          ${h.paper?'<span class="badge badge-muted" style="margin-top:2px;">📄 ورقي</span>':''}${h.imageUrl?'<span class="badge badge-info" style="margin-top:2px;">📸 ورقة مرفقة</span>':''}
-          <div class="text-xs text-muted" style="margin-top:2px;">👨🏫 ${teacher?.name||'-'} · 👥 ${g?.name||'-'} · 📅 ${h.deadline||'-'}</div>
+          <div class="text-xs text-muted" style="margin-top:2px;">
+            👨‍🏫 <strong style="color:var(--primary);">${teacher?.name||'-'}</strong> · 👥 ${g?.name||'-'}
+          </div>
+          <div class="text-xs text-muted" style="margin-top:2px;">
+            📅 ${h.deadline||'-'}
+            ${h.paper?'<span class="badge badge-muted" style="margin-right:4px;">📄 ورقي</span>':'<span class="badge badge-info" style="margin-right:4px;">🌐 أونلاين</span>'}
+          </div>
         </div>
       </div>
       ${statusBadge}
@@ -786,19 +930,33 @@ window.openHomework=function(hwId, forceUpload){
   const h=DataService?.getHomeworkById?DataService.getHomeworkById(hwId):null;
   if(!h) return;
   const sub=DataService?.getSubmissions?DataService.getSubmissions({studentId:activeStudentId}).find(s=>s.homeworkId===hwId):null;
+  const g=DataService?.getGroups?DataService.getGroups().find(x=>x.id===h.groupId):null;
+  const teacher=g?DataService?.getUserById?.(g.teacherId):null;
   let body=`<div class="modal-header"><h3 class="modal-title">📝 ${h.title}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">`;
-  // 🆕 ورقة الواجب (صورة الأستاذ)
-  if(h.imageUrl) body+=`<div class="text-xs text-muted" style="margin-bottom:4px;">📄 ورقة الواجب (اضغط للتكبير):</div><img src="${window.driveThumb(h.imageUrl)}" class="hw-paper-img" onclick="window.open(this.src,'_blank')">`;
+  // 🆕 بيانات الأستاذ
+  if(teacher){
+    const photo=teacher.photoUrl?`<img src="${window.driveThumb(teacher.photoUrl)}" class="teacher-photo-sm" style="margin-left:8px;" onerror="this.style.display='none'">`:`<div class="user-avatar teacher-photo-sm" style="margin-left:8px;">👨‍🏫</div>`;
+    body+=`<div class="card" style="background:var(--primary-bg);padding:10px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">
+      ${photo}
+      <div><strong>👨‍🏫 ${teacher.name||'-'}</strong><div class="text-xs text-muted">👥 ${g?.name||'-'} · ${h.paper?'📄 واجب ورقي':'🌐 واجب أونلاين'}</div></div>
+    </div>`;
+  }
+  // 🆕 ورقة الواجب (صورة الأستاذ) - قابلة للتكبير
+  if(h.imageUrl) body+=`<div class="text-xs text-muted" style="margin-bottom:4px;">📄 ورقة الواجب (اضغط للتكبير):</div><img src="${window.driveThumb(h.imageUrl)}" class="hw-paper-img" onclick="window.openImageZoom('${window.driveThumb(h.imageUrl).replace('sz=w400','sz=w1200')}')">`;
   if(h.description) body+=`<div class="card" style="background:var(--surface-hover);padding:10px;margin-bottom:12px;font-size:13px;">📋 ${h.description}</div>`;
+  
+  // 🆕 عرض الدرجة والمراجعة في أي وقت
   if(sub?.status==='graded'){
-    body+=`<div class="card" style="background:var(--success-bg);text-align:center;padding:20px;"><div style="font-size:32px;font-weight:900;color:var(--success);">${Math.round(sub.score/(h.totalPoints||100)*100)}%</div><div>درجتك: ${sub.score} / ${h.totalPoints||100}</div></div>`;
+    const pct = Math.round(sub.score/(h.totalPoints||100)*100);
+    const msg = window.gradeMessage(sub.score, h.totalPoints||100);
+    body+=`<div class="card" style="background:var(--success-bg);text-align:center;padding:20px;"><div style="font-size:32px;font-weight:900;color:var(--success);">${pct}%</div><div>درجتك: ${sub.score} / ${h.totalPoints||100}</div><div style="margin-top:8px;font-size:14px;font-weight:700;color:var(--text);">${msg}</div></div>`;
     if(sub.answerImages&&sub.answerImages.length){
-      body+=`<div class="text-xs text-muted" style="margin:8px 0 4px;">📸 حلك المُسلَّم:</div><div class="answer-images-grid">`+sub.answerImages.map(u=>`<img src="${window.driveThumb(u)}" class="answer-thumb" onclick="window.open(this.src,'_blank')">`).join('')+`</div>`;
+      body+=`<div class="text-xs text-muted" style="margin:8px 0 4px;">📸 حلك المُسلَّم (اضغط للتكبير):</div><div class="answer-images-grid">`+sub.answerImages.map(u=>`<img src="${window.driveThumb(u)}" class="answer-thumb" onclick="window.openImageZoom('${window.driveThumb(u).replace('sz=w400','sz=w1200')}')">`).join('')+`</div>`;
     }
   } else if(sub && !forceUpload && ((sub.answerImages&&sub.answerImages.length)||sub.status==='pending_review')){
     body+=`<div class="card" style="background:var(--warning-bg);text-align:center;padding:20px;">⏳ تم تسليم الحل - بانتظار التصحيح</div>`;
     if(sub.answerImages&&sub.answerImages.length){
-      body+=`<div class="text-xs text-muted" style="margin:8px 0 4px;">📸 حلك المُسلَّم:</div><div class="answer-images-grid">`+sub.answerImages.map(u=>`<img src="${window.driveThumb(u)}" class="answer-thumb" onclick="window.open(this.src,'_blank')">`).join('')+`</div>`;
+      body+=`<div class="text-xs text-muted" style="margin:8px 0 4px;">📸 حلك المُسلَّم (اضغط للتكبير):</div><div class="answer-images-grid">`+sub.answerImages.map(u=>`<img src="${window.driveThumb(u)}" class="answer-thumb" onclick="window.openImageZoom('${window.driveThumb(u).replace('sz=w400','sz=w1200')}')">`).join('')+`</div>`;
     }
     body+=`<button class="btn btn-secondary w-full" style="margin-top:10px;" onclick="window.openHomework('${h.id}',true)">🔄 استبدال / إضافة صور الحل</button>`;
   } else {
@@ -809,7 +967,6 @@ window.openHomework=function(hwId, forceUpload){
   ThemeManager.openModal(body,'modal-lg');
 };
 
-// 🆕 منطقة رفع صور الحل
 window.homeworkUploadZone=function(hwId){
   return `<div class="form-group"><label>📸 ارفع صورة حلك (ورقة أو أكثر)</label>
   <label class="image-upload-zone" id="stuUpZone_${hwId}">
@@ -861,7 +1018,7 @@ window.submitHomeworkImages=async function(hwId){
       if(typeof DataService?.addNotification==='function'){
         const g=DataService?.getGroups?.().find(x=>x.id===h.groupId);
         const t=g?DataService.getUserById(g.teacherId):null;
-        await DataService.addNotification({targetUserId:t?.id||'',title:'📸 تسليم واجب بالصور',message:`${currentUser.name} سلّم حل واجب: ${h.title}`,type:'homework'});
+        await DataService.addNotification({targetUserId:t?.id||'',title:'📸 تسليم واجب بالصور',message:`${currentUser.name} سلّم حل واجب: ${h.title}`,type:'homework',meta:{teacherId:t?.id,groupId:g?.id,refId:h.id}});
       }
     }catch(e){}
     ThemeManager.closeModal();
@@ -871,48 +1028,109 @@ window.submitHomeworkImages=async function(hwId){
 };
 
 /* ================================================================
-   🎓 الامتحانات + 🆕 إخفاء الدرجة (بالتوفيق)
+   🎓 الامتحانات + 🆕 عرض أونلاين + درجات أوفلاين + أستاذ
    ================================================================ */
 window.loadExams=function(){
   const groups=(typeof DataService?.getStudentTeachers==='function')?DataService.getStudentTeachers(activeStudentId):[];
-  const gids=groups.map(t=>t.group.id);
-  const allEx=DataService?.getExams?DataService.getExams():[];
-  const myEx=allEx.filter(e=>gids.includes(e.groupId) && e.mode!=='offline');
-  const atts=DataService?.getExamAttempts?DataService.getExamAttempts({studentId:activeStudentId}):[];
   const el=document.getElementById('examsList');
-  if(!myEx.length){ el.innerHTML='<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">🎓</div><strong>لا توجد امتحانات</strong></div>'; return; }
-  el.innerHTML=myEx.map(e=>{
-    const att=atts.find(a=>a.examId===e.id);
-    const g=DataService?.getGroups?DataService.getGroups().find(x=>x.id===e.groupId):null;
-    const teacher=g?DataService?.getUserById?.(g.teacherId):null;
-    const photo=teacher?.photoUrl?`<img src="${window.driveThumb(teacher.photoUrl)}" class="teacher-photo-sm" style="margin-left:6px;" onerror="this.style.display='none'">`:'';
-    const mx = att?.maxScore || e.totalPoints || 100;
-    let statusBadge;
-    if(window.isExamReleased(att)) statusBadge=`<span class="badge badge-success">✓ ${Math.round((att.score||0)/mx*100)}%</span>`;
-    else if(att) statusBadge=`<span class="badge badge-info">🤲 بالتوفيق</span>`;
-    else statusBadge=`<span class="badge badge-primary">📝 ابدأ</span>`;
-    const modeLabel=e.mode==='home'?'🏠 منزلي':e.mode==='class'?'🏫 حصة':'';
-    return `<div class="hw-card" onclick="window.openExam('${e.id}')"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-      <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+  if(!groups.length){ el.innerHTML='<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">🎓</div><strong>لا توجد امتحانات</strong></div>'; return; }
+  
+  let html='';
+  groups.forEach(t=>{
+    const teacher=t.teacher;
+    const group=t.group;
+    const photo=teacher?.photoUrl?`<img src="${window.driveThumb(teacher.photoUrl)}" class="teacher-photo">`:`<div class="user-avatar teacher-photo" style="font-size:20px;">👨‍🏫</div>`;
+    
+    // الامتحانات الأونلاين
+    const allEx=DataService?.getExams?DataService.getExams():[];
+    const myEx=allEx.filter(e=>e.groupId===group.id && e.mode!=='offline');
+    const atts=DataService?.getExamAttempts?DataService.getExamAttempts({studentId:activeStudentId}):[];
+    
+    // امتحانات الأوفلاين (الورقية) مع درجاتها
+    const offlineEx=allEx.filter(e=>e.groupId===group.id && (e.mode==='offline' || e.paper));
+    const offlineAtts=atts.filter(a=>offlineEx.some(e=>e.id===a.examId));
+    
+    const items=[];
+    myEx.forEach(e=>{
+      const att=atts.find(a=>a.examId===e.id);
+      items.push({type:'online',ex:e,att:att});
+    });
+    offlineEx.forEach(e=>{
+      const att=atts.find(a=>a.examId===e.id);
+      if(att) items.push({type:'offline',ex:e,att:att});
+    });
+    
+    if(!items.length) return;
+    
+    html+=`<div class="result-teacher-card">
+      <div class="result-teacher-header">
         ${photo}
-        <div style="min-width:0;flex:1;">
-          <strong style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.title}</strong>
-          <div class="text-xs text-muted" style="margin-top:2px;">👨‍🏫 ${teacher?.name||'-'} · 👥 ${g?.name||'-'} · ${modeLabel} ⏱️ ${e.duration||60}د</div>
+        <div class="result-teacher-info">
+          <strong>${teacher?.name||'-'}</strong>
+          <div class="text-xs text-muted">👥 ${group?.name||'-'} · ${(group.schedules&&group.schedules.length)?group.schedules.map(s=>dayAr(s.day)).join(' + '):dayAr(group?.day)} ${T(group?.time)}</div>
         </div>
       </div>
-      ${statusBadge}
-    </div></div>`;
-  }).join('');
+      <div style="display:flex;flex-direction:column;gap:8px;">`;
+    
+    items.forEach(item=>{
+      const e=item.ex;
+      const att=item.att;
+      const mx=att?.maxScore||e.totalPoints||100;
+      let statusBadge, statusText;
+      if(item.type==='online'){
+        if(window.isExamReleased(att)){
+          statusBadge=`<span class="badge badge-success">✓ ${Math.round((att.score||0)/mx*100)}%</span>`;
+        } else if(att){
+          statusBadge=`<span class="badge badge-info">🤲 بالتوفيق</span>`;
+        } else {
+          statusBadge=`<span class="badge badge-primary">📝 ابدأ</span>`;
+        }
+        statusText=`🌐 أونلاين · ⏱️ ${e.duration||60}د`;
+      } else {
+        if(window.isExamReleased(att)){
+          statusBadge=`<span class="badge badge-success">✓ ${Math.round((att.score||0)/mx*100)}%</span>`;
+          statusText=`📄 ورقي · الدرجة: ${att.score||0}/${mx}`;
+        } else {
+          statusBadge=`<span class="badge badge-muted">—</span>`;
+          statusText=`📄 ورقي · لم تُرصد الدرجة بعد`;
+        }
+      }
+      html+=`<div class="sub-row ${att?'graded':'pending'}" onclick="window.openExam('${e.id}')" style="cursor:pointer;">
+        <div style="flex:1;min-width:0;">
+          <strong style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.title}</strong>
+          <div class="text-xs text-muted" style="margin-top:2px;">${statusText}</div>
+        </div>
+        ${statusBadge}
+      </div>`;
+    });
+    html+=`</div></div>`;
+  });
+  
+  if(!html) html='<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">🎓</div><strong>لا توجد امتحانات</strong></div>';
+  el.innerHTML=html;
 };
+
 window.openExam=function(exId){
   const e=DataService?.getExamById?DataService.getExamById(exId):null;
   if(!e) return;
   const att=DataService?.getExamAttempts?DataService.getExamAttempts({studentId:activeStudentId}).find(a=>a.examId===exId):null;
+  const g=DataService?.getGroups?DataService.getGroups().find(x=>x.id===e.groupId):null;
+  const teacher=g?DataService?.getUserById?.(g.teacherId):null;
   let body=`<div class="modal-header"><h3 class="modal-title">🎓 ${e.title}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">`;
-  if(e.imageUrl) body+=`<div class="text-xs text-muted" style="margin-bottom:4px;">📄 ورقة الامتحان (اضغط للتكبير):</div><img src="${window.driveThumb(e.imageUrl)}" class="hw-paper-img" onclick="window.open(this.src,'_blank')">`;
+  // 🆕 بيانات الأستاذ
+  if(teacher){
+    const photo=teacher.photoUrl?`<img src="${window.driveThumb(teacher.photoUrl)}" class="teacher-photo-sm" style="margin-left:8px;" onerror="this.style.display='none'">`:`<div class="user-avatar teacher-photo-sm" style="margin-left:8px;">👨‍🏫</div>`;
+    body+=`<div class="card" style="background:var(--primary-bg);padding:10px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">
+      ${photo}
+      <div><strong>👨‍🏫 ${teacher.name||'-'}</strong><div class="text-xs text-muted">👥 ${g?.name||'-'} · ${e.mode==='home'?'🏠 منزلي':e.mode==='class'?'🏫 حصة':'📝 ورقي'}</div></div>
+    </div>`;
+  }
+  if(e.imageUrl) body+=`<div class="text-xs text-muted" style="margin-bottom:4px;">📄 ورقة الامتحان (اضغط للتكبير):</div><img src="${window.driveThumb(e.imageUrl)}" class="hw-paper-img" onclick="window.openImageZoom('${window.driveThumb(e.imageUrl).replace('sz=w400','sz=w1200')}')">`;
   if(window.isExamReleased(att)){
     const mx = att.maxScore || e.totalPoints || 100;
-    body+=`<div class="card" style="background:var(--success-bg);text-align:center;padding:20px;"><div style="font-size:32px;font-weight:900;color:var(--success);">${Math.round((att.score||0)/mx*100)}%</div><div>درجتك: ${att.score||0} / ${mx}</div></div>`;
+    const pct = Math.round((att.score||0)/mx*100);
+    const msg = window.gradeMessage(att.score||0, mx);
+    body+=`<div class="card" style="background:var(--success-bg);text-align:center;padding:20px;"><div style="font-size:32px;font-weight:900;color:var(--success);">${pct}%</div><div>درجتك: ${att.score||0} / ${mx}</div><div style="margin-top:8px;font-size:14px;font-weight:700;color:var(--text);">${msg}</div></div>`;
   } else if(att){
     body+=`<div class="dua-card"><div style="font-size:40px;margin-bottom:6px;">🤲</div><strong style="font-size:16px;">بالتوفيق يا بطل!</strong><div class="text-sm text-muted" style="margin-top:6px;">تم تسليم إجاباتك بنجاح — درجتك هتظهر هنا بعد مراجعة الأستاذ</div></div>`;
   } else {
@@ -932,7 +1150,7 @@ window.switchResultTab = function(ev, tab) {
   resultTab = tab;
   const tabs = document.querySelectorAll('#section-results .tabs')[1];
   if (tabs) tabs.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  ev.target.classList.add('active');
+  if(ev && ev.target) ev.target.classList.add('active');
   window.loadResults();
 };
 
@@ -1075,39 +1293,255 @@ window.loadPoints=function(){
     <div class="points-item"><span class="points-item-icon">🌟</span><div class="points-item-info"><div class="points-item-label">تفاعل</div></div><div class="points-item-value">+${breakdown.interactions?.points||0}</div></div>
     <div class="points-item"><span class="points-item-icon">🎁</span><div class="points-item-info"><div class="points-item-label">يدوي</div></div><div class="points-item-value">+${breakdown.manual?.points||0}</div></div>
   `;
-  const rankings = typeof Ops?.getStudentRanking === 'function' ? Ops.getStudentRanking(activeStudentId) : {};
+  
+  // 🏆 ترتيب المجموعات (أول 3 + ترتيبي لو خارجهم)
   const rankEl = document.getElementById('myRankingCards');
-  if(rankEl && Object.keys(rankings).length > 0) {
-    let rankHtml = '';
-    for(const key in rankings) {
-      if(key === '_grade') continue;
-      const r = rankings[key];
-      rankHtml += `<div class="card" style="margin-bottom:10px;padding:12px;display:flex;justify-content:space-between;align-items:center;">
-        <div><strong>${r.groupName}</strong><div class="text-xs text-muted">ترتيبك بين ${r.total} طالب</div></div>
-        <div style="text-align:center;"><div style="font-size:24px;font-weight:900;color:var(--primary);font-family:var(--font-en);">#${r.rank}</div></div>
-      </div>`;
-    }
-    rankEl.innerHTML = '<h3 style="margin:16px 0 12px;">🏅 ترتيبي في المجموعات</h3>' + rankHtml;
+  if(rankEl) {
+    const myGroups = typeof DataService?.getStudentTeachers === 'function' ? DataService.getStudentTeachers(activeStudentId) : [];
+    let groupRankHtml = '';
+    
+    myGroups.forEach(t => {
+      const group = t.group;
+      if(!group) return;
+      const groupStudents = typeof DataService?.getStudentsByGroup === 'function' ? DataService.getStudentsByGroup(group.id) : [];
+      const rankedStudents = groupStudents.map(s => ({
+        id: s.id,
+        name: s.name,
+        points: (typeof Ops?.getStudentPoints === 'function') ? Ops.getStudentPoints(s.id, null, 'all') : 0
+      })).sort((a, b) => b.points - a.points);
+      
+      const myIdx = rankedStudents.findIndex(s => s.id === activeStudentId);
+      const top3 = rankedStudents.slice(0, 3);
+      
+      let listHtml = `<div style="margin-bottom:8px;"><strong>👥 ${group.name}</strong></div>`;
+      top3.forEach((s, i) => {
+        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
+        const isMe = s.id === activeStudentId;
+        listHtml += `<div class="sub-row ${isMe ? 'graded' : ''}" style="padding:8px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:18px;">${medal}</span>
+            <strong>${s.name} ${isMe ? '(أنا)' : ''}</strong>
+          </div>
+          <span class="badge badge-primary" style="font-family:var(--font-en);">${s.points} نقطة</span>
+        </div>`;
+      });
+      
+      if (myIdx >= 3) {
+        const me = rankedStudents[myIdx];
+        listHtml += `<div class="sub-row graded" style="padding:8px;border-right:3px solid var(--primary);margin-top:6px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:16px;font-weight:900;color:var(--primary);">#${myIdx + 1}</span>
+            <strong>${me.name} (أنا)</strong>
+          </div>
+          <span class="badge badge-primary" style="font-family:var(--font-en);">${me.points} نقطة</span>
+        </div>`;
+      }
+      
+      groupRankHtml += `<div class="card" style="margin-bottom:12px;padding:12px;">${listHtml}</div>`;
+    });
+    
+    rankEl.innerHTML = groupRankHtml ? '<h3 style="margin:16px 0 12px;">🏅 الأوائل على مجموعاتي</h3>' + groupRankHtml : '';
   }
-  // 🆕 ترتيبي على مستوى الصف (بالنقاط)
+
+  // 🎓 ترتيب الصف (أول 3 + ترتيبي لو خارجهم)
   try{
     const me=DataService?.getUserById?DataService.getUserById(activeStudentId):null;
     const gradeEl=document.getElementById('myGradeRankCard');
     if(me&&me.grade&&gradeEl&&typeof Ops?.getStudentPoints==='function'){
       const peers=(DataService?.getStudents?DataService.getStudents():[]).filter(s=>s.grade===me.grade);
-      const rows=peers.map(s=>({id:s.id,p:Ops.getStudentPoints(s.id,null,'all')||0})).sort((a,b)=>b.p-a.p);
+      const rows=peers.map(s=>({id:s.id, name:s.name, p:Ops.getStudentPoints(s.id,null,'all')||0})).sort((a,b)=>b.p-a.p);
       const idx=rows.findIndex(r=>r.id===activeStudentId);
-      gradeEl.innerHTML=idx>=0?`<div class="card" style="margin-bottom:10px;padding:12px;display:flex;justify-content:space-between;align-items:center;">
-        <div><strong>🎓 ترتيبك على مستوى صف ${me.grade}</strong><div class="text-xs text-muted">من بين ${rows.length} طالب · نقاطك: ${rows[idx].p}</div></div>
-        <div style="text-align:center;"><div style="font-size:24px;font-weight:900;color:var(--primary);font-family:var(--font-en);">#${idx+1}</div></div>
-      </div>`:'';
+      
+      let gradeHtml = `<h3 style="margin:16px 0 12px;">🎓 الأوائل على صف ${me.grade}</h3>`;
+      gradeHtml += `<div class="card" style="margin-bottom:12px;padding:12px;">`;
+      
+      const top3 = rows.slice(0, 3);
+      top3.forEach((s, i) => {
+        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
+        const isMe = s.id === activeStudentId;
+        gradeHtml += `<div class="sub-row ${isMe ? 'graded' : ''}" style="padding:8px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:18px;">${medal}</span>
+            <strong>${s.name} ${isMe ? '(أنا)' : ''}</strong>
+          </div>
+          <span class="badge badge-primary" style="font-family:var(--font-en);">${s.p} نقطة</span>
+        </div>`;
+      });
+      
+      if (idx >= 3) {
+        const myData = rows[idx];
+        gradeHtml += `<div class="sub-row graded" style="padding:8px;border-right:3px solid var(--primary);margin-top:6px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:16px;font-weight:900;color:var(--primary);">#${idx + 1}</span>
+            <strong>${myData.name} (أنا)</strong>
+          </div>
+          <span class="badge badge-primary" style="font-family:var(--font-en);">${myData.p} نقطة</span>
+        </div>`;
+      }
+      
+      gradeHtml += `</div>`;
+      gradeEl.innerHTML = gradeHtml;
     }
-  }catch(e){}
+  }catch(e){ console.error(e); }
+
   const manuals=(DataService.getManualPoints?DataService.getManualPoints():[]).filter(m=>m.studentId===activeStudentId);
   const interactions=(DataService.getInteractionPoints?DataService.getInteractionPoints():[]).filter(m=>m.studentId===activeStudentId);
   let allHistory = [...manuals.map(m=>({...m, type:'manual'})), ...interactions.map(i=>({...i, type:'interaction'}))];
   allHistory.sort((a,b)=>new Date(b.awardedAt)-new Date(a.awardedAt));
-  document.getElementById('pointsHistory').innerHTML=allHistory.length?allHistory.map(m=>`<div class="sub-row graded"><div><strong>${m.type==='interaction'?'⭐ '+m.note:'🎁 '+m.reason}</strong><div class="text-xs text-muted">${new Date(m.awardedAt).toLocaleDateString('ar-EG')}</div></div><strong style="color:var(--primary);">+${m.points}</strong></div>`).join(''):'<p class="text-muted">لا يوجد سجل بعد</p>';
+  document.getElementById('pointsHistory').innerHTML=allHistory.length?allHistory.map(m=>`<div class="sub-row ${m.points < 0 ? 'due' : 'graded'}"><div><strong>${m.type==='interaction'?'⭐ '+m.note:(m.points < 0 ? '🛒 '+m.reason : '🎁 '+m.reason)}</strong><div class="text-xs text-muted">${new Date(m.awardedAt).toLocaleDateString('ar-EG')}</div></div><strong style="color:${m.points < 0 ? 'var(--danger)' : 'var(--primary)'};">${m.points > 0 ? '+' : ''}${m.points}</strong></div>`).join(''):'<p class="text-muted">لا يوجد سجل بعد</p>';
+};
+
+/* ================================================================
+   🛒 متجر النقاط (سلة المشتريات)
+   ================================================================ */
+window.loadStore = function() {
+  const el = document.getElementById('storeList');
+  if (!el) return;
+  
+  const d = db();
+  const gamification = d.gamification || { store: { enabled: false, items: [] } };
+  const storeSettings = gamification.store || { enabled: false, items: [] };
+  
+  if (!storeSettings.enabled) {
+    el.innerHTML = '<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">🛒</div><strong>المتجر غير مفعل حالياً</strong><p class="text-sm text-muted">لم يقم الأدمن بتفعيل متجر النقاط بعد.</p></div>';
+    return;
+  }
+
+  const items = (storeSettings.items || []).filter(i => i.active);
+  const myPoints = (typeof Ops?.getStudentPoints === 'function') ? Ops.getStudentPoints(activeStudentId, null, 'all') : 0;
+  
+  if (!items.length) {
+    el.innerHTML = '<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">🛒</div><strong>لا توجد مكافآت متاحة</strong></div>';
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="store-balance-card">
+      <div class="store-balance-label">رصيدك الحالي من النقاط</div>
+      <div class="store-balance-value">${myPoints} 🏆</div>
+    </div>
+    <div class="store-grid">
+      ${items.map(item => {
+        const canAfford = myPoints >= item.cost;
+        return `
+          <div class="store-item-card ${!canAfford ? 'disabled' : ''}">
+            <div>
+              <div class="store-item-icon">${item.icon || '🎁'}</div>
+              <h3 style="margin:0 0 4px;font-size:16px;">${item.name}</h3>
+              <div style="margin-bottom:12px;">
+                <span class="badge ${item.type === 'real' ? 'badge-success' : 'badge-info'}">${item.type === 'real' ? '🏢 مكافأة حقيقية' : '✨ شارة افتراضية'}</span>
+              </div>
+            </div>
+            <div>
+              <div class="store-item-cost">${item.cost} نقطة</div>
+              <button class="btn ${canAfford ? 'btn-primary' : 'btn-secondary'} w-full" ${!canAfford ? 'disabled' : ''} onclick="window.purchaseStoreItem('${item.id}', ${item.cost}, '${item.name.replace(/'/g, "\\'")}')">
+                ${canAfford ? '🛒 استبدال الآن' : '🔒 نقاط غير كافية'}
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+    
+    <h3 style="margin:24px 0 12px;">📦 مشترياتي السابقة</h3>
+    <div id="myPurchasesList"></div>
+  `;
+  
+  window.loadMyPurchases();
+};
+
+window.loadMyPurchases = function() {
+  const el = document.getElementById('myPurchasesList');
+  if (!el) return;
+  const d = db();
+  const purchases = (d.storePurchases || []).filter(p => p.studentId === activeStudentId).sort((a,b) => new Date(b.purchasedAt) - new Date(a.purchasedAt));
+  
+  if (!purchases.length) {
+    el.innerHTML = '<p class="text-muted" style="text-align:center;padding:12px;">لم تقم بأي عملية شراء بعد.</p>';
+    return;
+  }
+  
+  el.innerHTML = purchases.map(p => `
+    <div class="sub-row ${p.status === 'fulfilled' ? 'graded' : 'pending'}">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:24px;">${p.icon || '🎁'}</span>
+        <div>
+          <strong>${p.itemName}</strong>
+          <div class="text-xs text-muted">📅 ${new Date(p.purchasedAt).toLocaleDateString('ar-EG')} · ${p.type === 'real' ? '⏳ بانتظار التسليم من الأدمن' : '✅ تم الإضافة لحسابك'}</div>
+        </div>
+      </div>
+      <span class="badge badge-danger">-${p.cost} 🏆</span>
+    </div>
+  `).join('');
+};
+
+window.purchaseStoreItem = async function(itemId, cost, itemName) {
+  const myPoints = (typeof Ops?.getStudentPoints === 'function') ? Ops.getStudentPoints(activeStudentId, null, 'all') : 0;
+  if (myPoints < cost) {
+    safeToast('نقاطك لا تكفي لاستبدال هذه المكافأة', 'error');
+    return;
+  }
+  
+  if (!confirm(`هل أنت متأكد من استبدال "${itemName}" مقابل ${cost} نقطة؟`)) return;
+  
+  try {
+    const d = db();
+    const gamification = d.gamification || { store: { items: [] } };
+    const item = (gamification.store?.items || []).find(i => i.id === itemId);
+    if (!item) { safeToast('المكافأة غير موجودة', 'error'); return; }
+    
+    d.storePurchases = d.storePurchases || [];
+    const purchaseRecord = {
+      id: 'sp_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+      studentId: activeStudentId,
+      studentName: currentUser.name,
+      itemId: item.id,
+      itemName: item.name,
+      icon: item.icon,
+      cost: cost,
+      type: item.type,
+      status: item.type === 'virtual' ? 'fulfilled' : 'pending',
+      purchasedAt: new Date().toISOString()
+    };
+    d.storePurchases.push(purchaseRecord);
+    
+    // Deduct points via manual points array
+    d.manualPoints = d.manualPoints || [];
+    d.manualPoints.push({
+      id: 'mp_deduct_' + Date.now(),
+      studentId: activeStudentId,
+      points: -cost,
+      reason: 'استبدال مكافأة: ' + item.name,
+      awardedBy: 'SYSTEM_STORE',
+      awardedAt: new Date().toISOString(),
+      _type: 'manual'
+    });
+    
+    save(d);
+    
+    if (window.FirebaseService?.connected) {
+      try { 
+        await FirebaseService.saveDoc('storePurchases', purchaseRecord.id, purchaseRecord); 
+      } catch (e) { console.warn('Firebase sync failed', e); }
+    }
+    
+    if (item.type === 'real' && typeof DataService?.addNotification === 'function') {
+      await DataService.addNotification({
+        targetRole: 'super_admin',
+        title: '🛒 طلب استبدال مكافأة جديدة',
+        message: `الطالب ${currentUser.name} استبدل ${item.cost} نقطة للحصول على: ${item.name}`,
+        type: 'store_purchase',
+        meta: { purchaseId: purchaseRecord.id, studentId: activeStudentId }
+      });
+    }
+    
+    safeToast('✅ تم استبدال المكافأة بنجاح!', 'success');
+    window.loadStore();
+    
+  } catch (e) {
+    console.error(e);
+    safeToast('حدث خطأ أثناء عملية الشراء', 'error');
+  }
 };
 
 window.loadTeachers=function(){
@@ -1116,28 +1550,48 @@ window.loadTeachers=function(){
   if(!ts.length){ el.innerHTML='<p class="text-muted">لا يوجد أساتذة</p>'; return; }
   el.innerHTML=ts.map(t=>{
     const photo=t.teacher?.photoUrl?window.driveThumb(t.teacher.photoUrl):'';
-    return `<div class="card" style="margin-bottom:10px;"><div style="display:flex;gap:12px;align-items:center;">${photo?`<img src="${photo}" class="teacher-photo" onerror="this.style.display='none'">`:'<div class="user-avatar" style="width:56px;height:56px;font-size:20px;">👨‍</div>'}<div style="flex:1;"><strong>${t.teacher?.name||'-'}</strong><div class="text-xs text-muted">${t.group?.name||'-'} · ${dayAr(t.group?.day)} ${T(t.group?.time)}</div>${t.teacher?.phone?`<a href="https://wa.me/2${t.teacher.phone.replace(/\D/g,'')}" target="_blank" class="wa-btn" style="margin-top:6px;">💬 واتساب</a>`:''}</div></div></div>`;
+    return `<div class="card" style="margin-bottom:10px;"><div style="display:flex;gap:12px;align-items:center;">${photo?`<img src="${photo}" class="teacher-photo" onerror="this.style.display='none'">`:'<div class="user-avatar" style="width:56px;height:56px;font-size:20px;">👨‍🏫</div>'}<div style="flex:1;"><strong>${t.teacher?.name||'-'}</strong><div class="text-xs text-muted">${t.group?.name||'-'} · ${dayAr(t.group?.day)} ${T(t.group?.time)}</div>${t.teacher?.phone?`<a href="https://wa.me/2${t.teacher.phone.replace(/\D/g,'')}" target="_blank" class="wa-btn" style="margin-top:6px;">💬 واتساب</a>`:''}</div></div></div>`;
   }).join('');
 };
 
 window.loadVideos=function(){
-  const videos = typeof DataService?.getVideosForStudent === 'function' ? DataService.getVideosForStudent(activeStudentId) : [];
-  const el = document.getElementById('videosList');
-  if (!el) return;
-  if (!videos.length) { el.innerHTML = '<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">🎬</div><strong>لا توجد فيديوهات متاحة حالياً</strong></div>'; return; }
-  el.innerHTML = videos.map(v => {
-    const yId = v.platform === 'youtube' ? window.ytId(v.url) : null;
-    return `<div class="card" style="margin-bottom:12px;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
-            <div style="flex:1;">
-                <span class="badge badge-info">${v.category || 'عام'}</span>
-                <strong style="display:block;margin-top:6px;">${v.title}</strong>
-            </div>
+  try{
+    const videos = typeof DataService?.getVideosForStudent === 'function' ? DataService.getVideosForStudent(activeStudentId) : [];
+    const el = document.getElementById('videosList');
+    if (!el) return;
+
+    if (!videos || !videos.length) {
+      el.innerHTML = '<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">🎬</div><strong>لا توجد فيديوهات متاحة حالياً</strong></div>';
+      return;
+    }
+
+    el.innerHTML = videos.map(v => {
+      const platform = v.platform || (typeof DataService?.detectVideoPlatform === 'function' ? DataService.detectVideoPlatform(v.url) : 'other');
+      const yId = platform === 'youtube' ? window.ytId(v.url) : null;
+      const g = (v.targetType === 'group') ? ((DataService?.getGroups ? DataService.getGroups() : []).find(x => x.id === v.targetValue) || null) : null;
+      const teacher = g ? (DataService?.getUserById ? DataService.getUserById(g.teacherId) : null) : null;
+      const photoHtml = teacher?.photoUrl ? `<img src="${window.driveThumb(teacher.photoUrl)}" class="teacher-photo-sm" style="margin-inline-start:6px;vertical-align:middle;" onerror="this.style.display='none'">` : '';
+
+      return `<div class="card content-card" style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:0;">
+            <span class="badge badge-info">${v.category || 'عام'}</span>
+            <strong style="display:block;margin-top:6px;font-size:15px;">${v.title || '-'}</strong>
+            ${teacher ? `<div class="text-xs text-muted" style="margin-top:6px;display:flex;align-items:center;">🧑‍🏫 ${teacher.name || '-'} ${photoHtml}</div>` : ''}
+          </div>
         </div>
-        ${yId ? `<div class="video-iframe-wrap"><iframe src="https://www.youtube.com/embed/${yId}" allowfullscreen></iframe></div>` :
-                 `<a href="${v.url}" target="_blank" class="btn btn-primary w-full" style="margin-top:10px;">🔗 مشاهدة الفيديو</a>`}
-    </div>`;
-  }).join('');
+        <div style="margin-top:12px;">
+          ${yId ? `<div class="video-iframe-wrap"><iframe src="https://www.youtube.com/embed/${yId}" allowfullscreen></iframe></div>` :
+            `<a href="${v.url}" target="_blank" class="btn btn-primary w-full" style="margin-top:10px;">🔗 مشاهدة الفيديو</a>`}
+        </div>
+      </div>`;
+    }).join('');
+
+  } catch (e) {
+    console.error('loadVideos error:', e);
+    const el = document.getElementById('videosList');
+    if (el) el.innerHTML = '<div class="card" style="text-align:center;padding:24px;color:var(--danger);">حدث خطأ أثناء تحميل الفيديوهات</div>';
+  }
 };
 
 window.loadChallenges=function(){
@@ -1161,6 +1615,9 @@ window.loadChallenges=function(){
   }).join('');
 };
 
+/* ================================================================
+   📰 بوستات الحصة + 🆕 تكبير الصور
+   ================================================================ */
 window.loadClassPosts=function(){
   const posts = typeof DataService?.getClassPostsForStudent === 'function' ? DataService.getClassPostsForStudent(activeStudentId) : [];
   const el = document.getElementById('classPostsList');
@@ -1169,7 +1626,8 @@ window.loadClassPosts=function(){
   el.innerHTML = posts.map(p => {
     const group = DataService?.getGroups?.().find(g => g.id === p.groupId);
     const teacher = group ? DataService?.getUserById?.(group.teacherId) : null;
-    const photo = teacher?.photoUrl ? `<img src="${window.driveThumb(teacher.photoUrl)}" class="teacher-photo-sm">` : '';
+    const photo = teacher?.photoUrl ? `<img src="${window.driveThumb(teacher.photoUrl)}" class="teacher-photo-sm">` : `<div class="user-avatar teacher-photo-sm">👨‍🏫</div>`;
+    const imgClick = p.imageUrl ? `onclick="window.openImageZoom('${window.driveThumb(p.imageUrl).replace('sz=w400','sz=w1200')}')"` : '';
     return `<div class="card" style="margin-bottom:12px;border-right:3px solid var(--info);">
         <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;">
             ${photo}
@@ -1181,7 +1639,7 @@ window.loadClassPosts=function(){
         <strong>${p.title || 'ملخص حصة'}</strong>
         ${p.summary ? `<p style="margin-top:6px;">${p.summary}</p>` : ''}
         ${p.homeworkText ? `<div style="margin-top:8px;padding:8px;background:var(--warning-bg);border-radius:6px;"><strong>📋 الواجب:</strong> ${p.homeworkText}</div>` : ''}
-        ${p.imageUrl ? `<img src="${window.driveThumb(p.imageUrl)}" class="post-image">` : ''}
+        ${p.imageUrl ? `<img src="${window.driveThumb(p.imageUrl)}" class="post-image" ${imgClick}>` : ''}
     </div>`;
   }).join('');
 };
@@ -1193,9 +1651,18 @@ window.loadInteractive=function(){
   if (!materials.length) { el.innerHTML = '<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">🧩</div><strong>لا توجد مواد تفاعلية</strong></div>'; return; }
   const typeLabel = {link:'🔗 رابط', question:'❓ أسئلة', vocabulary:'📖 مفردات', recitation:'🎙️ تسميع'};
   el.innerHTML = materials.map(it => {
+    const g=DataService?.getGroups?.().find(x=>x.id===it.groupId);
+    const teacher=g?DataService?.getUserById?.(g.teacherId):null;
+    const photo=teacher?.photoUrl?`<img src="${window.driveThumb(teacher.photoUrl)}" class="teacher-photo-sm" style="margin-left:6px;" onerror="this.style.display='none'">`:'';
     return `<div class="card material-card type-${it.type}" style="margin-bottom:12px;">
-        <span class="badge badge-info">${typeLabel[it.type] || it.type}</span>
-        <strong style="display:block;margin-top:6px;">${it.title}</strong>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          ${photo}
+          <div>
+            <span class="badge badge-info">${typeLabel[it.type] || it.type}</span>
+            <strong style="display:block;margin-top:4px;">${it.title}</strong>
+            ${teacher?`<div class="text-xs text-muted">👨‍🏫 ${teacher.name||'-'}</div>`:''}
+          </div>
+        </div>
         ${it.word ? `<div style="margin-top:6px;"><strong style="color:var(--primary);font-family:var(--font-en);">${it.word}</strong> ${it.meaning || ''}</div>` : ''}
         <div class="material-media">
             ${it.url ? `<a href="${it.url}" target="_blank" class="btn btn-secondary btn-sm" style="margin-top:8px;">🔗 فتح الرابط</a>` : ''}
@@ -1214,10 +1681,14 @@ window.loadPayments=function(){
   el.innerHTML = billing.map(b => {
     const rem = Math.max(0, (b.billing?.total || 0) - (b.payment?.paidAmount || 0));
     const status = rem > 0 ? 'due' : 'graded';
+    const photo=b.teacher?.photoUrl?`<img src="${window.driveThumb(b.teacher.photoUrl)}" class="teacher-photo-sm" style="margin-left:6px;" onerror="this.style.display='none'">`:'';
     return `<div class="sub-row ${status}">
-        <div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${photo}
+          <div>
             <strong>${b.group?.name || '-'}</strong>
             <div class="text-xs text-muted">👨‍🏫 ${b.teacher?.name || '-'} · شهر ${b.billing?.month || '-'}</div>
+          </div>
         </div>
         <div style="text-align:left;">
             <strong>${b.payment?.paidAmount || 0} / ${b.billing?.total || 0}</strong>
@@ -1309,13 +1780,15 @@ window.loadBarcodeRequests = function() {
       return;
     }
     listEl.innerHTML = allRequests.map(r => {
-      const statusLabel = { pending: '⏳ بانتظار الموافقة', approved: '✅ تمت الموافقة', rejected: '❌ تم الرفض' };
+      const statusLabel = { pending: '⏳ بانتظار الموافقة', prepared: '🖨️ تم التجهيز (جاهز للاستلام)', approved: '✅ تم الاستلام', rejected: '❌ تم الرفض' };
       const statusClass = 'status-' + r.status;
       const requestDate = new Date(r.requestedAt).toLocaleString('ar-EG', {dateStyle: 'medium', timeStyle: 'short'});
       let detailsHtml = '';
-      if (r.status === 'approved' && r.approvedAt) {
-        detailsHtml = `<div class="text-xs" style="margin-top:6px;color:var(--success);">✓ تمت الموافقة في ${new Date(r.approvedAt).toLocaleString('ar-EG', {dateStyle: 'medium'})}</div>
-        <div class="text-xs" style="margin-top:4px;color:var(--text-muted);">📞 تواصل مع الأدمن لاستلام الباركود الجديد</div>`;
+      if (r.status === 'prepared' && r.preparedAt) {
+        detailsHtml = `<div class="text-xs" style="margin-top:6px;color:var(--info);">🖨️ تم تجهيز الباركود وطباعته</div>
+        <div class="text-xs" style="margin-top:4px;color:var(--text-muted);">🏢 يمكنك استلامه من المركز / الأدمن</div>`;
+      } else if (r.status === 'approved' && r.approvedAt) {
+        detailsHtml = `<div class="text-xs" style="margin-top:6px;color:var(--success);">✓ تم الاستلام في ${new Date(r.approvedAt).toLocaleString('ar-EG', {dateStyle: 'medium'})}</div>`;
       } else if (r.status === 'rejected') {
         detailsHtml = `<div class="text-xs" style="margin-top:6px;color:var(--danger);">❌ ${r.rejectionReason || 'تم الرفض'}</div>`;
       } else if (r.status === 'pending') {
@@ -1450,6 +1923,79 @@ window.submitBarcodeRequest = async function() {
     console.error('submitBarcodeRequest error:', e);
     safeToast('خطأ في إرسال الطلب: ' + e.message, 'error');
   }
+};
+/* ================================================================
+   👤 البروفايل الشخصي + 🔥 حساب سلسلة الحضور (Streak)
+   ================================================================ */
+window.calculateStreak = function() {
+    try {
+        const allAtt = DataService?.getAttendance ? DataService.getAttendance() : [];
+        // جلب كل الحصص التي تم تسجيل حضور/غياب فيها لهذا الطالب
+        const mySessions = allAtt.filter(a => a.status === 'approved' && a.records.some(r => r.studentId === activeStudentId));
+        if (!mySessions.length) return 0;
+
+        // ترتيب الحصص من الأحدث للأقدم
+        mySessions.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        let streak = 0;
+        for (const session of mySessions) {
+            const record = session.records.find(r => r.studentId === activeStudentId);
+            if (record && record.status === 'present') {
+                streak++; // حضر الحصة، نزيد السلسلة
+            } else {
+                break; // غاب أو تم إلغاء الحصة، السلسلة تنكسر
+            }
+        }
+        return streak;
+    } catch (e) {
+        return 0;
+    }
+};
+
+window.openStudentProfile = function() {
+    const points = (typeof Ops?.getStudentPoints === 'function') ? Ops.getStudentPoints(activeStudentId, null, 'all') : 0;
+    const streak = window.calculateStreak();
+    const s = DataService?.getUserById ? DataService.getUserById(activeStudentId) : currentUser;
+    const groups = (typeof DataService?.getStudentTeachers === 'function') ? DataService.getStudentTeachers(activeStudentId) : [];
+    
+    const photo = s?.photoUrl ? `<img src="${window.driveThumb(s.photoUrl)}" style="width:80px;height:80px;border-radius:50%;border:3px solid var(--primary);object-fit:cover;">` : `<div style="width:80px;height:80px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;">${(s?.name || 'S').charAt(0)}</div>`;
+
+    const body = `
+        <div class="modal-header">
+            <h3 class="modal-title">👤 البروفايل الشخصي</h3>
+            <button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button>
+        </div>
+        <div class="modal-body" style="text-align:center;">
+            <div style="margin-bottom:16px;">${photo}</div>
+            <h2 style="margin:0;">${s?.name || '-'}</h2>
+            <div class="text-muted" style="margin-top:4px;">${s?.grade || '-'} · كود: ${s?.code || '-'}</div>
+            
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:24px 0;">
+                <div class="card" style="background:linear-gradient(135deg,rgba(251,191,36,.1),rgba(245,158,11,.1));border:1px solid rgba(251,191,36,.3);padding:16px;margin:0;">
+                    <div style="font-size:28px;font-weight:900;color:#f59e0b;font-family:var(--font-en);">${streak} 🔥</div>
+                    <div class="text-xs text-muted" style="margin-top:4px;">سلسلة الحضور</div>
+                    <div class="text-xs" style="margin-top:2px;">آخر ${streak} حصة متتالية</div>
+                </div>
+                <div class="card" style="background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(139,92,246,.1));border:1px solid var(--primary-border);padding:16px;margin:0;">
+                    <div style="font-size:28px;font-weight:900;color:var(--primary);font-family:var(--font-en);">${points} 🏆</div>
+                    <div class="text-xs text-muted" style="margin-top:4px;">رصيد النقاط</div>
+                    <div class="text-xs" style="margin-top:2px;">إجمالي النقاط</div>
+                </div>
+            </div>
+
+            <div style="text-align:right;background:var(--surface-hover);padding:12px;border-radius:10px;margin-bottom:16px;">
+                <div style="margin-bottom:8px;"><strong>📱 رقم الهاتف:</strong> ${s?.phone || '-'}</div>
+                <div style="margin-bottom:8px;"><strong>👨‍👩‍👦 ولي الأمر:</strong> ${s?.parentPhone || '-'}</div>
+                <div><strong>👥 عدد المجموعات:</strong> ${groups.length}</div>
+            </div>
+
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-primary" style="flex:1;" onclick="ThemeManager.closeModal();window.showSection('points');">📊 تفاصيل النقاط</button>
+              <button class="btn btn-secondary" style="flex:1;" onclick="ThemeManager.closeModal();window.showSection('store');">🛒 المتجر</button>
+            </div>
+        </div>
+    `;
+    ThemeManager.openModal(body, 'modal-md');
 };
 
 window.handleLogout=function(){ if(confirm('خروج؟')) AuthService.logout(); };

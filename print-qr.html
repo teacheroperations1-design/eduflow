@@ -3,211 +3,707 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>طباعة باركودات الطلاب - EduFlow by Habbash Group</title>
+<title>طباعة وتصدير باركودات الطلاب | EduFlow</title>
 <link rel="stylesheet" href="css/eduflow-theme.css">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Fira+Code:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-body{padding:20px;}
-.toolbar{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:var(--shadow-sm);}
-.toolbar-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;}
-.toolbar-title{display:flex;align-items:center;gap:10px;}
-.toolbar-title-icon{font-size:28px;}
-.toolbar-title h2{margin:0;font-size:18px;}
-.toolbar-title p{margin:2px 0 0 0;font-size:12px;color:var(--text-muted);}
-.toolbar-actions{display:flex;gap:8px;flex-wrap:wrap;}
-.filters-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;}
-@media(max-width:640px){.filters-row{grid-template-columns:1fr;}}
-.filter-group{display:flex;flex-direction:column;gap:4px;}
-.filter-group label{font-size:11px;font-weight:700;color:var(--text-muted);}
-.size-options{display:flex;gap:6px;flex-wrap:wrap;padding:10px;background:var(--surface-hover);border-radius:8px;margin-bottom:12px;}
-.size-opt{padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;transition:all .2s;display:flex;align-items:center;gap:6px;}
-.size-opt:hover{border-color:var(--primary-border);}
-.size-opt.active{background:var(--primary);color:#fff;border-color:var(--primary);}
-.size-opt .size-icon{font-size:16px;}
-.stats-bar{display:flex;gap:12px;flex-wrap:wrap;padding:10px;background:var(--info-bg);border:1px solid var(--info-border);border-radius:8px;margin-bottom:12px;font-size:12px;color:var(--info);}
-.stats-bar strong{font-family:var(--font-en);font-size:14px;}
-.action-buttons{display:flex;gap:8px;flex-wrap:wrap;}
-.btn-xl{padding:12px 20px;font-size:14px;font-weight:800;display:inline-flex;align-items:center;gap:8px;}
-.btn-export{background:linear-gradient(135deg,#10b981,#059669);color:#fff;}
-.btn-export:hover{background:linear-gradient(135deg,#059669,#047857);}
-.btn-zip{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;}
-.btn-zip:hover{background:linear-gradient(135deg,#d97706,#b45309);}
-.btn-preview{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;}
-.btn-preview:hover{background:linear-gradient(135deg,#8b5cf6,#7c3aed);}
-.qr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
-.qr-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;position:relative;transition:all .2s;break-inside:avoid;page-break-inside:avoid;}
-.qr-card:hover{border-color:var(--primary-border);box-shadow:var(--shadow-sm);}
-.qr-card.teacher-card{border:2px solid var(--primary);background:linear-gradient(135deg,var(--surface),var(--primary-bg));}
-.qr-card.group-card{border:2px solid #25d366;background:linear-gradient(135deg,var(--surface),rgba(37,211,102,.08));}
-.qr-card-type{position:absolute;top:6px;right:6px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:9999px;background:var(--primary);color:#fff;}
-.qr-card-type.teacher{background:var(--primary);}
-.qr-card-type.group{background:#25d366;}
-.qr-card-type.student{background:var(--info);}
-.qr-name{font-size:14px;font-weight:800;margin-bottom:6px;color:var(--text);}
-.qr-card img{width:100%;max-width:140px;aspect-ratio:1;border-radius:8px;margin:6px auto;display:block;background:#fff;padding:4px;}
-.qr-codeline{font-family:var(--font-en);font-size:14px;font-weight:800;letter-spacing:2px;color:var(--primary);margin:6px 0;}
-.qr-brand{font-size:10px;color:var(--text-muted);margin-top:4px;display:flex;align-items:center;justify-content:center;gap:4px;}
-.qr-brand .dot{width:4px;height:4px;border-radius:50%;background:var(--primary);}
-.qr-meta{font-size:10px;color:var(--text-muted);margin-top:4px;line-height:1.4;}
-.card-actions{display:flex;gap:4px;justify-content:center;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);}
-.card-actions .btn{font-size:10px;padding:4px 8px;}
-.selection-check{position:absolute;top:8px;left:8px;width:20px;height:20px;cursor:pointer;}
-.selection-check input{width:100%;height:100%;cursor:pointer;}
-/* Preview Modal */
-.preview-container{max-height:70vh;overflow-y:auto;padding:16px;background:var(--surface-hover);border-radius:8px;}
-.preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
-@media(max-width:768px){.preview-grid{grid-template-columns:repeat(2,1fr);}}
-@media(max-width:480px){.preview-grid{grid-template-columns:1fr;}}
-/* Print Styles */
-@media print{
-  body{padding:0;background:#fff;}
-  .toolbar,.no-print,.card-actions,.selection-check{display:none!important;}
-  .qr-grid{grid-template-columns:repeat(4,1fr);gap:8px;}
-  .qr-card{border:1px solid #ccc;page-break-inside:avoid;padding:8px;}
-  .qr-card img{max-width:3.2cm;}
-  .qr-name{font-size:9pt;}
-  .qr-codeline{font-size:10pt;}
-  .qr-brand,.qr-meta{font-size:7pt;}
-  @page{margin:1cm;}
+:root {
+    --primary: #6366f1;
+    --primary-light: #818cf8;
+    --primary-dark: #4f46e5;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --surface-hover: #f1f5f9;
+    --border: #e2e8f0;
+    --text: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --font-en: 'Fira Code', 'Courier New', monospace;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05);
 }
-/* Print size variants */
-@media print{
-  body.print-small .qr-grid{grid-template-columns:repeat(6,1fr);}
-  body.print-small .qr-card img{max-width:2.2cm;}
-  body.print-small .qr-card{padding:4px;}
-  body.print-small .qr-name{font-size:7pt;}
-  body.print-small .qr-codeline{font-size:8pt;}
-  body.print-large .qr-grid{grid-template-columns:repeat(3,1fr);}
-  body.print-large .qr-card img{max-width:4.5cm;}
-  body.print-large .qr-card{padding:12px;}
-  body.print-large .qr-name{font-size:11pt;}
-  body.print-large .qr-codeline{font-size:12pt;}
-  body.print-pocket .qr-grid{grid-template-columns:repeat(2,1fr);}
-  body.print-pocket .qr-card{padding:14px;min-height:12cm;}
-  body.print-pocket .qr-card img{max-width:6cm;}
-  body.print-pocket .qr-name{font-size:14pt;}
-  body.print-pocket .qr-codeline{font-size:16pt;}
-  body.print-a3 .qr-grid{grid-template-columns:repeat(6,1fr);}
-  body.print-a3 .qr-card img{max-width:4cm;}
-  @page size-a3{size:A3;}
-  @page size-a4{size:A4;}
-  @page size-letter{size:letter;}
+
+[data-theme="dark"] {
+    --bg: #0b1120;
+    --surface: #1e293b;
+    --surface-hover: #334155;
+    --border: #334155;
+    --text: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-muted: #64748b;
 }
+
+body {
+    font-family: 'Cairo', sans-serif;
+    background-color: var(--bg);
+    background-image: radial-gradient(var(--border) 1px, transparent 1px);
+    background-size: 24px 24px;
+    color: var(--text);
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.page-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.toolbar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 28px;
+    margin-bottom: 40px;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.toolbar::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary), #8b5cf6, #ec4899);
+}
+
+.toolbar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.toolbar-title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.toolbar-icon {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, var(--primary), #8b5cf6);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: white;
+    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.25);
+}
+
+.toolbar-title h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.toolbar-title p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.filter-box {
+    background: var(--surface-hover);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    transition: all 0.2s;
+}
+
+.filter-box:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.filter-box label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.size-selector {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+    align-items: center;
+    background: var(--surface-hover);
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+}
+
+.size-label {
+    font-weight: 800;
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-left: 8px;
+}
+
+.size-btn {
+    padding: 10px 18px;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 13px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+}
+
+.size-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.size-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.stats-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.stat-pill {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 10px 18px;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s;
+}
+
+.stat-pill:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.stat-pill strong {
+    color: var(--primary);
+    font-family: var(--font-en);
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.stat-pill.highlight {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+    border-color: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+[data-theme="dark"] .stat-pill.highlight {
+    color: var(--primary-light);
+}
+
+.actions-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.btn-action {
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-action:active {
+    transform: translateY(0);
+}
+
+.btn-primary-action {
+    background: linear-gradient(135deg, var(--primary), #8b5cf6);
+    color: white;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+}
+
+.btn-success-action {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.btn-warning-action {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+.btn-ghost-action {
+    background: var(--surface);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+}
+
+.btn-ghost-action:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+    border-color: var(--text-muted);
+}
+
+/* Cards Grid */
+.qr-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+    perspective: 1000px;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.qr-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 24px;
+    overflow: hidden;
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+.qr-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-xl);
+    border-color: var(--primary-light);
+}
+
+.qr-card.selected {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15), var(--shadow-lg);
+    background: linear-gradient(to bottom right, var(--surface), rgba(99, 102, 241, 0.02));
+}
+
+.card-accent {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 6px;
+    z-index: 2;
+}
+
+.qr-card.student .card-accent { background: linear-gradient(90deg, #6366f1, #8b5cf6); }
+.qr-card.teacher .card-accent { background: linear-gradient(90deg, #f59e0b, #d97706); }
+.qr-card.group .card-accent { background: linear-gradient(90deg, #10b981, #059669); }
+
+.card-header {
+    padding: 20px 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+}
+
+.card-badge {
+    font-size: 11px;
+    font-weight: 800;
+    padding: 6px 12px;
+    border-radius: 10px;
+    color: white;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: var(--shadow-sm);
+}
+
+.badge-student { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+.badge-teacher { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.badge-group { background: linear-gradient(135deg, #10b981, #059669); }
+
+/* Custom Checkbox */
+.custom-checkbox {
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.custom-checkbox input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.checkmark {
+    width: 26px;
+    height: 26px;
+    background: var(--surface-hover);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.custom-checkbox input:checked ~ .checkmark {
+    background: var(--primary);
+    border-color: var(--primary);
+    box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
+}
+
+.checkmark::after {
+    content: '✓';
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.custom-checkbox input:checked ~ .checkmark::after {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.card-body {
+    padding: 24px;
+    text-align: center;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.qr-wrapper {
+    background: white;
+    padding: 16px;
+    border-radius: 20px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+    border: 1px solid #f1f5f9;
+    position: relative;
+    transition: transform 0.3s;
+}
+
+.qr-card:hover .qr-wrapper {
+    transform: scale(1.02);
+}
+
+.qr-wrapper::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, var(--primary-light), transparent);
+    opacity: 0.2;
+    z-index: -1;
+}
+
+.card-img {
+    width: 160px;
+    height: 160px;
+    display: block;
+    object-fit: contain;
+}
+
+.card-name {
+    font-size: 20px;
+    font-weight: 800;
+    margin: 0 0 12px;
+    color: var(--text);
+    line-height: 1.3;
+}
+
+.card-code-wrapper {
+    background: var(--surface-hover);
+    padding: 8px 20px;
+    border-radius: 99px;
+    margin-bottom: 12px;
+    border: 1px dashed var(--border);
+    display: inline-block;
+}
+
+.card-code {
+    font-family: var(--font-en);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--primary);
+}
+
+.card-meta {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0;
+    font-weight: 500;
+}
+
+.card-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    background: var(--surface-hover);
+}
+
+.flex-1 { flex: 1; }
+
+/* Modal */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.modal-content {
+    max-width: 1000px;
+    margin: 40px auto;
+    background: var(--surface);
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+    border: 1px solid var(--border);
+}
+
+.preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 16px;
+    background: var(--surface-hover);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+}
+
 /* Empty State */
-.empty-state{text-align:center;padding:60px 20px;grid-column:1/-1;}
-.empty-state-icon{font-size:64px;margin-bottom:12px;opacity:.5;}
-.empty-state-title{font-size:18px;font-weight:800;margin-bottom:6px;}
-.empty-state-text{font-size:13px;color:var(--text-muted);}
+.empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    grid-column: 1 / -1;
+}
+.empty-state-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
+.empty-state-title { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+.empty-state-text { font-size: 14px; color: var(--text-muted); }
+
+/* Form Elements Enhancement */
+.form-select, .form-input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    width: 100%;
+    transition: all 0.2s;
+}
+
+.form-select:focus, .form-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.btn {
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 13px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-sm { padding: 8px 12px; font-size: 12px; }
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--surface-hover); }
+.btn-ghost { background: transparent; color: var(--text-secondary); }
+.btn-ghost:hover { background: var(--surface-hover); }
+.btn-icon { padding: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
+
+/* Print Styles */
+@media print {
+    body { background: white; padding: 0; margin: 0; color: black; }
+    .no-print { display: none !important; }
+    .page-container { max-width: 100%; padding: 0; }
+    .qr-grid { 
+        grid-template-columns: repeat(4, 1fr); 
+        gap: 12px; 
+        padding: 12px;
+    }
+    .qr-card { 
+        border: 1px solid #ddd; 
+        page-break-inside: avoid; 
+        padding: 0; 
+        box-shadow: none; 
+        transform: none; 
+        border-radius: 8px;
+        background: white;
+        animation: none;
+    }
+    .qr-card:hover { transform: none; }
+    .card-accent { display: none; }
+    .qr-wrapper { box-shadow: none; border: 1px solid #eee; padding: 8px; border-radius: 8px; }
+    .card-img { width: 100%; height: auto; max-width: 3.5cm; }
+    .card-name { font-size: 12pt; margin: 6px 0; color: black; }
+    .card-code-wrapper { background: none; border: none; padding: 0; }
+    .card-code { font-size: 14pt; margin: 6px 0; color: #4f46e5; }
+    .card-meta { font-size: 9pt; margin-bottom: 6px; color: #555; }
+    .card-badge, .card-check, .card-actions, .custom-checkbox { display: none; }
+    @page { margin: 1cm; }
+    
+    body.print-small .qr-grid { grid-template-columns: repeat(6, 1fr); }
+    body.print-small .card-img { max-width: 2.5cm; }
+    body.print-large .qr-grid { grid-template-columns: repeat(3, 1fr); }
+    body.print-large .card-img { max-width: 5cm; }
+    body.print-pocket .qr-grid { grid-template-columns: repeat(2, 1fr); }
+    body.print-pocket .card-img { max-width: 6cm; }
+}
 </style>
 </head>
-<body data-theme="dark">
-<div class="bg-grid"></div>
-<div class="orb orb-1"></div>
-<div class="orb orb-2"></div>
+<body data-theme="light">
 
-<div class="toolbar no-print">
-  <div class="toolbar-header">
-    <div class="toolbar-title">
-      <div class="toolbar-title-icon">🖨️</div>
-      <div>
-        <h2>طباعة باركودات الطلاب</h2>
-        <p>كل باركود بيفتح بطاقة الطالب على الموقع — اطبع أو صدّر</p>
-      </div>
+<div class="page-container">
+    <div class="toolbar no-print">
+        <div class="toolbar-header">
+            <div class="toolbar-title">
+                <div class="toolbar-icon">🖨️</div>
+                <div>
+                    <h1>طباعة وتصدير الباركودات</h1>
+                    <p>قم بطباعة باركودات الطلاب، المدرسين، أو مجموعات الواتساب بجودة عالية</p>
+                </div>
+            </div>
+            <div class="toolbar-actions" style="display:flex; gap:8px;">
+                <button class="btn btn-ghost" onclick="window.goBack()">← رجوع</button>
+                <button class="btn btn-secondary" id="themeToggle">🌓</button>
+            </div>
+        </div>
+        
+        <div class="filters-grid">
+            <div class="filter-box">
+                <label>👥 المجموعة</label>
+                <select id="prGroup" class="form-select" onchange="window.renderGrid()">
+                    <option value="all">🌍 كل الطلاب</option>
+                </select>
+            </div>
+            <div class="filter-box">
+                <label>🔍 بحث</label>
+                <input type="text" id="prSearch" class="form-input" placeholder="ابحث بالاسم أو الكود..." onkeyup="window.renderGrid()">
+            </div>
+            <div class="filter-box">
+                <label>🎯 نوع البطاقات</label>
+                <select id="prType" class="form-select" onchange="window.renderGrid()">
+                    <option value="students">🎓 طلاب فقط</option>
+                    <option value="all">🎓 طلاب + 👨‍🏫 مدرس + 💬 واتساب</option>
+                    <option value="teachers">👨‍🏫 مدرس فقط</option>
+                    <option value="groups">💬 واتساب جروبات</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="size-selector">
+            <span class="size-label">📏 حجم الطباعة:</span>
+            <button class="size-btn active" data-size="a4" onclick="window.setPrintSize('a4',this)">📄 A4 قياسي</button>
+            <button class="size-btn" data-size="small" onclick="window.setPrintSize('small',this)">🏷️ صغيرة</button>
+            <button class="size-btn" data-size="large" onclick="window.setPrintSize('large',this)">📋 كبيرة</button>
+            <button class="size-btn" data-size="pocket" onclick="window.setPrintSize('pocket',this)">💳 جيب</button>
+        </div>
+        
+        <div class="stats-row" id="statsBar">
+            <div class="stat-pill">📊 الإجمالي: <strong id="totalCount">0</strong></div>
+            <div class="stat-pill">🎓 طلاب: <strong id="studentsCount">0</strong></div>
+            <div class="stat-pill">👨‍🏫 مدرسين: <strong id="teachersCount">0</strong></div>
+            <div class="stat-pill">💬 جروبات: <strong id="groupsCount">0</strong></div>
+            <div class="stat-pill highlight" style="margin-inline-start:auto;">✅ مختار: <strong id="selectedCount">0</strong></div>
+        </div>
+        
+        <div class="actions-row">
+            <button class="btn-action btn-primary-action" onclick="window.printSelected()">🖨️ طباعة المختارة</button>
+            <button class="btn-action btn-primary-action" onclick="window.printAll()">🖨️ طباعة الكل</button>
+            <button class="btn-action btn-ghost-action" onclick="window.showPreview()">👁️ معاينة</button>
+            <button class="btn-action btn-warning-action" onclick="window.downloadAllAsZip()">📦 تحميل ZIP</button>
+            <button class="btn-action btn-success-action" onclick="window.exportCSV()">📊 تصدير CSV</button>
+            <button class="btn-action btn-ghost-action" onclick="window.selectAll()">✅ تحديد الكل</button>
+            <button class="btn-action btn-ghost-action" onclick="window.deselectAll()">❌ إلغاء</button>
+        </div>
     </div>
-    <div class="toolbar-actions">
-      <button class="btn btn-ghost btn-sm" onclick="window.goBack()">← رجوع</button>
-      <button class="btn btn-secondary btn-sm" id="themeToggle">🌓</button>
-    </div>
-  </div>
-  
-  <div class="filters-row">
-    <div class="filter-group">
-      <label>👥 المجموعة</label>
-      <select id="prGroup" class="form-select" onchange="window.renderGrid()">
-        <option value="all">🌍 كل الطلاب</option>
-      </select>
-    </div>
-    <div class="filter-group">
-      <label>🔍 بحث (اسم / كود)</label>
-      <input type="text" id="prSearch" class="form-input" placeholder="ابحث عن طالب..." onkeyup="window.renderGrid()">
-    </div>
-    <div class="filter-group">
-      <label>🎯 نوع البطاقات</label>
-      <select id="prType" class="form-select" onchange="window.renderGrid()">
-        <option value="students">🎓 طلاب فقط</option>
-        <option value="all">🎓 طلاب + 👨‍🏫 مدرس + 💬 واتساب</option>
-        <option value="teachers">👨‍🏫 مدرس فقط</option>
-        <option value="groups">💬 واتساب جروبات</option>
-      </select>
-    </div>
-  </div>
-  
-  <div class="size-options">
-    <span style="align-self:center;font-weight:700;font-size:12px;color:var(--text-muted);margin-left:4px;">📏 حجم الطباعة:</span>
-    <button class="size-opt active" data-size="a4" onclick="window.setPrintSize('a4',this)">
-      <span class="size-icon">📄</span> A4 قياسي (4×4)
-    </button>
-    <button class="size-opt" data-size="small" onclick="window.setPrintSize('small',this)">
-      <span class="size-icon">🏷️</span> صغيرة (6×4)
-    </button>
-    <button class="size-opt" data-size="large" onclick="window.setPrintSize('large',this)">
-      <span class="size-icon">📋</span> كبيرة (3×3)
-    </button>
-    <button class="size-opt" data-size="pocket" onclick="window.setPrintSize('pocket',this)">
-      <span class="size-icon">💳</span> جيب (2×2)
-    </button>
-    <button class="size-opt" data-size="a3" onclick="window.setPrintSize('a3',this)">
-      <span class="size-icon">📰</span> A3 (6×6)
-    </button>
-  </div>
-  
-  <div class="stats-bar" id="statsBar">
-    <span>📊 <strong id="totalCount">0</strong> بطاقة</span>
-    <span>🎓 <strong id="studentsCount">0</strong> طالب</span>
-    <span>👨‍🏫 <strong id="teachersCount">0</strong> مدرس</span>
-    <span>💬 <strong id="groupsCount">0</strong> جروب</span>
-    <span style="margin-inline-start:auto;">✅ <strong id="selectedCount">0</strong> مختار</span>
-  </div>
-  
-  <div class="action-buttons">
-    <button class="btn btn-primary btn-xl" onclick="window.printSelected()">
-      🖨️ طباعة المختارة
-    </button>
-    <button class="btn btn-primary btn-xl" onclick="window.printAll()">
-      🖨️ طباعة الكل
-    </button>
-    <button class="btn btn-preview btn-xl" onclick="window.showPreview()">
-      👁️ معاينة قبل الطباعة
-    </button>
-    <button class="btn btn-export btn-xl" onclick="window.exportCSV()">
-      📊 تصدير CSV
-    </button>
-    <button class="btn btn-zip btn-xl" onclick="window.downloadAllAsZip()">
-      📦 تحميل ZIP
-    </button>
-    <button class="btn btn-secondary btn-xl" onclick="window.selectAll()">
-      ✅ تحديد الكل
-    </button>
-    <button class="btn btn-ghost btn-xl" onclick="window.deselectAll()">
-      ❌ إلغاء التحديد
-    </button>
-  </div>
+
+    <div class="qr-grid" id="qrGrid"></div>
 </div>
 
-<div class="qr-grid" id="qrGrid"></div>
-
 <!-- Preview Modal -->
-<div id="previewModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;padding:20px;overflow-y:auto;">
-  <div style="max-width:1200px;margin:0 auto;background:var(--surface);border-radius:16px;padding:20px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-      <h3 style="margin:0;">👁️ معاينة الطباعة</h3>
-      <button class="btn btn-ghost btn-icon" onclick="window.closePreview()">✕</button>
+<div class="modal-overlay" id="previewModal">
+    <div class="modal-content">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+            <h2 style="margin:0; font-weight:800;">👁️ معاينة الطباعة</h2>
+            <button class="btn btn-ghost btn-icon" onclick="window.closePreview()">✕</button>
+        </div>
+        <div class="preview-grid" id="previewContainer"></div>
+        <div style="display:flex; gap:12px; margin-top:24px; justify-content:flex-end;">
+            <button class="btn btn-ghost" onclick="window.closePreview()">إلغاء</button>
+            <button class="btn btn-primary" onclick="window.printFromPreview()">🖨️ طباعة الآن</button>
+        </div>
     </div>
-    <div class="preview-container" id="previewContainer"></div>
-    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
-      <button class="btn btn-ghost" onclick="window.closePreview()">إلغاء</button>
-      <button class="btn btn-primary" onclick="window.printFromPreview()">🖨️ طباعة الآن</button>
-    </div>
-  </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -227,13 +723,15 @@ body{padding:20px;}
 const SITE_BASE = 'https://eduflow-nine-dusky.vercel.app/';
 const qrData = (code, type='student') => {
   if(type === 'teacher') return SITE_BASE + 'teacher-dashboard.html';
-  if(type === 'group') return SITE_BASE; // أو رابط واتساب
+  if(type === 'group') return SITE_BASE; 
   return SITE_BASE + 'student-qr.html?code=' + encodeURIComponent(code);
 };
-const qrImg = (code, size, type='student') => 
-  'https://api.qrserver.com/v1/create-qr-code/?size=' + size + 'x' + size + 
-  '&data=' + encodeURIComponent(qrData(code, type)) +
-  '&bgcolor=ffffff&color=6366f1&margin=8';
+const qrImg = (code, size, type='student') => {
+  const url = type === 'group' ? (allCards.find(c=>c.code===code)?.whatsappLink || SITE_BASE) : qrData(code, type);
+  return 'https://api.qrserver.com/v1/create-qr-code/?size=' + size + 'x' + size + 
+         '&data=' + encodeURIComponent(url) +
+         '&bgcolor=ffffff&color=0f172a&margin=12';
+};
 
 let currentUser = null;
 let currentPrintSize = 'a4';
@@ -247,25 +745,17 @@ let allCards = [];
     if(!currentUser){ window.location.href='login.html'; return; }
     
     window.buildGroupSelect();
-    
-    // استعلام البحث من URL
     const s = new URLSearchParams(location.search).get('search');
     if(s){ const el = document.getElementById('prSearch'); if(el) el.value = s; }
-    
     window.renderGrid();
   }catch(err){
     console.error('Boot error', err);
-    const grid = document.getElementById('qrGrid');
-    if(grid) grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-title">خطأ في التحميل</div><div class="empty-state-text">'+err.message+'</div></div>';
   }
 })();
 
 window.goBack = function(){
-  if(document.referrer && document.referrer.includes(location.origin)){
-    history.back();
-  } else {
-    window.location.href = currentUser?.role === 'teacher' ? 'teacher-dashboard.html' : 'assistant-dashboard.html';
-  }
+  if(document.referrer && document.referrer.includes(location.origin)) history.back();
+  else window.location.href = currentUser?.role === 'teacher' ? 'teacher-dashboard.html' : 'assistant-dashboard.html';
 };
 
 window.buildGroupSelect = function(){
@@ -277,28 +767,16 @@ window.buildGroupSelect = function(){
     if(!groups.length) groups = typeof DataService?.getGroups === 'function' ? DataService.getGroups() : [];
     sel.innerHTML = '<option value="all">🌍 كل الطلاب</option>' + 
       groups.map(g => '<option value="' + g.id + '">' + g.name + '</option>').join('');
-  }catch(e){ console.error('buildGroupSelect error', e); }
+  }catch(e){}
 };
 
 window.setPrintSize = function(size, btn){
   currentPrintSize = size;
-  document.querySelectorAll('.size-opt').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
   btn?.classList.add('active');
-  
-  // تنظيف الكلاسات القديمة
   document.body.classList.remove('print-small','print-large','print-pocket','print-a3');
   if(size !== 'a4') document.body.classList.add('print-' + size);
-  
-  if(typeof ThemeManager?.toast === 'function'){
-    const labels = {
-      a4:'📄 A4 قياسي (4×4)',
-      small:'🏷️ صغيرة (6×4)',
-      large:'📋 كبيرة (3×3)',
-      pocket:'💳 جيب (2×2)',
-      a3:'📰 A3 كبيرة (6×6)'
-    };
-    ThemeManager.toast(labels[size], 'info');
-  }
+  if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('تم تغيير حجم الطباعة', 'info');
 };
 
 window.renderGrid = function(){
@@ -308,123 +786,95 @@ window.renderGrid = function(){
     const gid = sel ? sel.value : 'all';
     const type = document.getElementById('prType')?.value || 'students';
     
-    let students = gid === 'all'
-      ? (DataService?.getStudents ? DataService.getStudents() : [])
-      : (DataService?.getStudentsByGroup ? DataService.getStudentsByGroup(gid) : []);
-    
-    // فلترة حسب Scope
+    let students = gid === 'all' ? (DataService?.getStudents ? DataService.getStudents() : []) : (DataService?.getStudentsByGroup ? DataService.getStudentsByGroup(gid) : []);
     if(currentUser && typeof Ops?.studentsInScope === 'function'){
       const scopedIds = Ops.studentsInScope(currentUser.id).map(s => s.id);
       students = students.filter(s => scopedIds.includes(s.id));
     }
-    
-    if(q) students = students.filter(s => 
-      (s.name||'').toLowerCase().includes(q) || 
-      (s.code||'').toLowerCase().includes(q)
-    );
+    if(q) students = students.filter(s => (s.name||'').toLowerCase().includes(q) || (s.code||'').toLowerCase().includes(q));
     students = students.filter(s => s.code);
     
     allCards = [];
-    
-    // إضافة الطلاب
     if(type === 'students' || type === 'all'){
       students.forEach(s => {
-        allCards.push({
-          type: 'student',
-          id: s.id,
-          code: s.code,
-          name: s.name,
-          meta: (s.grade || '') + (s.phone ? ' · ' + s.phone : '')
-        });
+        allCards.push({ type: 'student', id: s.id, code: s.code, name: s.name, meta: (s.grade || '') + (s.phone ? ' · ' + s.phone : '') });
       });
     }
-    
-    // إضافة المدرس
     if(type === 'teachers' || type === 'all'){
       if(currentUser && currentUser.role === 'teacher'){
-        allCards.push({
-          type: 'teacher',
-          id: currentUser.id,
-          code: currentUser.code || currentUser.id,
-          name: currentUser.name,
-          meta: 'مدرس · ' + (currentUser.subject || '')
-        });
+        allCards.push({ type: 'teacher', id: currentUser.id, code: currentUser.code || currentUser.id, name: currentUser.name, meta: 'مدرس · ' + (currentUser.subject || '') });
       }
     }
-    
-    // إضافة جروبات الواتساب
     if(type === 'groups' || type === 'all'){
-      let groups = gid === 'all'
-        ? (DataService?.getGroups ? DataService.getGroups() : [])
-        : (DataService?.getGroups ? DataService.getGroups().filter(g => g.id === gid) : []);
-      
+      let groups = gid === 'all' ? (DataService?.getGroups ? DataService.getGroups() : []) : (DataService?.getGroups ? DataService.getGroups().filter(g => g.id === gid) : []);
       if(currentUser && typeof Ops?.groupsInScope === 'function'){
         const scopedGroupIds = Ops.groupsInScope(currentUser.id).map(g => g.id);
         groups = groups.filter(g => scopedGroupIds.includes(g.id));
       }
-      
       groups.filter(g => g.whatsappLink).forEach(g => {
-        allCards.push({
-          type: 'group',
-          id: g.id,
-          code: g.id,
-          name: g.name,
-          meta: '💬 واتساب جروب',
-          whatsappLink: g.whatsappLink
-        });
+        allCards.push({ type: 'group', id: g.id, code: g.id, name: g.name, meta: '💬 واتساب جروب', whatsappLink: g.whatsappLink });
       });
     }
     
-    // تحديث الإحصائيات
-    const studentsCount = allCards.filter(c => c.type === 'student').length;
-    const teachersCount = allCards.filter(c => c.type === 'teacher').length;
-    const groupsCount = allCards.filter(c => c.type === 'group').length;
-    
     document.getElementById('totalCount').textContent = allCards.length;
-    document.getElementById('studentsCount').textContent = studentsCount;
-    document.getElementById('teachersCount').textContent = teachersCount;
-    document.getElementById('groupsCount').textContent = groupsCount;
+    document.getElementById('studentsCount').textContent = allCards.filter(c => c.type === 'student').length;
+    document.getElementById('teachersCount').textContent = allCards.filter(c => c.type === 'teacher').length;
+    document.getElementById('groupsCount').textContent = allCards.filter(c => c.type === 'group').length;
     updateSelectedCount();
     
     const grid = document.getElementById('qrGrid');
     if(!grid) return;
-    
     if(!allCards.length){
       grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-title">لا توجد بطاقات</div><div class="empty-state-text">جرب تغيير الفلتر أو البحث</div></div>';
       return;
     }
     
-    grid.innerHTML = allCards.map(card => {
+    grid.innerHTML = allCards.map((card, index) => {
       const safeName = (card.name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
-      const qrUrl = card.type === 'group' ? card.whatsappLink : qrData(card.code, card.type);
-      const imgSrc = qrImg(card.code, 140, card.type);
-      const cardClass = card.type === 'teacher' ? 'teacher-card' : card.type === 'group' ? 'group-card' : '';
+      const imgSrc = qrImg(card.code, 300, card.type);
+      const cardClass = card.type;
+      const badgeClass = 'badge-' + card.type;
       const typeLabel = card.type === 'teacher' ? 'مدرس' : card.type === 'group' ? 'واتساب' : 'طالب';
+      const isSelected = selectedCards.has(card.id);
       
-      return '<div class="qr-card ' + cardClass + '" data-id="' + card.id + '" data-type="' + card.type + '">' +
-        '<label class="selection-check no-print"><input type="checkbox" ' + (selectedCards.has(card.id) ? 'checked' : '') + ' onchange="window.toggleSelection(\'' + card.id + '\', this.checked)"></label>' +
-        '<span class="qr-card-type ' + card.type + '">' + typeLabel + '</span>' +
-        '<div class="qr-name">' + safeName + '</div>' +
-        '<img src="' + imgSrc + '" alt="' + card.code + '" loading="lazy">' +
-        '<div class="qr-codeline">' + card.code + '</div>' +
-        '<div class="qr-meta">' + (card.meta || '') + '</div>' +
-        '<div class="qr-brand">EduFlow <span class="dot"></span> Habbash Group</div>' +
-        '<div class="card-actions no-print">' +
-          '<button class="btn btn-secondary btn-sm" onclick="window.printSingleCard(\'' + card.id + '\')">🖨️</button>' +
-          '<button class="btn btn-ghost btn-sm" onclick="window.downloadSingleCard(\'' + card.id + '\')">⬇️</button>' +
-        '</div>' +
-      '</div>';
+      return `
+      <div class="qr-card ${cardClass} ${isSelected ? 'selected' : ''}" data-id="${card.id}" data-type="${card.type}" style="animation-delay: ${index * 0.03}s">
+        <div class="card-accent"></div>
+        <div class="card-header">
+          <span class="card-badge ${badgeClass}">${typeLabel}</span>
+          <label class="custom-checkbox no-print">
+            <input type="checkbox" class="card-check" ${isSelected ? 'checked' : ''} onchange="window.toggleSelection('${card.id}', this.checked)">
+            <span class="checkmark"></span>
+          </label>
+        </div>
+        <div class="card-body">
+          <div class="qr-wrapper">
+            <img src="${imgSrc}" class="card-img" alt="${card.code}" loading="lazy">
+          </div>
+          <h3 class="card-name">${safeName}</h3>
+          <div class="card-code-wrapper">
+            <span class="card-code">${card.code}</span>
+          </div>
+          <p class="card-meta">${card.meta || ''}</p>
+        </div>
+        <div class="card-footer no-print">
+          <button class="btn btn-secondary btn-sm flex-1" onclick="window.printSingleCard('${card.id}')" title="طباعة">🖨️ طباعة</button>
+          <button class="btn btn-primary btn-sm flex-1" onclick="window.downloadSingleCard('${card.id}')" title="تحميل كصورة">⬇️ صورة</button>
+        </div>
+      </div>`;
     }).join('');
   }catch(e){
     console.error('renderGrid error', e);
-    const grid = document.getElementById('qrGrid');
-    if(grid) grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-title">خطأ في التحميل</div></div>';
   }
 };
 
 window.toggleSelection = function(id, checked){
-  if(checked) selectedCards.add(id);
-  else selectedCards.delete(id);
+  if(checked) selectedCards.add(id); else selectedCards.delete(id);
+  const cardEl = document.querySelector(`.qr-card[data-id="${id}"]`);
+  if(cardEl) {
+    if(checked) cardEl.classList.add('selected');
+    else cardEl.classList.remove('selected');
+  }
   updateSelectedCount();
 };
 
@@ -435,300 +885,212 @@ window.updateSelectedCount = function(){
 
 window.selectAll = function(){
   allCards.forEach(c => selectedCards.add(c.id));
-  document.querySelectorAll('.selection-check input').forEach(cb => cb.checked = true);
+  document.querySelectorAll('.card-check').forEach(cb => cb.checked = true);
+  document.querySelectorAll('.qr-card').forEach(card => card.classList.add('selected'));
   updateSelectedCount();
   if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('✅ تم تحديد الكل', 'success');
 };
 
 window.deselectAll = function(){
   selectedCards.clear();
-  document.querySelectorAll('.selection-check input').forEach(cb => cb.checked = false);
+  document.querySelectorAll('.card-check').forEach(cb => cb.checked = false);
+  document.querySelectorAll('.qr-card').forEach(card => card.classList.remove('selected'));
   updateSelectedCount();
+};
+
+// Helper for Canvas RoundRect (Fixes the bug in older browsers)
+function drawRoundRect(ctx, x, y, w, h, r) {
+    if (w < 2 * r) r = w / 2;
+    if (h < 2 * r) r = h / 2;
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+    ctx.fill();
+}
+
+async function generateCardImage(card) {
+    return new Promise((resolve, reject) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const width = 800;
+        const height = 1100;
+        canvas.width = width;
+        canvas.height = height;
+
+        ctx.direction = 'rtl';
+        ctx.textAlign = 'center';
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+        
+        const gradient = ctx.createLinearGradient(0, 0, width, 0);
+        if(card.type === 'group') { gradient.addColorStop(0, '#25d366'); gradient.addColorStop(1, '#128c7e'); }
+        else if(card.type === 'teacher') { gradient.addColorStop(0, '#f59e0b'); gradient.addColorStop(1, '#d97706'); }
+        else { gradient.addColorStop(0, '#6366f1'); gradient.addColorStop(1, '#8b5cf6'); }
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, 25);
+
+        ctx.fillStyle = '#64748b';
+        ctx.font = 'bold 28px "Cairo", "Tahoma", "Arial", sans-serif';
+        ctx.fillText('🎓 EduFlow by Habbash Group', width / 2, 80);
+
+        const typeLabels = {student:'طالب',teacher:'مدرس',group:'واتساب جروب'};
+        ctx.fillStyle = gradient;
+        const badgeW = 180, badgeH = 50, badgeX = (width - badgeW) / 2, badgeY = 120;
+        
+        drawRoundRect(ctx, badgeX, badgeY, badgeW, badgeH, 25);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 26px "Cairo", "Tahoma", sans-serif';
+        ctx.fillText(typeLabels[card.type] || 'بطاقة', width / 2, badgeY + 35);
+
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 52px "Cairo", "Tahoma", sans-serif';
+        ctx.fillText(card.name || '-', width / 2, 250);
+
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        const qrUrl = card.type === 'group' ? (card.whatsappLink || qrData(card.code, card.type)) : qrData(card.code, card.type);
+        img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=' + encodeURIComponent(qrUrl) + '&bgcolor=ffffff&color=0f172a&margin=16';
+        
+        img.onload = () => {
+            const qrS = 450, qrX = (width - qrS) / 2, qrY = 300;
+            ctx.fillStyle = '#f8fafc'; 
+            ctx.fillRect(qrX - 20, qrY - 20, qrS + 40, qrS + 40);
+            ctx.strokeStyle = '#e2e8f0'; 
+            ctx.lineWidth = 2; 
+            ctx.strokeRect(qrX - 20, qrY - 20, qrS + 40, qrS + 40);
+            ctx.drawImage(img, qrX, qrY, qrS, qrS);
+
+            ctx.fillStyle = '#4f46e5'; 
+            ctx.font = 'bold 60px monospace, "Courier New", sans-serif';
+            ctx.fillText(card.code, width / 2, 850);
+
+            ctx.fillStyle = '#64748b'; 
+            ctx.font = '30px "Cairo", "Tahoma", sans-serif';
+            ctx.fillText(card.meta || '', width / 2, 910);
+
+            ctx.fillStyle = '#334155'; 
+            ctx.font = 'bold 28px "Cairo", "Tahoma", sans-serif';
+            ctx.fillText(card.type === 'group' ? '💬 امسح الباركود للانضمام للجروب' : '📱 امسح الباركود للدخول السريع', width / 2, 980);
+
+            ctx.fillStyle = '#f1f5f9'; 
+            ctx.fillRect(0, height - 90, width, 90);
+            ctx.fillStyle = '#94a3b8'; 
+            ctx.font = '24px "Cairo", "Tahoma", sans-serif';
+            ctx.fillText('© Habbash Group · ' + new Date().getFullYear(), width / 2, height - 35);
+
+            canvas.toBlob(blob => resolve(blob), 'image/png');
+        };
+        img.onerror = () => reject(new Error('فشل تحميل صورة الباركود'));
+    });
+}
+
+window.downloadSingleCard = async function(id){
+  const card = allCards.find(c => c.id === id);
+  if(!card) return;
+  try{
+    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('🎨 جاري تجهيز الصورة...','info');
+    const blob = await generateCardImage(card);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'QR_' + card.type + '_' + card.code + '_' + (card.name||'').replace(/\s+/g,'_') + '.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('✅ تم تحميل البطاقة كصورة','success');
+  }catch(e){
+    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('خطأ في تحميل الصورة','error');
+  }
 };
 
 window.printSingleCard = function(id){
   const card = allCards.find(c => c.id === id);
   if(!card) return;
-  
   const w = window.open('', '_blank', 'width=500,height=700');
   if(!w){ if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('اسمح بالنوافذ المنبثقة','warning'); return; }
-  
   const d = w.document;
   d.documentElement.setAttribute('dir','rtl');
   d.title = card.name;
-  
   const st = d.createElement('style');
-  st.textContent = `
-    body{font-family:Cairo,Arial,sans-serif;text-align:center;padding:24px;color:#000;background:#fff;margin:0;}
-    .logo{font-size:14px;color:#666;margin-bottom:16px;}
-    .type-badge{display:inline-block;padding:4px 12px;border-radius:9999px;font-size:11px;font-weight:700;color:#fff;margin-bottom:12px;}
-    .type-student{background:#3b82f6;}
-    .type-teacher{background:#6366f1;}
-    .type-group{background:#25d366;}
-    img{width:260px;height:260px;margin:12px auto;display:block;background:#fff;padding:12px;border-radius:12px;border:2px solid #e5e7eb;}
-    .n{font-weight:800;font-size:24px;margin-top:12px;}
-    .c{font-family:monospace;font-size:26px;letter-spacing:3px;margin-top:8px;color:#6366f1;font-weight:800;}
-    .m{font-size:12px;color:#666;margin-top:8px;}
-    .b{font-size:11px;color:#555;margin-top:12px;padding-top:10px;border-top:1px solid #ddd;}
-    .sub{font-size:10px;color:#999;margin-top:4px;}
-  `;
+  st.textContent = `body{font-family:Cairo,Tahoma,Arial,sans-serif;text-align:center;padding:24px;color:#000;background:#fff;margin:0;} img{width:260px;height:260px;margin:12px auto;display:block;background:#fff;padding:12px;border-radius:12px;border:2px solid #e5e7eb;} .n{font-weight:800;font-size:24px;margin-top:12px;} .c{font-family:monospace;font-size:26px;letter-spacing:3px;margin-top:8px;color:#6366f1;font-weight:800;}`;
   d.head.appendChild(st);
-  
-  const typeLabels = {student:'طالب',teacher:'مدرس',group:'واتساب جروب'};
-  
-  const logo = d.createElement('div'); 
-  logo.className = 'logo'; 
-  logo.innerHTML = '🎓 <strong>EduFlow</strong> by <strong>Habbash Group</strong>';
-  
-  const badge = d.createElement('div');
-  badge.className = 'type-badge type-' + card.type;
-  badge.textContent = typeLabels[card.type];
-  
-  const n = d.createElement('div'); 
-  n.className = 'n'; 
-  n.textContent = card.name || '-';
-  
-  const img = d.createElement('img'); 
-  img.src = qrImg(card.code, 300, card.type);
-  
-  const c = d.createElement('div'); 
-  c.className = 'c'; 
-  c.textContent = card.code;
-  
-  const m = d.createElement('div');
-  m.className = 'm';
-  m.textContent = card.meta || '';
-  
-  const b = d.createElement('div'); 
-  b.className = 'b'; 
-  b.innerHTML = card.type === 'group' ? '💬 امسح الباركود للانضمام للجروب' : '📱 امسح الباركود للدخول السريع';
-  
-  const sub = d.createElement('div');
-  sub.className = 'sub';
-  sub.textContent = '© Habbash Group · ' + new Date().getFullYear();
-  
-  d.body.appendChild(logo);
-  d.body.appendChild(badge);
-  d.body.appendChild(n);
-  d.body.appendChild(img);
-  d.body.appendChild(c);
-  d.body.appendChild(m);
-  d.body.appendChild(b);
-  d.body.appendChild(sub);
-  
-  img.onload = function(){ setTimeout(function(){ w.focus(); w.print(); }, 250); };
-  setTimeout(function(){ w.focus(); w.print(); }, 1500);
-};
-
-window.downloadSingleCard = async function(id){
-  const card = allCards.find(c => c.id === id);
-  if(!card) return;
-  
-  try{
-    const r = await fetch(qrImg(card.code, 300, card.type));
-    const b = await r.blob();
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(b);
-    a.download = 'QR_' + card.type + '_' + card.code + '_' + (card.name||'').replace(/\s+/g,'_') + '.png';
-    document.body.appendChild(a); 
-    a.click(); 
-    a.remove();
-    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
-    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('✅ تم تحميل الباركود','success');
-  }catch(e){
-    window.open(qrImg(card.code, 300, card.type), '_blank');
-  }
+  d.body.innerHTML = `<h2>${card.name}</h2><img src="${qrImg(card.code, 300, card.type)}"><div class="c">${card.code}</div><p>${card.meta||''}</p>`;
+  setTimeout(() => { w.focus(); w.print(); }, 1000);
 };
 
 window.printAll = function(){
-  if(!allCards.length){
-    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('لا توجد بطاقات للطباعة','warning');
-    return;
-  }
+  if(!allCards.length) return;
   selectedCards.clear();
   allCards.forEach(c => selectedCards.add(c.id));
-  document.querySelectorAll('.selection-check input').forEach(cb => cb.checked = true);
+  document.querySelectorAll('.card-check').forEach(cb => cb.checked = true);
+  document.querySelectorAll('.qr-card').forEach(card => card.classList.add('selected'));
   updateSelectedCount();
   setTimeout(() => window.print(), 100);
 };
 
 window.printSelected = function(){
-  if(!selectedCards.size){
-    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('حدد بطاقات أولاً','warning');
-    return;
-  }
-  // إخفاء غير المحددة للطباعة
-  document.querySelectorAll('.qr-card').forEach(card => {
-    const id = card.dataset.id;
-    card.style.display = selectedCards.has(id) ? '' : 'none';
-  });
-  setTimeout(() => {
-    window.print();
-    // إعادة الإظهار بعد الطباعة
-    setTimeout(() => {
-      document.querySelectorAll('.qr-card').forEach(card => card.style.display = '');
-    }, 500);
-  }, 100);
+  if(!selectedCards.size){ if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('حدد بطاقات أولاً','warning'); return; }
+  document.querySelectorAll('.qr-card').forEach(card => { card.style.display = selectedCards.has(card.dataset.id) ? '' : 'none'; });
+  setTimeout(() => { window.print(); setTimeout(() => { document.querySelectorAll('.qr-card').forEach(card => card.style.display = ''); }, 500); }, 100);
 };
 
 window.showPreview = function(){
-  const cards = selectedCards.size 
-    ? allCards.filter(c => selectedCards.has(c.id))
-    : allCards;
-  
-  if(!cards.length){
-    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('لا توجد بطاقات للمعاينة','warning');
-    return;
-  }
-  
+  const cards = selectedCards.size ? allCards.filter(c => selectedCards.has(c.id)) : allCards;
+  if(!cards.length) return;
   const container = document.getElementById('previewContainer');
   container.innerHTML = cards.map(card => {
-    const typeLabels = {student:'طالب',teacher:'مدرس',group:'واتساب'};
-    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">' +
-      '<div style="font-size:10px;color:var(--primary);font-weight:700;margin-bottom:4px;">' + typeLabels[card.type] + '</div>' +
-      '<div style="font-weight:800;margin-bottom:6px;">' + card.name + '</div>' +
-      '<img src="' + qrImg(card.code, 120, card.type) + '" style="width:100px;height:100px;margin:6px auto;display:block;">' +
-      '<div style="font-family:monospace;font-weight:800;color:var(--primary);font-size:12px;">' + card.code + '</div>' +
-      '<div style="font-size:10px;color:var(--text-muted);margin-top:4px;">' + (card.meta || '') + '</div>' +
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;">' +
+      '<div style="font-weight:800;margin-bottom:8px;">' + card.name + '</div>' +
+      '<img src="' + qrImg(card.code, 150, card.type) + '" style="width:120px;height:120px;margin:8px auto;display:block;border-radius:8px;">' +
+      '<div style="font-family:monospace;font-weight:800;color:var(--primary);font-size:14px;">' + card.code + '</div>' +
     '</div>';
   }).join('');
-  
   document.getElementById('previewModal').style.display = 'block';
 };
-
-window.closePreview = function(){
-  document.getElementById('previewModal').style.display = 'none';
-};
-
-window.printFromPreview = function(){
-  window.closePreview();
-  if(selectedCards.size){
-    window.printSelected();
-  } else {
-    window.printAll();
-  }
-};
+window.closePreview = function(){ document.getElementById('previewModal').style.display = 'none'; };
+window.printFromPreview = function(){ window.closePreview(); selectedCards.size ? window.printSelected() : window.printAll(); };
 
 window.exportCSV = function(){
-  if(!allCards.length){
-    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('لا توجد بيانات للتصدير','warning');
-    return;
-  }
-  
-  const headers = ['النوع','الاسم','الكود','المرحلة/الصف','الهاتف','الرابط'];
-  const rows = allCards.map(c => {
-    const typeLabels = {student:'طالب',teacher:'مدرس',group:'واتساب جروب'};
-    return [
-      typeLabels[c.type],
-      c.name,
-      c.code,
-      c.meta || '',
-      '',
-      qrData(c.code, c.type)
-    ];
-  });
-  
-  const csv = '\uFEFF' + [headers, ...rows]
-    .map(row => row.map(cell => '"' + String(cell).replace(/"/g,'""') + '"').join(','))
-    .join('\n');
-  
+  if(!allCards.length) return;
+  const headers = ['النوع','الاسم','الكود','المرحلة/الصف','الرابط'];
+  const rows = allCards.map(c => [c.type, c.name, c.code, c.meta || '', qrData(c.code, c.type)]);
+  const csv = '\uFEFF' + [headers, ...rows].map(row => row.map(cell => '"' + String(cell).replace(/"/g,'""') + '"').join(',')).join('\n');
   const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = 'EduFlow_Codes_' + new Date().toISOString().split('T')[0] + '.csv';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
-  
-  if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('✅ تم تصدير ' + allCards.length + ' بطاقة','success');
+  document.body.appendChild(a); a.click(); a.remove();
 };
 
 window.downloadAllAsZip = async function(){
-  if(!allCards.length){
-    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('لا توجد بطاقات للتحميل','warning');
-    return;
-  }
-  
-  if(typeof JSZip === 'undefined'){
-    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('مكتبة JSZip غير محملة','error');
-    return;
-  }
-  
-  if(typeof ThemeManager?.toast === 'function'){
-    ThemeManager.toast('📦 جاري تجهيز ' + allCards.length + ' باركود...','info');
-  }
-  
+  if(!allCards.length || typeof JSZip === 'undefined') return;
+  if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('📦 جاري تجهيز ' + allCards.length + ' صورة...','info');
   try{
     const zip = new JSZip();
-    const folder = zip.folder('EduFlow_QR_Codes');
-    
-    // إضافة CSV
-    const csvHeaders = ['النوع','الاسم','الكود','الرابط'];
-    const csvRows = allCards.map(c => {
-      const typeLabels = {student:'طالب',teacher:'مدرس',group:'واتساب'};
-      return [typeLabels[c.type], c.name, c.code, qrData(c.code, c.type)];
-    });
-    const csv = '\uFEFF' + [csvHeaders, ...csvRows]
-      .map(row => row.map(cell => '"' + String(cell).replace(/"/g,'""') + '"').join(','))
-      .join('\n');
-    folder.file('codes.csv', csv);
-    
-    // تحميل كل الباركودات
+    const folder = zip.folder('EduFlow_QR_Cards');
     for(let i = 0; i < allCards.length; i++){
       const card = allCards[i];
       try{
-        const response = await fetch(qrImg(card.code, 300, card.type));
-        const blob = await response.blob();
+        const blob = await generateCardImage(card);
         const fileName = card.type + '_' + card.code + '_' + (card.name||'').replace(/[^a-zA-Z0-9\u0600-\u06FF]/g,'_') + '.png';
         folder.file(fileName, blob);
-        
-        if(typeof ThemeManager?.toast === 'function' && (i+1) % 5 === 0){
-          ThemeManager.toast('⏳ جاري التحميل... ' + (i+1) + '/' + allCards.length, 'info');
-        }
-      }catch(e){
-        console.error('Error downloading card', card.id, e);
-      }
+        if((i+1) % 5 === 0 && typeof ThemeManager?.toast === 'function') ThemeManager.toast('⏳ ' + (i+1) + '/' + allCards.length, 'info');
+      }catch(e){ console.error(e); }
     }
-    
     const content = await zip.generateAsync({type: 'blob'});
-    const url = URL.createObjectURL(content);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'EduFlow_QR_Codes_' + new Date().toISOString().split('T')[0] + '.zip';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-    
-    if(typeof ThemeManager?.toast === 'function'){
-      ThemeManager.toast('✅ تم تحميل ' + allCards.length + ' باركود في ملف ZIP','success');
-    }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(content);
+    a.download = 'EduFlow_Cards_' + new Date().toISOString().split('T')[0] + '.zip';
+    document.body.appendChild(a); a.click(); a.remove();
+    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('✅ تم تحميل ملف ZIP بنجاح','success');
   }catch(e){
-    console.error('ZIP error', e);
-    if(typeof ThemeManager?.toast === 'function'){
-      ThemeManager.toast('خطأ في إنشاء ملف ZIP: ' + e.message,'error');
-    }
+    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('خطأ في إنشاء ZIP','error');
   }
 };
 
-// إغلاق المودال عند الضغط على الخلفية
-document.getElementById('previewModal')?.addEventListener('click', function(e){
-  if(e.target === this) window.closePreview();
-});
-
-// اختصارات الكيبورد
-document.addEventListener('keydown', function(e){
-  if(e.ctrlKey && e.key === 'p'){
-    e.preventDefault();
-    window.printAll();
-  }
-  if(e.key === 'Escape'){
-    window.closePreview();
-  }
-});
+document.getElementById('previewModal')?.addEventListener('click', function(e){ if(e.target === this) window.closePreview(); });
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
 </body>
 </html>

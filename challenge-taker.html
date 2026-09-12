@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>خوض التحدي - Habbash Group</title>
+<link rel="stylesheet" href="css/eduflow-theme.css">
+<style>
+.challenge-container { max-width: 800px; margin: 20px auto; padding: 20px; position: relative; z-index: 1; }
+.challenge-header { text-align: center; margin-bottom: 24px; }
+.challenge-title { font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 8px; }
+.challenge-meta { display: flex; justify-content: center; gap: 16px; font-size: 14px; color: var(--text-muted); margin-bottom: 16px; flex-wrap: wrap; }
+.timer-badge { background: var(--danger-bg); color: var(--danger); padding: 6px 14px; border-radius: 9999px; font-weight: 700; font-family: var(--font-en); font-size: 16px; display: inline-flex; align-items: center; gap: 6px; }
+.timer-badge.bonus-active { background: var(--success-bg); color: var(--success); animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.6} }
+.progress-bar-wrap { width: 100%; height: 8px; background: var(--surface-hover); border-radius: 9999px; margin-bottom: 24px; overflow: hidden; }
+.progress-bar { height: 100%; background: var(--primary); transition: width 0.3s ease; }
+.question-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 20px; }
+.question-text { font-size: 18px; font-weight: 700; margin-bottom: 20px; line-height: 1.6; }
+.options-list { display: flex; flex-direction: column; gap: 12px; }
+.option-btn { background: var(--surface-hover); border: 2px solid var(--border); border-radius: 12px; padding: 16px; text-align: right; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 12px; }
+.option-btn:hover { border-color: var(--primary-border); background: var(--primary-bg); }
+.option-btn.selected { border-color: var(--primary); background: var(--primary-bg); color: var(--primary); }
+.option-letter { width: 32px; height: 32px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0; }
+.option-btn.selected .option-letter { background: var(--primary); color: #fff; border-color: var(--primary); }
+.action-btns { display: flex; gap: 12px; margin-top: 24px; }
+.btn-full { flex: 1; padding: 14px; font-size: 16px; font-weight: 700; }
+.results-screen { text-align: center; padding: 40px 20px; }
+.results-icon { font-size: 64px; margin-bottom: 16px; }
+.results-score { font-size: 48px; font-weight: 900; color: var(--primary); font-family: var(--font-en); margin-bottom: 8px; }
+.results-msg { font-size: 18px; color: var(--text-secondary); margin-bottom: 24px; }
+.bonus-alert { background: var(--success-bg); color: var(--success); padding: 12px; border-radius: 12px; font-weight: 700; margin-bottom: 24px; display: inline-block; }
+</style>
+</head>
+<body data-theme="dark">
+<div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div>
+
+<div class="challenge-container" id="app">
+    <div id="loadingState" style="text-align:center; padding:60px 20px;">
+        <div style="font-size:48px; margin-bottom:16px;">⏳</div>
+        <h2>جاري تحميل التحدي...</h2>
+    </div>
+
+    <div id="errorState" style="display:none; text-align:center; padding:60px 20px;">
+        <div style="font-size:48px; margin-bottom:16px;">⚠️</div>
+        <h2 id="errorMsg">التحدي غير متاح أو انتهت صلاحيته</h2>
+        <a href="index.html" class="btn btn-primary" style="margin-top:20px;">العودة للرئيسية</a>
+    </div>
+
+    <div id="quizState" style="display:none;">
+        <div class="challenge-header">
+            <h1 class="challenge-title" id="chTitle"></h1>
+            <div class="challenge-meta">
+                <span id="chQuestionsCount"></span>
+                <span id="chPointsInfo"></span>
+            </div>
+            <div id="timerWrap" style="display:none;">
+                <div class="timer-badge bonus-active" id="timerBadge">
+                    ⚡ <span id="timerText">00:00</span>
+                </div>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">أجب بسرعة للحصول على مضاعف النقاط!</div>
+            </div>
+        </div>
+
+        <div class="progress-bar-wrap">
+            <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+        </div>
+
+        <div id="questionContainer"></div>
+
+        <div class="action-btns">
+            <button class="btn btn-primary btn-full" id="submitBtn" onclick="submitChallenge()" disabled>تسليم الإجابات</button>
+        </div>
+    </div>
+
+    <div id="resultsState" style="display:none;" class="results-screen">
+        <div class="results-icon" id="resIcon">🏆</div>
+        <h2 id="resTitle">أحسنت!</h2>
+        <div class="results-score" id="resScore">0</div>
+        <div style="color:var(--text-muted); margin-bottom:16px;">نقطة</div>
+        <div class="results-msg" id="resMsg"></div>
+        <div id="bonusAlertWrap"></div>
+        <a href="index.html" class="btn btn-primary btn-full" style="max-width:300px; margin:0 auto;">العودة للرئيسية</a>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="js/config.js"></script>
+<script src="js/firebase-service.js"></script>
+<script src="js/data-service.js"></script>
+<script src="js/operations-service.js"></script>
+<script src="js/theme-manager.js"></script>
+<script src="js/auth-service.js"></script>
+
+<script>
+let currentUser = null;
+let challenge = null;
+let userAnswers = {};
+let timerInterval = null;
+let bonusDeadlineMs = 0;
+
+// دالة مساعدة لقراءة التاريخ بصيغ مختلفة (Firestore Timestamp, String, Number)
+function parseDate(dateVal) {
+    if (!dateVal) return Date.now();
+    if (typeof dateVal === 'number') return dateVal;
+    if (typeof dateVal === 'string') return new Date(dateVal).getTime();
+    if (dateVal.seconds) return dateVal.seconds * 1000;
+    if (dateVal.toDate) return dateVal.toDate().getTime();
+    return new Date(dateVal).getTime();
+}
+
+async function init() {
+    try {
+        if (typeof DataService?.init === 'function') await DataService.init();
+        currentUser = AuthService?.getCurrentUser ? AuthService.getCurrentUser() : null;
+        if (!currentUser) { window.location.href = 'login.html'; return; }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const challengeId = urlParams.get('id');
+
+        if (!challengeId) { showError('رابط التحدي غير صحيح.'); return; }
+
+        if (typeof DataService?.getChallengeById === 'function') {
+            challenge = await DataService.getChallengeById(challengeId);
+        } else if (typeof DataService?.getChallenges === 'function') {
+            const all = await DataService.getChallenges({});
+            challenge = all.find(c => c.id === challengeId);
+        }
+
+        if (!challenge || challenge.status !== 'active') { showError('التحدي مغلق أو غير موجود حالياً.'); return; }
+        
+        // 🛡️ التحقق من عدم قيام الطالب بخوض التحدي مسبقاً
+        let allAttempts = [];
+        if (typeof DataService?.getChallengeAttempts === 'function') {
+            allAttempts = await DataService.getChallengeAttempts({challengeId: challengeId});
+        } else if (typeof DataService?._getData === 'function') {
+            const d = DataService._getData();
+            allAttempts = (d.challengeAttempts || []).filter(a => a.challengeId === challengeId);
+        }
+        
+        const myAttempt = allAttempts.find(a => a.studentId === currentUser.id);
+        if (myAttempt) {
+            showAlreadyAttempted(myAttempt);
+            return;
+        }
+
+        setupQuiz();
+    } catch (err) {
+        console.error(err);
+        showError('حدث خطأ أثناء تحميل التحدي.');
+    }
+}
+
+function showError(msg) {
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('errorState').style.display = 'block';
+    document.getElementById('errorMsg').textContent = msg;
+}
+
+function showAlreadyAttempted(attempt) {
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('quizState').style.display = 'none';
+    document.getElementById('resultsState').style.display = 'block';
+    
+    document.getElementById('resIcon').textContent = '✅';
+    document.getElementById('resTitle').textContent = 'لقد قمت بخوض هذا التحدي مسبقاً';
+    document.getElementById('resScore').textContent = attempt.points || 0;
+    
+    const scoreNextSibling = document.getElementById('resScore').nextElementSibling;
+    if(scoreNextSibling) scoreNextSibling.textContent = 'نقطة (نتيجتك السابقة)';
+    
+    document.getElementById('resMsg').textContent = `أجبت على ${attempt.correctCount || 0} من ${attempt.totalQuestions || 0} إجابة صحيحة.`;
+    
+    if (attempt.timeBonusApplied) {
+        document.getElementById('bonusAlertWrap').innerHTML = `<div class="bonus-alert">⚡ حصلت على مضاعف النقاط في محاولتك السابقة!</div>`;
+    }
+}
+
+function setupQuiz() {
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('quizState').style.display = 'block';
+
+    document.getElementById('chTitle').textContent = challenge.title || 'تحدي';
+    document.getElementById('chQuestionsCount').textContent = `❓ ${(challenge.questions || []).length} سؤال`;
+    document.getElementById('chPointsInfo').textContent = `⭐ ${challenge.basePoints || 1} نقطة / إجابة`;
+
+    // ⏱️ حساب الوقت المتبقي بناءً على تاريخ إنشاء التحدي
+    if (challenge.timeBonusMultiplier > 1 && challenge.timeBonusHours > 0) {
+        const createdAt = parseDate(challenge.createdAt);
+        bonusDeadlineMs = createdAt + (challenge.timeBonusHours * 60 * 60 * 1000);
+        
+        document.getElementById('timerWrap').style.display = 'block';
+        startTimer();
+    }
+    renderQuestions();
+}
+
+function renderQuestions() {
+    const container = document.getElementById('questionContainer');
+    const questions = challenge.questions || [];
+    container.innerHTML = questions.map((q, i) => {
+        const options = q.options || [];
+        const letters = ['أ', 'ب', 'ج', 'د'];
+        return `
+            <div class="question-card" id="qcard-${i}">
+                <div class="question-text">${i + 1}. ${q.text || ''}</div>
+                <div class="options-list">
+                    ${options.map((opt, oi) => `
+                        <div class="option-btn" onclick="selectOption(${i}, ${oi}, this)" data-q="${i}" data-o="${oi}">
+                            <div class="option-letter">${letters[oi] || (oi + 1)}</div>
+                            <div>${opt}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>`;
+    }).join('');
+    updateProgress();
+}
+
+function selectOption(qIndex, oIndex, el) {
+    const card = document.getElementById(`qcard-${qIndex}`);
+    card.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
+    el.classList.add('selected');
+    userAnswers[qIndex] = oIndex;
+    updateProgress();
+}
+
+function updateProgress() {
+    const total = (challenge.questions || []).length;
+    const answered = Object.keys(userAnswers).length;
+    const pct = total > 0 ? (answered / total) * 100 : 0;
+    document.getElementById('progressBar').style.width = `${pct}%`;
+    document.getElementById('submitBtn').disabled = (answered < total);
+}
+
+function startTimer() {
+    const timerText = document.getElementById('timerText');
+    const timerBadge = document.getElementById('timerBadge');
+    
+    const updateTimer = () => {
+        const remaining = bonusDeadlineMs - Date.now();
+        if (remaining <= 0) {
+            clearInterval(timerInterval);
+            timerText.textContent = "انتهى وقت المضاعف";
+            timerBadge.classList.remove('bonus-active');
+            timerBadge.style.background = 'var(--surface-hover)';
+            timerBadge.style.color = 'var(--text-muted)';
+        } else {
+            const hrs = Math.floor(remaining / 3600000);
+            const mins = Math.floor((remaining % 3600000) / 60000);
+            const secs = Math.floor((remaining % 60000) / 1000);
+            timerText.textContent = hrs > 0 ? `${hrs}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}` : `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+    };
+    
+    updateTimer();
+    timerInterval = setInterval(updateTimer, 1000);
+}
+
+async function submitChallenge() {
+    if (timerInterval) clearInterval(timerInterval);
+    const questions = challenge.questions || [];
+    let correctCount = 0;
+    let basePoints = challenge.basePoints || 1;
+    
+    questions.forEach((q, i) => { if (userAnswers[i] === q.correctAnswer) correctCount++; });
+
+    let totalPoints = correctCount * basePoints;
+    let timeBonusApplied = false;
+
+    // التحقق من المضاعف بناءً على الـ Deadline العالمي
+    if (challenge.timeBonusMultiplier > 1 && bonusDeadlineMs > 0) {
+        if (Date.now() <= bonusDeadlineMs) {
+            totalPoints = Math.round(totalPoints * challenge.timeBonusMultiplier);
+            timeBonusApplied = true;
+        }
+    }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true; btn.textContent = 'جاري الحفظ...';
+
+    try {
+        const attemptData = {
+            challengeId: challenge.id, studentId: currentUser.id, studentName: currentUser.name || 'طالب',
+            answers: userAnswers, correctCount, totalQuestions: questions.length,
+            basePoints: correctCount * basePoints, points: totalPoints,
+            timeBonusApplied, completedAt: new Date().toISOString()
+        };
+
+        if (typeof DataService?.addChallengeAttempt === 'function') await DataService.addChallengeAttempt(attemptData);
+        else if (typeof FirebaseService?.addDoc === 'function') await FirebaseService.addDoc('challengeAttempts', attemptData);
+        else if (typeof DataService?._saveData === 'function') {
+            const d = DataService._getData(); d.challengeAttempts = d.challengeAttempts || [];
+            d.challengeAttempts.push(attemptData); DataService._saveData(d);
+        }
+        showResults(correctCount, questions.length, totalPoints, timeBonusApplied);
+    } catch (err) {
+        console.error(err); btn.textContent = 'خطأ في الحفظ، حاول مرة أخرى'; btn.disabled = false;
+    }
+}
+
+function showResults(correct, total, points, bonus) {
+    document.getElementById('quizState').style.display = 'none';
+    document.getElementById('resultsState').style.display = 'block';
+    document.getElementById('resScore').textContent = points;
+    
+    const pct = total > 0 ? (correct / total) : 0;
+    let msg = '', icon = '🏆';
+    if (pct === 1) { msg = 'إجابات مثالية! أنت بطل حقيقي.'; icon = '🥇'; }
+    else if (pct >= 0.7) { msg = 'أداء ممتاز جداً! استمر.'; icon = '🌟'; }
+    else if (pct >= 0.5) { msg = 'جيد، يمكنك تحقيق نتيجة أفضل في المرة القادمة.'; icon = '👍'; }
+    else { msg = 'لا بأس، راجع الدرس وحاول مرة أخرى!'; icon = '📚'; }
+
+    document.getElementById('resIcon').textContent = icon;
+    document.getElementById('resMsg').textContent = msg;
+
+    if (bonus) {
+        document.getElementById('bonusAlertWrap').innerHTML = `<div class="bonus-alert">⚡ تم تطبيق مضاعف النقاط لسرعتك!</div>`;
+    }
+}
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
