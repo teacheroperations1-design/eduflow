@@ -1,13 +1,8 @@
-// js/config.js — إعدادات منصة EduFlow (نسخة Compat صحيحة)
-// ⚠️ ممنوع نهائيًا استخدام import / export في ملفات هذا المشروع
-//    لأن كل الصفحات بتحمّلها كـ Classic Scripts
-
+// js/config.js — إعدادات منصة EduFlow (نسخة كاملة نهائية)
 window.EduFlowConfig = {
 
-  // 🔥 تفعيل المزامنة السحابية
   useFirebase: true,
 
-  // إعدادات مشروع Firebase (Compat Style — بدون import)
   firebaseConfig: {
     apiKey: "AIzaSyBj2wM0CgWbXVohSTI8y5fIPmT1vNw3Jl8",
     authDomain: "follow-up-ee4cc.firebaseapp.com",
@@ -19,16 +14,22 @@ window.EduFlowConfig = {
     measurementId: "G-B31RT3KJDP"
   },
 
-  // ⏰ صيغة الوقت
   timeFormat: '12h',
 
-  // 💰 إعدادات الفوترة
+  // 🆕 ده القسم اللي كان ناقص — بدونه قوائم المرحلة والصفوف فاضية في كل الصفحات
+  educationLevels: {
+    kg:        { nameAr: 'رياض الأطفال',   grades: ['KG1','KG2'] },
+    primary:   { nameAr: 'المرحلة الابتدائية', grades: ['الأول الابتدائي','الثاني الابتدائي','الثالث الابتدائي','الرابع الابتدائي','الخامس الابتدائي','السادس الابتدائي'] },
+    prep:      { nameAr: 'المرحلة الإعدادية',  grades: ['الأول الإعدادي','الثاني الإعدادي','الثالث الإعدادي'] },
+    secondary: { nameAr: 'المرحلة الثانوية',   grades: ['الأول الثانوي','الثاني الثانوي','الثالث الثانوي'] }
+  },
+
   billing: {
+    currency: 'ج.م',
     defaultSessionsPerMonth: 8,
     sessionsBeforePayment: 8
   },
 
-  // 🏆 نظام النقاط
   pointsSystem: {
     attendance: 1,
     homeworkPass: 1,
@@ -37,15 +38,11 @@ window.EduFlowConfig = {
     recitation: { basePoints: 2 }
   },
 
-  // ⚙️ إعدادات عامة
   settings: {
-    qrSessionDuration: 7200000,          // مدة صلاحية كود الحضور (ساعتين)
-    teacherRegisterLinkDuration: 48      // مدة رابط دعوة مدرس (ساعات)
+    qrSessionDuration: 7200000,
+    teacherRegisterLinkDuration: 48
   },
 
-  // 🚩 FLAGS الميزات
   featureFlags: {},
-
-  // 📚 إعدادات منصة حصتك
   hesetak: {}
 };
