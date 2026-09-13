@@ -27,15 +27,13 @@
 .hint-box{background:var(--surface-hover);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:12px;font-size:12px;color:var(--text-secondary);display:flex;gap:8px;align-items:flex-start}
 .hint-box .icon{font-size:16px;flex-shrink:0}
 .parent-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:9999px;background:linear-gradient(135deg,rgba(251,191,36,.15),rgba(245,158,11,.15));border:1px solid rgba(251,191,36,.3);color:var(--text-secondary);font-size:10px;font-weight:700}
-
-/* 🆕 Smart Modal Styles */
-.smart-modal-overlay{display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:2000; align-items:center; justify-content:center; padding:16px; backdrop-filter:blur(8px);}
+.smart-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:2000;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(8px);}
 .smart-modal-overlay.active{display:flex;}
-.smart-modal-card{background:var(--surface); border:2px solid var(--primary); border-radius:20px; max-width:500px; width:100%; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.5); padding:24px; position:relative;}
-.smart-student-header{background:var(--surface-hover); padding:16px; border-radius:12px; margin-bottom:20px; text-align:center; border:1px solid var(--border);}
-.smart-student-name{font-size:24px; font-weight:900; color:var(--primary); margin-bottom:4px;}
-.smart-action-box{background:var(--success-bg); border:1px solid var(--success); border-radius:12px; padding:14px; margin-bottom:16px;}
-.smart-hw-box{background:var(--warning-bg); border:1px dashed var(--warning); border-radius:12px; padding:14px; margin-bottom:16px;}
+.smart-modal-card{background:var(--surface);border:2px solid var(--primary);border-radius:20px;max-width:500px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.5);padding:24px;position:relative;}
+.smart-student-header{background:var(--surface-hover);padding:16px;border-radius:12px;margin-bottom:20px;text-align:center;border:1px solid var(--border);}
+.smart-student-name{font-size:24px;font-weight:900;color:var(--primary);margin-bottom:4px;}
+.smart-action-box{background:var(--success-bg);border:1px solid var(--success);border-radius:12px;padding:14px;margin-bottom:16px;}
+.smart-hw-box{background:var(--warning-bg);border:1px dashed var(--warning);border-radius:12px;padding:14px;margin-bottom:16px;}
 </style>
 </head>
 <body data-theme="dark">
@@ -43,10 +41,7 @@
 <div class="cam-wrap">
 
 <div class="cam-header">
-  <a href="javascript:history.back()" class="back-btn">
-    <span>←</span>
-    <span>رجوع</span>
-  </a>
+  <a href="javascript:history.back()" class="back-btn"><span>←</span><span>رجوع</span></a>
   <div class="brand-mini">
     <div class="brand-mini-logo">🎓</div>
     <div>
@@ -69,16 +64,25 @@
 </div>
 
 <div class="cam-controls">
-  <button class="btn btn-secondary" onclick="window.toggleCamera()" id="flipBtn">
-    🔄 تبديل الكاميرا
-  </button>
-  <button class="btn btn-secondary" onclick="document.getElementById('uploadInput').click()">
-    🖼️ من الصورة
-  </button>
+  <button class="btn btn-secondary" onclick="window.toggleCamera()" id="flipBtn">🔄 تبديل الكاميرا</button>
+  <button class="btn btn-secondary" onclick="document.getElementById('uploadInput').click()">🖼️ من الصورة</button>
   <input type="file" id="uploadInput" accept="image/*" style="display:none" onchange="window.handleUpload(event)">
 </div>
 
 <div id="scanStatus" class="filter-info" style="margin-top:12px;text-align:center;">🎥 تشغيل الكاميرا...</div>
+
+<!-- 🆕 دخول فوري للموظفين بدون كلمة مرور -->
+<div id="staffQuickBox" class="hint-box" style="display:none;border-color:var(--primary);">
+  <span class="icon">👨💼</span>
+  <div style="flex:1">
+    <strong>وضع الموظفين — دخول فوري بدون كلمة مرور:</strong>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+      <button class="btn btn-sm btn-primary" onclick="window.staffQuick('assistant')">🧑💼 مساعد</button>
+      <button class="btn btn-sm btn-primary" onclick="window.staffQuick('super_admin')">🛡️ أدمن</button>
+      <button class="btn btn-sm btn-primary" onclick="window.staffQuick('teacher')">👨🏫 مدرس</button>
+    </div>
+  </div>
+</div>
 
 <div class="hint-box">
   <span class="icon">💡</span>
@@ -98,7 +102,6 @@
 
 </div>
 
-<!-- 🆕 Smart Scan Modal (النظام الذكي للمساعد/الأدمن) -->
 <div id="smartScanModal" class="smart-modal-overlay">
   <div class="smart-modal-card">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
@@ -123,7 +126,7 @@
 <script src="js/auth-service.js"></script>
 
 <script>
-  /* 🆕 موحّد البحث عن الطالب بالكود (يقبل حروف كبيرة/صغيرة + مسافات + studentId احتياطي) */
+/* توحيد البحث عن الطالب بالكود */
 window.normalizeCode=function(c){ return String(c||'').trim().toUpperCase().replace(/\s+/g,''); };
 window.resolveStudentByCode=function(code){
   try{
@@ -134,7 +137,6 @@ window.resolveStudentByCode=function(code){
         || null;
   }catch(e){ return null; }
 };
-/* 🆕 إصلاح الطلاب اللي ملهمش كود (نفّذها مرة واحدة من console جهاز الإدارة) */
 window.fixMissingCodes=function(){
   try{
     const d=DataService._getData(); const used=new Set((d.users||[]).map(u=>u.code).filter(Boolean));
@@ -146,10 +148,11 @@ window.fixMissingCodes=function(){
       }
     });
     DataService._saveData(d);
-    if(window.FirebaseService?.connected) FirebaseService.saveDoc('meta','codes_fixed',{at:new Date().toISOString(),fixed:n});
+    if(window.FirebaseService?.connected) FirebaseService.saveMeta('codes_fixed',{at:new Date().toISOString(),fixed:n});
     alert('✅ تم توليد أكواد لـ '+n+' طالب — اطبع الباركودات تاني');
   }catch(e){ alert('خطأ: '+e.message); }
 };
+
 let currentUser=null, scanning=true, lastScan=0, stream=null;
 let useFrontCamera=false;
 const video=document.getElementById('preview');
@@ -160,10 +163,24 @@ const ctx=canvas.getContext('2d',{willReadFrequently:true});
   try{
     if(typeof DataService?.init==='function') await DataService.init();
     currentUser=AuthService?.getCurrentUser?AuthService.getCurrentUser():null;
-    
+    if(!currentUser){
+      const box=document.getElementById('staffQuickBox');
+      if(box) box.style.display='flex';
+    }
     window.startCamera();
   }catch(e){ console.error(e); }
 })();
+
+/* 🆕 دخول فوري للموظفين */
+window.staffQuick=function(role){
+  if(window.setQrQuickSession) window.setQrQuickSession(role,12);
+  currentUser=AuthService.getCurrentUser();
+  const box=document.getElementById('staffQuickBox');
+  if(box) box.style.display='none';
+  const st=document.getElementById('scanStatus');
+  if(st) st.innerHTML='✅ وضع الموظف مفعّل — امسح الباركود الآن';
+  if(typeof ThemeManager?.toast==='function') ThemeManager.toast('✅ تم تفعيل وضع: '+role,'success');
+};
 
 window.startCamera=async function(){
   try{
@@ -204,7 +221,7 @@ window.toggleCamera=async function(){
 window.tick=function(){
   try{
     if(scanning && video.readyState===video.HAVE_ENOUGH_DATA && window.jsQR){
-      canvas.width=video.videoWidth; 
+      canvas.width=video.videoWidth;
       canvas.height=video.videoHeight;
       ctx.drawImage(video,0,0);
       const img=ctx.getImageData(0,0,canvas.width,canvas.height);
@@ -223,22 +240,18 @@ window.handleUpload=async function(event){
   try{
     const file=event.target.files[0];
     if(!file) return;
-    
     scanning=false;
     const st=document.getElementById('scanStatus');
     if(st) st.innerHTML='🔍 جاري تحليل الصورة...';
-    
     video.style.display='none';
     const scanLine=document.getElementById('scanLine');
     if(scanLine) scanLine.style.display='none';
-    
     let uploadedImg=document.querySelector('.cam-box img.uploaded');
     if(!uploadedImg){
       uploadedImg=document.createElement('img');
       uploadedImg.className='uploaded';
       document.getElementById('camBox').appendChild(uploadedImg);
     }
-    
     const reader=new FileReader();
     reader.onload=function(e){
       uploadedImg.src=e.target.result;
@@ -248,7 +261,6 @@ window.handleUpload=async function(event){
         canvas.height=img.height;
         ctx.drawImage(img,0,0);
         const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
-        
         if(window.jsQR){
           const code=jsQR(imgData.data,imgData.width,imgData.height,{inversionAttempts:'attemptBoth'});
           if(code && code.data){
@@ -281,7 +293,7 @@ window.goManual=function(){
 };
 
 // ==========================================
-// 🆕 النظام الذكي (Smart Modal Functions للمساعد/الأدمن)
+// النافذة الذكية (مساعد/أدمن/مدرس)
 // ==========================================
 window.openSmartModal = function(student) {
     const teachers = DataService.getStudentTeachers ? DataService.getStudentTeachers(student.id) : [];
@@ -289,14 +301,11 @@ window.openSmartModal = function(student) {
         ThemeManager.toast('هذا الطالب غير مسجل في أي مجموعة حالياً', 'error');
         return;
     }
-    
     let groupsOptions = teachers.map(t => `<option value="${t.group.id}">${t.group.name} (${t.teacher.name})</option>`).join('');
-    
     const gids = teachers.map(t => t.group.id);
     const allHw = DataService.getHomework ? DataService.getHomework() : [];
     const offlineHw = allHw.filter(h => gids.includes(h.groupId) && (h.paper || h.offline));
-    
-    let hwOptions = '<option value="">-- بدون تسجيل واجب ورقي --</option>' + 
+    let hwOptions = '<option value="">-- بدون تسجيل واجب ورقي --</option>' +
         offlineHw.map(h => {
             const g = DataService.getGroups().find(gr => gr.id === h.groupId);
             return `<option value="${h.id}" data-max="${h.totalPoints || 10}">${h.title} (${g?.name || ''})</option>`;
@@ -307,7 +316,6 @@ window.openSmartModal = function(student) {
             <div class="smart-student-name">${student.name}</div>
             <div class="text-sm text-muted">الكود: <strong style="font-family:var(--font-en);">${student.code}</strong> · ${student.grade || ''}</div>
         </div>
-        
         <div class="smart-action-box">
             <label style="display:flex; align-items:center; gap:12px; cursor:pointer;">
                 <input type="checkbox" id="smartAttend" checked style="width:24px; height:24px; accent-color:var(--success); flex-shrink:0;">
@@ -322,7 +330,6 @@ window.openSmartModal = function(student) {
                 </select>
             </div>
         </div>
-
         <div class="smart-hw-box">
             <label class="text-sm" style="font-weight:800; color:var(--warning); display:block; margin-bottom:8px;">📝 تسجيل درجة واجب ورقي (اختياري)</label>
             <div class="form-group" style="margin-bottom:8px;">
@@ -337,13 +344,11 @@ window.openSmartModal = function(student) {
                 </div>
             </div>
         </div>
-
         <button class="btn btn-primary btn-lg w-full" onclick="window.submitSmartScan('${student.id}')" style="margin-top:8px; font-size:16px; padding:14px;">
             💾 حفظ الحضور والدرجة
         </button>
         <button class="btn btn-ghost w-full" onclick="window.closeSmartModal()" style="margin-top:8px;">إلغاء</button>
     `;
-    
     document.getElementById('smartModalBody').innerHTML = body;
     document.getElementById('smartScanModal').classList.add('active');
     scanning = false;
@@ -377,22 +382,22 @@ window.submitSmartScan = async function(studentId) {
     const groupId = document.getElementById('smartGroup').value;
     const hwId = document.getElementById('smartHwSelect').value;
     const hwGrade = document.getElementById('smartHwGrade').value;
-    
+    const byId = (currentUser && (currentUser.id || currentUser.uid)) || 'qr-staff';
     let successCount = 0;
-    
+
     if (attend && groupId) {
         try {
             const group = DataService.getGroups().find(g => g.id === groupId);
             await DataService.submitAttendance({
                 groupId: groupId,
                 groupName: group?.name || '',
-                submittedBy: currentUser.id,
+                submittedBy: byId,
                 records: [{ studentId: studentId, status: 'present' }]
             });
             successCount++;
         } catch(e) { console.error('Att error', e); }
     }
-    
+
     if (hwId && hwGrade) {
         try {
             const score = parseFloat(hwGrade);
@@ -411,8 +416,9 @@ window.submitSmartScan = async function(studentId) {
                         status: 'graded',
                         offline: true,
                         paper: true,
-                        gradedBy: currentUser.id,
-                        submittedAt: new Date().toISOString()
+                        gradedBy: byId,
+                        submittedAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
                     };
                     d.submissions.push(sub);
                 } else {
@@ -420,66 +426,80 @@ window.submitSmartScan = async function(studentId) {
                     sub.status = 'graded';
                     sub.offline = true;
                     sub.paper = true;
-                    sub.gradedBy = currentUser.id;
+                    sub.gradedBy = byId;
+                    sub.updatedAt = new Date().toISOString();
                 }
                 DataService._saveData(d);
+                if (window.FirebaseService?.connected) await FirebaseService.saveDoc('submissions', sub.id, sub);
                 successCount++;
             }
         } catch(e) { console.error('HW error', e); }
     }
-    
-    if (successCount > 0) {
-        ThemeManager.toast('✅ تم الحفظ بنجاح (الحضور + الدرجة)', 'success');
-    } else {
-        ThemeManager.toast('⚠️ لم يتم تحديد أي إجراء', 'warning');
-    }
-    
+
+    if (successCount > 0) ThemeManager.toast('✅ تم الحفظ بنجاح (الحضور + الدرجة)', 'success');
+    else ThemeManager.toast('⚠️ لم يتم تحديد أي إجراء', 'warning');
     window.closeSmartModal();
 };
-// ==========================================
 
-// ✅ معالجة الباركود الشاملة (مع المنطق الصحيح للتوجيه)
-window.handleScan = function(data) {
+// ==========================================
+// ✅ معالجة الباركود الشاملة (async + بحث في Firestore)
+// ==========================================
+window.handleScan = async function(data) {
     try {
         data = String(data || '').trim();
         if (!data) return;
 
-        // 1. باركود حضور (EDUFLOW-ATT) - يمسحه الطالب لتسجيل الحضور
+        // 1. باركود حضور
         if (data.includes('EDUFLOW-ATT:')) {
             const code = data.split('EDUFLOW-ATT:')[1] || '';
             if (currentUser?.role === 'student') {
-                (async () => {
-                    const r = await DataService.checkInByCode(currentUser.id, code);
-                    ThemeManager.toast(r.success ? '✅ تم تسجيل الحضور' : r.message, r.success ? 'success' : 'error');
-                    if (r.success) setTimeout(() => { window.location.href = 'student-dashboard.html'; }, 1200);
-                })();
+                const r = await DataService.checkInByCode(currentUser.id, code);
+                ThemeManager.toast(r.success ? '✅ تم تسجيل الحضور' : r.message, r.success ? 'success' : 'error');
+                if (r.success) setTimeout(() => { window.location.href = 'student-dashboard.html'; }, 1200);
             } else {
                 ThemeManager.toast('📋 هذا باركود حضور، يجب أن يمسحه الطالب من هاتفه', 'warning');
             }
             return;
         }
 
-        // 2. البحث عن كود (طالب أو ولي أمر)
+        // 2. استخراج الكود
         const m = data.match(/code=([A-Za-z0-9-]+)/i) || data.match(/(EDU-[A-Z0-9-]+)/i);
         const code = m ? m[1] : data;
 
         const allUsers = DataService.getUsers ? DataService.getUsers() : [];
-        const student = allUsers.find(u => u.role === 'student' && (u.code === code || u.id === code));
-        const parent = allUsers.find(u => u.role === 'parent' && (u.phone === code || u.id === code || u.parentPhone === code));
+        let student = allUsers.find(u => u.role === 'student' && (window.normalizeCode(u.code) === window.normalizeCode(code) || u.id === code));
+        let parent  = allUsers.find(u => u.role === 'parent' && (u.phone === code || u.id === code || u.parentPhone === code));
+
+        // 🆕 لو المحلي فاضي → دوّر في Firestore مباشرة
+        if (!student && !parent && window.firebase && firebase.apps.length) {
+          try {
+            const nc = window.normalizeCode(code);
+            let q = await firebase.firestore().collection('users').where('code','==',nc).limit(1).get();
+            if (q.empty) q = await firebase.firestore().collection('users').where('studentId','==',nc).limit(1).get();
+            if (!q.empty) {
+              student = { id: q.docs[0].id, ...q.docs[0].data() };
+              try {
+                const d = DataService._getData();
+                d.users = d.users || [];
+                if (!d.users.some(u => u.id === student.id)) { d.users.push(student); DataService._saveData(d); }
+              } catch(e){}
+            }
+          } catch(fe) { console.warn('remote resolve:', fe.code); }
+        }
 
         if (!student && !parent) {
             ThemeManager.toast('❌ لم يتم العثور على طالب أو ولي أمر بهذا الكود', 'error');
             return;
         }
 
-        // 🆕 الباركود = رخصة دخول: لو مفيش جلسة، سجّل دخول تلقائي ودخل على طول
+        // 🆕 مفيش جلسة + باركود طالب → دخول تلقائي كطالب
         if (!currentUser && student) {
             try {
                 if (window.setEduUser) window.setEduUser(student);
                 else sessionStorage.setItem('eduflow_user', JSON.stringify(student));
                 ThemeManager.toast('✅ أهلاً ' + student.name + ' — جاري فتح حسابك', 'success');
                 setTimeout(() => { window.location.href = 'student-dashboard.html'; }, 700);
-            } catch (e) { window.location.href = 'student-dashboard.html'; }
+            } catch(e) { window.location.href = 'student-dashboard.html'; }
             return;
         }
         if (!currentUser && parent) {
@@ -487,70 +507,49 @@ window.handleScan = function(data) {
                 if (window.setEduUser) window.setEduUser(parent);
                 else sessionStorage.setItem('eduflow_user', JSON.stringify(parent));
                 setTimeout(() => { window.location.href = 'parent-dashboard.html'; }, 700);
-            } catch (e) { window.location.href = 'parent-dashboard.html'; }
+            } catch(e) { window.location.href = 'parent-dashboard.html'; }
             return;
         }
 
-        // ==========================================
-        // 🎯 التوجيه بناءً على صلاحية المستخدم الحالي:
-        // ==========================================
-
-        // A. الطالب يمسح الباركود
+        // A. طالب
         if (currentUser?.role === 'student') {
-            if (student && currentUser.id === student.id) {
-                // ✅ الطالب يمسح باركوده الخاص → يوديه للدشابورد
-                window.location.href = 'student-dashboard.html';
-            } else {
-                ThemeManager.toast('⚠️ لا يمكنك مسح باركود طالب آخر', 'error');
-            }
+            if (student && currentUser.id === student.id) window.location.href = 'student-dashboard.html';
+            else ThemeManager.toast('⚠️ لا يمكنك مسح باركود طالب آخر', 'error');
             return;
         }
 
-        // B. ولي الأمر يمسح الباركود
+        // B. ولي أمر
         if (currentUser?.role === 'parent') {
-            if (parent && currentUser.id === parent.id) {
-                // ✅ ولي الأمر يمسح باركوده الخاص
-                window.location.href = 'parent-dashboard.html';
-            } else if (student) {
-                // ✅ ولي الأمر يمسح باركود ابنه → يتحقق من الربط ويوديه لدشابورد ولي الأمر
-                const isMyChild = currentUser.studentIds?.includes(student.id) || 
+            if (parent && currentUser.id === parent.id) window.location.href = 'parent-dashboard.html';
+            else if (student) {
+                const isMyChild = currentUser.studentIds?.includes(student.id) ||
                                   student.parentPhone === currentUser.phone ||
                                   student.parentPhone === currentUser.parentPhone;
-                if (isMyChild) {
-                    window.location.href = `parent-dashboard.html?studentId=${student.id}`;
-                } else {
-                    ThemeManager.toast('⚠️ هذا الطالب غير مرتبط بحسابك', 'error');
-                }
+                if (isMyChild) window.location.href = 'parent-dashboard.html?studentId=' + student.id;
+                else ThemeManager.toast('⚠️ هذا الطالب غير مرتبط بحسابك', 'error');
             }
             return;
         }
 
-        // C. مساعد / أدمن / مدرس → فتح النافذة الذكية
+        // C. مساعد / أدمن / مدرس → النافذة الذكية
         if (currentUser?.role === 'assistant' || currentUser?.role === 'super_admin' || currentUser?.role === 'teacher') {
-            if (student) {
-                window.openSmartModal(student);
-            } else if (parent) {
-                ThemeManager.toast('ℹ️ هذا باركود ولي أمر، ابحث عن الطالب المرتبط به', 'info');
-            }
+            if (student) window.openSmartModal(student);
+            else if (parent) ThemeManager.toast('ℹ️ هذا باركود ولي أمر، ابحث عن الطالب المرتبط به', 'info');
             return;
         }
 
-    } catch (e) {
+    } catch(e) {
         console.error(e);
         ThemeManager.toast('خطأ في معالجة الباركود', 'error');
     }
 };
 
 window.addEventListener('beforeunload',function(){
-  try{
-    if(stream) stream.getTracks().forEach(t=>t.stop());
-  }catch(e){}
+  try{ if(stream) stream.getTracks().forEach(t=>t.stop()); }catch(e){}
 });
 
 document.addEventListener('keydown',function(e){
-  if(e.key==='Enter' && document.activeElement?.id==='manualCode'){
-    window.goManual();
-  }
+  if(e.key==='Enter' && document.activeElement?.id==='manualCode'){ window.goManual(); }
 });
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>

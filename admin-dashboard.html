@@ -844,11 +844,11 @@
 </div>
 
 
-
 <!-- External Scripts -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 <script src="js/config.js"></script>
 <script src="js/firebase-service.js"></script>
 <script src="js/data-service.js"></script>
@@ -908,8 +908,19 @@ if(typeof Ops !== 'undefined'){
    🚀 BOOT & INIT
    ================================================================ */
 (async function boot(){
+try{
+// 1. تهيئة Firebase أولاً
+if(window.EduFlowConfig?.useFirebase && window.firebase && !firebase.apps.length){
   try{
-    if(typeof DataService?.init==='function') await DataService.init();
+    firebase.initializeApp(window.EduFlowConfig.firebaseConfig);
+    console.log('✅ Firebase initialized');
+  }catch(e){
+    console.error('❌ Firebase init error:', e);
+  }
+}
+
+// 2. تهيئة DataService
+if(typeof DataService?.init==='function') await DataService.init();
     if(window.Ops && typeof Ops.init==='function') await Ops.init();
     if(typeof AuthService?.requireRole==='function' && !AuthService.requireRole(['super_admin'])) return;
     currentUser=AuthService?.getCurrentUser?AuthService.getCurrentUser():null;
@@ -2761,34 +2772,49 @@ const r=document.documentElement;
 if(b.primaryColor) r.style.setProperty('--primary', b.primaryColor);
 if(b.accentColor) r.style.setProperty('--accent', b.accentColor);
 document.querySelectorAll('[data-brand-name]').forEach(el=>{ el.textContent=b.name||'EduFlow'; });
-document.querySelectorAll('[data-logo]').forEach(el=>{ el.innerHTML=b.logoUrl?`<img src="${b.logoUrl}" alt="logo" style="width:100%;height:100%;object-fit:cover;">`:'🎓'; });
+document.querySelectorAll('[data-logo]').forEach(el=>{ el.innerHTML=b.logoUrl?`<img src="${window.resolveImageUrl(b.logoUrl,200)}" alt="logo" style="width:100%;height:100%;object-fit:cover;">`:'🎓'; });
 }catch(e){}
 };
 
-window.saveBranding=async function(){
-  try{
-    const data={
-      name:document.getElementById('bName').value,
-      tagline:document.getElementById('bTagline').value,
-      logoUrl:document.getElementById('bLogoUrl').value,
-      primaryColor:document.getElementById('bPrimary').value,
-      accentColor:document.getElementById('bAccent').value,
-      phone:document.getElementById('bPhone').value,
-      whatsapp:document.getElementById('bWhatsapp').value,
-      facebook:document.getElementById('bFacebook').value,
-      aboutCompany:document.getElementById('bAboutCompany').value,
-      aboutContact:document.getElementById('bAboutContact').value
+window.saveBranding = async function(){
+  try {
+    const data = {
+      name: document.getElementById('bName').value,
+      tagline: document.getElementById('bTagline').value,
+      logoUrl: document.getElementById('bLogoUrl').value,
+      primaryColor: document.getElementById('bPrimary').value,
+      accentColor: document.getElementById('bAccent').value,
+      phone: document.getElementById('bPhone').value,
+      whatsapp: document.getElementById('bWhatsapp').value,
+      facebook: document.getElementById('bFacebook').value,
+      aboutCompany: document.getElementById('bAboutCompany').value,
+      aboutContact: document.getElementById('bAboutContact').value,
+      updatedAt: new Date().toISOString()
     };
-    
-    if(typeof Ops?.saveBranding==='function'){
-      await Ops.saveBranding(data);
-      window.safeToast('✅ تم حفظ الإعدادات','success');
-    } else {
-      window.safeToast('الخدمة غير متوفرة','error');
+
+    // 1. حفظ في الداتا المحلية
+    const d = db();
+    d.branding = data;
+    save(d);
+    localStorage.setItem('eduflow_branding', JSON.stringify(data));
+
+    // 2. تطبيق البراندنج فوراً على الشاشة
+    if (typeof window.applyBranding === 'function') window.applyBranding(data);
+    if (typeof DataService?.applyBrandingColors === 'function') DataService.applyBrandingColors(data);
+
+    // 3. رفع للسحابة (Cloud-First)
+    if (window.FirebaseService?._db) {
+      try {
+        await FirebaseService.saveMeta('branding', data);
+      } catch (e) {
+        console.warn('Cloud queue:', e);
+      }
     }
-  }catch(e){
+
+    window.safeToast('✅ تم حفظ الإعدادات وتطبيقها فوراً', 'success');
+  } catch(e) {
     console.error(e);
-    window.safeToast('خطأ في الحفظ: '+e.message,'error');
+    window.safeToast('خطأ في الحفظ: ' + e.message, 'error');
   }
 };
 
@@ -3610,6 +3636,72 @@ window.awardAcademicPoints = async function(studentId, type, score, maxScore, re
         console.error('Award points error', e);
     }
 };
+</script>
+<script>
+// 🩹 MASTER PATCH: سد ثغرات Ops المفقودة وربطها بـ DataService و Firebase مباشرة
+(function(){
+  if (typeof window.Ops === 'undefined') window.Ops = {};
+
+  // 1. حفظ الإعدادات (Branding) - احتياطي
+  Ops.saveBranding = Ops.saveBranding || async function(data) {
+    const d = db(); d.branding = data; save(d);
+    localStorage.setItem('eduflow_branding', JSON.stringify(data));
+    if (window.FirebaseService?._db) await FirebaseService.saveMeta('branding', data);
+    if (typeof window.applyBranding === 'function') window.applyBranding(data);
+    return { success: true };
+  };
+
+  // 2. النقاط اليدوية
+  Ops.addManualPoints = Ops.addManualPoints || async function(studentId, points, reason, awardedBy) {
+    if (typeof DataService?.addManualPoint === 'function') {
+      return await DataService.addManualPoint({ studentId, points, reason, awardedBy });
+    }
+    const d = db(); d.manualPoints = d.manualPoints || [];
+    const rec = { id: 'mp_' + Date.now(), studentId, points, reason, awardedBy, awardedAt: new Date().toISOString() };
+    d.manualPoints.push(rec); save(d);
+    if (window.FirebaseService?._db) await FirebaseService.saveDoc('manualPoints', rec.id, rec);
+    return rec;
+  };
+
+  // 3. قواعد النقاط
+  Ops.savePointsRules = Ops.savePointsRules || async function(rules) {
+    const d = db(); d.pointsRules = rules; save(d);
+    if (window.FirebaseService?._db) await FirebaseService.saveMeta('pointsRules', rules);
+    return { success: true };
+  };
+  Ops.getPointsRules = Ops.getPointsRules || function() { return db().pointsRules || {}; };
+
+  // 4. القوالب (Templates)
+  Ops.addWhatsAppTemplate = Ops.addWhatsAppTemplate || async function(data) {
+    if (typeof DataService?.addWhatsAppTemplate === 'function') return await DataService.addWhatsAppTemplate(data);
+    const d = db(); d.whatsappTemplates = d.whatsappTemplates || [];
+    const rec = { id: 'tpl_' + Date.now(), ...data, createdAt: new Date().toISOString() };
+    d.whatsappTemplates.push(rec); save(d);
+    if (window.FirebaseService?._db) await FirebaseService.saveDoc('whatsappTemplates', rec.id, rec);
+    return rec;
+  };
+  Ops.updateWhatsAppTemplate = Ops.updateWhatsAppTemplate || async function(id, data) {
+    if (typeof DataService?.updateWhatsAppTemplate === 'function') return await DataService.updateWhatsAppTemplate(id, data);
+    const d = db(); const t = (d.whatsappTemplates || []).find(x => x.id === id);
+    if (t) { Object.assign(t, data); save(d); if (window.FirebaseService?._db) await FirebaseService.saveDoc('whatsappTemplates', id, t); }
+    return t;
+  };
+  Ops.deleteWhatsAppTemplate = Ops.deleteWhatsAppTemplate || async function(id) {
+    if (typeof DataService?.deleteWhatsAppTemplate === 'function') return await DataService.deleteWhatsAppTemplate(id);
+    const d = db(); d.whatsappTemplates = (d.whatsappTemplates || []).filter(x => x.id !== id); save(d);
+    if (window.FirebaseService?._db) await FirebaseService.deleteDoc('whatsappTemplates', id);
+  };
+  
+  // 5. المتابعات
+  Ops.updateFollowUp = Ops.updateFollowUp || async function(id, updates) {
+    const d = db(); const list = d.followUps || d.followups || [];
+    const f = list.find(x => x.id === id);
+    if (f) { Object.assign(f, updates); save(d); if (window.FirebaseService?._db) await FirebaseService.saveDoc('followUps', id, f); }
+    return f;
+  };
+
+  console.log('✅ Ops Master Patch applied successfully');
+})();
 </script>
 </body>
 </html>
