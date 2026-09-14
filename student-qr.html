@@ -1,544 +1,292 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>باركود الحضور - Habbash Group</title>
-    <link rel="stylesheet" href="css/eduflow-theme.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Cairo', 'Tajawal', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .qr-container {
-            background: white;
-            border-radius: 24px;
-            padding: 40px;
-            max-width: 500px;
-            width: 100%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            text-align: center;
-            animation: slideUp 0.5s ease;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .student-avatar {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 48px;
-            font-weight: 700;
-            color: white;
-            margin: 0 auto 20px;
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-        }
-
-        .student-name {
-            font-size: 28px;
-            font-weight: 700;
-            color: #1a202c;
-            margin-bottom: 8px;
-        }
-
-        .student-code {
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 8px 20px;
-            border-radius: 9999px;
-            font-size: 16px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            margin-bottom: 24px;
-            font-family: 'Courier New', monospace;
-        }
-
-        .qr-wrapper {
-            background: white;
-            padding: 20px;
-            border-radius: 16px;
-            border: 3px solid #e2e8f0;
-            margin: 24px 0;
-            display: inline-block;
-            position: relative;
-        }
-
-        .qr-wrapper::before {
-            content: '';
-            position: absolute;
-            top: -3px;
-            left: -3px;
-            right: -3px;
-            bottom: -3px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 18px;
-            z-index: -1;
-        }
-
-        #qrCode {
-            display: block;
-            margin: 0 auto;
-        }
-
-        .qr-code-text {
-            font-size: 24px;
-            font-weight: 800;
-            color: #667eea;
-            letter-spacing: 3px;
-            margin-top: 12px;
-            font-family: 'Courier New', monospace;
-        }
-
-        .info-section {
-            background: #f7fafc;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 24px 0;
-            text-align: right;
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .info-row:last-child {
-            border-bottom: none;
-        }
-
-        .info-label {
-            font-size: 14px;
-            color: #718096;
-            font-weight: 600;
-        }
-
-        .info-value {
-            font-size: 16px;
-            color: #2d3748;
-            font-weight: 700;
-        }
-
-        .groups-section {
-            background: #f7fafc;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 24px 0;
-            text-align: right;
-        }
-
-        .groups-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #2d3748;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .group-chip {
-            display: inline-block;
-            background: white;
-            border: 2px solid #e2e8f0;
-            padding: 8px 16px;
-            border-radius: 9999px;
-            font-size: 14px;
-            font-weight: 600;
-            color: #4a5568;
-            margin: 4px;
-            transition: all 0.2s;
-        }
-
-        .group-chip:hover {
-            border-color: #667eea;
-            background: #f0f4ff;
-            transform: translateY(-2px);
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 12px;
-            margin-top: 24px;
-        }
-
-        .btn {
-            flex: 1;
-            padding: 16px 24px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-        }
-
-        .btn-secondary {
-            background: white;
-            color: #667eea;
-            border: 2px solid #667eea;
-        }
-
-        .btn-secondary:hover {
-            background: #f0f4ff;
-            transform: translateY(-2px);
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-        }
-
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid #f3f4f6;
-            border-top-color: #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .error-message {
-            background: #fee;
-            border: 2px solid #fcc;
-            color: #c33;
-            padding: 20px;
-            border-radius: 12px;
-            text-align: center;
-            font-weight: 600;
-        }
-
-        .tip-box {
-            background: linear-gradient(135deg, #fff5e6 0%, #ffe6cc 100%);
-            border: 2px solid #ffb84d;
-            border-radius: 12px;
-            padding: 16px;
-            margin: 24px 0;
-            text-align: right;
-        }
-
-        .tip-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #d97706;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .tip-text {
-            font-size: 14px;
-            color: #92400e;
-            line-height: 1.6;
-        }
-
-        @media print {
-            body {
-                background: white;
-            }
-            
-            .qr-container {
-                box-shadow: none;
-                max-width: 100%;
-            }
-            
-            .action-buttons,
-            .btn {
-                display: none !important;
-            }
-            
-            .tip-box {
-                display: none !important;
-            }
-        }
-
-        @media (max-width: 640px) {
-            .qr-container {
-                padding: 24px;
-            }
-            
-            .student-name {
-                font-size: 24px;
-            }
-            
-            .action-buttons {
-                flex-direction: column;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>بطاقة الطالب | Habbash Group</title>
+<link rel="stylesheet" href="css/eduflow-theme.css">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Fira+Code:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+body{
+  font-family:'Cairo',sans-serif;
+  background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+  min-height:100vh;
+  margin:0;padding:20px;
+  display:flex;align-items:center;justify-content:center;
+}
+.qr-page{
+  background:var(--surface,#fff);
+  border-radius:24px;
+  max-width:480px;width:100%;
+  box-shadow:0 25px 50px -12px rgba(0,0,0,.25);
+  overflow:hidden;
+  animation:slideUp .5s ease;
+}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+.qr-header{
+  background:linear-gradient(135deg,var(--primary,#6366f1),#8b5cf6);
+  color:#fff;padding:24px;text-align:center;
+}
+.qr-header h1{margin:0;font-size:20px;font-weight:800}
+.qr-header p{margin:6px 0 0;font-size:12px;opacity:.9}
+.qr-body{padding:24px}
+.student-card{
+  background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(139,92,246,.08));
+  border:2px solid var(--primary-border,#e0e7ff);
+  border-radius:16px;padding:20px;text-align:center;margin-bottom:16px;
+}
+.student-avatar{
+  width:80px;height:80px;border-radius:50%;
+  background:linear-gradient(135deg,var(--primary,#6366f1),#8b5cf6);
+  color:#fff;display:flex;align-items:center;justify-content:center;
+  font-size:32px;font-weight:800;margin:0 auto 12px;
+  box-shadow:0 8px 24px rgba(99,102,241,.3);
+}
+.student-name{font-size:22px;font-weight:800;margin:0 0 8px;color:var(--text,#0f172a)}
+.student-code{
+  font-family:'Fira Code',monospace;font-size:18px;font-weight:700;
+  color:var(--primary,#6366f1);letter-spacing:2px;
+  background:var(--surface-hover,#f8fafc);padding:8px 16px;
+  border-radius:99px;display:inline-block;margin-top:8px;
+}
+.info-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;
+}
+.info-box{
+  background:var(--surface-hover,#f8fafc);
+  border:1px solid var(--border,#e2e8f0);
+  border-radius:12px;padding:12px;text-align:center;
+}
+.info-label{font-size:11px;color:var(--text-muted,#94a3b8);margin-bottom:4px}
+.info-value{font-size:14px;font-weight:700;color:var(--text,#0f172a)}
+.groups-list{
+  background:var(--surface-hover,#f8fafc);
+  border:1px solid var(--border,#e2e8f0);
+  border-radius:12px;padding:14px;margin-bottom:16px;
+}
+.groups-title{font-size:13px;font-weight:800;margin:0 0 10px;color:var(--text,#0f172a)}
+.group-item{
+  background:var(--surface,#fff);border:1px solid var(--border,#e2e8f0);
+  border-radius:10px;padding:10px;margin-bottom:8px;display:flex;align-items:center;gap:10px;
+}
+.group-item:last-child{margin-bottom:0}
+.group-icon{
+  width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(135deg,#10b981,#059669);
+  color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;
+}
+.group-info{flex:1;min-width:0}
+.group-name{font-size:13px;font-weight:700;margin:0;color:var(--text,#0f172a)}
+.group-meta{font-size:11px;color:var(--text-muted,#94a3b8);margin-top:2px}
+.action-btn{
+  display:block;width:100%;padding:14px;border:none;border-radius:12px;
+  font-weight:800;font-size:14px;cursor:pointer;margin-bottom:8px;
+  transition:all .2s;text-decoration:none;text-align:center;
+}
+.action-btn:last-child{margin-bottom:0}
+.action-btn-primary{
+  background:linear-gradient(135deg,var(--primary,#6366f1),#8b5cf6);color:#fff;
+  box-shadow:0 4px 12px rgba(99,102,241,.3);
+}
+.action-btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(99,102,241,.4)}
+.action-btn-secondary{
+  background:var(--surface-hover,#f8fafc);color:var(--text,#0f172a);
+  border:1px solid var(--border,#e2e8f0);
+}
+.action-btn-secondary:hover{background:var(--border,#e2e8f0)}
+.error-box{
+  background:rgba(239,68,68,.1);border:2px solid rgba(239,68,68,.3);
+  border-radius:16px;padding:24px;text-align:center;color:#dc2626;
+}
+.error-icon{font-size:48px;margin-bottom:12px}
+.error-title{font-size:18px;font-weight:800;margin:0 0 8px}
+.error-msg{font-size:13px;color:var(--text-secondary,#475569);margin:0}
+.qr-footer{
+  padding:16px 24px;background:var(--surface-hover,#f8fafc);
+  border-top:1px solid var(--border,#e2e8f0);text-align:center;
+}
+.qr-footer-text{font-size:11px;color:var(--text-muted,#94a3b8);margin:0}
+.loading-state{text-align:center;padding:40px 20px}
+.loading-spinner{
+  width:40px;height:40px;border:3px solid var(--border,#e2e8f0);
+  border-top-color:var(--primary,#6366f1);border-radius:50%;
+  animation:spin 1s linear infinite;margin:0 auto 16px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
 </head>
 <body>
-    <div class="qr-container" id="mainContainer">
-        <div class="loading" id="loadingState">
-            <div class="spinner"></div>
-            <p style="color: #718096; font-weight: 600;">جاري تحميل بياناتك...</p>
-        </div>
-
-        <div id="contentState" style="display: none;">
-            <div class="student-avatar" id="studentAvatar">A</div>
-            <h1 class="student-name" id="studentName">اسم الطالب</h1>
-            <div class="student-code" id="studentCode">STU-0000</div>
-
-            <div class="qr-wrapper">
-                <div id="qrCode"></div>
-                <div class="qr-code-text" id="qrCodeText">STU-0000</div>
-            </div>
-
-            <div class="tip-box">
-                <div class="tip-title">
-                    <span>💡</span>
-                    <span>نصيحة مهمة</span>
-                </div>
-                <div class="tip-text">
-                    احفظ هذه الصفحة أو اطبعها واستخدم الباركود عند دخول الحصة لتسجيل حضورك تلقائياً
-                </div>
-            </div>
-
-            <div class="info-section">
-                <div class="info-row">
-                    <span class="info-label">📱 الهاتف</span>
-                    <span class="info-value" id="studentPhone">-</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">🎓 المرحلة</span>
-                    <span class="info-value" id="studentStage">-</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">📚 الصف</span>
-                    <span class="info-value" id="studentGrade">-</span>
-                </div>
-            </div>
-
-            <div class="groups-section">
-                <div class="groups-title">
-                    <span>👥</span>
-                    <span>المجموعات المسجل بها</span>
-                </div>
-                <div id="groupsList"></div>
-            </div>
-
-            <div class="action-buttons">
-                <button class="btn btn-primary" onclick="window.print()">
-                    <span>🖨️</span>
-                    <span>طباعة الباركود</span>
-                </button>
-                <button class="btn btn-secondary" onclick="downloadQR()">
-                    <span>💾</span>
-                    <span>حفظ الصورة</span>
-                </button>
-            </div>
-        </div>
-
-        <div id="errorState" style="display: none;">
-            <div class="error-message">
-                <p style="font-size: 48px; margin-bottom: 16px;">⚠️</p>
-                <p id="errorMessage">حدث خطأ أثناء تحميل البيانات</p>
-                <button class="btn btn-primary" style="margin-top: 20px; width: 100%;" onclick="location.reload()">
-                    <span>🔄</span>
-                    <span>إعادة المحاولة</span>
-                </button>
-            </div>
-        </div>
+<div class="qr-page">
+  <div class="qr-header">
+    <h1>🎓 بطاقة الطالب</h1>
+    <p id="brandName">Habbash Group</p>
+  </div>
+  <div class="qr-body" id="qrBody">
+    <div class="loading-state">
+      <div class="loading-spinner"></div>
+      <p style="color:var(--text-muted);margin:0">جاري تحميل البيانات...</p>
     </div>
+  </div>
+  <div class="qr-footer">
+    <p class="qr-footer-text">© <span id="yearSpan"></span> <span id="footerBrand">Habbash Group</span></p>
+  </div>
+</div>
 
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-    <script src="js/config.js"></script>
-    <script src="js/firebase-service.js"></script>
-    <script src="js/data-service.js"></script>
-    <script src="js/auth-service.js"></script>
-    <script>
-        const loadingState = document.getElementById('loadingState');
-        const contentState = document.getElementById('contentState');
-        const errorState = document.getElementById('errorState');
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="js/config.js"></script>
+<script src="js/firebase-service.js"></script>
+<script src="js/data-service.js"></script>
+<script src="js/operations-service.js"></script>
+<script src="js/ui-helpers.js"></script>
 
-        async function init() {
-            try {
-                // Initialize services
-                if (typeof DataService?.init === 'function') {
-                    await DataService.init();
-                }
+<script>
+// 🆕 الصفحة دي Public - مفيش أي auth check
+(async function boot(){
+  try{
+    document.getElementById('yearSpan').textContent = new Date().getFullYear();
+    
+    // تحميل البراندنج
+    try{
+      if(typeof DataService?.init === 'function') await DataService.init();
+      const branding = (typeof DataService?.getBranding === 'function') 
+        ? DataService.getBranding() 
+        : ((DataService?._getData && DataService._getData().branding) || {});
+      if(branding?.name){
+        document.getElementById('brandName').textContent = branding.name;
+        document.getElementById('footerBrand').textContent = branding.name;
+        document.title = 'بطاقة الطالب | ' + branding.name;
+      }
+    }catch(e){ console.log('Branding load skipped'); }
+    
+    // جلب الكود من URL
+    const params = new URLSearchParams(location.search);
+    const code = params.get('code');
+    
+    if(!code){
+      showError('كود غير موجود', 'الرابط غير صحيح — تأكد من مسح الباركود الصحيح');
+      return;
+    }
+    
+    // البحث عن الطالب بالكود (بدون أي auth)
+    await DataService.init();
+    const allUsers = DataService.getUsers ? DataService.getUsers() : [];
+    const student = allUsers.find(u => u.role === 'student' && (u.code||'').toUpperCase() === code.toUpperCase());
+    
+    if(!student){
+      showError('طالب غير موجود', 'الكود "' + code + '" غير مسجل في النظام');
+      return;
+    }
+    
+    // عرض البيانات فوراً
+    renderStudentCard(student);
+    
+  }catch(err){
+    console.error('QR Page Error:', err);
+    showError('خطأ في التحميل', err.message || 'حدث خطأ غير متوقع');
+  }
+})();
 
-                // Check authentication
-                const currentUser = AuthService?.getCurrentUser ? AuthService.getCurrentUser() : null;
-                
-                if (!currentUser) {
-                    showError('يجب تسجيل الدخول أولاً');
-                    setTimeout(() => {
-                        window.location.href = 'login.html';
-                    }, 2000);
-                    return;
-                }
+function renderStudentCard(student){
+  const body = document.getElementById('qrBody');
+  
+  // جلب معلومات المجموعات والأستاذ
+  const teachers = (typeof DataService?.getStudentTeachers === 'function') 
+    ? DataService.getStudentTeachers(student.id) 
+    : [];
+  
+  const stageLabel = (typeof EduFlowConfig !== 'undefined' && EduFlowConfig?.educationLevels?.[student.stage]?.nameAr) || '';
+  
+  let groupsHtml = '';
+  if(teachers.length){
+    groupsHtml = `
+      <div class="groups-list">
+        <h3 class="groups-title">👥 المجموعات المسجل فيها (${teachers.length})</h3>
+        ${teachers.map(t => `
+          <div class="group-item">
+            <div class="group-icon">📚</div>
+            <div class="group-info">
+              <div class="group-name">${t.group?.name || '-'}</div>
+              <div class="group-meta">
+                👨‍🏫 ${t.teacher?.name || '-'} 
+                ${t.group?.center ? ' · 🏢 ' + t.group.center : ''}
+                ${t.group?.day ? ' · 📅 ' + t.group.day : ''}
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+  
+  // حساب الإحصائيات البسيطة
+  const d = (DataService._getData && DataService._getData()) || {};
+  const attendance = (d.attendance||[]).filter(a => a.status==='approved' && a.records.some(r => r.studentId===student.id));
+  const present = attendance.filter(a => a.records.find(r => r.studentId===student.id)?.status==='present').length;
+  const attRate = attendance.length ? Math.round(present/attendance.length*100) : 0;
+  
+  const subs = (d.submissions||[]).filter(s => s.studentId===student.id && s.status==='graded');
+  const avgHw = subs.length ? Math.round(subs.reduce((a,s) => a+(s.score||0), 0)/subs.length) : 0;
+  
+  body.innerHTML = `
+    <div class="student-card">
+      <div class="student-avatar">${(student.name||'?').charAt(0)}</div>
+      <h2 class="student-name">${student.name}</h2>
+      <div class="student-code">${student.code}</div>
+    </div>
+    
+    <div class="info-grid">
+      <div class="info-box">
+        <div class="info-label">🎓 المرحلة</div>
+        <div class="info-value">${stageLabel || '-'}</div>
+      </div>
+      <div class="info-box">
+        <div class="info-label">📚 الصف</div>
+        <div class="info-value">${student.grade || '-'}</div>
+      </div>
+      <div class="info-box">
+        <div class="info-label">📋 الحضور</div>
+        <div class="info-value" style="color:${attRate>=75?'var(--success,#10b981)':'var(--warning,#f59e0b)'}">${attRate}%</div>
+      </div>
+      <div class="info-box">
+        <div class="info-label">📝 الواجبات</div>
+        <div class="info-value">${subs.length > 0 ? avgHw + '%' : '-'}</div>
+      </div>
+    </div>
+    
+    ${groupsHtml}
+    
+    ${student.phone ? `
+      <a href="tel:${student.phone}" class="action-btn action-btn-primary">
+        📞 اتصل بالطالب
+      </a>
+    ` : ''}
+    
+    ${student.parentPhone ? `
+      <a href="https://wa.me/2${String(student.parentPhone).replace(/\D/g,'')}" target="_blank" class="action-btn action-btn-primary" style="background:linear-gradient(135deg,#25d366,#128c7e);">
+        💬 واتساب ولي الأمر
+      </a>
+    ` : ''}
+    
+    <a href="login.html" class="action-btn action-btn-secondary">
+      🔐 دخول لوحة الطالب
+    </a>
+  `;
+}
 
-                // Get student data
-                const student = DataService?.getUserById ? DataService.getUserById(currentUser.id) : null;
-                
-                if (!student || student.role !== 'student') {
-                    showError('لا توجد بيانات طالب');
-                    return;
-                }
-
-                // Display student info
-                displayStudentInfo(student);
-
-            } catch (error) {
-                console.error('Init error:', error);
-                showError('حدث خطأ أثناء تحميل البيانات: ' + error.message);
-            }
-        }
-
-        function displayStudentInfo(student) {
-            // Hide loading, show content
-            loadingState.style.display = 'none';
-            contentState.style.display = 'block';
-
-            // Student avatar
-            const avatar = document.getElementById('studentAvatar');
-            avatar.textContent = (student.name || 'A').charAt(0);
-
-            // Student name
-            document.getElementById('studentName').textContent = student.name || 'طالب';
-
-            // Student code
-            const code = student.code || 'STU-0000';
-            document.getElementById('studentCode').textContent = code;
-            document.getElementById('qrCodeText').textContent = code;
-
-            // Student info
-            document.getElementById('studentPhone').textContent = student.phone || '-';
-            
-            const stage = EduFlowConfig?.educationLevels?.[student.stage]?.nameAr || '-';
-            document.getElementById('studentStage').textContent = stage;
-            document.getElementById('studentGrade').textContent = student.grade || '-';
-
-            // Generate QR Code
-            generateQRCode(code);
-
-            // Load groups
-            loadStudentGroups(student.id);
-        }
-
-        function generateQRCode(code) {
-            const qrContainer = document.getElementById('qrCode');
-            
-            // Generate QR code with student code
-            const qrData = `EDUFLOW-STUDENT:${code}`;
-            
-            QRCode.toCanvas(qrContainer, qrData, {
-                width: 280,
-                margin: 2,
-                color: {
-                    dark: '#1a202c',
-                    light: '#ffffff'
-                }
-            }, function(error) {
-                if (error) {
-                    console.error('QR generation error:', error);
-                    qrContainer.innerHTML = '<p style="color: #c33;">فشل في إنشاء الباركود</p>';
-                }
-            });
-        }
-
-        function loadStudentGroups(studentId) {
-            const groupsContainer = document.getElementById('groupsList');
-            
-            try {
-                const teachers = DataService?.getStudentTeachers ? DataService.getStudentTeachers(studentId) : [];
-                
-                if (!teachers || teachers.length === 0) {
-                    groupsContainer.innerHTML = '<p style="color: #718096; text-align: center;">لا توجد مجموعات مسجل بها</p>';
-                    return;
-                }
-
-                const groupsHTML = teachers.map(t => {
-                    const group = t.group;
-                    if (!group) return '';
-                    
-                    return `<span class="group-chip">${group.name}</span>`;
-                }).join('');
-
-                groupsContainer.innerHTML = groupsHTML || '<p style="color: #718096; text-align: center;">لا توجد مجموعات</p>';
-
-            } catch (error) {
-                console.error('Load groups error:', error);
-                groupsContainer.innerHTML = '<p style="color: #c33;">فشل في تحميل المجموعات</p>';
-            }
-        }
-
-        function downloadQR() {
-            const canvas = document.querySelector('#qrCode canvas');
-            if (!canvas) {
-                alert('الباركود غير جاهز بعد');
-                return;
-            }
-
-            const studentCode = document.getElementById('studentCode').textContent;
-            const link = document.createElement('a');
-            link.download = `barcode-${studentCode}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        }
-
-        function showError(message) {
-            loadingState.style.display = 'none';
-            contentState.style.display = 'none';
-            errorState.style.display = 'block';
-            document.getElementById('errorMessage').textContent = message;
-        }
-
-        // Initialize on load
-        window.addEventListener('DOMContentLoaded', init);
-    </script>
+function showError(title, msg){
+  document.getElementById('qrBody').innerHTML = `
+    <div class="error-box">
+      <div class="error-icon">⚠️</div>
+      <h3 class="error-title">${title}</h3>
+      <p class="error-msg">${msg}</p>
+      <a href="login.html" class="action-btn action-btn-primary" style="margin-top:16px;">
+        🔐 تسجيل الدخول
+      </a>
+    </div>
+  `;
+}
+</script>
 </body>
 </html>

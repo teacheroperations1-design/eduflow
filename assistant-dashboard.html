@@ -584,6 +584,7 @@
 <script src="js/auth-service.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="js/footer-injector.js"></script>
+<script src="js/camera-helper.js"></script>
 <script>
   /* 🆕 View-As: لو الرابط فيه ?viewas= خد الهوية دي كالمستخدم الحالي للتبويب ده */
 (function(){
@@ -3013,36 +3014,6 @@ window.startBulkGradeScan=async function(){
   }catch(e){ console.error(e); window.safeToast('خطأ في بدء الرصد','error'); }
 };
 
-window.startBgsCamera=async function(){
-  try{
-    if(!window.jsQR){ window.safeToast('مكتبة المسح مش محملة — استخدم الإدخال اليدوي','warning'); return; }
-    if(window._bgs.stream) return;
-    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
-    window._bgs.stream=stream;
-    const video=document.getElementById('bgsVideo');
-    document.getElementById('bgsCamWrap').style.display='block';
-    video.srcObject=stream; await video.play();
-    const canvas=document.createElement('canvas');
-    const ctx=canvas.getContext('2d',{willReadFrequently:true});
-    const tick=()=>{
-      if(!window._bgs.stream) return;
-      if(video.readyState===video.HAVE_ENOUGH_DATA){
-        canvas.width=video.videoWidth; canvas.height=video.videoHeight;
-        ctx.drawImage(video,0,0);
-        const img=ctx.getImageData(0,0,canvas.width,canvas.height);
-        const code=window.jsQR(img.data,img.width,img.height);
-        if(code&&code.data&&code.data!==window._bgs.lastCode){
-          window._bgs.lastCode=code.data;
-          if(navigator.vibrate) navigator.vibrate(120);
-          window.bgsHandleCode(code.data);
-          setTimeout(()=>{ window._bgs.lastCode=null; },2500);
-        }
-      }
-      window._bgs.scanTimer=requestAnimationFrame(tick);
-    };
-    tick();
-  }catch(e){ console.error(e); window.safeToast('مش قادر أشغل الكاميرا — استخدم الإدخال اليدوي','warning'); }
-};
 window.toggleBgsCamera=function(){ if(window._bgs.stream){ window.stopBgsCamera(); } else { window.startBgsCamera(); } };
 window.stopBgsCamera=function(){
   try{
