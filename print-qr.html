@@ -486,6 +486,7 @@ body {
     color: var(--text-muted);
     margin: 0;
     font-weight: 500;
+    line-height: 1.8;
 }
 
 .card-footer {
@@ -608,7 +609,7 @@ body {
     .card-name { font-size: 12pt; margin: 6px 0; color: black; }
     .card-code-wrapper { background: none; border: none; padding: 0; }
     .card-code { font-size: 14pt; margin: 6px 0; color: #4f46e5; }
-    .card-meta { font-size: 9pt; margin-bottom: 6px; color: #555; }
+    .card-meta { font-size: 9pt; margin-bottom: 6px; color: #555; line-height: 1.8; }
     .card-badge, .card-check, .card-actions, .custom-checkbox { display: none; }
     @page { margin: 1cm; }
     
@@ -721,11 +722,13 @@ body {
 
 <script>
 const SITE_BASE = 'https://eduflow-nine-dusky.vercel.app/';
+
 const qrData = (code, type='student') => {
   if(type === 'teacher') return SITE_BASE + 'teacher-dashboard.html';
   if(type === 'group') return SITE_BASE; 
   return SITE_BASE + 'student-qr.html?code=' + encodeURIComponent(code);
 };
+
 const qrImg = (code, size, type='student') => {
   const url = type === 'group' ? (allCards.find(c=>c.code===code)?.whatsappLink || SITE_BASE) : qrData(code, type);
   return 'https://api.qrserver.com/v1/create-qr-code/?size=' + size + 'x' + size + 
@@ -737,12 +740,40 @@ let currentUser = null;
 let currentPrintSize = 'a4';
 let selectedCards = new Set();
 let allCards = [];
+let branding = {};
+
+// 🆕 دالة لجلب معلومات الطالب (السنتر والصف)
+function getStudentInfo(studentId) {
+    try {
+        const ts = typeof DataService?.getStudentTeachers === 'function' 
+            ? DataService.getStudentTeachers(studentId) 
+            : [];
+        
+        if (!ts.length) return { center: '', grade: '', groupName: '' };
+        
+        const first = ts[0];
+        return {
+            center: first.group?.center || '',
+            grade: first.group?.grade || '',
+            groupName: first.group?.name || ''
+        };
+    } catch (e) {
+        return { center: '', grade: '', groupName: '' };
+    }
+}
 
 (async function boot(){
   try{
     if(typeof DataService?.init === 'function') await DataService.init();
     currentUser = AuthService?.getCurrentUser ? AuthService.getCurrentUser() : null;
     if(!currentUser){ window.location.href='login.html'; return; }
+    
+    // 🆕 تحميل البراندنج
+    try {
+        branding = typeof DataService?.getBranding === 'function' 
+            ? DataService.getBranding() 
+            : {};
+    } catch (e) {}
     
     window.buildGroupSelect();
     const s = new URLSearchParams(location.search).get('search');
@@ -797,7 +828,30 @@ window.renderGrid = function(){
     allCards = [];
     if(type === 'students' || type === 'all'){
       students.forEach(s => {
-        allCards.push({ type: 'student', id: s.id, code: s.code, name: s.name, meta: (s.grade || '') + (s.phone ? ' · ' + s.phone : '') });
+        // 🆕 جلب معلومات السنتر والصف
+        const info = getStudentInfo(s.id);
+        const stageLabel = (typeof EduFlowConfig !== 'undefined' && EduFlowConfig?.educationLevels?.[s.stage]?.nameAr) || '';
+        
+        // 🆕 بناء meta بدون رقم الهاتف - فقط الصف والسنتر
+        let meta = '';
+        if (stageLabel || s.grade) {
+            meta = '🎓 ' + stageLabel + (s.grade ? ' - ' + s.grade : '');
+        }
+        if (info.center) {
+            meta += (meta ? '<br>' : '') + '🏢 ' + info.center;
+        }
+        
+        allCards.push({ 
+            type: 'student', 
+            id: s.id, 
+            code: s.code, 
+            name: s.name, 
+            meta: meta,
+            center: info.center,
+            grade: s.grade || info.grade,
+            stageLabel: stageLabel,
+            groupName: info.groupName
+        });
       });
     }
     if(type === 'teachers' || type === 'all'){
@@ -812,7 +866,7 @@ window.renderGrid = function(){
         groups = groups.filter(g => scopedGroupIds.includes(g.id));
       }
       groups.filter(g => g.whatsappLink).forEach(g => {
-        allCards.push({ type: 'group', id: g.id, code: g.id, name: g.name, meta: '💬 واتساب جروب', whatsappLink: g.whatsappLink });
+        allCards.push({ type: 'group', id: g.id, code: g.id, name: g.name, meta: '💬 واتساب جروب', whatsappLink: g.whatsappLink, center: g.center });
       });
     }
     
@@ -934,9 +988,11 @@ async function generateCardImage(card) {
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, width, 25);
 
+        // 🆕 اسم المنصة من البراندنج
+        const brandName = branding?.name || 'EduFlow';
         ctx.fillStyle = '#64748b';
         ctx.font = 'bold 28px "Cairo", "Tahoma", "Arial", sans-serif';
-        ctx.fillText('🎓 EduFlow by Habbash Group', width / 2, 80);
+        ctx.fillText('🎓 ' + brandName + ' by Habbash Group', width / 2, 80);
 
         const typeLabels = {student:'طالب',teacher:'مدرس',group:'واتساب جروب'};
         ctx.fillStyle = gradient;
@@ -970,13 +1026,30 @@ async function generateCardImage(card) {
             ctx.font = 'bold 60px monospace, "Courier New", sans-serif';
             ctx.fillText(card.code, width / 2, 850);
 
+            // 🆕 عرض المرحلة والصف والسنتر كنص بسيط
             ctx.fillStyle = '#64748b'; 
             ctx.font = '30px "Cairo", "Tahoma", sans-serif';
-            ctx.fillText(card.meta || '', width / 2, 910);
+            
+            let metaLine = '';
+            if (card.type === 'student') {
+                if (card.stageLabel || card.grade) {
+                    metaLine = '🎓 ' + (card.stageLabel || '') + (card.grade ? ' - ' + card.grade : '');
+                }
+            } else {
+                metaLine = card.meta || '';
+            }
+            ctx.fillText(metaLine, width / 2, 900);
+            
+            // 🆕 عرض السنتر تحت المرحلة والصف (كـ text عادي بدون box)
+            if (card.center) {
+                ctx.fillStyle = '#475569';
+                ctx.font = '28px "Cairo", "Tahoma", sans-serif';
+                ctx.fillText('🏢 ' + card.center, width / 2, 940);
+            }
 
             ctx.fillStyle = '#334155'; 
-            ctx.font = 'bold 28px "Cairo", "Tahoma", sans-serif';
-            ctx.fillText(card.type === 'group' ? '💬 امسح الباركود للانضمام للجروب' : '📱 امسح الباركود للدخول السريع', width / 2, 980);
+            ctx.font = 'bold 26px "Cairo", "Tahoma", sans-serif';
+            ctx.fillText(card.type === 'group' ? '💬 امسح الباركود للانضمام للجروب' : '📱 امسح الباركود للدخول السريع', width / 2, 990);
 
             ctx.fillStyle = '#f1f5f9'; 
             ctx.fillRect(0, height - 90, width, 90);
@@ -1016,9 +1089,19 @@ window.printSingleCard = function(id){
   d.documentElement.setAttribute('dir','rtl');
   d.title = card.name;
   const st = d.createElement('style');
-  st.textContent = `body{font-family:Cairo,Tahoma,Arial,sans-serif;text-align:center;padding:24px;color:#000;background:#fff;margin:0;} img{width:260px;height:260px;margin:12px auto;display:block;background:#fff;padding:12px;border-radius:12px;border:2px solid #e5e7eb;} .n{font-weight:800;font-size:24px;margin-top:12px;} .c{font-family:monospace;font-size:26px;letter-spacing:3px;margin-top:8px;color:#6366f1;font-weight:800;}`;
+  st.textContent = `body{font-family:Cairo,Tahoma,Arial,sans-serif;text-align:center;padding:24px;color:#000;background:#fff;margin:0;} img{width:260px;height:260px;margin:12px auto;display:block;background:#fff;padding:12px;border-radius:12px;border:2px solid #e5e7eb;} .n{font-weight:800;font-size:24px;margin-top:12px;} .c{font-family:monospace;font-size:26px;letter-spacing:3px;margin-top:8px;color:#6366f1;font-weight:800;} .info{margin-top:12px;font-size:14px;color:#555;line-height:1.8;}`;
   d.head.appendChild(st);
-  d.body.innerHTML = `<h2>${card.name}</h2><img src="${qrImg(card.code, 300, card.type)}"><div class="c">${card.code}</div><p>${card.meta||''}</p>`;
+  
+  // 🆕 معلومات بسيطة بدون box
+  let infoHtml = '';
+  if (card.stageLabel || card.grade) {
+      infoHtml += `<div class="info" style="color:#555;font-size:13px;">🎓 ${card.stageLabel || ''}${card.grade ? ' - ' + card.grade : ''}</div>`;
+  }
+  if (card.center) {
+      infoHtml += `<div class="info" style="color:#333;font-weight:600;font-size:13px;">🏢 ${card.center}</div>`;
+  }
+  
+  d.body.innerHTML = `<h2>${card.name}</h2><img src="${qrImg(card.code, 300, card.type)}"><div class="c">${card.code}</div>${infoHtml}`;
   setTimeout(() => { w.focus(); w.print(); }, 1000);
 };
 
@@ -1043,10 +1126,22 @@ window.showPreview = function(){
   if(!cards.length) return;
   const container = document.getElementById('previewContainer');
   container.innerHTML = cards.map(card => {
+    // 🆕 معلومات إضافية في المعاينة
+    let extraInfo = '';
+    if (card.type === 'student') {
+        if (card.stageLabel || card.grade) {
+            extraInfo += `<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">🎓 ${card.stageLabel || ''}${card.grade ? ' - ' + card.grade : ''}</div>`;
+        }
+        if (card.center) {
+            extraInfo += `<div style="font-size:11px;color:var(--text-secondary);font-weight:600;margin-top:4px;">🏢 ${card.center}</div>`;
+        }
+    }
+    
     return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;">' +
       '<div style="font-weight:800;margin-bottom:8px;">' + card.name + '</div>' +
       '<img src="' + qrImg(card.code, 150, card.type) + '" style="width:120px;height:120px;margin:8px auto;display:block;border-radius:8px;">' +
       '<div style="font-family:monospace;font-weight:800;color:var(--primary);font-size:14px;">' + card.code + '</div>' +
+      extraInfo +
     '</div>';
   }).join('');
   document.getElementById('previewModal').style.display = 'block';
@@ -1056,8 +1151,17 @@ window.printFromPreview = function(){ window.closePreview(); selectedCards.size 
 
 window.exportCSV = function(){
   if(!allCards.length) return;
-  const headers = ['النوع','الاسم','الكود','المرحلة/الصف','الرابط'];
-  const rows = allCards.map(c => [c.type, c.name, c.code, c.meta || '', qrData(c.code, c.type)]);
+  // 🆕 إضافة السنتر والصف في CSV
+  const headers = ['النوع','الاسم','الكود','المرحلة','الصف','السنتر','الرابط'];
+  const rows = allCards.map(c => [
+      c.type, 
+      c.name, 
+      c.code, 
+      c.stageLabel || '',
+      c.grade || '',
+      c.center || '',
+      qrData(c.code, c.type)
+  ]);
   const csv = '\uFEFF' + [headers, ...rows].map(row => row.map(cell => '"' + String(cell).replace(/"/g,'""') + '"').join(',')).join('\n');
   const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);

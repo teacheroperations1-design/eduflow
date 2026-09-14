@@ -8,166 +8,41 @@
 <style>
 body { background: #0a0a0f; }
 .scan-container {
-  position: relative;
-  width: 100%;
-  max-width: 500px;
-  margin: 20px auto;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  position: relative; width: 100%; max-width: 500px; margin: 20px auto;
+  border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
 }
-#videoElement {
-  width: 100%;
-  display: block;
-  background: #000;
-}
-.scan-overlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+#videoElement { width: 100%; display: block; background: #000; }
+.scan-overlay { position: absolute; inset: 0; pointer-events: none; display: flex; align-items: center; justify-content: center; }
 .scan-frame {
-  width: 70%;
-  height: 70%;
-  border: 3px solid #6366f1;
-  border-radius: 20px;
-  position: relative;
-  box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
+  width: 70%; height: 70%; border: 3px solid #6366f1; border-radius: 20px;
+  position: relative; box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
 }
 .scan-frame::before, .scan-frame::after {
-  content: '';
-  position: absolute;
-  width: 30px;
-  height: 30px;
-  border: 4px solid #6366f1;
+  content: ''; position: absolute; width: 30px; height: 30px; border: 4px solid #6366f1;
 }
-.scan-frame::before {
-  top: -4px; left: -4px;
-  border-right: none;
-  border-bottom: none;
-  border-top-left-radius: 20px;
-}
-.scan-frame::after {
-  top: -4px; right: -4px;
-  border-left: none;
-  border-bottom: none;
-  border-top-right-radius: 20px;
-}
+.scan-frame::before { top: -4px; left: -4px; border-right: none; border-bottom: none; border-top-left-radius: 20px; }
+.scan-frame::after { top: -4px; right: -4px; border-left: none; border-bottom: none; border-top-right-radius: 20px; }
 .scan-line {
-  position: absolute;
-  width: 100%;
-  height: 3px;
+  position: absolute; width: 100%; height: 3px;
   background: linear-gradient(90deg, transparent, #6366f1, transparent);
-  animation: scanLine 2s infinite linear;
-  top: 0;
+  animation: scanLine 2s infinite linear; top: 0;
 }
 @keyframes scanLine {
-  0% { top: 0; opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { top: 100%; opacity: 0; }
+  0% { top: 0; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; }
 }
 .scan-status {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0,0,0,0.8);
-  color: #fff;
-  padding: 10px 20px;
-  border-radius: 9999px;
-  font-weight: 700;
-  font-size: 13px;
-  backdrop-filter: blur(10px);
+  position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.8); color: #fff; padding: 10px 20px; border-radius: 9999px;
+  font-weight: 700; font-size: 13px; backdrop-filter: blur(10px);
   border: 1px solid rgba(99,102,241,0.5);
 }
-.manual-entry {
-  max-width: 500px;
-  margin: 20px auto;
-  padding: 20px;
+.manual-entry { max-width: 500px; margin: 20px auto; padding: 20px; }
+.scanning-animation {
+  display: inline-block; width: 16px; height: 16px; border: 2px solid #6366f1;
+  border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;
+  margin-inline-end: 8px; vertical-align: middle;
 }
-.quick-action-btn {
-  width: 100%;
-  padding: 14px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  margin-bottom: 8px;
-  text-align: right;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--text);
-  font-weight: 600;
-}
-.quick-action-btn:hover {
-  border-color: var(--primary);
-  transform: translateX(-4px);
-  background: var(--primary-bg);
-}
-.quick-action-icon {
-  width: 44px;
-  height: 44px;
-  background: var(--primary-bg);
-  color: var(--primary);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  flex-shrink: 0;
-}
-.student-info-header {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px;
-  background: linear-gradient(135deg, var(--primary-bg), transparent);
-  border-radius: 12px;
-  margin-bottom: 16px;
-  border: 1px solid var(--primary-border);
-}
-.student-avatar {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: var(--grad);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  font-weight: 800;
-  flex-shrink: 0;
-  border: 3px solid var(--primary);
-}
-.student-meta {
-  flex: 1;
-  min-width: 0;
-}
-.student-name {
-  font-size: 17px;
-  font-weight: 800;
-  margin-bottom: 4px;
-}
-.student-code {
-  font-family: var(--font-en);
-  font-weight: 700;
-  color: var(--primary);
-  font-size: 13px;
-  letter-spacing: 1px;
-}
-.student-badges {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-top: 6px;
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body data-theme="dark">
@@ -197,11 +72,14 @@ body { background: #0a0a0f; }
       <span style="color:var(--text-muted);font-size:12px;">أو أدخل الكود يدوياً</span>
     </div>
     <div style="display:flex;gap:8px;">
-      <input type="text" id="manualCode" class="form-input" placeholder="أدخل كود الطالب..." 
+      <input type="text" id="manualCode" class="form-input" placeholder="أدخل كود الطالب (مثال: EDU-1234 أو 1234)..." 
              style="flex:1;font-family:var(--font-en);font-weight:700;letter-spacing:2px;text-align:center;">
       <button class="btn btn-primary" onclick="window.handleBarcodeScan(document.getElementById('manualCode').value)">
         🔍 بحث
       </button>
+    </div>
+    <div class="filter-info" style="margin-top:10px;">
+      💡 يمكنك كتابة الكود مع أو بدون <strong>EDU-</strong> — النظام هيفهمها تلقائياً
     </div>
   </div>
 
@@ -209,9 +87,6 @@ body { background: #0a0a0f; }
     <button class="btn btn-ghost" onclick="window.closeScanner()">← العودة</button>
   </div>
 </div>
-
-<!-- Modal التفاصيل للطالب (للأسست/الأدمن) -->
-<div id="studentDetailsModal" style="display:none;"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -227,64 +102,42 @@ body { background: #0a0a0f; }
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 
 <script>
-const DAYS=[{en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},{en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'},{en:'Saturday',ar:'السبت'}];
-const dayAr=en=>(DAYS.find(d=>d.en===en)||{}).ar||en;
-const T=tm=>DataService?.formatTime12?DataService.formatTime12(tm):tm;
-const db=()=>DataService?._getData?DataService._getData():{};
-const save=d=>DataService?._saveData?DataService._saveData(d):null;
-
-window.safeToast=function(msg,type='info'){
-  try{ if(typeof ThemeManager?.toast==='function') ThemeManager.toast(msg,type); }
-  catch(e){ console.log('[Toast]',type,msg); }
-};
-
-window.driveThumb=function(url){
-  try{
-    if(!url) return '';
-    const u=String(url);
-    const m=u.match(/\/d\/([\w-]+)/)||u.match(/[?&]id=([\w-]+)/)||u.match(/^([\w-]{20,})$/);
-    return m?('https://drive.google.com/thumbnail?id='+m[1]+'&sz=w400'):u;
-  }catch(e){ return url||''; }
+window.safeToast = function(msg, type='info') {
+  try { if (typeof ThemeManager?.toast === 'function') ThemeManager.toast(msg, type); }
+  catch(e) { console.log('[Toast]', type, msg); }
 };
 
 let currentUser = null;
 let scanStream = null;
 let scanTimer = null;
 let lastScannedCode = null;
+let isProcessing = false;
 
-(async function boot(){
+(async function boot() {
   try {
     if (typeof DataService?.init === 'function') await DataService.init();
     currentUser = AuthService?.getCurrentUser ? AuthService.getCurrentUser() : null;
-    
-    // 🆕 السماح بمسح الباركود بدون تسجيل دخول (لحالة الطالب)
-    // لو مفيش user، هنكمل كـ guest mode
     startCamera();
   } catch (e) {
     console.error('Boot error:', e);
-    document.getElementById('scanStatus').textContent = '❌ خطأ في التشغيل';
+    document.getElementById('scanStatus').textContent = '⚠️ استخدم الإدخال اليدوي';
   }
 })();
 
-// 🎥 تشغيل الكاميرا
 async function startCamera() {
   try {
     if (!window.jsQR) {
       document.getElementById('scanStatus').textContent = '⚠️ مكتبة المسح غير محملة — استخدم الإدخال اليدوي';
       return;
     }
-    
     const video = document.getElementById('videoElement');
     scanStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment' },
-      audio: false
+      video: { facingMode: 'environment' }, audio: false
     });
     video.srcObject = scanStream;
     await video.play();
-    
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    
     const tick = () => {
       if (!scanStream) return;
       if (video.readyState === video.HAVE_ENOUGH_DATA) {
@@ -293,11 +146,10 @@ async function startCamera() {
         ctx.drawImage(video, 0, 0);
         const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const code = window.jsQR(img.data, img.width, img.height);
-        
-        if (code && code.data && code.data !== lastScannedCode) {
+        if (code && code.data && code.data !== lastScannedCode && !isProcessing) {
           lastScannedCode = code.data;
           if (navigator.vibrate) navigator.vibrate(150);
-          handleBarcodeScan(code.data);
+          window.handleBarcodeScan(code.data);
           setTimeout(() => { lastScannedCode = null; }, 3000);
         }
       }
@@ -306,19 +158,16 @@ async function startCamera() {
     tick();
   } catch (e) {
     console.error('Camera error:', e);
-    document.getElementById('scanStatus').textContent = '❌ لا يمكن الوصول للكاميرا — استخدم الإدخال اليدوي';
+    document.getElementById('scanStatus').textContent = '❌ لا يمكن الوصول للكاميرا';
   }
 }
 
-// 🆕 إغلاق الماسح
 window.closeScanner = function() {
   stopCamera();
   if (window.history.length > 1) {
     window.history.back();
   } else {
-    window.location.href = currentUser?.role === 'student' ? 'student-dashboard.html' :
-                           currentUser?.role === 'assistant' ? 'assistant-dashboard.html' :
-                           'admin-dashboard.html';
+    window.location.href = 'login.html';
   }
 };
 
@@ -330,646 +179,170 @@ function stopCamera() {
   }
 }
 
-// 🎯 معالجة الباركود الممسوح
+// 🧠 Parser ذكي للباركود - يفهم كل الصيغ
+window.parseBarcode = function(rawCode) {
+  if (!rawCode) return null;
+  const code = String(rawCode).trim();
+  
+  // الصيغ المختلفة:
+  // 1. EDU-1234 أو EDU:1234
+  // 2. EDUFLOW-ATT:QR-1234 (QR code للحضور)
+  // 3. https://site.com/?code=EDU-1234 (URL)
+  // 4. 1234 (أرقام فقط)
+  // 5. {"studentId":"xxx"} (JSON)
+  
+  let extracted = null;
+  
+  // محاولة 1: JSON
+  try {
+    const parsed = JSON.parse(code);
+    if (parsed.studentId || parsed.id || parsed.code) {
+      extracted = parsed.studentId || parsed.id || parsed.code;
+    }
+  } catch(e) {}
+  
+  // محاولة 2: URL parameter
+  if (!extracted) {
+    const urlMatch = code.match(/[?&]code=([A-Za-z0-9\-_]+)/i);
+    if (urlMatch) extracted = urlMatch[1];
+  }
+  
+  // محاولة 3: EDUFLOW-ATT:XXX (QR للحضور)
+  if (!extracted) {
+    const attMatch = code.match(/EDUFLOW-ATT:(.+)/i);
+    if (attMatch) {
+      // ده QR حضور، مش باركود طالب
+      return { type: 'attendance', value: attMatch[1] };
+    }
+  }
+  
+  // محاولة 4: EDU-XXX أو EDU:XXX
+  if (!extracted) {
+    const eduMatch = code.match(/EDU[-:]([A-Za-z0-9\-_]+)/i);
+    if (eduMatch) extracted = eduMatch[1];
+  }
+  
+  // محاولة 5: أرقام/حروف فقط (كود مباشر)
+  if (!extracted) {
+    const cleanMatch = code.match(/^([A-Za-z0-9\-_]{3,30})$/);
+    if (cleanMatch) extracted = cleanMatch[1];
+  }
+  
+  // محاولة 6: أي نص بعد آخر : أو =
+  if (!extracted) {
+    const parts = code.split(/[:=]/);
+    if (parts.length > 1) extracted = parts[parts.length - 1];
+  }
+  
+  if (extracted) {
+    return { type: 'student', value: extracted, raw: code };
+  }
+  
+  return null;
+};
+
+// 🎯 معالجة الباركود الممسوح - الدخول الفوري
 window.handleBarcodeScan = function(rawCode) {
   try {
-    if (!rawCode || !rawCode.trim()) {
-      safeToast('الكود فارغ', 'error');
+    if (isProcessing) return;
+    isProcessing = true;
+    
+    const status = document.getElementById('scanStatus');
+    status.innerHTML = '<span class="scanning-animation"></span> جاري التحقق...';
+    
+    const parsed = window.parseBarcode(rawCode);
+    if (!parsed) {
+      status.textContent = '❌ باركود غير مفهوم';
+      safeToast('❌ لم أستطع قراءة الباركود', 'error');
+      isProcessing = false;
       return;
     }
     
-    const code = rawCode.trim();
-    const status = document.getElementById('scanStatus');
-    status.textContent = '🔍 جاري البحث عن الطالب...';
+    // لو QR حضور (مش باركود طالب)
+    if (parsed.type === 'attendance') {
+      // يمكن معالجة QR حضور هنا لاحقاً
+      status.textContent = '⚠️ هذا QR حضور وليس باركود طالب';
+      safeToast('⚠️ هذا QR لتسجيل الحضور', 'warning');
+      isProcessing = false;
+      return;
+    }
     
-    // استخراج الكود من صيغ مختلفة
-    const m = code.match(/code=([A-Za-z0-9-]+)/) || code.match(/(EDU-[A-Za-z0-9-]+)/i) || code.match(/^([A-Za-z0-9-]+)$/);
-    const cleanCode = m ? m[1] : code;
+    const codeValue = parsed.value.toUpperCase();
     
     // البحث عن الطالب
     const users = DataService?.getUsers ? DataService.getUsers() : [];
     const student = users.find(u => 
       u.role === 'student' && 
-      ((u.code || '').toUpperCase() === cleanCode.toUpperCase() || u.id === cleanCode)
+      ((u.code || '').toUpperCase() === codeValue || 
+       u.id === codeValue ||
+       (u.code || '').toUpperCase().replace(/^(EDU-|EDU:)/i, '') === codeValue.replace(/^(EDU-|EDU:)/i, ''))
     );
     
     if (!student) {
       status.textContent = '❌ طالب غير مسجل';
-      safeToast('❌ الكود "' + cleanCode + '" غير مسجل في النظام', 'error');
+      safeToast('❌ الكود "' + parsed.value + '" غير مسجل', 'error');
+      isProcessing = false;
       return;
     }
     
-    status.textContent = '✅ تم العثور على: ' + student.name;
+    status.innerHTML = '✅ مرحباً ' + student.name + '! جاري فتح الداشبورد...';
     stopCamera();
     
-    // 🆕 تحديد السلوك حسب نوع المستخدم الحالي
-    const currentRole = currentUser?.role || 'guest';
+    // 🎯 الدخول الفوري - لا تسجيل دخول مطلوب!
+    window.directLoginToStudent(student);
     
-    if (currentRole === 'student' || currentRole === 'guest' || currentRole === 'parent') {
-      // 🎓 لو الطالب هو اللي ماسح → فتح داشبورده مباشرة
-      openStudentOwnDashboard(student);
-    } else if (currentRole === 'assistant' || currentRole === 'super_admin' || currentRole === 'admin' || currentRole === 'teacher') {
-      // 👨‍🏫 لو أسست/أدمن/مدرس → فتح modal التفاصيل والاختصارات
-      openStudentQuickActionsModal(student);
-    } else {
-      // Fallback
-      openStudentQuickActionsModal(student);
-    }
   } catch (e) {
     console.error('handleBarcodeScan error:', e);
-    safeToast('خطأ في معالجة الباركود: ' + e.message, 'error');
+    safeToast('خطأ في المعالجة: ' + e.message, 'error');
+    isProcessing = false;
   }
 };
 
-// 🎓 فتح داشبورد الطالب نفسه (بدون طلب تسجيل دخول)
-function openStudentOwnDashboard(student) {
+// 🚀 الدخول الفوري للداشبورد بدون تسجيل دخول
+window.directLoginToStudent = function(student) {
   try {
-    // 🆕 حفظ الطالب كـ session مؤقت للدخول
-    sessionStorage.setItem('eduflow_barcode_student', JSON.stringify(student));
-    
-    // لو الطالب هو نفس المستخدم الحالي → فقط reload
-    if (currentUser && currentUser.id === student.id) {
-      safeToast('✅ أهلاً ' + student.name, 'success');
-      window.location.href = 'student-dashboard.html';
-      return;
-    }
-    
-    // 🆕 استخدام viewas parameter لتجاوز تسجيل الدخول
-    const targetUrl = 'student-dashboard.html?viewas=' + encodeURIComponent(student.id) + '&from=barcode';
-    
-    // 🆕 إذا كان المستخدم الحالي طالب آخر → فتح في تبويب جديد
-    if (currentUser && currentUser.role === 'student') {
-      window.open(targetUrl, '_blank');
-      setTimeout(() => { window.closeScanner(); }, 500);
-      return;
-    }
-    
-    // لو مفيش مستخدم حالي → فتح مباشرة
-    window.location.href = targetUrl;
-  } catch (e) {
-    console.error('openStudentOwnDashboard error:', e);
-    safeToast('خطأ في فتح الداشبورد', 'error');
-  }
-}
-
-// 👨‍🏫 فتح Modal الاختصارات والتفاصيل (للأسست/الأدمن)
-window.openStudentQuickActionsModal = function(student) {
-  try {
-    const ts = DataService?.getStudentTeachers ? DataService.getStudentTeachers(student.id) : [];
-    const allAtt = DataService?.getAttendance ? DataService.getAttendance() : [];
-    const att = allAtt.filter(a => a.status === 'approved' && a.records.some(r => r.studentId === student.id));
-    const pr = att.filter(a => a.records.find(r => r.studentId === student.id)?.status === 'present').length;
-    const rate = att.length ? Math.round(pr / att.length * 100) : 0;
-    
-    const points = (typeof Ops?.getStudentPoints === 'function') ? Ops.getStudentPoints(student.id, null, 'all') : 0;
-    const stage = EduFlowConfig?.educationLevels?.[student.stage]?.nameAr || '-';
-    
-    // حساب المستحقات
-    const billing = (typeof Ops?.buildStudentBilling === 'function') ? Ops.buildStudentBilling(student.id) : [];
-    const totalDue = billing.reduce((a, x) => a + (x.billing?.total || 0), 0);
-    const totalPaid = billing.reduce((a, x) => a + (x.payment?.paidAmount || 0), 0);
-    const remaining = Math.max(0, totalDue - totalPaid);
-    
-    const photo = student.photoUrl 
-      ? `<img src="${window.driveThumb(student.photoUrl)}" class="student-avatar" style="object-fit:cover;" onerror="this.outerHTML='<div class=\\'student-avatar\\'>${student.name.charAt(0)}</div>'">`
-      : `<div class="student-avatar">${student.name.charAt(0)}</div>`;
-    
-    const groupsHtml = ts.length ? ts.map(t => `
-      <div style="background:var(--surface-hover);padding:10px;border-radius:8px;margin-bottom:6px;">
-        <strong>${t.group?.name || '-'}</strong>
-        <div class="text-xs text-muted">👨‍🏫 ${t.teacher?.name || '-'} · 📅 ${dayAr(t.group?.day)} ${T(t.group?.time)} · 🏢 ${t.group?.center || '-'}</div>
-      </div>
-    `).join('') : '<p class="text-muted">لا توجد مجموعات</p>';
-    
-    const modalHtml = `
-      <div class="modal-header">
-        <h3 class="modal-title">🎓 بيانات الطالب</h3>
-        <button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="student-info-header">
-          ${photo}
-          <div class="student-meta">
-            <div class="student-name">${student.name}</div>
-            <div class="student-code">🎟️ ${student.code || '-'}</div>
-            <div class="student-badges">
-              <span class="badge badge-info">${stage} ${student.grade || ''}</span>
-              <span class="badge badge-success">🏆 ${points} نقطة</span>
-              <span class="badge ${rate >= 75 ? 'badge-success' : rate >= 50 ? 'badge-warning' : 'badge-danger'}">📋 ${rate}% حضور</span>
-              ${remaining > 0 ? `<span class="badge badge-danger">💰 ${remaining} ج.م متبقي</span>` : `<span class="badge badge-success">✅ مسدد</span>`}
-            </div>
-          </div>
-        </div>
-        
-        <div class="detail-grid" style="margin-bottom:16px;">
-          <div class="detail-box">
-            <div class="lbl">📱 هاتف الطالب</div>
-            <div class="val">${student.phone || '-'}</div>
-          </div>
-          <div class="detail-box">
-            <div class="lbl">👨‍👩‍👦 ولي الأمر</div>
-            <div class="val">${student.parentPhone || '-'}</div>
-          </div>
-          <div class="detail-box">
-            <div class="lbl">🔑 كلمة المرور</div>
-            <div class="val" style="font-family:var(--font-en);letter-spacing:2px;">${student.password || '-'}</div>
-          </div>
-          <div class="detail-box">
-            <div class="lbl">📚 المجموعات</div>
-            <div class="val">${ts.length}</div>
-          </div>
-        </div>
-        
-        <h4 style="margin:20px 0 12px;">⚡ الاختصارات السريعة</h4>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
-          <button class="quick-action-btn" onclick="window.quickAttendStudent('${student.id}')">
-            <div class="quick-action-icon">📋</div>
-            <div>
-              <div>تسجيل حضور</div>
-              <div class="text-xs text-muted">حصة اليوم</div>
-            </div>
-          </button>
-          <button class="quick-action-btn" onclick="window.quickPayStudent('${student.id}')">
-            <div class="quick-action-icon">💰</div>
-            <div>
-              <div>تحصيل دفعة</div>
-              <div class="text-xs text-muted">${remaining > 0 ? `متبقي ${remaining} ج.م` : 'مسدد'}</div>
-            </div>
-          </button>
-          <button class="quick-action-btn" onclick="window.quickAddPoints('${student.id}')">
-            <div class="quick-action-icon">🏆</div>
-            <div>
-              <div>إضافة نقاط</div>
-              <div class="text-xs text-muted">تفاعل/تميز</div>
-            </div>
-          </button>
-          <button class="quick-action-btn" onclick="window.quickAddNote('${student.id}')">
-            <div class="quick-action-icon">📝</div>
-            <div>
-              <div>إضافة ملاحظة</div>
-              <div class="text-xs text-muted">توصية/ملاحظة</div>
-            </div>
-          </button>
-          ${student.parentPhone ? `
-          <a class="quick-action-btn" href="https://wa.me/2${student.parentPhone.replace(/\\D/g, '')}" target="_blank" style="text-decoration:none;">
-            <div class="quick-action-icon" style="background:rgba(37,211,102,0.15);color:#25d366;">💬</div>
-            <div>
-              <div>واتساب ولي الأمر</div>
-              <div class="text-xs text-muted">${student.parentPhone}</div>
-            </div>
-          </a>
-          ` : `
-          <button class="quick-action-btn" disabled style="opacity:0.5;">
-            <div class="quick-action-icon">📱</div>
-            <div>
-              <div>لا يوجد رقم</div>
-              <div class="text-xs text-muted">ولي الأمر</div>
-            </div>
-          </button>
-          `}
-          <button class="quick-action-btn" onclick="window.openStudentFullProfile('${student.id}')">
-            <div class="quick-action-icon" style="background:var(--info-bg);color:var(--info);">👁️</div>
-            <div>
-              <div>عرض الملف الكامل</div>
-              <div class="text-xs text-muted">تفاصيل شاملة</div>
-            </div>
-          </button>
-        </div>
-        
-        <h4 style="margin:20px 0 12px;">👥 المجموعات (${ts.length})</h4>
-        <div style="max-height:200px;overflow-y:auto;margin-bottom:16px;">${groupsHtml}</div>
-        
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="btn btn-primary" style="flex:1;" onclick="window.openEditStudentModal('${student.id}')">
-            ✏️ تعديل بيانات الطالب
-          </button>
-          <button class="btn btn-secondary" style="flex:1;" onclick="window.closeScanner()">
-            ← مسح طالب آخر
-          </button>
-        </div>
-      </div>
-    `;
-    
-    if (typeof ThemeManager?.openModal === 'function') {
-      ThemeManager.openModal(modalHtml, 'modal-lg');
-    } else {
-      document.getElementById('studentDetailsModal').innerHTML = modalHtml;
-      document.getElementById('studentDetailsModal').style.display = 'block';
-    }
-  } catch (e) {
-    console.error('openStudentQuickActionsModal error:', e);
-    safeToast('خطأ في عرض البيانات', 'error');
-  }
-};
-
-// 📋 تسجيل حضور سريع
-window.quickAttendStudent = async function(studentId) {
-  try {
-    const ts = DataService?.getStudentTeachers ? DataService.getStudentTeachers(studentId) : [];
-    if (!ts.length) { safeToast('الطالب ليس في أي مجموعة', 'error'); return; }
-    
-    const now = new Date();
-    const dayEn = DAYS[now.getDay()].en;
-    const today = now.toISOString().split('T')[0];
-    
-    // البحث عن حصة اليوم
-    const todayGroups = ts.filter(t => {
-      const g = t.group;
-      if (!g) return false;
-      const schs = (g.schedules && g.schedules.length) ? g.schedules : [{day: g.day, time: g.time}];
-      return schs.some(s => s.day === dayEn);
-    });
-    
-    if (!todayGroups.length) {
-      safeToast('لا توجد حصة لهذا الطالب اليوم', 'warning');
-      return;
-    }
-    
-    const g = todayGroups[0].group;
-    
-    if (typeof DataService?.submitAttendance === 'function') {
-      await DataService.submitAttendance({
-        groupId: g.id,
-        groupName: g.name,
-        submittedBy: currentUser?.id || '',
-        records: [{studentId: studentId, status: 'present', time: now.toTimeString().slice(0, 5)}]
-      });
-      safeToast('✅ تم تسجيل الحضور بنجاح', 'success');
-      ThemeManager.closeModal();
-    } else {
-      const d = db();
-      d.attendance = d.attendance || [];
-      let att = d.attendance.find(a => a.groupId === g.id && a.date === today);
-      if (!att) {
-        att = {
-          id: 'att_' + Date.now(),
-          groupId: g.id,
-          groupName: g.name,
-          date: today,
-          status: 'approved',
-          approvedBy: currentUser?.id || '',
-          approvedAt: new Date().toISOString(),
-          records: []
-        };
-        d.attendance.push(att);
-      }
-      let rec = att.records.find(r => r.studentId === studentId);
-      if (!rec) {
-        att.records.push({studentId: studentId, status: 'present', time: now.toTimeString().slice(0, 5)});
-      } else {
-        rec.status = 'present';
-      }
-      save(d);
-      safeToast('✅ تم تسجيل الحضور بنجاح', 'success');
-      ThemeManager.closeModal();
-    }
-  } catch (e) {
-    console.error(e);
-    safeToast('خطأ في تسجيل الحضور', 'error');
-  }
-};
-
-// 💰 تحصيل دفعة سريع
-window.quickPayStudent = function(studentId) {
-  try {
-    const billing = (typeof Ops?.buildStudentBilling === 'function') ? Ops.buildStudentBilling(studentId) : [];
-    const totalDue = billing.reduce((a, x) => a + (x.billing?.total || 0), 0);
-    const totalPaid = billing.reduce((a, x) => a + (x.payment?.paidAmount || 0), 0);
-    const remaining = Math.max(0, totalDue - totalPaid);
-    
-    if (remaining <= 0) {
-      safeToast('✅ الطالب مسدد بالكامل', 'success');
-      return;
-    }
-    
-    const amount = prompt(`المبلغ المتبقي: ${remaining} ج.م\nأدخل المبلغ المدفوع:`, remaining);
-    if (amount === null) return;
-    const num = parseFloat(amount);
-    if (isNaN(num) || num <= 0) { safeToast('مبلغ غير صحيح', 'error'); return; }
-    
-    const d = db();
-    d.payments = d.payments || [];
-    const month = new Date().toISOString().slice(0, 7);
-    
-    billing.forEach(({group, billing: b}) => {
-      let pay = d.payments.find(x => x.studentId === studentId && x.groupId === group.id && x.month === month);
-      if (!pay) {
-        pay = {
-          id: 'pay_' + Date.now() + '_' + group.id,
-          studentId: studentId,
-          groupId: group.id,
-          teacherId: group.teacherId,
-          month: month,
-          amount: b.total || 0,
-          paidAmount: 0,
-          status: 'unpaid',
-          history: []
-        };
-        d.payments.push(pay);
-      }
-      pay.paidAmount += num;
-      pay.status = pay.paidAmount >= pay.amount ? 'paid' : 'partial';
-      pay.history = pay.history || [];
-      pay.history.push({date: new Date().toISOString(), amount: num, method: 'cash'});
-    });
-    save(d);
-    
-    safeToast('💵 تم تسجيل الدفعة بنجاح', 'success');
-    ThemeManager.closeModal();
-  } catch (e) {
-    console.error(e);
-    safeToast('خطأ في التحصيل', 'error');
-  }
-};
-
-// 🏆 إضافة نقاط سريعة
-window.quickAddPoints = function(studentId) {
-  try {
-    const points = parseInt(prompt('عدد النقاط:', '5'));
-    if (isNaN(points) || points <= 0) { safeToast('قيمة غير صحيحة', 'error'); return; }
-    const reason = prompt('السبب:', 'تفاعل في الحصة') || 'تفاعل';
-    
-    if (typeof Ops?.addManualPoints === 'function') {
-      Ops.addManualPoints(studentId, points, reason, currentUser?.id).then(() => {
-        safeToast(`✅ تم إضافة ${points} نقطة`, 'success');
-        ThemeManager.closeModal();
-      });
-    } else {
-      const d = db();
-      d.manualPoints = d.manualPoints || [];
-      d.manualPoints.push({
-        id: 'mp_' + Date.now(),
-        studentId: studentId,
-        points: points,
-        reason: reason,
-        awardedBy: currentUser?.id || '',
-        awardedAt: new Date().toISOString()
-      });
-      save(d);
-      safeToast(`✅ تم إضافة ${points} نقطة`, 'success');
-      ThemeManager.closeModal();
-    }
-  } catch (e) {
-    console.error(e);
-    safeToast('خطأ', 'error');
-  }
-};
-
-// 📝 إضافة ملاحظة سريعة
-window.quickAddNote = function(studentId) {
-  try {
-    const note = prompt('اكتب الملاحظة:');
-    if (!note) return;
-    
-    if (typeof Ops?.addStudentNote === 'function') {
-      Ops.addStudentNote({
-        studentId: studentId,
-        note: note,
-        teacherId: currentUser?.id,
-        teacherName: currentUser?.name
-      }).then(() => {
-        safeToast('✅ تم إضافة الملاحظة', 'success');
-        ThemeManager.closeModal();
-      });
-    } else {
-      const d = db();
-      d.studentNotes = d.studentNotes || [];
-      d.studentNotes.push({
-        id: 'note_' + Date.now(),
-        studentId: studentId,
-        note: note,
-        teacherId: currentUser?.id,
-        teacherName: currentUser?.name,
-        createdAt: new Date().toISOString()
-      });
-      save(d);
-      safeToast('✅ تم إضافة الملاحظة', 'success');
-      ThemeManager.closeModal();
-    }
-  } catch (e) {
-    console.error(e);
-    safeToast('خطأ', 'error');
-  }
-};
-
-// 👁️ فتح الملف الكامل
-window.openStudentFullProfile = function(studentId) {
-  try {
-    ThemeManager.closeModal();
-    if (typeof window.openStudentProfile === 'function') {
-      window.openStudentProfile(studentId);
-    } else {
-      // Fallback: فتح صفحة الطلاب مع البروفايل
-      window.location.href = 'assistant-dashboard.html?student=' + encodeURIComponent(studentId);
-    }
-  } catch (e) {
-    console.error(e);
-  }
-};
-
-// ✏️ فتح مودال التعديل الكامل
-window.openEditStudentModal = function(studentId) {
-  try {
-    const s = DataService?.getUserById ? DataService.getUserById(studentId) : null;
-    if (!s) { safeToast('الطالب غير موجود', 'error'); return; }
-    
-    const stageOptions = Object.entries(EduFlowConfig?.educationLevels || {}).map(([k, v]) => 
-      `<option value="${k}" ${s.stage === k ? 'selected' : ''}>${v.nameAr}</option>`
-    ).join('');
-    
-    const currentEnrollments = DataService?.getStudentTeachers ? DataService.getStudentTeachers(studentId) : [];
-    const currentTeacherIds = currentEnrollments.map(t => t.teacher?.id);
-    const currentGroupIds = currentEnrollments.map(t => t.group?.id);
-    
-    const teachers = DataService?.getTeachers ? DataService.getTeachers() : [];
-    const groups = DataService?.getGroups ? DataService.getGroups() : [];
-    
-    const teachersHtml = teachers.map(t => `
-      <label style="display:flex;gap:8px;align-items:center;padding:10px;background:var(--surface-hover);border-radius:8px;margin-bottom:6px;cursor:pointer;border:2px solid var(--border);">
-        <input type="checkbox" class="edit-teacher-chk" value="${t.id}" ${currentTeacherIds.includes(t.id) ? 'checked' : ''} onchange="window.updateEditGroups()">
-        <div>
-          <strong>${t.name}</strong>
-          <div class="text-xs text-muted">${t.subject || '-'}</div>
-        </div>
-      </label>
-    `).join('');
-    
-    ThemeManager.closeModal();
-    
-    setTimeout(() => {
-      ThemeManager.openModal(`
-        <div class="modal-header">
-          <h3 class="modal-title">✏️ تعديل بيانات: ${s.name}</h3>
-          <button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label>الاسم الكامل *</label>
-            <input type="text" id="editName" class="form-input" value="${s.name || ''}" required>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <div class="form-group">
-              <label>هاتف الطالب</label>
-              <input type="tel" id="editPhone" class="form-input" value="${s.phone || ''}">
-            </div>
-            <div class="form-group">
-              <label>هاتف ولي الأمر</label>
-              <input type="tel" id="editParent" class="form-input" value="${s.parentPhone || ''}">
-            </div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <div class="form-group">
-              <label>المرحلة *</label>
-              <select id="editStage" class="form-select" onchange="window.updateEditGrades()">
-                ${stageOptions}
-              </select>
-            </div>
-            <div class="form-group">
-              <label>الصف *</label>
-              <select id="editGrade" class="form-select"></select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>🔑 كلمة المرور</label>
-            <input type="text" id="editPassword" class="form-input" value="${s.password || '1234'}" style="font-family:var(--font-en);letter-spacing:2px;">
-          </div>
-          <div class="form-group">
-            <label>👨‍🏫 اختر الأساتذة</label>
-            <div style="max-height:150px;overflow-y:auto;padding:8px;background:var(--surface-hover);border-radius:8px;">
-              ${teachersHtml || '<p class="text-muted">لا يوجد أساتذة</p>'}
-            </div>
-          </div>
-          <div class="form-group">
-            <label>👥 المجموعات المرتبطة</label>
-            <div id="editGroupsList" style="max-height:180px;overflow-y:auto;padding:8px;background:var(--surface-hover);border-radius:8px;"></div>
-          </div>
-          <button class="btn btn-primary w-full" style="padding:14px;font-size:15px;" onclick="window.saveEditedStudent('${studentId}')">
-            💾 حفظ التعديلات
-          </button>
-        </div>
-      `, 'modal-lg');
-      
-      window.updateEditGrades(s.grade);
-      setTimeout(() => window.updateEditGroups(currentGroupIds), 100);
-    }, 300);
-  } catch (e) {
-    console.error('openEditStudentModal error:', e);
-    safeToast('خطأ في فتح نافذة التعديل', 'error');
-  }
-};
-
-window.updateEditGrades = function(selected) {
-  try {
-    const stage = document.getElementById('editStage')?.value;
-    const grades = EduFlowConfig?.educationLevels?.[stage]?.grades || [];
-    const el = document.getElementById('editGrade');
-    if (el) {
-      el.innerHTML = '<option value="">-- اختر --</option>' + grades.map(g => 
-        `<option ${selected === g ? 'selected' : ''}>${g}</option>`
-      ).join('');
-    }
-    window.updateEditGroups();
-  } catch (e) {}
-};
-
-window.updateEditGroups = function(preSelectedIds) {
-  try {
-    const selectedTeachers = Array.from(document.querySelectorAll('.edit-teacher-chk:checked')).map(c => c.value);
-    const stage = document.getElementById('editStage')?.value;
-    const grade = document.getElementById('editGrade')?.value;
-    const container = document.getElementById('editGroupsList');
-    if (!container) return;
-    
-    if (!selectedTeachers.length) {
-      container.innerHTML = '<p class="text-muted" style="font-size:12px;">اختر أستاذاً واحداً على الأقل أولاً</p>';
-      return;
-    }
-    
-    const groups = DataService?.getGroups ? DataService.getGroups() : [];
-    let html = '';
-    selectedTeachers.forEach(tid => {
-      const teacher = DataService?.getUserById ? DataService.getUserById(tid) : null;
-      html += `<div style="font-weight:700;font-size:13px;color:var(--primary);margin:8px 0 4px;">👨‍🏫 ${teacher?.name || '-'}</div>`;
-      const teacherGroups = groups.filter(g => 
-        g.teacherId === tid && 
-        (!stage || g.stage === stage) && 
-        (!grade || g.grade === grade)
-      );
-      if (teacherGroups.length) {
-        html += teacherGroups.map(g => `
-          <label style="display:flex;gap:8px;align-items:center;padding:8px;background:var(--surface);border-radius:6px;margin-bottom:4px;cursor:pointer;">
-            <input type="checkbox" class="edit-grp-chk" value="${g.id}" data-teacher="${tid}" ${preSelectedIds?.includes(g.id) ? 'checked' : ''}>
-            <span style="font-size:12px;">${g.name} (${dayAr(g.day)} ${T(g.time)})</span>
-          </label>
-        `).join('');
-      } else {
-        html += '<p class="text-muted" style="font-size:11px;">لا توجد مجموعات مطابقة</p>';
-      }
-    });
-    container.innerHTML = html;
-  } catch (e) { console.error(e); }
-};
-
-window.saveEditedStudent = async function(studentId) {
-  try {
-    const data = {
-      name: document.getElementById('editName').value,
-      phone: document.getElementById('editPhone').value,
-      parentPhone: document.getElementById('editParent').value,
-      stage: document.getElementById('editStage').value,
-      grade: document.getElementById('editGrade').value,
-      password: document.getElementById('editPassword').value || '1234'
+    // 1. حفظ الطالب كـ session مؤقت
+    const sessionData = {
+      id: student.id,
+      code: student.code,
+      name: student.name,
+      role: student.role || 'student',
+      barcodeLogin: true,
+      loginAt: Date.now(),
+      expiresAt: Date.now() + (24 * 60 * 60 * 1000) // 24 ساعة
     };
     
-    const enrollments = Array.from(document.querySelectorAll('.edit-grp-chk:checked')).map(c => ({
-      groupId: c.value,
-      teacherId: c.dataset.teacher
-    }));
+    // 2. حفظ في sessionStorage
+    sessionStorage.setItem('eduflow_barcode_session', JSON.stringify(sessionData));
+    sessionStorage.setItem('eduflow_user', JSON.stringify(student));
+    sessionStorage.setItem('eduflow_viewas', JSON.stringify(student));
     
-    // تحديث بيانات الطالب
-    if (typeof DataService?.updateUser === 'function') {
-      await DataService.updateUser(studentId, data);
-    } else {
-      const d = db();
-      const users = d.users || [];
-      const user = users.find(u => u.id === studentId);
-      if (user) {
-        Object.assign(user, data, {updatedAt: new Date().toISOString()});
-        save(d);
-      }
+    // 3. حفظ في localStorage (بديل احتياطي)
+    try {
+      localStorage.setItem('eduflow_barcode_session', JSON.stringify(sessionData));
+      localStorage.setItem('eduflow_user', JSON.stringify(student));
+    } catch(e) {}
+    
+    // 4. تحديد الصفحة المستهدفة حسب الدور
+    let targetPage = 'student-dashboard.html';
+    if (student.role === 'parent') {
+      targetPage = 'parent-dashboard.html';
     }
     
-    // تحديث الاشتراكات
-    const d = db();
-    d.enrollments = (d.enrollments || []).filter(e => e.studentId !== studentId);
-    enrollments.forEach(enr => {
-      d.enrollments.push({
-        studentId: studentId,
-        groupId: enr.groupId,
-        teacherId: enr.teacherId,
-        status: 'active',
-        enrolledAt: new Date().toISOString()
-      });
-    });
-    save(d);
+    // 5. إضافة parameter لتأكيد الدخول بالباركود
+    const targetUrl = targetPage + '?barcode=' + encodeURIComponent(student.id) + '&direct=1';
     
-    if (window.FirebaseService?.connected) {
-      try {
-        await FirebaseService.saveDoc('users', studentId, {...data, id: studentId});
-      } catch (e) {}
-    }
+    // 6. الانتقال المباشر
+    safeToast('✅ أهلاً ' + student.name, 'success');
     
-    ThemeManager.closeModal();
-    safeToast('✅ تم حفظ التعديلات بنجاح', 'success');
-    
-    // إعادة فتح modal الاختصارات لرؤية البيانات الجديدة
     setTimeout(() => {
-      const updatedStudent = DataService?.getUserById ? DataService.getUserById(studentId) : null;
-      if (updatedStudent) window.openStudentQuickActionsModal(updatedStudent);
-    }, 400);
+      window.location.href = targetUrl;
+    }, 500);
+    
   } catch (e) {
-    console.error('saveEditedStudent error:', e);
-    safeToast('خطأ في الحفظ: ' + e.message, 'error');
+    console.error('directLoginToStudent error:', e);
+    safeToast('خطأ في الدخول', 'error');
+    isProcessing = false;
   }
 };
 

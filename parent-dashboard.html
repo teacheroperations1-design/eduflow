@@ -293,6 +293,73 @@
 <script src="js/auth-service.js"></script>
 
 <script>
+  /* 🎯 نظام الدخول الفوري بالباركود */
+(function handleBarcodeAutoLogin() {
+  try {
+    // 1. التحقق من parameter في URL
+    const params = new URLSearchParams(location.search);
+    const barcodeId = params.get('barcode');
+    const isDirect = params.get('direct') === '1';
+    
+    // 2. التحقق من session في sessionStorage/localStorage
+    let barcodeSession = null;
+    try {
+      barcodeSession = JSON.parse(sessionStorage.getItem('eduflow_barcode_session') || 'null');
+    } catch(e) {}
+    
+    if (!barcodeSession) {
+      try {
+        barcodeSession = JSON.parse(localStorage.getItem('eduflow_barcode_session') || 'null');
+      } catch(e) {}
+    }
+    
+    // 3. لو في session صالح
+    if (barcodeSession && barcodeSession.barcodeLogin && barcodeSession.expiresAt > Date.now()) {
+      const userId = barcodeSession.id;
+      const user = (DataService?.getUsers ? DataService.getUsers() : []).find(u => u.id === userId);
+      
+      if (user && user.role === 'student') {
+        // 🎯 تجاوز تسجيل الدخول!
+        window.__BARCODE_LOGIN_USER = user;
+        window.__VIEWAS_USER = user;
+        
+        // Override AuthService.getCurrentUser
+        if (window.AuthService) {
+          const originalGetCurrentUser = AuthService.getCurrentUser;
+          AuthService.getCurrentUser = function() { 
+            return window.__BARCODE_LOGIN_USER || originalGetCurrentUser?.call(this); 
+          };
+          
+          // Override requireRole
+          if (typeof AuthService.requireRole === 'function') {
+            AuthService.requireRole = function(roles) {
+              if (!roles || roles.includes('student')) return true;
+              return true; // السماح دائماً للباركود
+            };
+          }
+          
+          // Override logout
+          const origLogout = AuthService.logout?.bind(AuthService);
+          AuthService.logout = function() {
+            sessionStorage.removeItem('eduflow_barcode_session');
+            sessionStorage.removeItem('eduflow_user');
+            localStorage.removeItem('eduflow_barcode_session');
+            localStorage.removeItem('eduflow_user');
+            window.__BARCODE_LOGIN_USER = null;
+            window.__VIEWAS_USER = null;
+            if (origLogout) origLogout();
+            else location.href = 'login.html';
+          };
+        }
+        
+        console.log('✅ Barcode auto-login successful for:', user.name);
+      }
+    }
+  } catch (e) {
+    console.error('Barcode auto-login error:', e);
+  }
+})();
+
   /* 🆕 View-As: لو الرابط فيه ?viewas= خد الهوية دي كالمستخدم الحالي للتبويب ده */
 (function(){
   try{
