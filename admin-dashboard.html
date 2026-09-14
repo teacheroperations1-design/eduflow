@@ -323,7 +323,12 @@
 .admin-fu-card.urgent{border-right-color:var(--danger);background:linear-gradient(135deg,rgba(239,68,68,.02),transparent)}
 .admin-fu-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
 .fu-priority{font-size:10px;font-weight:800;padding:4px 8px;border-radius:6px;text-transform:uppercase}
-
+.teacher-select-card{display:flex;gap:8px;align-items:center;padding:10px;background:var(--surface);border:2px solid var(--border);border-radius:8px;cursor:pointer;transition:all .2s;}
+.teacher-select-card:hover{border-color:var(--primary-border);}
+.teacher-select-card.selected{border-color:var(--primary);background:var(--primary-bg);}
+.teacher-select-card input{width:16px;height:16px;accent-color:var(--primary);}
+.group-check-item{display:flex;gap:8px;align-items:center;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:4px;cursor:pointer;}
+.group-check-item input{width:16px;height:16px;accent-color:var(--primary);}
 </style>
 </head>
 <body data-theme="dark">
@@ -1375,63 +1380,68 @@ window.doSwapStudent=async function(studentId){
 
 // مودال الطالب الكامل
 window.openStudentModal=function(editId){
-  try{
-    const s=editId?DataService.getUserById(editId):null;
-    const stageOptions=Object.entries(EduFlowConfig?.educationLevels||{}).map(([k,v])=>`<option value="${k}" ${s?.stage===k?'selected':''}>${v.nameAr}</option>`).join('');
-    const currentEnrollments=editId?DataService.getStudentTeachers(editId):[];
-    const currentTeacherIds=currentEnrollments.map(t=>t.teacher?.id);
-    const currentGroupIds=currentEnrollments.map(t=>t.group?.id);
-    
-    ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${s?'✏️ تعديل':'🎓 إضافة'} طالب</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
-    <div class="modal-body">
-      <form onsubmit="return window.saveStudent(event,'${editId||''}')">
-        <div class="form-group"><label>الاسم الكامل *</label><input type="text" id="sName" class="form-input" value="${s?.name||''}" required></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div class="form-group"><label>هاتف الطالب</label><input type="tel" id="sPhone" class="form-input" value="${s?.phone||''}"></div>
-          <div class="form-group"><label>هاتف ولي الأمر</label><input type="tel" id="sParent" class="form-input" value="${s?.parentPhone||''}"></div>
-        </div>
-        <div class="stage-grade-row">
-          <div class="form-group"><label>المرحلة *</label><select id="sLevel" class="form-select" onchange="window.updStudentGrades();window.renderStudentGroups();">${stageOptions}</select></div>
-          <div class="form-group"><label>الصف *</label><select id="sGrade" class="form-select" onchange="window.renderStudentGroups();"></select></div>
-        </div>
-        
-        <div class="form-group">
-          <label>👨‍🏫 اختر الأساتذة (يمكن اختيار أكثر من أستاذ)</label>
-          <div id="teacherSelectionGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-top:6px;"></div>
-        </div>
-        
-        <div class="form-group">
-          <label>👥 المجموعات المرتبطة</label>
-          <div id="sGroups" style="max-height:200px;overflow-y:auto;padding:8px;background:var(--surface-hover);border-radius:8px;"></div>
-        </div>
-        
-        <div class="form-group"><label>كلمة المرور</label><input type="text" id="sPass" class="form-input" value="${s?.password||'1234'}"></div>
-        <button class="btn btn-primary w-full">💾 حفظ البيانات</button>
-      </form>
-    </div>`);
-    
-    window.updStudentGrades(s?.grade);
-    window.renderStudentTeachersGrid(currentTeacherIds);
-    setTimeout(()=>{ window.renderStudentGroups(currentGroupIds); }, 150);
-  }catch(e){console.error(e);}
+try{
+const s=editId?DataService.getUserById(editId):null;
+const stageOptions=Object.entries(EduFlowConfig?.educationLevels||{}).map(([k,v])=>`<option value="${k}" ${s?.stage===k?'selected':''}>${v.nameAr}</option>`).join('');
+const currentEnrollments=editId?DataService.getStudentTeachers(editId):[];
+const currentTeacherIds=currentEnrollments.map(t=>t.teacher?.id);
+const currentGroupIds=currentEnrollments.map(t=>t.group?.id);
+// 🆕 خيارات السنتر
+const centers=window.getAllCenters?window.getAllCenters():[];
+const centerOptions=centers.map(c=>`<option value="${c}">${c}</option>`).join('');
+ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${s?'✏️ تعديل':'🎓 إضافة'} طالب</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+<div class="modal-body">
+<form onsubmit="return window.saveStudent(event,'${editId||''}')">
+<div class="stu-section">
+<div class="stu-section-title">👤 البيانات الأساسية</div>
+<div class="form-group"><label>الاسم الكامل *</label><input type="text" id="sName" class="form-input" value="${s?.name||''}" required placeholder="مثال: أحمد محمد علي"></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+<div class="form-group"><label>📱 هاتف الطالب</label><input type="tel" id="sPhone" class="form-input" value="${s?.phone||''}" placeholder="01xxxxxxxxx"></div>
+<div class="form-group"><label>👨‍👩‍👦 هاتف ولي الأمر</label><input type="tel" id="sParent" class="form-input" value="${s?.parentPhone||''}" placeholder="01xxxxxxxxx"></div>
+</div>
+</div>
+<div class="stu-section">
+<div class="stu-section-title">🎓 المرحلة والصف والسنتر</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+<div class="form-group"><label>المرحلة *</label><select id="sLevel" class="form-select" onchange="window.updStudentGrades();window.renderStudentGroups();">${stageOptions}</select></div>
+<div class="form-group"><label>الصف *</label><select id="sGrade" class="form-select" onchange="window.renderStudentGroups();"></select></div>
+<div class="form-group"><label>🏢 السنتر</label><select id="sCenter" class="form-select" onchange="window.renderStudentGroups();"><option value="">كل السناتر</option>${centerOptions}</select></div>
+</div>
+</div>
+<div class="stu-section">
+<div class="stu-section-title">👨‍🏫 الأساتذة والمجموعات</div>
+<div class="form-group"><label>اختر الأساتذة (يمكن اختيار أكثر من أستاذ)</label>
+<div id="teacherSelectionGrid" class="teacher-grid"></div></div>
+<div class="form-group"><label>👥 المجموعات المرتبطة <span id="grpCountBadge" class="points-badge" style="display:none;">0</span></label>
+<div id="sGroups" class="groups-box"></div></div>
+</div>
+<div class="stu-section">
+<div class="stu-section-title">🔑 بيانات الدخول</div>
+<div class="form-group"><label>كلمة المرور</label><input type="text" id="sPass" class="form-input" value="${s?.password||'1234'}"></div>
+</div>
+<div class="modal-sticky-footer"><button class="btn btn-primary w-full btn-lg">💾 حفظ البيانات</button></div>
+</form>
+</div>`,'modal-lg');
+window.updStudentGrades(s?.grade);
+window.renderStudentTeachersGrid(currentTeacherIds);
+setTimeout(()=>{ window.renderStudentGroups(currentGroupIds); }, 150);
+}catch(e){console.error(e);}
 };
 
 window.renderStudentTeachersGrid=function(selectedIds){
-  try{
-    const teachers=DataService.getTeachers();
-    const grid=document.getElementById('teacherSelectionGrid');
-    if(!grid) return;
-    grid.innerHTML=teachers.map(t=>`
-      <label class="teacher-select-card ${selectedIds?.includes(t.id)?'selected':''}" onclick="window.toggleStudentTeacher(this, '${t.id}')">
-        <input type="checkbox" value="${t.id}" ${selectedIds?.includes(t.id)?'checked':''}>
-        <div class="attention-card ${highRiskStudents?'danger':''}" onclick="window.showSection('churn')"><div class="attention-value">${highRiskStudents}</div><div>🚨 طلاب بخطر التسرب</div></div>
-        <div style="flex:1;">
-          <div style="font-weight:700;font-size:13px;">${t.name}</div>
-          <div style="font-size:11px;color:var(--text-muted);">${t.subject||'-'}</div>
-        </div>
-      </label>
-    `).join('');
-  }catch(e){}
+try{
+const teachers=DataService.getTeachers();
+const grid=document.getElementById('teacherSelectionGrid');
+if(!grid) return;
+grid.innerHTML=teachers.map(t=>`
+<label class="teacher-select-card ${selectedIds?.includes(t.id)?'selected':''}" onclick="window.toggleStudentTeacher(this, '${t.id}')">
+<input type="checkbox" value="${t.id}" ${selectedIds?.includes(t.id)?'checked':''}>
+<div style="flex:1;">
+<div style="font-weight:700;font-size:13px;">${t.name}</div>
+<div style="font-size:11px;color:var(--text-muted);">${t.subject||'-'}</div>
+</div>
+</label>`).join('')||'<p class="text-muted">لا يوجد أساتذة</p>';
+}catch(e){console.error('renderStudentTeachersGrid:',e);}
 };
 
 window.toggleStudentTeacher=function(el, tid){
@@ -1453,38 +1463,63 @@ window.updStudentGrades=function(sel){
 };
 
 window.renderStudentGroups=function(preSelectedIds){
-  try{
-    const selectedCards=document.querySelectorAll('#teacherSelectionGrid .teacher-select-card.selected input');
-    const selectedTeacherIds=Array.from(selectedCards).map(cb=>cb.value);
-    const stage=document.getElementById('sLevel')?.value;
-    const grade=document.getElementById('sGrade')?.value;
-    const container=document.getElementById('sGroups');
-    if(!container) return;
-    
-    if(!selectedTeacherIds.length){
-      container.innerHTML='<p class="text-muted" style="font-size:12px;">👈 اختر أستاذاً واحداً على الأقل أولاً</p>';
-      return;
-    }
-    
-    let html='';
-    selectedTeacherIds.forEach(tid=>{
-      const teacher=DataService.getUserById(tid);
-      html+=`<div style="font-weight:700;font-size:13px;color:var(--primary);margin:8px 0 4px 0;">👨‍🏫 ${teacher?.name||'أستاذ'}</div>`;
-      const groups=DataService.getGroupsByTeacher(tid).filter(g=>(!stage||!g.stage||g.stage===stage)&&(!grade||!g.grade||g.grade===grade));
-      if(groups.length){
-        html+=groups.map(g=>`
-          <label class="group-check-item">
-            <input type="checkbox" class="s-grp" value="${g.id}" data-teacher="${tid}" ${preSelectedIds?.includes(g.id)?'checked':''}>
-            <span style="font-size:12px;">${g.name} (${dayAr(g.day)} ${T(g.time)})</span>
-          </label>
-        `).join('');
-      }else{
-        html+='<p class="text-muted" style="font-size:11px;margin-bottom:8px;">لا توجد مجموعات مطابقة لهذا الأستاذ</p>';
-      }
-    });
-    container.innerHTML=html||'<p class="text-muted">لا مجموعات متاحة</p>';
-  }catch(e){console.error(e);}
+try{
+const selectedCards=document.querySelectorAll('#teacherSelectionGrid .teacher-select-card.selected input');
+const selectedTeacherIds=Array.from(selectedCards).map(cb=>cb.value);
+const stage=(document.getElementById('sLevel')?.value||'').trim();
+const grade=(document.getElementById('sGrade')?.value||'').trim();
+const center=(document.getElementById('sCenter')?.value||'').trim();
+const container=document.getElementById('sGroups');
+if(!container) return;
+if(!selectedTeacherIds.length){
+container.innerHTML='<p class="text-muted" style="font-size:12px;text-align:center;padding:12px;">👈 اختر أستاذاً واحداً على الأقل أولاً</p>';
+window.updateGrpCountBadge(0);
+return;
+}
+const norm=s=>String(s||'').trim();
+const key=stage+'|'+grade+'|'+center+'|'+selectedTeacherIds.join(',');
+if(window._grpLastKey!==key){ window._grpShowAll=false; window._grpLastKey=key; }
+let html=''; let totalCount=0;
+selectedTeacherIds.forEach(tid=>{
+const teacher=DataService.getUserById(tid);
+const all=DataService.getGroupsByTeacher(tid);
+let list=all;
+if(stage) list=list.filter(g=>norm(g.stage)===stage);
+if(grade) list=list.filter(g=>norm(g.grade)===grade);
+if(center) list=list.filter(g=>norm(g.center)===center);
+if(window._grpShowAll) list=all;
+totalCount+=list.length;
+html+=`<div class="grp-teacher-head">👨‍🏫 ${teacher?.name||'أستاذ'} <span class="points-badge">${list.length}</span></div>`;
+if(list.length){
+html+=list.map(g=>`
+<label class="group-check-item">
+<input type="checkbox" class="s-grp" value="${g.id}" data-teacher="${tid}" ${preSelectedIds?.includes(g.id)?'checked':''}>
+<span style="flex:1;font-size:12px;">${g.name} <span class="text-xs text-muted">(${dayAr(g.day)} ${T(g.time)})</span></span>
+${g.center?`<span class="badge badge-success" style="font-size:10px;">🏢 ${g.center}</span>`:''}
+${g.grade?`<span class="badge badge-info" style="font-size:10px;">🎓 ${g.grade}</span>`:''}
+</label>`).join('');
+}else{
+html+=`<p class="text-muted" style="font-size:11px;margin:4px 0 8px;">مفيش مجموعات مطابقة ${grade||stage||center?'للفلتر':''} عند الأستاذ ده</p>
+<button type="button" class="btn btn-ghost btn-sm" onclick="window._grpShowAll=true;window.renderStudentGroups(${JSON.stringify(preSelectedIds||[])});">👀 عرض كل مجموعات الأستاذ</button>`;
+}
+});
+container.innerHTML=html||'<p class="text-muted">لا مجموعات متاحة</p>';
+window.updateGrpCountBadge(totalCount);
+}catch(e){console.error(e);}
 };
+window.updateGrpCountBadge=function(n){
+const b=document.getElementById('grpCountBadge');
+if(b){ b.textContent=n; b.style.display=n?'inline-flex':'none'; }
+};
+window.getAllCenters=window.getAllCenters||function(){
+try{
+const set=new Set();
+(DataService?.getCenters?DataService.getCenters():[]).forEach(c=>{ if(c&&c.name) set.add(c.name); });
+(DataService?.getGroups?DataService.getGroups():[]).forEach(g=>{ if(g.center) set.add(g.center); });
+return [...set].sort((a,b)=>a.localeCompare(b,'ar'));
+}catch(e){ return []; }
+};
+
 
 window.saveStudent=async function(e,editId){
   try{
@@ -1537,36 +1572,71 @@ window.delUser=async function(id){
   }catch(e){ window.safeToast('خطأ في الحذف','error'); } 
 };
 
-// بروفايل الطالب
 window.openStudentProfile=function(id){
-  try{
-    const s=DataService.getUserById(id); if(!s)return;
-    const statsByTeacher=typeof Ops?.getStudentStatsByTeacher==='function'?Ops.getStudentStatsByTeacher(id):[];
-    const points=(typeof Ops?.getStudentPoints==='function')?Ops.getStudentPoints(id,null,'all'):0;
-    ThemeManager.openModal(`<div class="modal-header"><div style="display:flex;gap:12px;align-items:center;"><div class="user-avatar" style="width:48px;height:48px;font-size:18px;">${s.name.charAt(0)}</div><div><h3 class="modal-title" style="margin:0;">${s.name}</h3><div class="text-xs text-muted">${s.code||''} · ${s.grade||''} · <span class="points-badge">🏆 ${points}</span></div></div></div><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
-    <div class="modal-body">
-      <div class="detail-grid"><div class="detail-box"><div class="lbl">الهاتف</div><div class="val">${s.phone||'-'}</div></div><div class="detail-box"><div class="lbl">ولي الأمر</div><div class="val">${s.parentPhone||'-'}</div></div><div class="detail-box"><div class="lbl">كلمة السر</div><div class="val">${s.password||'-'}</div></div><div class="detail-box"><div class="lbl">المرحلة</div><div class="val">${EduFlowConfig?.educationLevels?.[s.stage]?.nameAr||'-'}</div></div></div>
-      <h4 class="text-sm" style="margin:14px 0 8px;">📚 إحصائيات مع كل أستاذ:</h4>
-      ${statsByTeacher.length?statsByTeacher.map(st=>{
-        const photo=st.teacher?.photoUrl?`<img src="${window.driveThumb(st.teacher.photoUrl)}" class="teacher-photo-sm" onerror="this.style.display='none'">`:'<div class="user-avatar" style="width:32px;height:32px;font-size:14px;">👨‍🏫</div>';
-        const rate=st.stats.attendance.total?Math.round((st.stats.attendance.present/st.stats.attendance.total)*100):0;
-        return `<div class="sub-row" style="flex-direction:column;align-items:stretch;">
-          <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;">
-            ${photo}
-            <div><strong>${st.teacher?.name||'-'}</strong><div class="text-xs text-muted">${st.group?.name||''}</div></div>
-            <span class="points-badge" style="margin-inline-start:auto;">🏆 ${st.stats.points}</span>
-          </div>
-          <div class="stat-mini">
-            <div class="stat-mini-box"><div class="stat-mini-value">${rate}%</div><div class="stat-mini-label">حضور</div></div>
-            <div class="stat-mini-box"><div class="stat-mini-value">${st.stats.homework.avg}%</div><div class="stat-mini-label">واجبات</div></div>
-            <div class="stat-mini-box"><div class="stat-mini-value">${st.stats.exams.avg}%</div><div class="stat-mini-label">امتحانات</div></div>
-            <div class="stat-mini-box"><div class="stat-mini-value">${st.billing?.remaining||0}</div><div class="stat-mini-label">متبقي</div></div>
-          </div>
-        </div>`;
-      }).join(''):'<p class="text-muted">لا توجد اشتراكات</p>'}
-      ${s.parentPhone?`<div style="margin-top:14px;display:flex;gap:8px;"><a class="btn btn-success btn-sm" href="https://wa.me/2${s.parentPhone.replace(/\D/g,'')}" target="_blank">💬 واتساب ولي الأمر</a><a class="btn btn-secondary btn-sm" href="tel:${s.parentPhone}">📞 اتصال</a></div>`:''}
-    </div>`,'modal-lg');
-  }catch(e){console.error(e);}
+try{
+const s=DataService.getUserById(id); if(!s)return;
+const statsByTeacher=typeof Ops?.getStudentStatsByTeacher==='function'?Ops.getStudentStatsByTeacher(id):[];
+const points=(typeof Ops?.getStudentPoints==='function')?Ops.getStudentPoints(id,null,'all'):0;
+const bd=(typeof Ops?.getStudentPointsBreakdown==='function')?Ops.getStudentPointsBreakdown(id,null,'all'):{};
+const streak=(typeof Ops?.getStudentStreak==='function')?Ops.getStudentStreak(id):{current:0,longest:0,enabled:false,freezes:0};
+const risk=(typeof window.calculateChurnRisk==='function')?window.calculateChurnRisk(id):{level:'low',score:0,reasons:[]};
+const bill=(typeof Ops?.buildStudentBilling==='function')?Ops.buildStudentBilling(id):[];
+const due=bill.reduce((a,b)=>a+(b.billing?.total||0),0);
+const paid=bill.reduce((a,b)=>a+(b.payment?.paidAmount||0),0);
+const remaining=Math.max(0,due-paid);
+const stSet=(typeof Ops?.getStreakSettings==='function')?Ops.getStreakSettings():{milestoneEvery:7};
+const nextMilestone=stSet.milestoneEvery? (stSet.milestoneEvery - (streak.current % stSet.milestoneEvery)) : 0;
+const riskBadge=risk.level==='high'?'<span class="badge badge-danger">🚨 خطر '+risk.score+'%</span>':risk.level==='medium'?'<span class="badge badge-warning">⚠️ خطر '+risk.score+'%</span>':'<span class="badge badge-success">✅ ملتزم</span>';
+
+ThemeManager.openModal(`<div class="modal-header"><div style="display:flex;gap:12px;align-items:center;"><div class="user-avatar" style="width:48px;height:48px;font-size:18px;">${s.name.charAt(0)}</div><div><h3 class="modal-title" style="margin:0;">${s.name}</h3><div class="text-xs text-muted">${s.code||''} · ${EduFlowConfig?.educationLevels?.[s.stage]?.nameAr||'-'} ${s.grade||''}</div><div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;"><span class="points-badge">🏆 ${points}</span><span class="points-badge" style="background:var(--warning-bg);color:var(--warning);">🔥 ${streak.current} يوم</span>${riskBadge}</div></div></div><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+<div class="modal-body">
+<div class="stat-mini">
+<div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--warning);">🔥 ${streak.current}</div><div class="stat-mini-label">السلسلة الحالية${streak.enabled?` · باقي ${nextMilestone} يوم للمكافأة`:''}</div></div>
+<div class="stat-mini-box"><div class="stat-mini-value">🏅 ${streak.longest}</div><div class="stat-mini-label">أطول سلسلة · 🧊 تجميدات: ${streak.freezes||0}</div></div>
+<div class="stat-mini-box"><div class="stat-mini-value">💰 ${remaining}</div><div class="stat-mini-label">متبقي من ${due}</div></div>
+<div class="stat-mini-box"><div class="stat-mini-value">📋 ${statsByTeacher[0]?.stats?.attendance?.total||0}</div><div class="stat-mini-label">حصص مرصودة</div></div>
+</div>
+
+<h4 class="text-sm" style="margin:14px 0 8px;">📊 تفصيل النقاط:</h4>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px;">
+<div class="stat-mini-box"><div class="stat-mini-value">${bd.attendance?.points||0}</div><div class="stat-mini-label">📋 حضور (${bd.attendance?.count||0})</div></div>
+<div class="stat-mini-box"><div class="stat-mini-value">${bd.homework?.points||0}</div><div class="stat-mini-label">📝 واجبات (${bd.homework?.count||0})</div></div>
+<div class="stat-mini-box"><div class="stat-mini-value">${bd.exams?.points||0}</div><div class="stat-mini-label">🎓 امتحانات (${bd.exams?.count||0})</div></div>
+<div class="stat-mini-box"><div class="stat-mini-value">${bd.evaluations?.points||0}</div><div class="stat-mini-label">🎙️ تسميع (${bd.evaluations?.count||0})</div></div>
+<div class="stat-mini-box"><div class="stat-mini-value">${bd.interactions?.points||0}</div><div class="stat-mini-label">⭐ تفاعل (${bd.interactions?.count||0})</div></div>
+<div class="stat-mini-box"><div class="stat-mini-value">${bd.manual?.points||0}</div><div class="stat-mini-label">🎁 يدوي (${bd.manual?.count||0})</div></div>
+</div>
+
+<div class="detail-grid"><div class="detail-box"><div class="lbl">الهاتف</div><div class="val">${s.phone||'-'}</div></div><div class="detail-box"><div class="lbl">ولي الأمر</div><div class="val">${s.parentPhone||'-'}</div></div><div class="detail-box"><div class="lbl">كلمة السر</div><div class="val">${s.password||'-'}</div></div><div class="detail-box"><div class="lbl">المرحلة</div><div class="val">${EduFlowConfig?.educationLevels?.[s.stage]?.nameAr||'-'}</div></div></div>
+
+<h4 class="text-sm" style="margin:14px 0 8px;">📚 إحصائيات مع كل أستاذ:</h4>
+${statsByTeacher.length?statsByTeacher.map(st=>{
+const photo=st.teacher?.photoUrl?`<img src="${window.driveThumb(st.teacher.photoUrl)}" class="teacher-photo-sm" onerror="this.style.display='none'">`:'<div class="user-avatar" style="width:32px;height:32px;font-size:14px;">👨‍</div>';
+const rate=st.stats.attendance.total?Math.round((st.stats.attendance.present/st.stats.attendance.total)*100):0;
+return `<div class="sub-row" style="flex-direction:column;align-items:stretch;">
+<div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;">
+${photo}
+<div><strong>${st.teacher?.name||'-'}</strong><div class="text-xs text-muted">${st.group?.name||''} · ${dayAr(st.group?.day||'')} ${st.group?.time||''}</div></div>
+<span class="points-badge" style="margin-inline-start:auto;">🏆 ${st.stats.points}</span>
+</div>
+<div class="stat-mini">
+<div class="stat-mini-box"><div class="stat-mini-value">${rate}%</div><div class="stat-mini-label">حضور</div></div>
+<div class="stat-mini-box"><div class="stat-mini-value">${st.stats.homework.avg}%</div><div class="stat-mini-label">واجبات</div></div>
+<div class="stat-mini-box"><div class="stat-mini-value">${st.stats.exams.avg}%</div><div class="stat-mini-label">امتحانات</div></div>
+<div class="stat-mini-box"><div class="stat-mini-value">${st.billing?.remaining||0}</div><div class="stat-mini-label">متبقي</div></div>
+</div>
+</div>`;
+}).join(''):'<p class="text-muted">لا توجد اشتراكات</p>'}
+
+${risk.reasons?.length?`<div class="filter-info" style="margin-top:10px;background:var(--warning-bg);border-color:var(--warning);color:var(--warning);">🚨 أسباب الخطر: ${risk.reasons.join(' · ')}</div>`:''}
+
+<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
+${s.parentPhone?`<a class="btn btn-success btn-sm" href="https://wa.me/2${String(s.parentPhone).replace(/\D/g,'')}" target="_blank">💬 واتساب ولي الأمر</a><a class="btn btn-secondary btn-sm" href="tel:${s.parentPhone}">📞 اتصال</a>`:''}
+<button class="btn btn-secondary btn-sm" onclick="window.open('print-qr.html?search=${encodeURIComponent(s.code||'')}','_blank')">🖨️ باركود الطالب</button>
+<button class="btn btn-ghost btn-sm" onclick="ThemeManager.closeModal();window.openStudentModal('${s.id}')">✏️ تعديل البيانات</button>
+</div>
+</div>`,'modal-lg');
+}catch(e){console.error(e);}
 };
 
 /* ================================================================

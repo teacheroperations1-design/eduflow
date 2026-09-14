@@ -254,14 +254,25 @@ const DataService = {
     const att = { id, date: new Date().toISOString().split('T')[0], status: 'pending', ...data };
     d.attendance.push(att); this._saveData(d);
     if (window.FirebaseService?.connected) await FirebaseService.saveDoc('attendance', id, att);
+        try{
+      if(att.status==='approved' && window.Ops?.touchStreak){
+        (att.records||[]).filter(r=>r.status==='present').forEach(r=>{ Ops.touchStreak(r.studentId, att.submittedBy); });
+      }
+    }catch(e){}
     return att;
   },
-  async approveAttendance(id, by) {
+   async approveAttendance(id, by) {
     const d = this._getData();
     const a = (d.attendance || []).find(x => x.id === id); if (!a) return;
     a.status = 'approved'; a.approvedBy = by; a.approvedAt = new Date().toISOString();
     this._saveData(d);
     if (window.FirebaseService?.connected) await FirebaseService.saveDoc('attendance', id, a);
+    // 🔥 تحديث الستريك لكل طالب حاضر في الحصة المعتمدة
+    try{
+      if(window.Ops?.touchStreak){
+        (a.records||[]).filter(r=>r.status==='present').forEach(r=>{ Ops.touchStreak(r.studentId, by); });
+      }
+    }catch(e){}
   },
 
   // ===== CANCELLED SESSIONS + MAKEUPS =====

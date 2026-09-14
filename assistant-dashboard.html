@@ -837,8 +837,7 @@ if(grid) grid.innerHTML=`
 <div class="attention-card ${teacherFlags?'danger':''}" onclick="window.showSection('followups')"><div class="attention-value">${teacherFlags}</div><div>بلاغات الأستاذ</div></div>
 <div class="attention-card ${pendHw?'warning':''}" onclick="window.showSection('grades')"><div class="attention-value">${pendHw}</div><div>واجبات للتصحيح</div></div>
 <div class="attention-card ${overduePay?'danger':''}" onclick="window.showSection('monthly')"><div class="attention-value">${overduePay}</div><div>دفعات متأخرة</div></div>
-<div class="attention-card ${pendingRegs?'warning':''}" onclick="window.showSection('pending')"><div class="attention-value">${pendingRegs}</div><div>طلبات تسجيل</div></div>
-<div class="attention-card ${highRiskStudents?'danger':''}" onclick="window.showSection('churn')"><div class="attention-value">${highRiskStudents}</div><div>🚨 طلاب معرضين للخطر</div></div>`;
+<div class="attention-card ${pendingRegs?'warning':''}" onclick="window.showSection('pending')"><div class="attention-value">${pendingRegs}</div><div>طلبات تسجيل</div></div>`;
 const today=new Date().toISOString().split('T')[0];
 const live=(typeof Ops?.getClassSessionsForDate==='function')?Ops.getClassSessionsForDate(today).filter(s=>gids.includes(s.groupId)&&s.status!=='finished'):[];
 const liveEl=document.getElementById('liveClasses');
@@ -1172,59 +1171,92 @@ try{
 const assignment = typeof Ops?.getAssignment === 'function' ? Ops.getAssignment(currentUser.id) : null;
 const teacherId = assignment?.teacherId;
 const teacher = teacherId ? DataService.getUserById(teacherId) : null;
-if(!teacher) {
-window.safeToast('يجب ربطك بأستاذ أولاً من قبل الأدمن', 'error');
-return;
-}
+if(!teacher) { window.safeToast('يجب ربطك بأستاذ أولاً من قبل الأدمن', 'error'); return; }
 const stageOptions=Object.entries(EduFlowConfig?.educationLevels||{}).map(([k,v])=>`<option value="${k}">${v.nameAr}</option>`).join('');
+// 🆕 السناتر المتاحة من مجموعات أستاذي فقط
+const myGroups=DataService.getGroupsByTeacher(teacherId);
+const centers=[...new Set(myGroups.map(g=>g.center).filter(Boolean))];
+const centerOptions=centers.map(c=>`<option value="${c}">${c}</option>`).join('');
 ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🎓 إضافة طالب جديد</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
 <div class="modal-body">
-<div class="filter-info">💡 سيتم ربط هذا الطالب تلقائياً بالأستاذ: <strong>${teacher.name}</strong></div>
+<div class="filter-info">💡 سيتم ربط الطالب تلقائياً بالأستاذ: <strong>${teacher.name}</strong></div>
 <form onsubmit="return window.saveAssistantStudent(event)">
-<div class="form-group"><label>الاسم الكامل *</label><input type="text" id="asName" class="form-input" required></div>
+<div class="stu-section">
+<div class="stu-section-title">👤 البيانات الأساسية</div>
+<div class="form-group"><label>الاسم الكامل *</label><input type="text" id="asName" class="form-input" required placeholder="مثال: أحمد محمد علي"></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-<div class="form-group"><label>هاتف الطالب</label><input type="tel" id="asPhone" class="form-input" oninput="window.checkExistingStudent()"></div>
-<div class="form-group"><label>هاتف ولي الأمر</label><input type="tel" id="asParent" class="form-input" oninput="window.checkExistingStudent()"></div>
+<div class="form-group"><label>📱 هاتف الطالب</label><input type="tel" id="asPhone" class="form-input" oninput="window.checkExistingStudent()" placeholder="01xxxxxxxxx"></div>
+<div class="form-group"><label>👨‍👩‍ هاتف ولي الأمر</label><input type="tel" id="asParent" class="form-input" oninput="window.checkExistingStudent()" placeholder="01xxxxxxxxx"></div>
 </div>
-<!-- 🆕 صندوق البحث الذكي -->
 <div id="smartSearchResult" style="display:none;"></div>
-
-<div class="stage-grade-row">
+</div>
+<div class="stu-section">
+<div class="stu-section-title">🎓 المرحلة والصف والسنتر</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
 <div class="form-group"><label>المرحلة *</label><select id="asLevel" class="form-select" onchange="window.updAssistantStudentGrades();window.renderAssistantStudentGroups();">${stageOptions}</select></div>
 <div class="form-group"><label>الصف *</label><select id="asGrade" class="form-select" onchange="window.renderAssistantStudentGroups();"></select></div>
+<div class="form-group"><label>🏢 السنتر</label><select id="asCenter" class="form-select" onchange="window.renderAssistantStudentGroups();"><option value="">كل السناتر</option>${centerOptions}</select></div>
 </div>
-<div class="form-group">
-<label>👥 اختر المجموعة (التابعة للأستاذ ${teacher.name})</label>
-<div id="asGroups" style="max-height:200px;overflow-y:auto;padding:8px;background:var(--surface-hover);border-radius:8px;"></div>
 </div>
+<div class="stu-section">
+<div class="stu-section-title">👥 المجموعة <span id="asGrpCountBadge" class="points-badge" style="display:none;">0</span></div>
+<div id="asGroups" class="groups-box"></div>
+</div>
+<div class="stu-section">
+<div class="stu-section-title">🔑 بيانات الدخول</div>
 <div class="form-group"><label>كلمة المرور</label><input type="text" id="asPass" class="form-input" value="1234"></div>
-<button class="btn btn-primary w-full">💾 حفظ الطالب</button>
+</div>
+<div class="modal-sticky-footer"><button class="btn btn-primary w-full btn-lg">💾 حفظ الطالب</button></div>
 </form>
-</div>`);
+</div>`,'modal-lg');
 window.updAssistantStudentGrades();
 setTimeout(()=>{ window.renderAssistantStudentGroups(); }, 100);
 }catch(e){ console.error(e); }
 };
-window.renderAssistantStudentGroups=function(){
+
+// 🆕 الدالة الناقصة: تعبئة الصفوف حسب المرحلة المختارة
+window.updAssistantStudentGrades=function(sel){
+try{
+const lvl=document.getElementById('asLevel')?.value;
+const grades=(window.EduFlowConfig?.educationLevels?.[lvl]?.grades)||[];
+const el=document.getElementById('asGrade');
+if(el) el.innerHTML='<option value="">--</option>'+grades.map(g=>`<option ${sel===g?'selected':''}>${g}</option>`).join('');
+}catch(e){}
+};
+window.renderAssistantStudentGroups=function(preSelectedIds){
 try{
 const teacherId=window.getMyTeacherId();
-const stage=document.getElementById('asLevel')?.value;
-const grade=document.getElementById('asGrade')?.value;
+const stage=(document.getElementById('asLevel')?.value||'').trim();
+const grade=(document.getElementById('asGrade')?.value||'').trim();
+const center=(document.getElementById('asCenter')?.value||'').trim();
 const container=document.getElementById('asGroups');
 if(!container) return;
-const groups=(DataService?.getGroupsByTeacher?DataService.getGroupsByTeacher(teacherId):[]).filter(g=>(!stage||!g.stage||g.stage===stage)&&(!grade||!g.grade||g.grade===grade));
-if(groups.length){
-container.innerHTML=groups.map(g=>`
-<label style="display:flex;gap:8px;align-items:center;margin-bottom:6px;padding:8px;background:var(--surface);border-radius:6px;cursor:pointer;">
-<input type="checkbox" class="as-grp" value="${g.id}" data-teacher="${teacherId}">
-<span style="font-size:13px;">${g.name} (${dayAr(g.day)} ${T(g.time)})</span>
-</label>
-`).join('');
+const norm=s=>String(s||'').trim();
+const key=stage+'|'+grade+'|'+center;
+if(window._asGrpLastKey!==key){ window._asGrpShowAll=false; window._asGrpLastKey=key; }
+const all=(DataService?.getGroupsByTeacher?DataService.getGroupsByTeacher(teacherId):[]);
+let list=all;
+if(stage) list=list.filter(g=>norm(g.stage)===stage);
+if(grade) list=list.filter(g=>norm(g.grade)===grade);
+if(center) list=list.filter(g=>norm(g.center)===center);
+if(window._asGrpShowAll) list=all;
+const badge=document.getElementById('asGrpCountBadge');
+if(badge){ badge.textContent=list.length; badge.style.display=list.length?'inline-flex':'none'; }
+if(list.length){
+container.innerHTML=list.map(g=>`
+<label class="group-check-item">
+<input type="checkbox" class="as-grp" value="${g.id}" data-teacher="${teacherId}" ${preSelectedIds?.includes(g.id)?'checked':''}>
+<span style="flex:1;font-size:13px;">${g.name} <span class="text-xs text-muted">(${dayAr(g.day)} ${T(g.time)})</span></span>
+${g.center?`<span class="badge badge-success" style="font-size:10px;">🏢 ${g.center}</span>`:''}
+${g.grade?`<span class="badge badge-info" style="font-size:10px;">🎓 ${g.grade}</span>`:''}
+</label>`).join('');
 }else{
-container.innerHTML='<p class="text-muted" style="font-size:12px;">لا توجد مجموعات مطابقة لهذا الأستاذ والمرحلة</p>';
+container.innerHTML=`<p class="text-muted" style="font-size:12px;text-align:center;padding:10px;">مفيش مجموعات مطابقة ${grade||stage||center?'للاختيار ده':''} عند أستاذك</p>
+${all.length?`<button type="button" class="btn btn-ghost btn-sm w-full" onclick="window._asGrpShowAll=true;window.renderAssistantStudentGroups();">👀 عرض كل مجموعات الأستاذ</button>`:''}`;
 }
 }catch(e){ console.error(e); }
 };
+
 window.saveAssistantStudent=async function(e){
 try{
 e.preventDefault();
@@ -1370,7 +1402,7 @@ const stage=document.getElementById('bulkLevel')?.value;
 const grade=document.getElementById('bulkGrade')?.value;
 const el=document.getElementById('bulkGroup');
 if(!el) return;
-const groups=(DataService?.getGroupsByTeacher?DataService.getGroupsByTeacher(teacherId):[]).filter(g=>(!stage||!g.stage||g.stage===stage)&&(!grade||!g.grade||g.grade===grade));
+const groups=DataService.getGroupsByTeacher(tid).filter(g=>(!stage||g.stage===stage)&&(!grade||g.grade===grade));
 el.innerHTML=groups.length?groups.map(g=>`<option value="${g.id}">${g.name} · ${g.center||''} (${dayAr(g.day)} ${T(g.time)})</option>`).join(''):'<option value="">لا مجموعات مطابقة</option>';
 }catch(e){}
 };
@@ -1522,10 +1554,6 @@ ${remaining>0?`
 </div>
 </div>
 `:''}
-<!-- Daily Streak Badge -->
-<div style="margin-bottom:16px; text-align:center;">
-    <span class="streak-badge">🔥 سلسلة إنجاز: 12 يوم متتالي</span>
-</div>
 
 <!-- Fridge Report Button inside Quick Actions Grid -->
 <button class="btn btn-info" onclick="window.sendFridgeReport('${s.id}')"><div style="font-size:20px;">🧲</div>تقرير الثلاجة</button>

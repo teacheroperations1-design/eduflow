@@ -1022,4 +1022,112 @@ const Ops = {
 };
 
 window.Ops = Ops;
+/* ================================================================
+   🔥 STREAK ENGINE — محرك السلسلة الحقيقي (حساب + مكافآت + حماية)
+   ================================================================ */
+Ops.getStreakSettings = function(){
+  const d = DataService._getData();
+  const def = window.DEFAULT_GAMIFICATION?.streak || {enabled:true, freezeCost:20, milestoneEvery:7, milestoneBonus:50};
+  return Object.assign({}, def, (d.gamification||{}).streak || {});
+};
+
+Ops.getStudentStreak = function(studentId){
+  const st = this.getStreakSettings();
+  if(!st.enabled) return {enabled:false, current:0, longest:0, lastDate:null, freezes:0};
+  const d = DataService._getData();
+  const teachers = DataService.getStudentTeachers(studentId);
+  const gids = teachers.map(t=>t.group.id);
+  const groups = DataService.getGroups().filter(g=>gids.includes(g.id));
+  const EN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+  const attended = new Set(), missed = new Set();
+  (DataService.getAttendance()||[]).filter(a=>a.status==='approved' && gids.includes(a.groupId)).forEach(a=>{
+    const rec=(a.records||[]).find(r=>r.studentId===studentId);
+    if(!rec) return;
+    if(rec.status==='present') attended.add(a.date);
+    else if(rec.status==='absent') missed.add(a.date);
+  });
+
+  // أيام الحصص المقررة خلال آخر 120 يوم (من الأحدث للأقدم)
+  const today=new Date(); today.setHours(0,0,0,0);
+  const days=[];
+  for(let i=0;i<120;i++){
+    const dt=new Date(today); dt.setDate(dt.getDate()-i);
+    const ds=dt.toISOString().split('T')[0];
+    const dayEn=EN[dt.getDay()];
+    const hasClass=groups.some(g=>{
+      const schs=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day}];
+      return schs.some(s=>s.day===dayEn);
+    });
+    if(hasClass) days.push(ds);
+  }
+
+  // السلسلة الحالية: من الأحدث للأقدم + استهلاك التجميد عند الغياب
+  let freezesLeft=(d.streakFreezes||{})[studentId]||0;
+  let run=0, lastDate=null;
+  for(const ds of days){
+    if(attended.has(ds)){ run++; if(!lastDate) lastDate=ds; continue; }
+    if(missed.has(ds)){
+      if(freezesLeft>0){ freezesLeft--; continue; } // يوم مكسور بس محمي بالتجميد
+      break;
+    }
+    // يوم لسه ملوش رصد (حصة النهارده مثلًا) → نتجاهله
+  }
+  const current=run;
+
+  // أطول سلسلة تاريخيًا
+  let best=0, cur=0;
+  for(let i=days.length-1;i>=0;i--){
+    const ds=days[i];
+    if(attended.has(ds)){ cur++; if(cur>best) best=cur; }
+    else if(missed.has(ds)){ cur=0; }
+  }
+
+  return {enabled:true, current, longest:best, lastDate, freezes:(d.streakFreezes||{})[studentId]||0};
+};
+
+// بيستدعى تلقائيًا عند اعتماد الحضور → بيدي مكافأة الميلستون مرة واحدة لكل محطة
+Ops.touchStreak = async function(studentId, byId){
+  try{
+    const st=this.getStreakSettings();
+    if(!st.enabled || !st.milestoneEvery) return null;
+    const s=this.getStudentStreak(studentId);
+    if(!s.current) return s;
+    const d=DataService._getData();
+    d.streakMilestones=d.streakMilestones||{};
+    const achieved=d.streakMilestones[studentId]||[];
+    if(s.current % st.milestoneEvery === 0 && !achieved.includes(s.current)){
+      achieved.push(s.current);
+      d.streakMilestones[studentId]=achieved;
+      DataService._saveData(d);
+      if(window.FirebaseService?.connected) await FirebaseService.saveMeta('streakMilestones', d.streakMilestones);
+      await this.addManualPoints(studentId, st.milestoneBonus, `🔥 مكافأة سلسلة ${s.current} يوم حضور`, byId||'system');
+      await DataService.addNotification({
+        title:'🔥 سلسلة إنجاز جديدة!',
+        message:`وصلت لسلسلة ${s.current} يوم حضور متتالي — حصلت على ${st.milestoneBonus} نقطة مكافأة 🎉`,
+        targetUserId:studentId, type:'streak', priority:'high'
+      });
+      return {milestone:s.current, bonus:st.milestoneBonus};
+    }
+    return s;
+  }catch(e){ console.error('touchStreak',e); return null; }
+};
+
+// حماية الشعلة: شراء تجميد (غياب واحد بدون كسر السلسلة)
+Ops.buyStreakFreeze = async function(studentId){
+  const d=DataService._getData();
+  d.streakFreezes=d.streakFreezes||{};
+  d.streakFreezes[studentId]=(d.streakFreezes[studentId]||0)+1;
+  DataService._saveData(d);
+  if(window.FirebaseService?.connected) await FirebaseService.saveMeta('streakFreezes', d.streakFreezes);
+  return d.streakFreezes[studentId];
+};
+
+Ops.getStreakLeaderboard = function(limit){
+  return DataService.getStudents().map(s=>({student:s, streak:this.getStudentStreak(s.id)}))
+    .filter(x=>x.streak.current>0)
+    .sort((a,b)=>b.streak.current-a.streak.current)
+    .slice(0, limit||10);
+};
+
 console.log('✅ Ops Service loaded with all methods');

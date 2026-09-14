@@ -2,117 +2,217 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>مسح باركود - EduFlow by Habbash Group</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>📷 مسح الباركود - EduFlow</title>
 <link rel="stylesheet" href="css/eduflow-theme.css">
 <style>
-.cam-wrap{max-width:520px;margin:20px auto;padding:16px;position:relative;z-index:1}
-.cam-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:10px;flex-wrap:wrap}
-.back-btn{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 14px;color:var(--text);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:13px;transition:all .2s}
-.back-btn:hover{border-color:var(--primary);color:var(--primary)}
-.brand-mini{display:flex;align-items:center;gap:8px}
-.brand-mini-logo{width:36px;height:36px;border-radius:10px;background:var(--grad);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;box-shadow:var(--glow)}
-.brand-mini-text{font-size:14px;font-weight:800;color:var(--primary)}
-.brand-mini-sub{font-size:10px;color:var(--text-muted);display:block;margin-top:2px}
-.cam-box{position:relative;border-radius:var(--radius-xl);overflow:hidden;border:2px solid var(--primary);background:#000;aspect-ratio:1/1;box-shadow:0 8px 32px rgba(99,102,241,.25)}
-.cam-box video{width:100%;height:100%;object-fit:cover}
-.cam-box img.uploaded{width:100%;height:100%;object-fit:contain;background:#000}
-.scan-line{position:absolute;left:8%;right:8%;height:3px;background:var(--primary);box-shadow:0 0 12px var(--primary);animation:scan 2s infinite;border-radius:2px}
-@keyframes scan{0%,100%{top:12%}50%{top:86%}}
-.cam-corners::before,.cam-corners::after{content:'';position:absolute;width:34px;height:34px;border:4px solid var(--primary)}
-.cam-corners::before{top:10px;right:10px;border-left:none;border-bottom:none;border-radius:0 8px 0 0}
-.cam-corners::after{bottom:10px;left:10px;border-right:none;border-top:none;border-radius:0 0 0 8px}
-.cam-controls{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
-.cam-controls .btn{flex:1;min-width:120px}
-.hint-box{background:var(--surface-hover);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:12px;font-size:12px;color:var(--text-secondary);display:flex;gap:8px;align-items:flex-start}
-.hint-box .icon{font-size:16px;flex-shrink:0}
-.parent-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:9999px;background:linear-gradient(135deg,rgba(251,191,36,.15),rgba(245,158,11,.15));border:1px solid rgba(251,191,36,.3);color:var(--text-secondary);font-size:10px;font-weight:700}
-.smart-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:2000;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(8px);}
-.smart-modal-overlay.active{display:flex;}
-.smart-modal-card{background:var(--surface);border:2px solid var(--primary);border-radius:20px;max-width:500px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.5);padding:24px;position:relative;}
-.smart-student-header{background:var(--surface-hover);padding:16px;border-radius:12px;margin-bottom:20px;text-align:center;border:1px solid var(--border);}
-.smart-student-name{font-size:24px;font-weight:900;color:var(--primary);margin-bottom:4px;}
-.smart-action-box{background:var(--success-bg);border:1px solid var(--success);border-radius:12px;padding:14px;margin-bottom:16px;}
-.smart-hw-box{background:var(--warning-bg);border:1px dashed var(--warning);border-radius:12px;padding:14px;margin-bottom:16px;}
+body { background: #0a0a0f; }
+.scan-container {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  margin: 20px auto;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+#videoElement {
+  width: 100%;
+  display: block;
+  background: #000;
+}
+.scan-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.scan-frame {
+  width: 70%;
+  height: 70%;
+  border: 3px solid #6366f1;
+  border-radius: 20px;
+  position: relative;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
+}
+.scan-frame::before, .scan-frame::after {
+  content: '';
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border: 4px solid #6366f1;
+}
+.scan-frame::before {
+  top: -4px; left: -4px;
+  border-right: none;
+  border-bottom: none;
+  border-top-left-radius: 20px;
+}
+.scan-frame::after {
+  top: -4px; right: -4px;
+  border-left: none;
+  border-bottom: none;
+  border-top-right-radius: 20px;
+}
+.scan-line {
+  position: absolute;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #6366f1, transparent);
+  animation: scanLine 2s infinite linear;
+  top: 0;
+}
+@keyframes scanLine {
+  0% { top: 0; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+.scan-status {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 13px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(99,102,241,0.5);
+}
+.manual-entry {
+  max-width: 500px;
+  margin: 20px auto;
+  padding: 20px;
+}
+.quick-action-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 8px;
+  text-align: right;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text);
+  font-weight: 600;
+}
+.quick-action-btn:hover {
+  border-color: var(--primary);
+  transform: translateX(-4px);
+  background: var(--primary-bg);
+}
+.quick-action-icon {
+  width: 44px;
+  height: 44px;
+  background: var(--primary-bg);
+  color: var(--primary);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.student-info-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--primary-bg), transparent);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  border: 1px solid var(--primary-border);
+}
+.student-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--grad);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 800;
+  flex-shrink: 0;
+  border: 3px solid var(--primary);
+}
+.student-meta {
+  flex: 1;
+  min-width: 0;
+}
+.student-name {
+  font-size: 17px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.student-code {
+  font-family: var(--font-en);
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+.student-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
 </style>
 </head>
 <body data-theme="dark">
 <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div>
-<div class="cam-wrap">
 
-<div class="cam-header">
-  <a href="javascript:history.back()" class="back-btn"><span>←</span><span>رجوع</span></a>
-  <div class="brand-mini">
-    <div class="brand-mini-logo">🎓</div>
+<div style="max-width:540px;margin:0 auto;padding:16px;">
+  <header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
     <div>
-      <div class="brand-mini-text">EduFlow</div>
-      <span class="brand-mini-sub">by Habbash Group</span>
+      <h1 style="font-size:20px;font-weight:800;margin:0;">📷 مسح الباركود</h1>
+      <p style="font-size:12px;color:var(--text-muted);margin:4px 0 0;">وجّه الكاميرا نحو باركود الطالب</p>
+    </div>
+    <button class="btn btn-ghost btn-icon" onclick="window.closeScanner()" style="width:40px;height:40px;">✕</button>
+  </header>
+
+  <div class="scan-container">
+    <video id="videoElement" autoplay muted playsinline></video>
+    <div class="scan-overlay">
+      <div class="scan-frame">
+        <div class="scan-line"></div>
+      </div>
+    </div>
+    <div class="scan-status" id="scanStatus">🔍 جاري البحث عن باركود...</div>
+  </div>
+
+  <div class="manual-entry">
+    <div style="text-align:center;margin-bottom:14px;">
+      <span style="color:var(--text-muted);font-size:12px;">أو أدخل الكود يدوياً</span>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <input type="text" id="manualCode" class="form-input" placeholder="أدخل كود الطالب..." 
+             style="flex:1;font-family:var(--font-en);font-weight:700;letter-spacing:2px;text-align:center;">
+      <button class="btn btn-primary" onclick="window.handleBarcodeScan(document.getElementById('manualCode').value)">
+        🔍 بحث
+      </button>
     </div>
   </div>
-</div>
 
-<h2 style="text-align:center;margin-bottom:6px;">📱 مسح باركود</h2>
-<p class="text-sm text-muted" style="text-align:center;margin-bottom:16px;">
-  وجّه الكاميرا على باركود الطالب أو الحصة
-  <span class="parent-badge" style="margin-right:6px;">🏢 Habbash Group</span>
-</p>
-
-<div class="cam-box" id="camBox">
-  <video id="preview" muted playsinline></video>
-  <div class="scan-line" id="scanLine"></div>
-  <div class="cam-corners"></div>
-</div>
-
-<div class="cam-controls">
-  <button class="btn btn-secondary" onclick="window.toggleCamera()" id="flipBtn">🔄 تبديل الكاميرا</button>
-  <button class="btn btn-secondary" onclick="document.getElementById('uploadInput').click()">🖼️ من الصورة</button>
-  <input type="file" id="uploadInput" accept="image/*" style="display:none" onchange="window.handleUpload(event)">
-</div>
-
-<div id="scanStatus" class="filter-info" style="margin-top:12px;text-align:center;">🎥 تشغيل الكاميرا...</div>
-
-<!-- 🆕 دخول فوري للموظفين بدون كلمة مرور -->
-<div id="staffQuickBox" class="hint-box" style="display:none;border-color:var(--primary);">
-  <span class="icon">👨💼</span>
-  <div style="flex:1">
-    <strong>وضع الموظفين — دخول فوري بدون كلمة مرور:</strong>
-    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
-      <button class="btn btn-sm btn-primary" onclick="window.staffQuick('assistant')">🧑💼 مساعد</button>
-      <button class="btn btn-sm btn-primary" onclick="window.staffQuick('super_admin')">🛡️ أدمن</button>
-      <button class="btn btn-sm btn-primary" onclick="window.staffQuick('teacher')">👨🏫 مدرس</button>
-    </div>
+  <div style="text-align:center;margin-top:20px;">
+    <button class="btn btn-ghost" onclick="window.closeScanner()">← العودة</button>
   </div>
 </div>
 
-<div class="hint-box">
-  <span class="icon">💡</span>
-  <div>
-    <strong>نصيحة:</strong> وجّه الكاميرا على الباركود من مسافة 15-30 سم. لو في إضاءة ضعيفة، جرّب مسح الباركود من الصورة.
-  </div>
-</div>
+<!-- Modal التفاصيل للطالب (للأسست/الأدمن) -->
+<div id="studentDetailsModal" style="display:none;"></div>
 
-<div class="card" style="margin-top:16px;">
-  <h3 style="font-size:14px;margin-bottom:10px;">⌨️ أو اكتب الكود يدوياً</h3>
-  <div class="form-group">
-    <label>الكود</label>
-    <input type="text" id="manualCode" class="form-input" placeholder="EDU-1234 أو EDUFLOW-ATT:QR-XXXX" autocomplete="off">
-  </div>
-  <button class="btn btn-primary w-full" onclick="window.goManual()">➡️ فتح الملف / تسجيل الحضور</button>
-</div>
-
-</div>
-
-<div id="smartScanModal" class="smart-modal-overlay">
-  <div class="smart-modal-card">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-      <h3 style="margin:0; color:var(--primary); display:flex; align-items:center; gap:8px;">⚡ إجراء سريع (النظام الذكي)</h3>
-      <button class="btn btn-ghost btn-icon" onclick="window.closeSmartModal()">✕</button>
-    </div>
-    <div id="smartModalBody"></div>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -124,434 +224,767 @@
 <script src="js/drive-service.js"></script>
 <script src="js/theme-manager.js"></script>
 <script src="js/auth-service.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 
 <script>
-/* توحيد البحث عن الطالب بالكود */
-window.normalizeCode=function(c){ return String(c||'').trim().toUpperCase().replace(/\s+/g,''); };
-window.resolveStudentByCode=function(code){
-  try{
-    const nc=window.normalizeCode(code);
-    const users=(DataService?.getUsers?DataService.getUsers():[])||[];
-    return users.find(u=>u.role==='student' && window.normalizeCode(u.code)===nc)
-        || users.find(u=>u.role==='student' && window.normalizeCode(u.studentId)===nc)
-        || null;
-  }catch(e){ return null; }
-};
-window.fixMissingCodes=function(){
-  try{
-    const d=DataService._getData(); const used=new Set((d.users||[]).map(u=>u.code).filter(Boolean));
-    let n=0;
-    (d.users||[]).forEach(u=>{
-      if(u.role==='student' && !u.code){
-        let c; do{ c='EDU-'+Math.floor(1000+Math.random()*9000); }while(used.has(c));
-        u.code=c; used.add(c); n++;
-      }
-    });
-    DataService._saveData(d);
-    if(window.FirebaseService?.connected) FirebaseService.saveMeta('codes_fixed',{at:new Date().toISOString(),fixed:n});
-    alert('✅ تم توليد أكواد لـ '+n+' طالب — اطبع الباركودات تاني');
-  }catch(e){ alert('خطأ: '+e.message); }
+const DAYS=[{en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},{en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'},{en:'Saturday',ar:'السبت'}];
+const dayAr=en=>(DAYS.find(d=>d.en===en)||{}).ar||en;
+const T=tm=>DataService?.formatTime12?DataService.formatTime12(tm):tm;
+const db=()=>DataService?._getData?DataService._getData():{};
+const save=d=>DataService?._saveData?DataService._saveData(d):null;
+
+window.safeToast=function(msg,type='info'){
+  try{ if(typeof ThemeManager?.toast==='function') ThemeManager.toast(msg,type); }
+  catch(e){ console.log('[Toast]',type,msg); }
 };
 
-let currentUser=null, scanning=true, lastScan=0, stream=null;
-let useFrontCamera=false;
-const video=document.getElementById('preview');
-const canvas=document.createElement('canvas');
-const ctx=canvas.getContext('2d',{willReadFrequently:true});
+window.driveThumb=function(url){
+  try{
+    if(!url) return '';
+    const u=String(url);
+    const m=u.match(/\/d\/([\w-]+)/)||u.match(/[?&]id=([\w-]+)/)||u.match(/^([\w-]{20,})$/);
+    return m?('https://drive.google.com/thumbnail?id='+m[1]+'&sz=w400'):u;
+  }catch(e){ return url||''; }
+};
+
+let currentUser = null;
+let scanStream = null;
+let scanTimer = null;
+let lastScannedCode = null;
 
 (async function boot(){
-  try{
-    if(typeof DataService?.init==='function') await DataService.init();
-    currentUser=AuthService?.getCurrentUser?AuthService.getCurrentUser():null;
-    if(!currentUser){
-      const box=document.getElementById('staffQuickBox');
-      if(box) box.style.display='flex';
-    }
-    window.startCamera();
-  }catch(e){ console.error(e); }
+  try {
+    if (typeof DataService?.init === 'function') await DataService.init();
+    currentUser = AuthService?.getCurrentUser ? AuthService.getCurrentUser() : null;
+    
+    // 🆕 السماح بمسح الباركود بدون تسجيل دخول (لحالة الطالب)
+    // لو مفيش user، هنكمل كـ guest mode
+    startCamera();
+  } catch (e) {
+    console.error('Boot error:', e);
+    document.getElementById('scanStatus').textContent = '❌ خطأ في التشغيل';
+  }
 })();
 
-/* 🆕 دخول فوري للموظفين */
-window.staffQuick=function(role){
-  if(window.setQrQuickSession) window.setQrQuickSession(role,12);
-  currentUser=AuthService.getCurrentUser();
-  const box=document.getElementById('staffQuickBox');
-  if(box) box.style.display='none';
-  const st=document.getElementById('scanStatus');
-  if(st) st.innerHTML='✅ وضع الموظف مفعّل — امسح الباركود الآن';
-  if(typeof ThemeManager?.toast==='function') ThemeManager.toast('✅ تم تفعيل وضع: '+role,'success');
-};
-
-window.startCamera=async function(){
-  try{
-    if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
-    stream=await navigator.mediaDevices.getUserMedia({
-      video:{facingMode:useFrontCamera?'user':'environment'},
-      audio:false
+// 🎥 تشغيل الكاميرا
+async function startCamera() {
+  try {
+    if (!window.jsQR) {
+      document.getElementById('scanStatus').textContent = '⚠️ مكتبة المسح غير محملة — استخدم الإدخال اليدوي';
+      return;
+    }
+    
+    const video = document.getElementById('videoElement');
+    scanStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' },
+      audio: false
     });
-    video.srcObject=stream;
-    video.style.display='block';
-    const uploaded=document.querySelector('.cam-box img.uploaded');
-    if(uploaded) uploaded.remove();
-    const scanLine=document.getElementById('scanLine');
-    if(scanLine) scanLine.style.display='block';
+    video.srcObject = scanStream;
     await video.play();
-    const st=document.getElementById('scanStatus');
-    if(st) st.innerHTML='✅ الكاميرا شغالة — امسح الباركود';
-    scanning=true;
-    requestAnimationFrame(window.tick);
-  }catch(e){
+    
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    
+    const tick = () => {
+      if (!scanStream) return;
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0);
+        const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = window.jsQR(img.data, img.width, img.height);
+        
+        if (code && code.data && code.data !== lastScannedCode) {
+          lastScannedCode = code.data;
+          if (navigator.vibrate) navigator.vibrate(150);
+          handleBarcodeScan(code.data);
+          setTimeout(() => { lastScannedCode = null; }, 3000);
+        }
+      }
+      scanTimer = requestAnimationFrame(tick);
+    };
+    tick();
+  } catch (e) {
     console.error('Camera error:', e);
-    const st=document.getElementById('scanStatus');
-    if(st) st.innerHTML = window.isSecureContext
-      ? '⚠️ المتصفح رفض الكاميرا — من إعدادات الموقع اسمح بالكاميرا، أو استخدم رفع صورة / الإدخال اليدوي'
-      : '⚠️ الكاميرا محتاجة HTTPS — افتح الموقع عبر https أو استخدم رفع صورة / الإدخال اليدوي';
-    scanning=false;
+    document.getElementById('scanStatus').textContent = '❌ لا يمكن الوصول للكاميرا — استخدم الإدخال اليدوي';
+  }
+}
+
+// 🆕 إغلاق الماسح
+window.closeScanner = function() {
+  stopCamera();
+  if (window.history.length > 1) {
+    window.history.back();
+  } else {
+    window.location.href = currentUser?.role === 'student' ? 'student-dashboard.html' :
+                           currentUser?.role === 'assistant' ? 'assistant-dashboard.html' :
+                           'admin-dashboard.html';
   }
 };
 
-window.toggleCamera=async function(){
-  useFrontCamera=!useFrontCamera;
-  await window.startCamera();
-  if(typeof ThemeManager?.toast==='function'){
-    ThemeManager.toast(useFrontCamera?'📷 الكاميرا الأمامية':'📷 الكاميرا الخلفية','info');
+function stopCamera() {
+  if (scanTimer) cancelAnimationFrame(scanTimer);
+  if (scanStream) {
+    scanStream.getTracks().forEach(t => t.stop());
+    scanStream = null;
+  }
+}
+
+// 🎯 معالجة الباركود الممسوح
+window.handleBarcodeScan = function(rawCode) {
+  try {
+    if (!rawCode || !rawCode.trim()) {
+      safeToast('الكود فارغ', 'error');
+      return;
+    }
+    
+    const code = rawCode.trim();
+    const status = document.getElementById('scanStatus');
+    status.textContent = '🔍 جاري البحث عن الطالب...';
+    
+    // استخراج الكود من صيغ مختلفة
+    const m = code.match(/code=([A-Za-z0-9-]+)/) || code.match(/(EDU-[A-Za-z0-9-]+)/i) || code.match(/^([A-Za-z0-9-]+)$/);
+    const cleanCode = m ? m[1] : code;
+    
+    // البحث عن الطالب
+    const users = DataService?.getUsers ? DataService.getUsers() : [];
+    const student = users.find(u => 
+      u.role === 'student' && 
+      ((u.code || '').toUpperCase() === cleanCode.toUpperCase() || u.id === cleanCode)
+    );
+    
+    if (!student) {
+      status.textContent = '❌ طالب غير مسجل';
+      safeToast('❌ الكود "' + cleanCode + '" غير مسجل في النظام', 'error');
+      return;
+    }
+    
+    status.textContent = '✅ تم العثور على: ' + student.name;
+    stopCamera();
+    
+    // 🆕 تحديد السلوك حسب نوع المستخدم الحالي
+    const currentRole = currentUser?.role || 'guest';
+    
+    if (currentRole === 'student' || currentRole === 'guest' || currentRole === 'parent') {
+      // 🎓 لو الطالب هو اللي ماسح → فتح داشبورده مباشرة
+      openStudentOwnDashboard(student);
+    } else if (currentRole === 'assistant' || currentRole === 'super_admin' || currentRole === 'admin' || currentRole === 'teacher') {
+      // 👨‍🏫 لو أسست/أدمن/مدرس → فتح modal التفاصيل والاختصارات
+      openStudentQuickActionsModal(student);
+    } else {
+      // Fallback
+      openStudentQuickActionsModal(student);
+    }
+  } catch (e) {
+    console.error('handleBarcodeScan error:', e);
+    safeToast('خطأ في معالجة الباركود: ' + e.message, 'error');
   }
 };
 
-window.tick=function(){
-  try{
-    if(scanning && video.readyState===video.HAVE_ENOUGH_DATA && window.jsQR){
-      canvas.width=video.videoWidth;
-      canvas.height=video.videoHeight;
-      ctx.drawImage(video,0,0);
-      const img=ctx.getImageData(0,0,canvas.width,canvas.height);
-      const code=jsQR(img.data,img.width,img.height,{inversionAttempts:'dontInvert'});
-      if(code && code.data && (Date.now()-lastScan>2500)){
-        lastScan=Date.now();
-        if(navigator.vibrate) navigator.vibrate(120);
-        window.handleScan(code.data);
+// 🎓 فتح داشبورد الطالب نفسه (بدون طلب تسجيل دخول)
+function openStudentOwnDashboard(student) {
+  try {
+    // 🆕 حفظ الطالب كـ session مؤقت للدخول
+    sessionStorage.setItem('eduflow_barcode_student', JSON.stringify(student));
+    
+    // لو الطالب هو نفس المستخدم الحالي → فقط reload
+    if (currentUser && currentUser.id === student.id) {
+      safeToast('✅ أهلاً ' + student.name, 'success');
+      window.location.href = 'student-dashboard.html';
+      return;
+    }
+    
+    // 🆕 استخدام viewas parameter لتجاوز تسجيل الدخول
+    const targetUrl = 'student-dashboard.html?viewas=' + encodeURIComponent(student.id) + '&from=barcode';
+    
+    // 🆕 إذا كان المستخدم الحالي طالب آخر → فتح في تبويب جديد
+    if (currentUser && currentUser.role === 'student') {
+      window.open(targetUrl, '_blank');
+      setTimeout(() => { window.closeScanner(); }, 500);
+      return;
+    }
+    
+    // لو مفيش مستخدم حالي → فتح مباشرة
+    window.location.href = targetUrl;
+  } catch (e) {
+    console.error('openStudentOwnDashboard error:', e);
+    safeToast('خطأ في فتح الداشبورد', 'error');
+  }
+}
+
+// 👨‍🏫 فتح Modal الاختصارات والتفاصيل (للأسست/الأدمن)
+window.openStudentQuickActionsModal = function(student) {
+  try {
+    const ts = DataService?.getStudentTeachers ? DataService.getStudentTeachers(student.id) : [];
+    const allAtt = DataService?.getAttendance ? DataService.getAttendance() : [];
+    const att = allAtt.filter(a => a.status === 'approved' && a.records.some(r => r.studentId === student.id));
+    const pr = att.filter(a => a.records.find(r => r.studentId === student.id)?.status === 'present').length;
+    const rate = att.length ? Math.round(pr / att.length * 100) : 0;
+    
+    const points = (typeof Ops?.getStudentPoints === 'function') ? Ops.getStudentPoints(student.id, null, 'all') : 0;
+    const stage = EduFlowConfig?.educationLevels?.[student.stage]?.nameAr || '-';
+    
+    // حساب المستحقات
+    const billing = (typeof Ops?.buildStudentBilling === 'function') ? Ops.buildStudentBilling(student.id) : [];
+    const totalDue = billing.reduce((a, x) => a + (x.billing?.total || 0), 0);
+    const totalPaid = billing.reduce((a, x) => a + (x.payment?.paidAmount || 0), 0);
+    const remaining = Math.max(0, totalDue - totalPaid);
+    
+    const photo = student.photoUrl 
+      ? `<img src="${window.driveThumb(student.photoUrl)}" class="student-avatar" style="object-fit:cover;" onerror="this.outerHTML='<div class=\\'student-avatar\\'>${student.name.charAt(0)}</div>'">`
+      : `<div class="student-avatar">${student.name.charAt(0)}</div>`;
+    
+    const groupsHtml = ts.length ? ts.map(t => `
+      <div style="background:var(--surface-hover);padding:10px;border-radius:8px;margin-bottom:6px;">
+        <strong>${t.group?.name || '-'}</strong>
+        <div class="text-xs text-muted">👨‍🏫 ${t.teacher?.name || '-'} · 📅 ${dayAr(t.group?.day)} ${T(t.group?.time)} · 🏢 ${t.group?.center || '-'}</div>
+      </div>
+    `).join('') : '<p class="text-muted">لا توجد مجموعات</p>';
+    
+    const modalHtml = `
+      <div class="modal-header">
+        <h3 class="modal-title">🎓 بيانات الطالب</h3>
+        <button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="student-info-header">
+          ${photo}
+          <div class="student-meta">
+            <div class="student-name">${student.name}</div>
+            <div class="student-code">🎟️ ${student.code || '-'}</div>
+            <div class="student-badges">
+              <span class="badge badge-info">${stage} ${student.grade || ''}</span>
+              <span class="badge badge-success">🏆 ${points} نقطة</span>
+              <span class="badge ${rate >= 75 ? 'badge-success' : rate >= 50 ? 'badge-warning' : 'badge-danger'}">📋 ${rate}% حضور</span>
+              ${remaining > 0 ? `<span class="badge badge-danger">💰 ${remaining} ج.م متبقي</span>` : `<span class="badge badge-success">✅ مسدد</span>`}
+            </div>
+          </div>
+        </div>
+        
+        <div class="detail-grid" style="margin-bottom:16px;">
+          <div class="detail-box">
+            <div class="lbl">📱 هاتف الطالب</div>
+            <div class="val">${student.phone || '-'}</div>
+          </div>
+          <div class="detail-box">
+            <div class="lbl">👨‍👩‍👦 ولي الأمر</div>
+            <div class="val">${student.parentPhone || '-'}</div>
+          </div>
+          <div class="detail-box">
+            <div class="lbl">🔑 كلمة المرور</div>
+            <div class="val" style="font-family:var(--font-en);letter-spacing:2px;">${student.password || '-'}</div>
+          </div>
+          <div class="detail-box">
+            <div class="lbl">📚 المجموعات</div>
+            <div class="val">${ts.length}</div>
+          </div>
+        </div>
+        
+        <h4 style="margin:20px 0 12px;">⚡ الاختصارات السريعة</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+          <button class="quick-action-btn" onclick="window.quickAttendStudent('${student.id}')">
+            <div class="quick-action-icon">📋</div>
+            <div>
+              <div>تسجيل حضور</div>
+              <div class="text-xs text-muted">حصة اليوم</div>
+            </div>
+          </button>
+          <button class="quick-action-btn" onclick="window.quickPayStudent('${student.id}')">
+            <div class="quick-action-icon">💰</div>
+            <div>
+              <div>تحصيل دفعة</div>
+              <div class="text-xs text-muted">${remaining > 0 ? `متبقي ${remaining} ج.م` : 'مسدد'}</div>
+            </div>
+          </button>
+          <button class="quick-action-btn" onclick="window.quickAddPoints('${student.id}')">
+            <div class="quick-action-icon">🏆</div>
+            <div>
+              <div>إضافة نقاط</div>
+              <div class="text-xs text-muted">تفاعل/تميز</div>
+            </div>
+          </button>
+          <button class="quick-action-btn" onclick="window.quickAddNote('${student.id}')">
+            <div class="quick-action-icon">📝</div>
+            <div>
+              <div>إضافة ملاحظة</div>
+              <div class="text-xs text-muted">توصية/ملاحظة</div>
+            </div>
+          </button>
+          ${student.parentPhone ? `
+          <a class="quick-action-btn" href="https://wa.me/2${student.parentPhone.replace(/\\D/g, '')}" target="_blank" style="text-decoration:none;">
+            <div class="quick-action-icon" style="background:rgba(37,211,102,0.15);color:#25d366;">💬</div>
+            <div>
+              <div>واتساب ولي الأمر</div>
+              <div class="text-xs text-muted">${student.parentPhone}</div>
+            </div>
+          </a>
+          ` : `
+          <button class="quick-action-btn" disabled style="opacity:0.5;">
+            <div class="quick-action-icon">📱</div>
+            <div>
+              <div>لا يوجد رقم</div>
+              <div class="text-xs text-muted">ولي الأمر</div>
+            </div>
+          </button>
+          `}
+          <button class="quick-action-btn" onclick="window.openStudentFullProfile('${student.id}')">
+            <div class="quick-action-icon" style="background:var(--info-bg);color:var(--info);">👁️</div>
+            <div>
+              <div>عرض الملف الكامل</div>
+              <div class="text-xs text-muted">تفاصيل شاملة</div>
+            </div>
+          </button>
+        </div>
+        
+        <h4 style="margin:20px 0 12px;">👥 المجموعات (${ts.length})</h4>
+        <div style="max-height:200px;overflow-y:auto;margin-bottom:16px;">${groupsHtml}</div>
+        
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-primary" style="flex:1;" onclick="window.openEditStudentModal('${student.id}')">
+            ✏️ تعديل بيانات الطالب
+          </button>
+          <button class="btn btn-secondary" style="flex:1;" onclick="window.closeScanner()">
+            ← مسح طالب آخر
+          </button>
+        </div>
+      </div>
+    `;
+    
+    if (typeof ThemeManager?.openModal === 'function') {
+      ThemeManager.openModal(modalHtml, 'modal-lg');
+    } else {
+      document.getElementById('studentDetailsModal').innerHTML = modalHtml;
+      document.getElementById('studentDetailsModal').style.display = 'block';
+    }
+  } catch (e) {
+    console.error('openStudentQuickActionsModal error:', e);
+    safeToast('خطأ في عرض البيانات', 'error');
+  }
+};
+
+// 📋 تسجيل حضور سريع
+window.quickAttendStudent = async function(studentId) {
+  try {
+    const ts = DataService?.getStudentTeachers ? DataService.getStudentTeachers(studentId) : [];
+    if (!ts.length) { safeToast('الطالب ليس في أي مجموعة', 'error'); return; }
+    
+    const now = new Date();
+    const dayEn = DAYS[now.getDay()].en;
+    const today = now.toISOString().split('T')[0];
+    
+    // البحث عن حصة اليوم
+    const todayGroups = ts.filter(t => {
+      const g = t.group;
+      if (!g) return false;
+      const schs = (g.schedules && g.schedules.length) ? g.schedules : [{day: g.day, time: g.time}];
+      return schs.some(s => s.day === dayEn);
+    });
+    
+    if (!todayGroups.length) {
+      safeToast('لا توجد حصة لهذا الطالب اليوم', 'warning');
+      return;
+    }
+    
+    const g = todayGroups[0].group;
+    
+    if (typeof DataService?.submitAttendance === 'function') {
+      await DataService.submitAttendance({
+        groupId: g.id,
+        groupName: g.name,
+        submittedBy: currentUser?.id || '',
+        records: [{studentId: studentId, status: 'present', time: now.toTimeString().slice(0, 5)}]
+      });
+      safeToast('✅ تم تسجيل الحضور بنجاح', 'success');
+      ThemeManager.closeModal();
+    } else {
+      const d = db();
+      d.attendance = d.attendance || [];
+      let att = d.attendance.find(a => a.groupId === g.id && a.date === today);
+      if (!att) {
+        att = {
+          id: 'att_' + Date.now(),
+          groupId: g.id,
+          groupName: g.name,
+          date: today,
+          status: 'approved',
+          approvedBy: currentUser?.id || '',
+          approvedAt: new Date().toISOString(),
+          records: []
+        };
+        d.attendance.push(att);
+      }
+      let rec = att.records.find(r => r.studentId === studentId);
+      if (!rec) {
+        att.records.push({studentId: studentId, status: 'present', time: now.toTimeString().slice(0, 5)});
+      } else {
+        rec.status = 'present';
+      }
+      save(d);
+      safeToast('✅ تم تسجيل الحضور بنجاح', 'success');
+      ThemeManager.closeModal();
+    }
+  } catch (e) {
+    console.error(e);
+    safeToast('خطأ في تسجيل الحضور', 'error');
+  }
+};
+
+// 💰 تحصيل دفعة سريع
+window.quickPayStudent = function(studentId) {
+  try {
+    const billing = (typeof Ops?.buildStudentBilling === 'function') ? Ops.buildStudentBilling(studentId) : [];
+    const totalDue = billing.reduce((a, x) => a + (x.billing?.total || 0), 0);
+    const totalPaid = billing.reduce((a, x) => a + (x.payment?.paidAmount || 0), 0);
+    const remaining = Math.max(0, totalDue - totalPaid);
+    
+    if (remaining <= 0) {
+      safeToast('✅ الطالب مسدد بالكامل', 'success');
+      return;
+    }
+    
+    const amount = prompt(`المبلغ المتبقي: ${remaining} ج.م\nأدخل المبلغ المدفوع:`, remaining);
+    if (amount === null) return;
+    const num = parseFloat(amount);
+    if (isNaN(num) || num <= 0) { safeToast('مبلغ غير صحيح', 'error'); return; }
+    
+    const d = db();
+    d.payments = d.payments || [];
+    const month = new Date().toISOString().slice(0, 7);
+    
+    billing.forEach(({group, billing: b}) => {
+      let pay = d.payments.find(x => x.studentId === studentId && x.groupId === group.id && x.month === month);
+      if (!pay) {
+        pay = {
+          id: 'pay_' + Date.now() + '_' + group.id,
+          studentId: studentId,
+          groupId: group.id,
+          teacherId: group.teacherId,
+          month: month,
+          amount: b.total || 0,
+          paidAmount: 0,
+          status: 'unpaid',
+          history: []
+        };
+        d.payments.push(pay);
+      }
+      pay.paidAmount += num;
+      pay.status = pay.paidAmount >= pay.amount ? 'paid' : 'partial';
+      pay.history = pay.history || [];
+      pay.history.push({date: new Date().toISOString(), amount: num, method: 'cash'});
+    });
+    save(d);
+    
+    safeToast('💵 تم تسجيل الدفعة بنجاح', 'success');
+    ThemeManager.closeModal();
+  } catch (e) {
+    console.error(e);
+    safeToast('خطأ في التحصيل', 'error');
+  }
+};
+
+// 🏆 إضافة نقاط سريعة
+window.quickAddPoints = function(studentId) {
+  try {
+    const points = parseInt(prompt('عدد النقاط:', '5'));
+    if (isNaN(points) || points <= 0) { safeToast('قيمة غير صحيحة', 'error'); return; }
+    const reason = prompt('السبب:', 'تفاعل في الحصة') || 'تفاعل';
+    
+    if (typeof Ops?.addManualPoints === 'function') {
+      Ops.addManualPoints(studentId, points, reason, currentUser?.id).then(() => {
+        safeToast(`✅ تم إضافة ${points} نقطة`, 'success');
+        ThemeManager.closeModal();
+      });
+    } else {
+      const d = db();
+      d.manualPoints = d.manualPoints || [];
+      d.manualPoints.push({
+        id: 'mp_' + Date.now(),
+        studentId: studentId,
+        points: points,
+        reason: reason,
+        awardedBy: currentUser?.id || '',
+        awardedAt: new Date().toISOString()
+      });
+      save(d);
+      safeToast(`✅ تم إضافة ${points} نقطة`, 'success');
+      ThemeManager.closeModal();
+    }
+  } catch (e) {
+    console.error(e);
+    safeToast('خطأ', 'error');
+  }
+};
+
+// 📝 إضافة ملاحظة سريعة
+window.quickAddNote = function(studentId) {
+  try {
+    const note = prompt('اكتب الملاحظة:');
+    if (!note) return;
+    
+    if (typeof Ops?.addStudentNote === 'function') {
+      Ops.addStudentNote({
+        studentId: studentId,
+        note: note,
+        teacherId: currentUser?.id,
+        teacherName: currentUser?.name
+      }).then(() => {
+        safeToast('✅ تم إضافة الملاحظة', 'success');
+        ThemeManager.closeModal();
+      });
+    } else {
+      const d = db();
+      d.studentNotes = d.studentNotes || [];
+      d.studentNotes.push({
+        id: 'note_' + Date.now(),
+        studentId: studentId,
+        note: note,
+        teacherId: currentUser?.id,
+        teacherName: currentUser?.name,
+        createdAt: new Date().toISOString()
+      });
+      save(d);
+      safeToast('✅ تم إضافة الملاحظة', 'success');
+      ThemeManager.closeModal();
+    }
+  } catch (e) {
+    console.error(e);
+    safeToast('خطأ', 'error');
+  }
+};
+
+// 👁️ فتح الملف الكامل
+window.openStudentFullProfile = function(studentId) {
+  try {
+    ThemeManager.closeModal();
+    if (typeof window.openStudentProfile === 'function') {
+      window.openStudentProfile(studentId);
+    } else {
+      // Fallback: فتح صفحة الطلاب مع البروفايل
+      window.location.href = 'assistant-dashboard.html?student=' + encodeURIComponent(studentId);
+    }
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+// ✏️ فتح مودال التعديل الكامل
+window.openEditStudentModal = function(studentId) {
+  try {
+    const s = DataService?.getUserById ? DataService.getUserById(studentId) : null;
+    if (!s) { safeToast('الطالب غير موجود', 'error'); return; }
+    
+    const stageOptions = Object.entries(EduFlowConfig?.educationLevels || {}).map(([k, v]) => 
+      `<option value="${k}" ${s.stage === k ? 'selected' : ''}>${v.nameAr}</option>`
+    ).join('');
+    
+    const currentEnrollments = DataService?.getStudentTeachers ? DataService.getStudentTeachers(studentId) : [];
+    const currentTeacherIds = currentEnrollments.map(t => t.teacher?.id);
+    const currentGroupIds = currentEnrollments.map(t => t.group?.id);
+    
+    const teachers = DataService?.getTeachers ? DataService.getTeachers() : [];
+    const groups = DataService?.getGroups ? DataService.getGroups() : [];
+    
+    const teachersHtml = teachers.map(t => `
+      <label style="display:flex;gap:8px;align-items:center;padding:10px;background:var(--surface-hover);border-radius:8px;margin-bottom:6px;cursor:pointer;border:2px solid var(--border);">
+        <input type="checkbox" class="edit-teacher-chk" value="${t.id}" ${currentTeacherIds.includes(t.id) ? 'checked' : ''} onchange="window.updateEditGroups()">
+        <div>
+          <strong>${t.name}</strong>
+          <div class="text-xs text-muted">${t.subject || '-'}</div>
+        </div>
+      </label>
+    `).join('');
+    
+    ThemeManager.closeModal();
+    
+    setTimeout(() => {
+      ThemeManager.openModal(`
+        <div class="modal-header">
+          <h3 class="modal-title">✏️ تعديل بيانات: ${s.name}</h3>
+          <button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>الاسم الكامل *</label>
+            <input type="text" id="editName" class="form-input" value="${s.name || ''}" required>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="form-group">
+              <label>هاتف الطالب</label>
+              <input type="tel" id="editPhone" class="form-input" value="${s.phone || ''}">
+            </div>
+            <div class="form-group">
+              <label>هاتف ولي الأمر</label>
+              <input type="tel" id="editParent" class="form-input" value="${s.parentPhone || ''}">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="form-group">
+              <label>المرحلة *</label>
+              <select id="editStage" class="form-select" onchange="window.updateEditGrades()">
+                ${stageOptions}
+              </select>
+            </div>
+            <div class="form-group">
+              <label>الصف *</label>
+              <select id="editGrade" class="form-select"></select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>🔑 كلمة المرور</label>
+            <input type="text" id="editPassword" class="form-input" value="${s.password || '1234'}" style="font-family:var(--font-en);letter-spacing:2px;">
+          </div>
+          <div class="form-group">
+            <label>👨‍🏫 اختر الأساتذة</label>
+            <div style="max-height:150px;overflow-y:auto;padding:8px;background:var(--surface-hover);border-radius:8px;">
+              ${teachersHtml || '<p class="text-muted">لا يوجد أساتذة</p>'}
+            </div>
+          </div>
+          <div class="form-group">
+            <label>👥 المجموعات المرتبطة</label>
+            <div id="editGroupsList" style="max-height:180px;overflow-y:auto;padding:8px;background:var(--surface-hover);border-radius:8px;"></div>
+          </div>
+          <button class="btn btn-primary w-full" style="padding:14px;font-size:15px;" onclick="window.saveEditedStudent('${studentId}')">
+            💾 حفظ التعديلات
+          </button>
+        </div>
+      `, 'modal-lg');
+      
+      window.updateEditGrades(s.grade);
+      setTimeout(() => window.updateEditGroups(currentGroupIds), 100);
+    }, 300);
+  } catch (e) {
+    console.error('openEditStudentModal error:', e);
+    safeToast('خطأ في فتح نافذة التعديل', 'error');
+  }
+};
+
+window.updateEditGrades = function(selected) {
+  try {
+    const stage = document.getElementById('editStage')?.value;
+    const grades = EduFlowConfig?.educationLevels?.[stage]?.grades || [];
+    const el = document.getElementById('editGrade');
+    if (el) {
+      el.innerHTML = '<option value="">-- اختر --</option>' + grades.map(g => 
+        `<option ${selected === g ? 'selected' : ''}>${g}</option>`
+      ).join('');
+    }
+    window.updateEditGroups();
+  } catch (e) {}
+};
+
+window.updateEditGroups = function(preSelectedIds) {
+  try {
+    const selectedTeachers = Array.from(document.querySelectorAll('.edit-teacher-chk:checked')).map(c => c.value);
+    const stage = document.getElementById('editStage')?.value;
+    const grade = document.getElementById('editGrade')?.value;
+    const container = document.getElementById('editGroupsList');
+    if (!container) return;
+    
+    if (!selectedTeachers.length) {
+      container.innerHTML = '<p class="text-muted" style="font-size:12px;">اختر أستاذاً واحداً على الأقل أولاً</p>';
+      return;
+    }
+    
+    const groups = DataService?.getGroups ? DataService.getGroups() : [];
+    let html = '';
+    selectedTeachers.forEach(tid => {
+      const teacher = DataService?.getUserById ? DataService.getUserById(tid) : null;
+      html += `<div style="font-weight:700;font-size:13px;color:var(--primary);margin:8px 0 4px;">👨‍🏫 ${teacher?.name || '-'}</div>`;
+      const teacherGroups = groups.filter(g => 
+        g.teacherId === tid && 
+        (!stage || g.stage === stage) && 
+        (!grade || g.grade === grade)
+      );
+      if (teacherGroups.length) {
+        html += teacherGroups.map(g => `
+          <label style="display:flex;gap:8px;align-items:center;padding:8px;background:var(--surface);border-radius:6px;margin-bottom:4px;cursor:pointer;">
+            <input type="checkbox" class="edit-grp-chk" value="${g.id}" data-teacher="${tid}" ${preSelectedIds?.includes(g.id) ? 'checked' : ''}>
+            <span style="font-size:12px;">${g.name} (${dayAr(g.day)} ${T(g.time)})</span>
+          </label>
+        `).join('');
+      } else {
+        html += '<p class="text-muted" style="font-size:11px;">لا توجد مجموعات مطابقة</p>';
+      }
+    });
+    container.innerHTML = html;
+  } catch (e) { console.error(e); }
+};
+
+window.saveEditedStudent = async function(studentId) {
+  try {
+    const data = {
+      name: document.getElementById('editName').value,
+      phone: document.getElementById('editPhone').value,
+      parentPhone: document.getElementById('editParent').value,
+      stage: document.getElementById('editStage').value,
+      grade: document.getElementById('editGrade').value,
+      password: document.getElementById('editPassword').value || '1234'
+    };
+    
+    const enrollments = Array.from(document.querySelectorAll('.edit-grp-chk:checked')).map(c => ({
+      groupId: c.value,
+      teacherId: c.dataset.teacher
+    }));
+    
+    // تحديث بيانات الطالب
+    if (typeof DataService?.updateUser === 'function') {
+      await DataService.updateUser(studentId, data);
+    } else {
+      const d = db();
+      const users = d.users || [];
+      const user = users.find(u => u.id === studentId);
+      if (user) {
+        Object.assign(user, data, {updatedAt: new Date().toISOString()});
+        save(d);
       }
     }
-  }catch(e){}
-  if(scanning) requestAnimationFrame(window.tick);
-};
-
-window.handleUpload=async function(event){
-  try{
-    const file=event.target.files[0];
-    if(!file) return;
-    scanning=false;
-    const st=document.getElementById('scanStatus');
-    if(st) st.innerHTML='🔍 جاري تحليل الصورة...';
-    video.style.display='none';
-    const scanLine=document.getElementById('scanLine');
-    if(scanLine) scanLine.style.display='none';
-    let uploadedImg=document.querySelector('.cam-box img.uploaded');
-    if(!uploadedImg){
-      uploadedImg=document.createElement('img');
-      uploadedImg.className='uploaded';
-      document.getElementById('camBox').appendChild(uploadedImg);
+    
+    // تحديث الاشتراكات
+    const d = db();
+    d.enrollments = (d.enrollments || []).filter(e => e.studentId !== studentId);
+    enrollments.forEach(enr => {
+      d.enrollments.push({
+        studentId: studentId,
+        groupId: enr.groupId,
+        teacherId: enr.teacherId,
+        status: 'active',
+        enrolledAt: new Date().toISOString()
+      });
+    });
+    save(d);
+    
+    if (window.FirebaseService?.connected) {
+      try {
+        await FirebaseService.saveDoc('users', studentId, {...data, id: studentId});
+      } catch (e) {}
     }
-    const reader=new FileReader();
-    reader.onload=function(e){
-      uploadedImg.src=e.target.result;
-      const img=new Image();
-      img.onload=function(){
-        canvas.width=img.width;
-        canvas.height=img.height;
-        ctx.drawImage(img,0,0);
-        const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
-        if(window.jsQR){
-          const code=jsQR(imgData.data,imgData.width,imgData.height,{inversionAttempts:'attemptBoth'});
-          if(code && code.data){
-            if(navigator.vibrate) navigator.vibrate([100,50,100]);
-            if(st) st.innerHTML='✅ تم العثور على باركود في الصورة!';
-            setTimeout(()=>window.handleScan(code.data),500);
-          }else{
-            if(st) st.innerHTML='❌ لم يتم العثور على باركود في الصورة — جرّب صورة أوضح';
-            scanning=true;
-          }
-        }
-      };
-      img.src=e.target.result;
-    };
-    reader.readAsDataURL(file);
-  }catch(e){
-    console.error(e);
-    if(typeof ThemeManager?.toast==='function') ThemeManager.toast('خطأ في قراءة الصورة','error');
+    
+    ThemeManager.closeModal();
+    safeToast('✅ تم حفظ التعديلات بنجاح', 'success');
+    
+    // إعادة فتح modal الاختصارات لرؤية البيانات الجديدة
+    setTimeout(() => {
+      const updatedStudent = DataService?.getUserById ? DataService.getUserById(studentId) : null;
+      if (updatedStudent) window.openStudentQuickActionsModal(updatedStudent);
+    }, 400);
+  } catch (e) {
+    console.error('saveEditedStudent error:', e);
+    safeToast('خطأ في الحفظ: ' + e.message, 'error');
   }
-  event.target.value='';
 };
 
-window.goManual=function(){
-  const v=document.getElementById('manualCode')?.value.trim();
-  if(!v){
-    if(typeof ThemeManager?.toast==='function') ThemeManager.toast('اكتب الكود الأول','warning');
-    return;
+// Enter key للإدخال اليدوي
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('manualCode');
+  if (input) {
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        window.handleBarcodeScan(input.value);
+      }
+    });
+    input.focus();
   }
-  window.handleScan(v);
-};
-
-// ==========================================
-// النافذة الذكية (مساعد/أدمن/مدرس)
-// ==========================================
-window.openSmartModal = function(student) {
-    const teachers = DataService.getStudentTeachers ? DataService.getStudentTeachers(student.id) : [];
-    if (!teachers.length) {
-        ThemeManager.toast('هذا الطالب غير مسجل في أي مجموعة حالياً', 'error');
-        return;
-    }
-    let groupsOptions = teachers.map(t => `<option value="${t.group.id}">${t.group.name} (${t.teacher.name})</option>`).join('');
-    const gids = teachers.map(t => t.group.id);
-    const allHw = DataService.getHomework ? DataService.getHomework() : [];
-    const offlineHw = allHw.filter(h => gids.includes(h.groupId) && (h.paper || h.offline));
-    let hwOptions = '<option value="">-- بدون تسجيل واجب ورقي --</option>' +
-        offlineHw.map(h => {
-            const g = DataService.getGroups().find(gr => gr.id === h.groupId);
-            return `<option value="${h.id}" data-max="${h.totalPoints || 10}">${h.title} (${g?.name || ''})</option>`;
-        }).join('');
-
-    const body = `
-        <div class="smart-student-header">
-            <div class="smart-student-name">${student.name}</div>
-            <div class="text-sm text-muted">الكود: <strong style="font-family:var(--font-en);">${student.code}</strong> · ${student.grade || ''}</div>
-        </div>
-        <div class="smart-action-box">
-            <label style="display:flex; align-items:center; gap:12px; cursor:pointer;">
-                <input type="checkbox" id="smartAttend" checked style="width:24px; height:24px; accent-color:var(--success); flex-shrink:0;">
-                <div>
-                    <strong style="color:var(--success); font-size:15px;">✓ تسجيل حضور اليوم</strong>
-                    <div class="text-xs text-muted" style="margin-top:2px;">سيتم احتساب الحصة ضمن حصص الشهر تلقائياً</div>
-                </div>
-            </label>
-            <div class="form-group" style="margin-top:12px; margin-bottom:0;">
-                <select id="smartGroup" class="form-select" ${teachers.length === 1 ? 'disabled' : ''}>
-                    ${groupsOptions}
-                </select>
-            </div>
-        </div>
-        <div class="smart-hw-box">
-            <label class="text-sm" style="font-weight:800; color:var(--warning); display:block; margin-bottom:8px;">📝 تسجيل درجة واجب ورقي (اختياري)</label>
-            <div class="form-group" style="margin-bottom:8px;">
-                <select id="smartHwSelect" class="form-select" onchange="window.updateSmartHwMax()">
-                    ${hwOptions}
-                </select>
-            </div>
-            <div class="form-group" id="smartHwGradeWrap" style="display:none; margin-bottom:0;">
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <input type="number" id="smartHwGrade" class="form-input" min="0" step="0.5" placeholder="الدرجة">
-                    <span class="text-sm" style="font-weight:800; color:var(--warning);" id="smartHwMaxLabel">/ 10</span>
-                </div>
-            </div>
-        </div>
-        <button class="btn btn-primary btn-lg w-full" onclick="window.submitSmartScan('${student.id}')" style="margin-top:8px; font-size:16px; padding:14px;">
-            💾 حفظ الحضور والدرجة
-        </button>
-        <button class="btn btn-ghost w-full" onclick="window.closeSmartModal()" style="margin-top:8px;">إلغاء</button>
-    `;
-    document.getElementById('smartModalBody').innerHTML = body;
-    document.getElementById('smartScanModal').classList.add('active');
-    scanning = false;
-    window.updateSmartHwMax();
-};
-
-window.updateSmartHwMax = function() {
-    const sel = document.getElementById('smartHwSelect');
-    const wrap = document.getElementById('smartHwGradeWrap');
-    const lbl = document.getElementById('smartHwMaxLabel');
-    if (!sel) return;
-    const opt = sel.options[sel.selectedIndex];
-    if (opt && opt.value) {
-        wrap.style.display = 'block';
-        const max = opt.getAttribute('data-max') || 10;
-        lbl.textContent = '/ ' + max;
-        document.getElementById('smartHwGrade').max = max;
-    } else {
-        wrap.style.display = 'none';
-    }
-};
-
-window.closeSmartModal = function() {
-    document.getElementById('smartScanModal').classList.remove('active');
-    scanning = true;
-    requestAnimationFrame(window.tick);
-};
-
-window.submitSmartScan = async function(studentId) {
-    const attend = document.getElementById('smartAttend').checked;
-    const groupId = document.getElementById('smartGroup').value;
-    const hwId = document.getElementById('smartHwSelect').value;
-    const hwGrade = document.getElementById('smartHwGrade').value;
-    const byId = (currentUser && (currentUser.id || currentUser.uid)) || 'qr-staff';
-    let successCount = 0;
-
-    if (attend && groupId) {
-        try {
-            const group = DataService.getGroups().find(g => g.id === groupId);
-            await DataService.submitAttendance({
-                groupId: groupId,
-                groupName: group?.name || '',
-                submittedBy: byId,
-                records: [{ studentId: studentId, status: 'present' }]
-            });
-            successCount++;
-        } catch(e) { console.error('Att error', e); }
-    }
-
-    if (hwId && hwGrade) {
-        try {
-            const score = parseFloat(hwGrade);
-            const hw = DataService.getHomeworkById ? DataService.getHomeworkById(hwId) : null;
-            if (hw) {
-                const d = DataService._getData();
-                d.submissions = d.submissions || [];
-                let sub = d.submissions.find(s => s.homeworkId === hwId && s.studentId === studentId);
-                if (!sub) {
-                    sub = {
-                        id: 'sub_' + Date.now(),
-                        homeworkId: hwId,
-                        studentId: studentId,
-                        score: score,
-                        maxScore: hw.totalPoints || 10,
-                        status: 'graded',
-                        offline: true,
-                        paper: true,
-                        gradedBy: byId,
-                        submittedAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString()
-                    };
-                    d.submissions.push(sub);
-                } else {
-                    sub.score = score;
-                    sub.status = 'graded';
-                    sub.offline = true;
-                    sub.paper = true;
-                    sub.gradedBy = byId;
-                    sub.updatedAt = new Date().toISOString();
-                }
-                DataService._saveData(d);
-                if (window.FirebaseService?.connected) await FirebaseService.saveDoc('submissions', sub.id, sub);
-                successCount++;
-            }
-        } catch(e) { console.error('HW error', e); }
-    }
-
-    if (successCount > 0) ThemeManager.toast('✅ تم الحفظ بنجاح (الحضور + الدرجة)', 'success');
-    else ThemeManager.toast('⚠️ لم يتم تحديد أي إجراء', 'warning');
-    window.closeSmartModal();
-};
-
-// ==========================================
-// ✅ معالجة الباركود الشاملة (async + بحث في Firestore)
-// ==========================================
-window.handleScan = async function(data) {
-    try {
-        data = String(data || '').trim();
-        if (!data) return;
-
-        // 1. باركود حضور
-        if (data.includes('EDUFLOW-ATT:')) {
-            const code = data.split('EDUFLOW-ATT:')[1] || '';
-            if (currentUser?.role === 'student') {
-                const r = await DataService.checkInByCode(currentUser.id, code);
-                ThemeManager.toast(r.success ? '✅ تم تسجيل الحضور' : r.message, r.success ? 'success' : 'error');
-                if (r.success) setTimeout(() => { window.location.href = 'student-dashboard.html'; }, 1200);
-            } else {
-                ThemeManager.toast('📋 هذا باركود حضور، يجب أن يمسحه الطالب من هاتفه', 'warning');
-            }
-            return;
-        }
-
-        // 2. استخراج الكود
-        const m = data.match(/code=([A-Za-z0-9-]+)/i) || data.match(/(EDU-[A-Z0-9-]+)/i);
-        const code = m ? m[1] : data;
-
-        const allUsers = DataService.getUsers ? DataService.getUsers() : [];
-        let student = allUsers.find(u => u.role === 'student' && (window.normalizeCode(u.code) === window.normalizeCode(code) || u.id === code));
-        let parent  = allUsers.find(u => u.role === 'parent' && (u.phone === code || u.id === code || u.parentPhone === code));
-
-        // 🆕 لو المحلي فاضي → دوّر في Firestore مباشرة
-        if (!student && !parent && window.firebase && firebase.apps.length) {
-          try {
-            const nc = window.normalizeCode(code);
-            let q = await firebase.firestore().collection('users').where('code','==',nc).limit(1).get();
-            if (q.empty) q = await firebase.firestore().collection('users').where('studentId','==',nc).limit(1).get();
-            if (!q.empty) {
-              student = { id: q.docs[0].id, ...q.docs[0].data() };
-              try {
-                const d = DataService._getData();
-                d.users = d.users || [];
-                if (!d.users.some(u => u.id === student.id)) { d.users.push(student); DataService._saveData(d); }
-              } catch(e){}
-            }
-          } catch(fe) { console.warn('remote resolve:', fe.code); }
-        }
-
-        if (!student && !parent) {
-            ThemeManager.toast('❌ لم يتم العثور على طالب أو ولي أمر بهذا الكود', 'error');
-            return;
-        }
-
-        // 🆕 مفيش جلسة + باركود طالب → دخول تلقائي كطالب
-        if (!currentUser && student) {
-            try {
-                if (window.setEduUser) window.setEduUser(student);
-                else sessionStorage.setItem('eduflow_user', JSON.stringify(student));
-                ThemeManager.toast('✅ أهلاً ' + student.name + ' — جاري فتح حسابك', 'success');
-                setTimeout(() => { window.location.href = 'student-dashboard.html'; }, 700);
-            } catch(e) { window.location.href = 'student-dashboard.html'; }
-            return;
-        }
-        if (!currentUser && parent) {
-            try {
-                if (window.setEduUser) window.setEduUser(parent);
-                else sessionStorage.setItem('eduflow_user', JSON.stringify(parent));
-                setTimeout(() => { window.location.href = 'parent-dashboard.html'; }, 700);
-            } catch(e) { window.location.href = 'parent-dashboard.html'; }
-            return;
-        }
-
-        // A. طالب
-        if (currentUser?.role === 'student') {
-            if (student && currentUser.id === student.id) window.location.href = 'student-dashboard.html';
-            else ThemeManager.toast('⚠️ لا يمكنك مسح باركود طالب آخر', 'error');
-            return;
-        }
-
-        // B. ولي أمر
-        if (currentUser?.role === 'parent') {
-            if (parent && currentUser.id === parent.id) window.location.href = 'parent-dashboard.html';
-            else if (student) {
-                const isMyChild = currentUser.studentIds?.includes(student.id) ||
-                                  student.parentPhone === currentUser.phone ||
-                                  student.parentPhone === currentUser.parentPhone;
-                if (isMyChild) window.location.href = 'parent-dashboard.html?studentId=' + student.id;
-                else ThemeManager.toast('⚠️ هذا الطالب غير مرتبط بحسابك', 'error');
-            }
-            return;
-        }
-
-        // C. مساعد / أدمن / مدرس → النافذة الذكية
-        if (currentUser?.role === 'assistant' || currentUser?.role === 'super_admin' || currentUser?.role === 'teacher') {
-            if (student) window.openSmartModal(student);
-            else if (parent) ThemeManager.toast('ℹ️ هذا باركود ولي أمر، ابحث عن الطالب المرتبط به', 'info');
-            return;
-        }
-
-    } catch(e) {
-        console.error(e);
-        ThemeManager.toast('خطأ في معالجة الباركود', 'error');
-    }
-};
-
-window.addEventListener('beforeunload',function(){
-  try{ if(stream) stream.getTracks().forEach(t=>t.stop()); }catch(e){}
-});
-
-document.addEventListener('keydown',function(e){
-  if(e.key==='Enter' && document.activeElement?.id==='manualCode'){ window.goManual(); }
 });
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
 </body>
 </html>

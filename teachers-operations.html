@@ -13,12 +13,16 @@
     .ops-card-icon{font-size:22px;margin-bottom:6px}
     .ops-card.critical .ops-card-value{color:var(--danger)}
     .ops-card.warning .ops-card-value{color:var(--warning)}
-    .teacher-row,.task-row{background:var(--surface-hover);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid var(--border)}
+    .ops-card.success .ops-card-value{color:var(--success)}
+    .teacher-row,.task-row,.grading-row{background:var(--surface-hover);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid var(--border);transition:all .2s}
+    .teacher-row:hover,.task-row:hover,.grading-row:hover{border-color:var(--primary-border)}
     .tag{display:inline-block;padding:2px 9px;border-radius:9999px;font-size:11px;font-weight:700;background:var(--primary-bg);color:var(--primary);margin-inline-end:4px;margin-bottom:4px}
     .tag.rel-am{background:var(--info-bg);color:var(--info)}
     .tag.rel-bm{background:var(--warning-bg);color:var(--warning)}
     .tag.rel-both{background:var(--success-bg);color:var(--success)}
     .tag.recurring{background:rgba(139,92,246,.15);color:#8b5cf6}
+    .tag.overdue{background:var(--danger-bg);color:var(--danger)}
+    .tag.urgent{background:var(--warning-bg);color:var(--warning)}
     .prio-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-inline-end:6px}
     .chk-grid{display:flex;flex-wrap:wrap;gap:8px}
     .chk-grid label{display:flex;align-items:center;gap:6px;background:var(--surface-hover);padding:7px 12px;border-radius:8px;cursor:pointer;font-size:13px;border:1px solid var(--border)}
@@ -32,7 +36,7 @@
     .cal-cell:hover{border-color:var(--primary)}
     .cal-cell.empty{opacity:.35;cursor:default}
     .cal-day-num{font-size:12px;font-weight:800;margin-bottom:6px;color:var(--text-muted)}
-    .cal-chip{font-size:11px;border-radius:6px;padding:3px 6px;margin-bottom:4px;background:var(--primary-bg);color:var(--primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .cal-chip{font-size:11px;border-radius:6px;padding:3px 6px;margin-bottom:4px;background:var(--primary-bg);color:var(--primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
     .cal-chip.critical{background:rgba(239,68,68,.15);color:#ef4444}
     .cal-chip.high{background:rgba(249,115,22,.15);color:#f97316}
     .cal-chip.medium{background:rgba(234,179,8,.15);color:#eab308}
@@ -76,6 +80,55 @@
     .filter-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
     .parent-company-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:9999px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#fff;font-size:11px;font-weight:700;margin-top:8px}
     
+    /* 🆕 عداد تنازلي */
+    .countdown-card{background:linear-gradient(135deg,rgba(239,68,68,.08),rgba(249,115,22,.08));border:2px solid var(--danger);border-radius:16px;padding:20px;margin-bottom:16px;text-align:center;position:relative;overflow:hidden}
+    .countdown-card::before{content:'';position:absolute;top:-50%;right:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(239,68,68,.05) 0%,transparent 70%);animation:pulse 3s infinite}
+    @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+    .countdown-title{font-size:14px;color:var(--danger);font-weight:700;margin-bottom:8px}
+    .countdown-value{font-size:42px;font-weight:900;font-family:var(--font-en);color:var(--danger);letter-spacing:2px}
+    .countdown-label{font-size:12px;color:var(--text-muted);margin-top:4px}
+    .countdown-sub{font-size:13px;color:var(--text-secondary);margin-top:8px}
+    
+    /* 🆕 طابور التصحيح */
+    .grading-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;border-right:4px solid var(--warning);transition:all .2s}
+    .grading-card.overdue{border-right-color:var(--danger);background:rgba(239,68,68,.03)}
+    .grading-card.urgent{border-right-color:var(--warning);background:rgba(249,115,22,.03)}
+    .grading-card:hover{border-color:var(--primary-border);transform:translateX(-2px)}
+    .grading-header{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+    .grading-info{flex:1;min-width:200px}
+    .grading-title{font-size:15px;font-weight:700;margin-bottom:4px}
+    .grading-meta{font-size:12px;color:var(--text-muted);line-height:1.6}
+    .grading-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-top:10px}
+    .grading-stat{background:var(--surface-hover);padding:8px;border-radius:8px;text-align:center}
+    .grading-stat-value{font-size:18px;font-weight:800;color:var(--primary);font-family:var(--font-en)}
+    .grading-stat-label{font-size:10px;color:var(--text-muted);margin-top:2px}
+    .grading-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+    
+    /* 🆕 إدارة المجموعات */
+    .group-mgmt-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;transition:all .2s}
+    .group-mgmt-card:hover{border-color:var(--primary-border)}
+    .group-mgmt-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+    .group-mgmt-info{flex:1;min-width:200px}
+    .group-mgmt-name{font-size:16px;font-weight:700;margin-bottom:4px}
+    .group-mgmt-meta{font-size:12px;color:var(--text-muted);line-height:1.6}
+    .group-mgmt-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;margin-top:10px}
+    .group-mgmt-stat{background:var(--surface-hover);padding:8px;border-radius:8px;text-align:center}
+    .group-mgmt-stat-value{font-size:16px;font-weight:800;color:var(--primary);font-family:var(--font-en)}
+    .group-mgmt-stat-label{font-size:10px;color:var(--text-muted);margin-top:2px}
+    .group-mgmt-actions{display:flex;gap:6px;flex-wrap:wrap}
+    
+    /* 🆕 جدول الأستاذ الحقيقي */
+    .schedule-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+    .schedule-day{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+    .schedule-day.today{border-color:var(--primary);border-width:2px}
+    .schedule-day-name{background:var(--primary-bg);color:var(--primary);padding:10px;text-align:center;font-weight:700;font-size:13px}
+    .schedule-day.today .schedule-day-name{background:var(--primary);color:#fff}
+    .schedule-day-classes{padding:8px;min-height:80px}
+    .schedule-class{background:var(--surface-hover);padding:8px;border-radius:6px;margin-bottom:6px;border-right:3px solid var(--primary);cursor:pointer}
+    .schedule-class:hover{background:var(--primary-bg)}
+    .schedule-class-name{font-weight:700;font-size:12px;margin-bottom:2px}
+    .schedule-class-meta{font-size:10px;color:var(--text-muted)}
+    
     @media(max-width:768px){
       .calendar-month{gap:5px}
       .cal-cell{min-height:82px;padding:6px}
@@ -84,6 +137,9 @@
       .week-table{font-size:12px}
       .detail-grid{grid-template-columns:1fr}
       .profile-stats{grid-template-columns:repeat(2,1fr)}
+      .grading-stats{grid-template-columns:repeat(2,1fr)}
+      .schedule-grid{grid-template-columns:1fr 1fr}
+      .countdown-value{font-size:32px}
     }
   </style>
 </head>
@@ -94,7 +150,7 @@
   <div class="app-layout">
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <div class="sidebar-logo" data-logo></div>
+        <div class="sidebar-logo" data-logo>🎓</div>
         <div>
           <div class="sidebar-brand-name" data-brand-name>Habbash Group</div>
           <div class="sidebar-brand-tagline">Teachers Operations</div>
@@ -141,17 +197,35 @@
       </header>
 
       <div class="content-area">
-        <!-- Overview -->
+        <!-- 🎯 Overview -->
         <section class="section active" id="section-overview">
+          <div id="countdownContainer"></div>
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:20px;" id="opsCards"></div>
           <div class="card" style="margin-bottom:14px;"><div class="card-header"><h3 class="card-title">🔔 تنبيهات اليوم</h3></div><div id="todayAlerts"></div></div>
           <div class="card"><div class="card-header"><h3 class="card-title">📍 اقتراحات تنظيمية</h3></div><div id="smartSuggestions"></div></div>
         </section>
 
-        <!-- Calendar -->
+        <!-- 🆕 طابور التصحيح -->
+        <section class="section" id="section-grading">
+          <div class="section-header">
+            <div><h2 class="section-title">📝 طابور التصحيح</h2><p class="text-sm text-muted">الواجبات والامتحانات وكراسات التسميع اللي محتاجة تصحيح</p></div>
+            <button class="btn btn-ghost btn-sm" onclick="window.loadGrading()">🔄 تحديث</button>
+          </div>
+          <div class="card" style="margin-bottom:14px;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
+              <div class="form-group"><label>فلتر الأستاذ</label><select id="gradingTeacherFilter" class="form-select" onchange="window.loadGrading()"><option value="">كل الأساتذة</option></select></div>
+              <div class="form-group"><label>النوع</label><select id="gradingTypeFilter" class="form-select" onchange="window.loadGrading()"><option value="">الكل</option><option value="hw">واجبات</option><option value="ex">امتحانات</option><option value="recitation">تسميع / إنجليزي</option></select></div>
+              <div class="form-group"><label>الحالة</label><select id="gradingStatusFilter" class="form-select" onchange="window.loadGrading()"><option value="">الكل</option><option value="overdue">متأخر</option><option value="urgent">عاجل</option><option value="pending">عادي</option></select></div>
+            </div>
+          </div>
+          <div id="gradingStats" style="margin-bottom:16px;"></div>
+          <div id="gradingList"></div>
+        </section>
+
+        <!-- 📅 Calendar -->
         <section class="section" id="section-calendar">
           <div class="section-header">
-            <div><h2 class="section-title">📅 Calendar التشغيل</h2><p class="text-sm text-muted">Day / Week / Month + إنشاء مهام ومواعيد</p></div>
+            <div><h2 class="section-title">📅 Calendar التشغيل</h2><p class="text-sm text-muted">جدول الأساتذة الحقيقي + المهام والمواعيد</p></div>
             <button class="btn btn-primary" onclick="window.openTaskModal()">+ Task / Event</button>
           </div>
           <div class="card">
@@ -172,7 +246,7 @@
           </div>
         </section>
 
-        <!-- Tasks -->
+        <!-- ✅ Tasks -->
         <section class="section" id="section-tasks">
           <div class="section-header">
             <div><h2 class="section-title">✅ Tasks & Events</h2><p class="text-sm text-muted">كل المهام والمواعيد الخاصة بالأساتذة</p></div>
@@ -190,22 +264,37 @@
           <div id="tasksList"></div>
         </section>
 
-        <!-- Teachers -->
+        <!-- 👨‍🏫 Teachers -->
         <section class="section" id="section-teachers">
           <div class="section-header">
-            <div><h2 class="section-title">👨‍🏫 المدرسون</h2><p class="text-sm text-muted">أضف أي عدد من المدرسين</p></div>
+            <div><h2 class="section-title">👨‍🏫 المدرسون</h2><p class="text-sm text-muted">إدارة شاملة لكل المدرسين</p></div>
             <button class="btn btn-primary" onclick="window.openTeacherModal()">+ إضافة مدرس</button>
           </div>
           <div class="card" style="margin-bottom:14px;"><div class="search-bar"><input type="text" id="tSearch" class="form-input" placeholder="بحث بالاسم أو المادة أو المنطقة..." onkeyup="window.loadTeachers()"></div></div>
           <div id="teachersList"></div>
         </section>
 
-        <!-- Teacher Profile -->
+        <!-- 👤 Teacher Profile -->
         <section class="section" id="section-teacher-profile">
           <div id="teacherProfileContent"></div>
         </section>
 
-        <!-- Reports -->
+        <!-- 🆕 إدارة المجموعات -->
+        <section class="section" id="section-groups-mgmt">
+          <div class="section-header">
+            <div><h2 class="section-title">👥 إدارة المجموعات</h2><p class="text-sm text-muted">تبديل، إلغاء، مواعيد استثنائية</p></div>
+            <button class="btn btn-primary" onclick="window.openExceptionalSessionModal()">+ موعد استثنائي</button>
+          </div>
+          <div class="card" style="margin-bottom:14px;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
+              <div class="form-group"><label>فلتر الأستاذ</label><select id="groupMgmtTeacherFilter" class="form-select" onchange="window.loadGroupsMgmt()"><option value="">كل الأساتذة</option></select></div>
+              <div class="form-group"><label>فلتر السنتر</label><select id="groupMgmtCenterFilter" class="form-select" onchange="window.loadGroupsMgmt()"><option value="">كل السناتر</option></select></div>
+            </div>
+          </div>
+          <div id="groupsMgmtList"></div>
+        </section>
+
+        <!-- 📊 Reports -->
         <section class="section" id="section-reports-ops">
           <div class="section-header">
             <div><h2 class="section-title">📊 تقارير التشغيل</h2><p class="text-sm text-muted">إحصائيات شاملة للمهام والمواعيد</p></div>
@@ -221,7 +310,7 @@
           <div id="reportsContent"></div>
         </section>
 
-        <!-- Locations -->
+        <!-- 📍 Locations -->
         <section class="section" id="section-locations">
           <div class="section-header">
             <div><h2 class="section-title">📍 المناطق والأماكن</h2></div>
@@ -230,7 +319,7 @@
           <div id="locationsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;"></div>
         </section>
 
-        <!-- Activity Types -->
+        <!-- 🏷️ Activity Types -->
         <section class="section" id="section-types">
           <div class="section-header">
             <div><h2 class="section-title">🏷️ أنواع الأنشطة</h2></div>
@@ -239,7 +328,7 @@
           <div id="typesList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;"></div>
         </section>
 
-        <!-- Settings -->
+        <!-- ⚙️ Settings -->
         <section class="section" id="section-settings">
           <div class="section-header"><div><h2 class="section-title">⚙️ إعدادات التشغيل</h2></div></div>
           <div class="card" style="max-width:520px;">
@@ -265,19 +354,30 @@
   <script src="js/config.js"></script>
   <script src="js/firebase-service.js"></script>
   <script src="js/data-service.js"></script>
+  <script src="js/operations-service.js"></script>
+  <script src="js/ui-helpers.js"></script>
+  <script src="js/drive-service.js"></script>
   <script src="js/theme-manager.js"></script>
   <script src="js/auth-service.js"></script>
+  <script src="js/footer-injector.js"></script>
 
   <script>
-    // 🆕 Safe toast wrapper لضمان التوافق
-    window.safeToast = function(msg, type='success') {
-      try {
-        if (typeof ThemeManager?.toast === 'function') ThemeManager.toast(msg, type);
-        else console.log(`[Toast ${type}]`, msg);
-      } catch(e) { console.log('[Toast fallback]', msg); }
+    const DAYS=[{en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},{en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'},{en:'Saturday',ar:'السبت'}];
+    const dayAr=en=>(DAYS.find(d=>d.en===en)||{}).ar||en;
+    const T=tm=>DataService?.formatTime12?DataService.formatTime12(tm):tm;
+    const db=()=>DataService?._getData?DataService._getData():{};
+    const save=d=>DataService?._saveData?DataService._saveData(d):null;
+    
+    window.safeToast=function(msg,type='success'){
+      try{if(typeof ThemeManager?.toast==='function')ThemeManager.toast(msg,type);else console.log(`[Toast ${type}]`,msg);}
+      catch(e){console.log('[Toast fallback]',msg);}
+    };
+    
+    window.driveThumb=function(url){
+      try{if(!url)return'';const u=String(url);const m=u.match(/\/d\/([\w-]+)/)||u.match(/[?&]id=([\w-]+)/)||u.match(/^([\w-]{20,})$/);return m?('https://drive.google.com/thumbnail?id='+m[1]+'&sz=w400'):u;}
+      catch(e){return url||'';}
     };
 
-    const DAYS=[{en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},{en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'},{en:'Saturday',ar:'السبت'}];
     const PRIORITIES={critical:{ar:'Critical',color:'#ef4444',icon:'🔴'},high:{ar:'High',color:'#f97316',icon:'🟠'},medium:{ar:'Medium',color:'#eab308',icon:'🟡'},low:{ar:'Low',color:'#22c55e',icon:'🟢'}};
     const STATUSES={pending:'Pending',in_progress:'In Progress',completed:'Completed',cancelled:'Cancelled',postponed:'Postponed'};
     const RELATIONS={assistant:{ar:'Assistant',cls:'rel-am'},business:{ar:'Business Manager',cls:'rel-bm'},both:{ar:'Assistant + Business Manager',cls:'rel-both'}};
@@ -296,11 +396,6 @@
         localStorage.setItem('eduflow_ops',JSON.stringify(this.data));
         if(window.FirebaseService?.initialized){
           FirebaseService.saveDoc('opsMeta','main',{updatedAt:new Date().toISOString()});
-          FirebaseService.saveDoc('opTeachers','list',{teachers:this.data.teachers});
-          FirebaseService.saveDoc('opLocations','list',{locations:this.data.locations});
-          FirebaseService.saveDoc('opTasks','list',{tasks:this.data.tasks});
-          FirebaseService.saveDoc('opTypes','list',{types:this.data.types});
-          FirebaseService.saveDoc('opSettings','main',{settings:this.data.settings});
         }
       },
       uid(p){return p+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);}
@@ -318,11 +413,22 @@
         document.getElementById('userName').textContent=currentUser.name;
         document.getElementById('userAvatar').textContent=currentUser.name.charAt(0);
 
+        // 🆕 تحميل البراندنج
+        try{
+          const b=(typeof Ops?.getBranding==='function'&&Ops.getBranding())||(db().branding)||{};
+          if(b.name) document.querySelectorAll('[data-brand-name]').forEach(el=>el.textContent=b.name);
+          if(b.logoUrl) document.querySelectorAll('[data-logo]').forEach(el=>el.innerHTML=`<img src="${window.driveThumb(b.logoUrl)}" alt="logo" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">`);
+        }catch(e){}
+
         TOPS.load();
         generateRecurringTasks();
         buildMenu();
+        fillAllFilters();
         window.showSection('overview');
         generateNotifications();
+        
+        // 🆕 تحديث العداد التنازلي كل دقيقة
+        setInterval(function(){try{renderCountdown();}catch(e){}},60000);
       }catch(err){
         document.body.innerHTML='<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;"><div class="card">خطأ: '+err.message+'<br><a href="login.html" class="btn btn-primary" style="margin-top:12px;">العودة</a></div></div>';
       }
@@ -330,8 +436,8 @@
 
     function buildMenu(){
       const menu=[
-        {s:'الرئيسية',items:[{id:'overview',l:'نظرة عامة',i:'🎯'},{id:'calendar',l:'Calendar',i:'📅'},{id:'tasks',l:'Tasks & Events',i:'✅'},{id:'reports-ops',l:'التقارير',i:'📊'}]},
-        {s:'الإدارة',items:[{id:'teachers',l:'المدرسون',i:'👨‍🏫'},{id:'locations',l:'المناطق والأماكن',i:'📍'},{id:'types',l:'أنواع الأنشطة',i:'🏷️'}]},
+        {s:'الرئيسية',items:[{id:'overview',l:'نظرة عامة',i:'🎯'},{id:'grading',l:'طابور التصحيح',i:'📝'},{id:'calendar',l:'Calendar',i:'📅'},{id:'tasks',l:'Tasks & Events',i:'✅'},{id:'reports-ops',l:'التقارير',i:'📊'}]},
+        {s:'الإدارة',items:[{id:'teachers',l:'المدرسون',i:'👨‍🏫'},{id:'groups-mgmt',l:'إدارة المجموعات',i:'👥'},{id:'locations',l:'المناطق والأماكن',i:'📍'},{id:'types',l:'أنواع الأنشطة',i:'🏷️'}]},
         {s:'النظام',items:[{id:'settings',l:'إعدادات التشغيل',i:'⚙️'}]}
       ];
       document.getElementById('sidebarNav').innerHTML=menu.map(sec=>`<div class="sidebar-section"><div class="sidebar-section-title">${sec.s}</div>${sec.items.map(it=>`<div class="sidebar-item" data-section="${it.id}" onclick="window.showSection('${it.id}')"><span class="sidebar-item-icon">${it.i}</span><span class="sidebar-item-label">${it.l}</span></div>`).join('')}</div>`).join('');
@@ -341,12 +447,31 @@
       document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
       document.getElementById('section-'+id)?.classList.add('active');
       document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.toggle('active',i.dataset.section===id));
-      const titles={overview:['إدارة الأساتذة','نظام التشغيل والمتابعة'],calendar:['Calendar التشغيل','جدولة المهام والمواعيد'],tasks:['Tasks & Events','إدارة كل المهام'],'reports-ops':['تقارير التشغيل','إحصائيات شاملة'],teachers:['المدرسون','إدارة أي عدد من المدرسين'],'teacher-profile':['ملف المدرس','تفاصيل كاملة'],locations:['المناطق والأماكن','المواقع والانتقالات'],types:['أنواع الأنشطة','قابلة للتخصيص'],settings:['إعدادات التشغيل','ساعات العمل والـ Buffer']};
+      const titles={overview:['إدارة الأساتذة','نظام التشغيل والمتابعة'],grading:['طابور التصحيح','الواجبات والامتحانات وكراسات التسميع'],calendar:['Calendar التشغيل','جدولة المهام والمواعيد'],tasks:['Tasks & Events','إدارة كل المهام'],'reports-ops':['تقارير التشغيل','إحصائيات شاملة'],teachers:['المدرسون','إدارة شاملة'],'teacher-profile':['ملف المدرس','تفاصيل كاملة'],'groups-mgmt':['إدارة المجموعات','تبديل وإلغاء ومواعيد استثنائية'],locations:['المناطق والأماكن','المواقع والانتقالات'],types:['أنواع الأنشطة','قابلة للتخصيص'],settings:['إعدادات التشغيل','ساعات العمل والـ Buffer']};
       if(titles[id]){document.getElementById('pageTitle').textContent=titles[id][0];document.getElementById('pageSubtitle').textContent=titles[id][1];}
-      const L={overview:loadOverview,calendar:loadCalendar,tasks:loadTasks,'reports-ops':loadReports,teachers:loadTeachers,'teacher-profile':()=>loadTeacherProfile(currentTeacherProfile),locations:loadLocations,types:loadTypes,settings:loadSettingsUI};
+      const L={overview:loadOverview,grading:loadGrading,calendar:loadCalendar,tasks:loadTasks,'reports-ops':loadReports,teachers:loadTeachers,'teacher-profile':()=>loadTeacherProfile(currentTeacherProfile),'groups-mgmt':loadGroupsMgmt,locations:loadLocations,types:loadTypes,settings:loadSettingsUI};
       if(L[id])L[id]();
       if(window.innerWidth<=1024){document.getElementById('sidebar').classList.remove('open');}
     };
+
+    function fillAllFilters(){
+      try{
+        const teachers=DataService.getTeachers();
+        const centers=DataService.getCenters?DataService.getCenters():[];
+        ['gradingTeacherFilter','taskTeacherFilter','groupMgmtTeacherFilter'].forEach(id=>{
+          const el=document.getElementById(id);
+          if(el&&!el.dataset.done){
+            el.innerHTML='<option value="">كل الأساتذة</option>'+teachers.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+            el.dataset.done='1';
+          }
+        });
+        const centerEl=document.getElementById('groupMgmtCenterFilter');
+        if(centerEl&&!centerEl.dataset.done){
+          centerEl.innerHTML='<option value="">كل السناتر</option>'+centers.map(c=>`<option value="${c.name}">${c.name}</option>`).join('');
+          centerEl.dataset.done='1';
+        }
+      }catch(e){}
+    }
 
     function todayStr(){return new Date().toISOString().split('T')[0];}
     function dateStr(d){return d.toISOString().split('T')[0];}
@@ -356,13 +481,122 @@
     function minOf(t){if(!t)return null;const[h,m]=t.split(':').map(Number);return h*60+m;}
     function timeLabel(hhmm){if(!hhmm)return'';const[h,m]=hhmm.split(':').map(Number);let h12=h%12;if(h12===0)h12=12;return`${h12}:${String(m).padStart(2,'0')} ${h<12?'ص':'م'}`;}
     function timeOptions(sel){let html='';for(let h=0;h<24;h++){for(const m of[0,15,30,45]){const val=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');let h12=h%12;if(h12===0)h12=12;html+=`<option value="${val}" ${val===sel?'selected':''}>${h12}:${String(m).padStart(2,'0')} ${h<12?'ص':'م'}</option>`;}}return html;}
-    function teacherName(id){return TOPS.data.teachers.find(t=>t.id===id)?.name||'بدون مدرس';}
+    function teacherName(id){try{return DataService.getUserById(id)?.name||TOPS.data.teachers.find(t=>t.id===id)?.name||'بدون مدرس';}catch(e){return'بدون مدرس';}}
     function locationName(id){return TOPS.data.locations.find(l=>l.id===id)?.name||'بدون مكان';}
     function typeObj(id){return TOPS.data.types.find(t=>t.id===id)||{icon:'🔧',name:'مهمة'};}
     function statusBadge(st){const map={pending:'badge-warning',in_progress:'badge-info',completed:'badge-success',cancelled:'badge-danger',postponed:'badge-muted'};return`<span class="badge ${map[st]||'badge-muted'}">${STATUSES[st]||st}</span>`;}
     function taskEndMin(t){if(t.openEnd)return 1439;return minOf(t.endTime);}
     function isOnsite(t){return t.mode!=='online';}
     function tasksForDate(ds){return TOPS.data.tasks.filter(t=>t.date===ds);}
+
+    // 🆕 حساب الوقت المتبقي
+    function getTimeRemaining(targetDate, targetTime){
+      const now=new Date();
+      const target=new Date(targetDate+'T'+(targetTime||'00:00')+':00');
+      const diff=target-now;
+      if(diff<=0) return {overdue:true,diff:Math.abs(diff)};
+      return {overdue:false,diff:diff};
+    }
+
+    function formatCountdown(ms){
+      if(ms<=0) return '00:00:00';
+      const h=Math.floor(ms/3600000);
+      const m=Math.floor((ms%3600000)/60000);
+      const s=Math.floor((ms%60000)/1000);
+      return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+
+    // 🆕 عداد تنازلي لأقرب مهمة مهمة
+    function renderCountdown(){
+      const container=document.getElementById('countdownContainer');
+      if(!container) return;
+      
+      const today=todayStr();
+      const now=new Date();
+      const nowMin=now.getHours()*60+now.getMinutes();
+      
+      // البحث عن أقرب مهمة عاجلة أو حصة جارية
+      let closest=null;
+      let closestDiff=Infinity;
+      
+      // 1. حصص جارية الآن
+      const groups=DataService.getGroups();
+      const dayEn=DAYS[now.getDay()].en;
+      groups.forEach(g=>{
+        const schs=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}];
+        schs.forEach(s=>{
+          if(s.day!==dayEn) return;
+          const startMin=minOf(s.time);
+          const dur=parseInt(g.duration)||60;
+          if(nowMin>=startMin && nowMin<startMin+dur){
+            const remaining=(startMin+dur-nowMin)*60000;
+            if(remaining<closestDiff){
+              closestDiff=remaining;
+              closest={type:'live',title:'حصة جارية: '+g.name,time:s.time,group:g,remaining:remaining};
+            }
+          } else if(nowMin<startMin){
+            const remaining=(startMin-nowMin)*60000;
+            if(remaining<closestDiff && remaining<3600000){ // أقل من ساعة
+              closestDiff=remaining;
+              closest={type:'upcoming',title:'أقرب حصة: '+g.name,time:s.time,group:g,remaining:remaining};
+            }
+          }
+        });
+      });
+      
+      // 2. مهام عاجلة اليوم
+      const urgentTasks=TOPS.data.tasks.filter(t=>t.date===today&&(t.priority==='critical'||t.priority==='high')&&t.startTime);
+      urgentTasks.forEach(t=>{
+        const startMin=minOf(t.startTime);
+        const remaining=(startMin-nowMin)*60000;
+        if(remaining>0 && remaining<closestDiff && remaining<7200000){
+          closestDiff=remaining;
+          closest={type:'task',title:'مهمة عاجلة: '+t.title,time:t.startTime,remaining:remaining};
+        }
+      });
+      
+      // 3. واجبات متأخرة
+      const d=db();
+      const pendingSubs=(d.submissions||[]).filter(s=>s.status==='pending_review');
+      if(pendingSubs.length>0 && !closest){
+        closest={type:'grading',title:`${pendingSubs.length} واجب بانتظار التصحيح`,time:null,remaining:0,isGrading:true};
+      }
+      
+      if(!closest){
+        container.innerHTML='';
+        return;
+      }
+      
+      let cardClass='countdown-card';
+      let icon='⏰';
+      let subText='';
+      
+      if(closest.type==='live'){
+        cardClass='countdown-card';
+        cardClass=cardClass.replace('var(--danger)','var(--success)');
+        icon='🔴';
+        subText=`الحصة ستنتهي قريباً`;
+      } else if(closest.type==='upcoming'){
+        icon='⏰';
+        subText=`تبدأ الساعة ${timeLabel(closest.time)}`;
+      } else if(closest.type==='task'){
+        icon='🔥';
+        subText=`تبدأ الساعة ${timeLabel(closest.time)}`;
+      } else if(closest.type==='grading'){
+        icon='📝';
+        subText='يحتاج إجراء فوري';
+      }
+      
+      const countdownValue=closest.isGrading?closest.title:formatCountdown(closest.remaining);
+      
+      container.innerHTML=`<div class="${cardClass}" style="border-color:${closest.type==='live'?'var(--success)':'var(--danger)'};">
+        <div class="countdown-title">${icon} ${closest.isGrading?'مهام عاجلة':'أقرب موعد مهم'}</div>
+        <div class="countdown-value" style="color:${closest.type==='live'?'var(--success)':'var(--danger)'};">${countdownValue}</div>
+        ${!closest.isGrading?`<div class="countdown-label">${closest.title}</div>`:''}
+        <div class="countdown-sub">${subText}</div>
+      </div>`;
+    }
+
     function travelBetween(loc1Id,loc2Id){
       if(!loc1Id||!loc2Id||loc1Id===loc2Id)return 0;
       const l1=TOPS.data.locations.find(l=>l.id===loc1Id), l2=TOPS.data.locations.find(l=>l.id===loc2Id);
@@ -384,7 +618,6 @@
           if(rec.frequency==='daily') shouldCreate=true;
           else if(rec.frequency==='weekly') shouldCreate=(parseDate(ds).getDay()===parseDate(rt.date).getDay());
           else if(rec.frequency==='specific_days') shouldCreate=rec.days&&rec.days.includes(dayName);
-          
           if(shouldCreate){
             const exists=TOPS.data.tasks.some(t=>t.recurringParentId===rt.id&&t.date===ds);
             if(!exists) TOPS.data.tasks.push({...rt,id:TOPS.uid('task'),date:ds,recurring:null,recurringParentId:rt.id,createdAt:new Date().toISOString()});
@@ -403,7 +636,6 @@
       if(e1!==null&&s1!==null&&e1<=s1&&!candidate.openEnd){conflicts.push({type:'error',msg:'وقت النهاية يجب أن يكون بعد وقت البداية.'});return conflicts;}
       const ws=minOf(TOPS.data.settings.workStart||'00:00'), we=minOf(TOPS.data.settings.workEnd||'23:59');
       if(s1!==null&&(s1<ws||(e1!==null&&e1>we))) conflicts.push({type:'warning',msg:`المهمة خارج ساعات العمل المعتادة (${timeLabel(TOPS.data.settings.workStart)} - ${timeLabel(TOPS.data.settings.workEnd)}).`});
-      
       const sameDay=TOPS.data.tasks.filter(t=>t.date===candidate.date&&t.id!==ignoreId);
       sameDay.forEach(t=>{
         const s2=minOf(t.startTime), e2=t.openEnd?1439:minOf(t.endTime);
@@ -413,7 +645,6 @@
           else if(isOnsite(candidate)&&isOnsite(t)) conflicts.push({type:'error',msg:`تعارض وقت مع: ${t.title} (${timeLabel(t.startTime)} → ${t.openEnd?'Until Finished':timeLabel(t.endTime)})`});
         }
       });
-
       if(isOnsite(candidate)&&candidate.locationId){
         const onsite=sameDay.filter(t=>isOnsite(t)&&t.startTime&&t.endTime&&t.locationId).sort((a,b)=>minOf(a.startTime)-minOf(b.startTime));
         onsite.forEach(t=>{
@@ -422,16 +653,13 @@
           if(e1<=s2 && (s2-e1)<needed) conflicts.push({type:'warning',msg:`وقت انتقال غير كافٍ قبل "${t.title}". المتاح ${s2-e1}د والمطلوب ${needed}د.`});
         });
       }
-      const seen=new Set();
-      return conflicts.filter(c=>{if(seen.has(c.msg))return false;seen.add(c.msg);return true;});
+      return conflicts;
     }
 
     function generateNotifications(){
       const today=todayStr(), notifications=[], tasksToday=tasksForDate(today);
       tasksToday.forEach(t=>{detectConflicts(t,t.id).filter(c=>c.type==='error').forEach(c=>{notifications.push({icon:'🔴',msg:c.msg,priority:'critical'});});});
       tasksToday.filter(t=>t.priority==='critical'||t.priority==='high').forEach(t=>{notifications.push({icon:'🟠',msg:`مهمة عاجلة: ${t.title} مع ${teacherName(t.teacherId)} الساعة ${timeLabel(t.startTime)}`,priority:'high'});});
-      tasksToday.filter(t=>t.typeId==='shooting').forEach(t=>{notifications.push({icon:'🎥',msg:`تصوير اليوم: ${t.title} الساعة ${timeLabel(t.startTime)}${t.openEnd?' → Until Finished':''}`,priority:'info'});});
-      TOPS.data.tasks.filter(t=>t.fullDay&&t.date>=today).slice(0,3).forEach(t=>{notifications.push({icon:'🎬',msg:`Event Day ${t.date===today?'اليوم':'قادم في '+t.date}: ${t.title}`,priority:t.date===today?'high':'medium'});});
       TOPS.data.notifications=notifications;
       renderNotificationBell();
     }
@@ -448,8 +676,299 @@
       dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
     };
 
+    // ==================== 📝 طابور التصحيح ====================
+    window.loadGrading=function(){
+      try{
+        const tf=document.getElementById('gradingTeacherFilter')?.value||'';
+        const typeF=document.getElementById('gradingTypeFilter')?.value||'';
+        const statusF=document.getElementById('gradingStatusFilter')?.value||'';
+        
+        const d=db();
+        const groups=DataService.getGroups();
+        const gradingItems=[];
+        
+        // 1. واجبات أونلاين غير مصححة
+        const allHw=DataService.getHomework?DataService.getHomework():[];
+        const allSubs=DataService.getSubmissions?DataService.getSubmissions():[];
+        const pendingHwSubs=allSubs.filter(s=>s.status==='pending_review');
+        
+        pendingHwSubs.forEach(sub=>{
+          const hw=allHw.find(h=>h.id===sub.homeworkId);
+          if(!hw) return;
+          const g=groups.find(x=>x.id===hw.groupId);
+          if(!g) return;
+          if(tf && g.teacherId!==tf) return;
+          if(typeF && typeF!=='hw') return;
+          
+          const daysSinceSubmit=Math.floor((Date.now()-new Date(sub.submittedAt).getTime())/(1000*60*60*24));
+          let status='pending';
+          if(daysSinceSubmit>=3) status='overdue';
+          else if(daysSinceSubmit>=1) status='urgent';
+          
+          if(statusF && statusF!==status) return;
+          
+          // حساب موعد الحصة القادمة
+          const now=new Date();
+          const dayEn=DAYS[now.getDay()].en;
+          const schs=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}];
+          let nextSession=null;
+          schs.forEach(s=>{
+            const dayIdx=DAYS.findIndex(d=>d.en===s.day);
+            const todayIdx=now.getDay();
+            const diff=(dayIdx-todayIdx+7)%7;
+            if(diff===0 || (diff===0 && minOf(s.time)>now.getHours()*60+now.getMinutes())){
+              if(!nextSession || diff<nextSession.diff){
+                nextSession={day:s.day,time:s.time,diff:diff};
+              }
+            }
+          });
+          
+          gradingItems.push({
+            type:'hw',
+            title:hw.title,
+            studentName:DataService.getUserById(sub.studentId)?.name||'طالب',
+            groupName:g.name,
+            teacherId:g.teacherId,
+            teacherName:teacherName(g.teacherId),
+            submittedAt:sub.submittedAt,
+            daysSinceSubmit:daysSinceSubmit,
+            status:status,
+            nextSession:nextSession,
+            totalPoints:hw.totalPoints||100,
+            paper:hw.paper,
+            id:sub.id
+          });
+        });
+        
+        // 2. امتحانات غير معتمدة
+        const allEx=DataService.getExams?DataService.getExams():[];
+        const allAttempts=DataService.getExamAttempts?DataService.getExamAttempts():[];
+        const pendingExAttempts=allAttempts.filter(a=>a.status==='pending'||a.status==='submitted');
+        
+        pendingExAttempts.forEach(att=>{
+          const ex=allEx.find(e=>e.id===att.examId);
+          if(!ex) return;
+          const g=groups.find(x=>x.id===ex.groupId);
+          if(!g) return;
+          if(tf && g.teacherId!==tf) return;
+          if(typeF && typeF!=='ex') return;
+          
+          const daysSinceSubmit=Math.floor((Date.now()-new Date(att.endTime||att.startTime).getTime())/(1000*60*60*24));
+          let status='pending';
+          if(daysSinceSubmit>=3) status='overdue';
+          else if(daysSinceSubmit>=1) status='urgent';
+          
+          if(statusF && statusF!==status) return;
+          
+          gradingItems.push({
+            type:'ex',
+            title:ex.title,
+            studentName:DataService.getUserById(att.studentId)?.name||'طالب',
+            groupName:g.name,
+            teacherId:g.teacherId,
+            teacherName:teacherName(g.teacherId),
+            submittedAt:att.endTime||att.startTime,
+            daysSinceSubmit:daysSinceSubmit,
+            status:status,
+            totalPoints:ex.totalPoints||100,
+            mode:ex.mode,
+            id:att.id
+          });
+        });
+        
+        // 3. كراسات التسميع (إنجليزي) - من المتابعات أو التقييمات
+        const recitations=(d.teacherEvaluations||[]).filter(e=>e.type==='recitation'&&e.status==='pending');
+        recitations.forEach(rec=>{
+          const student=DataService.getUserById(rec.studentId);
+          if(!student) return;
+          const ts=DataService.getStudentTeachers?DataService.getStudentTeachers(rec.studentId):[];
+          const g=ts.length>0?ts[0].group:null;
+          if(!g) return;
+          if(tf && g.teacherId!==tf) return;
+          if(typeF && typeF!=='recitation') return;
+          
+          gradingItems.push({
+            type:'recitation',
+            title:'تسميع / Recitation',
+            studentName:student.name,
+            groupName:g.name,
+            teacherId:g.teacherId,
+            teacherName:teacherName(g.teacherId),
+            submittedAt:rec.createdAt,
+            daysSinceSubmit:Math.floor((Date.now()-new Date(rec.createdAt).getTime())/(1000*60*60*24)),
+            status:'pending',
+            notes:rec.notes,
+            id:rec.id
+          });
+        });
+        
+        // ترتيب حسب الأهمية
+        gradingItems.sort((a,b)=>{
+          const order={overdue:0,urgent:1,pending:2};
+          return (order[a.status]||2)-(order[b.status]||2);
+        });
+        
+        // إحصائيات
+        const overdue=gradingItems.filter(i=>i.status==='overdue').length;
+        const urgent=gradingItems.filter(i=>i.status==='urgent').length;
+        const pending=gradingItems.filter(i=>i.status==='pending').length;
+        
+        document.getElementById('gradingStats').innerHTML=`
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;">
+            <div class="ops-card critical"><div class="ops-card-icon">🔴</div><div class="ops-card-value">${overdue}</div><div class="ops-card-label">متأخر (>3 أيام)</div></div>
+            <div class="ops-card warning"><div class="ops-card-icon">🟠</div><div class="ops-card-value">${urgent}</div><div class="ops-card-label">عاجل (1-3 أيام)</div></div>
+            <div class="ops-card"><div class="ops-card-icon">⏳</div><div class="ops-card-value">${pending}</div><div class="ops-card-label">عادي</div></div>
+            <div class="ops-card success"><div class="ops-card-icon">📊</div><div class="ops-card-value">${gradingItems.length}</div><div class="ops-card-label">إجمالي المعلق</div></div>
+          </div>
+        `;
+        
+        // عرض القائمة
+        const el=document.getElementById('gradingList');
+        if(!gradingItems.length){
+          el.innerHTML='<div class="empty-state"><div class="empty-state-icon">✅</div><h3>لا يوجد واجبات أو امتحانات بانتظار التصحيح</h3><p class="text-sm text-muted">كل شيء مصحح ✓</p></div>';
+          return;
+        }
+        
+        el.innerHTML=gradingItems.map(item=>{
+          const statusClass=item.status==='overdue'?'overdue':item.status==='urgent'?'urgent':'';
+          const statusBadge=item.status==='overdue'?'<span class="tag overdue">🔴 متأخر '+item.daysSinceSubmit+' يوم</span>':item.status==='urgent'?'<span class="tag urgent">🟠 عاجل</span>':'<span class="tag">⏳ عادي</span>';
+          const typeIcon=item.type==='hw'?'📝':item.type==='ex'?'🎓':'🎙️';
+          const typeLabel=item.type==='hw'?(item.paper?'واجب ورقي':'واجب أونلاين'):item.type==='ex'?(item.mode==='offline'?'امتحان ورقي':'امتحان أونلاين'):'تسميع / إنجليزي';
+          
+          let nextSessionHtml='';
+          if(item.nextSession){
+            nextSessionHtml=`<div class="grading-stat"><div class="grading-stat-value">${dayAr(item.nextSession.day)}</div><div class="grading-stat-label">الحصة القادمة</div></div>
+            <div class="grading-stat"><div class="grading-stat-value">${timeLabel(item.nextSession.time)}</div><div class="grading-stat-label">الموعد</div></div>`;
+          }
+          
+          return `<div class="grading-card ${statusClass}">
+            <div class="grading-header">
+              <div class="grading-info">
+                <div class="grading-title">${typeIcon} ${item.title}</div>
+                <div class="grading-meta">
+                  👤 ${item.studentName} · 👥 ${item.groupName} · 👨‍🏫 ${item.teacherName}<br>
+                  📅 تاريخ التسليم: ${new Date(item.submittedAt).toLocaleDateString('ar-EG')} ${statusBadge}
+                </div>
+              </div>
+            </div>
+            <div class="grading-stats">
+              <div class="grading-stat"><div class="grading-stat-value">${item.daysSinceSubmit}</div><div class="grading-stat-label">يوم منذ التسليم</div></div>
+              <div class="grading-stat"><div class="grading-stat-value">${typeLabel}</div><div class="grading-stat-label">النوع</div></div>
+              ${nextSessionHtml}
+            </div>
+            <div class="grading-actions">
+              <button class="btn btn-primary btn-sm" onclick="window.openGradingDetail('${item.type}','${item.id}')">👁️ عرض التفاصيل</button>
+              ${item.type==='hw'?`<button class="btn btn-success btn-sm" onclick="window.gradeSubmission('${item.id}')">✓ تصحيح سريع</button>`:''}
+              ${item.type==='ex'?`<button class="btn btn-success btn-sm" onclick="window.gradeExamAttempt('${item.id}')">✓ اعتماد الدرجة</button>`:''}
+              ${item.type==='recitation'?`<button class="btn btn-success btn-sm" onclick="window.approveRecitation('${item.id}')">✓ اعتماد التسميع</button>`:''}
+            </div>
+          </div>`;
+        }).join('');
+      }catch(e){
+        console.error('loadGrading error:',e);
+        document.getElementById('gradingList').innerHTML='<div class="card" style="text-align:center;padding:20px;color:var(--danger);">خطأ في تحميل طابور التصحيح</div>';
+      }
+    };
+
+    window.openGradingDetail=function(type,id){
+      try{
+        if(type==='hw'){
+          const sub=DataService.getSubmissions?DataService.getSubmissions().find(s=>s.id===id):null;
+          if(!sub) return;
+          const hw=DataService.getHomeworkById?DataService.getHomeworkById(sub.homeworkId):null;
+          const student=DataService.getUserById(sub.studentId);
+          ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📝 تفاصيل الواجب</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+          <div class="modal-body">
+            <div class="detail-grid">
+              <div class="detail-box"><div class="lbl">الطالب</div><div class="val">${student?.name||'-'}</div></div>
+              <div class="detail-box"><div class="lbl">الواجب</div><div class="val">${hw?.title||'-'}</div></div>
+              <div class="detail-box"><div class="lbl">تاريخ التسليم</div><div class="val">${new Date(sub.submittedAt).toLocaleString('ar-EG')}</div></div>
+              <div class="detail-box"><div class="lbl">الدرجة الكلية</div><div class="val">${hw?.totalPoints||100}</div></div>
+            </div>
+            ${sub.answerImages&&sub.answerImages.length?`<div style="margin-top:16px;"><strong>📸 صور الإجابة:</strong><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:8px;">${sub.answerImages.map(u=>`<img src="${window.driveThumb(u)}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="window.openImageZoom('${window.driveThumb(u).replace('sz=w400','sz=w1200')}')">`).join('')}</div></div>`:''}
+            <div style="margin-top:16px;"><label>الدرجة:</label><input type="number" id="gradeInput" class="form-input" min="0" max="${hw?.totalPoints||100}" placeholder="الدرجة"></div>
+            <button class="btn btn-primary w-full" style="margin-top:12px;" onclick="window.saveGrade('${id}')">💾 حفظ الدرجة</button>
+          </div>`,'modal-lg');
+        } else if(type==='ex'){
+          const att=DataService.getExamAttempts?DataService.getExamAttempts().find(a=>a.id===id):null;
+          if(!att) return;
+          const ex=DataService.getExamById?DataService.getExamById(att.examId):null;
+          const student=DataService.getUserById(att.studentId);
+          ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🎓 تفاصيل الامتحان</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+          <div class="modal-body">
+            <div class="detail-grid">
+              <div class="detail-box"><div class="lbl">الطالب</div><div class="val">${student?.name||'-'}</div></div>
+              <div class="detail-box"><div class="lbl">الامتحان</div><div class="val">${ex?.title||'-'}</div></div>
+              <div class="detail-box"><div class="lbl">الدرجة الكلية</div><div class="val">${ex?.totalPoints||100}</div></div>
+            </div>
+            <div style="margin-top:16px;"><label>الدرجة:</label><input type="number" id="gradeInput" class="form-input" min="0" max="${ex?.totalPoints||100}" placeholder="الدرجة"></div>
+            <button class="btn btn-primary w-full" style="margin-top:12px;" onclick="window.saveExamGrade('${id}')">💾 حفظ الدرجة</button>
+          </div>`,'modal-lg');
+        }
+      }catch(e){console.error(e);}
+    };
+
+    window.gradeSubmission=function(id){
+      window.openGradingDetail('hw',id);
+    };
+
+    window.gradeExamAttempt=function(id){
+      window.openGradingDetail('ex',id);
+    };
+
+    window.saveGrade=function(subId){
+      try{
+        const score=parseInt(document.getElementById('gradeInput')?.value);
+        if(isNaN(score)||score<0){window.safeToast('درجة غير صحيحة','error');return;}
+        const d=db();
+        const sub=(d.submissions||[]).find(s=>s.id===subId);
+        if(!sub) return;
+        sub.score=score;
+        sub.status='graded';
+        sub.gradedBy=currentUser?.id||'';
+        sub.gradedAt=new Date().toISOString();
+        save(d);
+        ThemeManager.closeModal();
+        window.safeToast('✅ تم حفظ الدرجة','success');
+        loadGrading();
+      }catch(e){window.safeToast('خطأ في الحفظ','error');}
+    };
+
+    window.saveExamGrade=function(attId){
+      try{
+        const score=parseInt(document.getElementById('gradeInput')?.value);
+        if(isNaN(score)||score<0){window.safeToast('درجة غير صحيحة','error');return;}
+        const d=db();
+        const att=(d.examAttempts||[]).find(a=>a.id===attId);
+        if(!att) return;
+        att.score=score;
+        att.status='graded';
+        att.gradedBy=currentUser?.id||'';
+        att.gradedAt=new Date().toISOString();
+        save(d);
+        ThemeManager.closeModal();
+        window.safeToast('✅ تم حفظ الدرجة','success');
+        loadGrading();
+      }catch(e){window.safeToast('خطأ في الحفظ','error');}
+    };
+
+    window.approveRecitation=function(id){
+      try{
+        const d=db();
+        const rec=(d.teacherEvaluations||[]).find(e=>e.id===id);
+        if(!rec) return;
+        rec.status='approved';
+        rec.approvedAt=new Date().toISOString();
+        save(d);
+        window.safeToast('✅ تم اعتماد التسميع','success');
+        loadGrading();
+      }catch(e){window.safeToast('خطأ','error');}
+    };
+
+    // ==================== 🎯 Overview ====================
     window.loadOverview=function(){
-      const today=todayStr(), teachers=TOPS.data.teachers, tasksToday=tasksForDate(today);
+      renderCountdown();
+      const today=todayStr(), teachers=DataService.getTeachers(), tasksToday=tasksForDate(today);
       const urgent=tasksToday.filter(t=>t.priority==='critical'||t.priority==='high');
       const shootings=tasksToday.filter(t=>t.typeId==='shooting'), travels=tasksToday.filter(t=>t.typeId==='travel'||parseInt(t.travelMinutes||0)>0);
       let totalMin=0, conflicts=0;
@@ -459,7 +978,32 @@
       });
       const weekTasks=TOPS.data.tasks.filter(t=>{const d=parseDate(t.date),now=new Date();now.setHours(0,0,0,0);const diff=(d-now)/(1000*60*60*24);return diff>=0&&diff<=7;});
       
-      const cards=[{icon:'👨‍🏫',label:'عدد المدرسين',value:teachers.length},{icon:'📅',label:'مهام اليوم',value:tasksToday.length},{icon:'🔴',label:'المهام العاجلة',value:urgent.length,cls:urgent.length?'critical':''},{icon:'🎥',label:'تصوير اليوم',value:shootings.length},{icon:'📍',label:'الانتقالات اليوم',value:travels.length},{icon:'⏱️',label:'ساعات العمل اليوم',value:(totalMin/60).toFixed(1)},{icon:'⚠️',label:'التعارضات',value:conflicts,cls:conflicts?'critical':''},{icon:'📌',label:'مهام الأسبوع',value:weekTasks.length}];
+      // 🆕 إحصائيات من المنصة
+      const d=db();
+      const pendingGrading=(d.submissions||[]).filter(s=>s.status==='pending_review').length + (d.examAttempts||[]).filter(a=>a.status==='pending'||a.status==='submitted').length;
+      const liveClasses=DataService.getGroups().filter(g=>{
+        const now=new Date();
+        const dayEn=DAYS[now.getDay()].en;
+        const nowMin=now.getHours()*60+now.getMinutes();
+        const schs=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}];
+        return schs.some(s=>{
+          if(s.day!==dayEn) return false;
+          const startMin=minOf(s.time);
+          const dur=parseInt(g.duration)||60;
+          return nowMin>=startMin && nowMin<startMin+dur;
+        });
+      }).length;
+      
+      const cards=[
+        {icon:'👨‍🏫',label:'عدد المدرسين',value:teachers.length},
+        {icon:'📅',label:'مهام اليوم',value:tasksToday.length},
+        {icon:'🔴',label:'المهام العاجلة',value:urgent.length,cls:urgent.length?'critical':''},
+        {icon:'📝',label:'بانتظار التصحيح',value:pendingGrading,cls:pendingGrading?'warning':''},
+        {icon:'🔴',label:'حصص جارية الآن',value:liveClasses,cls:liveClasses?'success':''},
+        {icon:'⏱️',label:'ساعات العمل اليوم',value:(totalMin/60).toFixed(1)},
+        {icon:'⚠️',label:'التعارضات',value:conflicts,cls:conflicts?'critical':''},
+        {icon:'📌',label:'مهام الأسبوع',value:weekTasks.length}
+      ];
       document.getElementById('opsCards').innerHTML=cards.map(c=>`<div class="ops-card ${c.cls||''}"><div class="ops-card-icon">${c.icon}</div><div class="ops-card-value">${c.value}</div><div class="ops-card-label">${c.label}</div></div>`).join('');
 
       const alerts=[];
@@ -475,11 +1019,13 @@
       tasks.forEach(t=>{const loc=TOPS.data.locations.find(l=>l.id===t.locationId);const area=loc?.area||'بدون منطقة';byArea[area]=byArea[area]||[];byArea[area].push(t);});
       const suggestions=[];
       Object.entries(byArea).forEach(([area,list])=>{if(list.length>=2)suggestions.push(`لديك ${list.length} مهام في منطقة ${area} اليوم، يفضل تجميعها وتقليل التنقل.`);});
-      const fullTomorrow=TOPS.data.tasks.filter(t=>t.date===dateStr(addDays(new Date(),1))&&t.fullDay);
-      if(fullTomorrow.length)suggestions.push(`لديك Event Day غدًا، يفضل عدم إضافة مهام حضورية كثيرة.`);
+      const d=db();
+      const pendingGrading=(d.submissions||[]).filter(s=>s.status==='pending_review').length;
+      if(pendingGrading>5) suggestions.push(`لديك ${pendingGrading} واجب بانتظار التصحيح، يفضل الإنجاز اليوم.`);
       document.getElementById('smartSuggestions').innerHTML=suggestions.length?suggestions.map(s=>`<div class="suggest-box">💡 ${s}</div>`).join(''):'<p class="text-muted">لا اقتراحات حاليًا</p>';
     }
 
+    // ==================== 📅 Calendar ====================
     window.setCalView=function(v,btn){calView=v;document.querySelectorAll('#section-calendar .filter-btn').forEach(b=>b.classList.toggle('active',b===btn));loadCalendar();};
     window.moveCal=function(dir){if(calView==='day')calDate=addDays(calDate,dir);else if(calView==='week')calDate=addDays(calDate,dir*7);else calDate=new Date(calDate.getFullYear(),calDate.getMonth()+dir,1);loadCalendar();};
     window.goToday=function(){calDate=new Date();loadCalendar();};
@@ -494,7 +1040,30 @@
         const ty=typeObj(t.typeId), pr=PRIORITIES[t.priority]||PRIORITIES.medium, conflicts=detectConflicts(t,t.id);
         html+=`<div class="timeline-item"><div class="timeline-time">${timeLabel(t.startTime)}<br>${t.openEnd?'Until Finished':timeLabel(t.endTime)}</div><div class="timeline-card ${t.priority}" onclick="window.openTaskDetail('${t.id}')"><div style="display:flex;justify-content:space-between;gap:8px;"><strong>${ty.icon} ${t.title} ${t.recurringParentId?'<span class="tag recurring">🔁</span>':''}</strong><div style="display:flex;gap:4px;">${conflicts.length?'<span class="badge badge-danger">⚠️</span>':''}${statusBadge(t.status)}</div></div><div class="text-xs text-muted" style="margin-top:6px;">👨‍🏫 ${teacherName(t.teacherId)} · 📍 ${locationName(t.locationId)} · ${pr.icon} ${pr.ar}</div>${t.fullDay?`<div class="tag" style="margin-top:8px;background:rgba(239,68,68,.12);color:#ef4444;">Full Day</div>`:''}${t.mode==='online'?`<div class="tag" style="margin-top:8px;">Online</div>`:''}</div></div>`;
       });
-      document.getElementById('calendarView').innerHTML=list.length?`<div class="day-timeline">${html}</div>`:`<div class="empty-state"><div class="empty-state-icon">📅</div>لا مهام لهذا اليوم</div>`;
+      
+      // 🆕 إضافة حصص الأساتذة الحقيقية
+      const groups=DataService.getGroups();
+      const dayEn=DAYS[calDate.getDay()].en;
+      const dayClasses=groups.filter(g=>{
+        const schs=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}];
+        return schs.some(s=>s.day===dayEn);
+      }).map(g=>{
+        const schs=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}];
+        const todaySch=schs.find(s=>s.day===dayEn);
+        return {...g,_time:todaySch?.time||g.time};
+      }).sort((a,b)=>minOf(a._time)-minOf(b._time));
+      
+      if(dayClasses.length){
+        html+='<div style="margin-top:20px;"><h3 style="margin-bottom:12px;">📚 حصص الأساتذة</h3>';
+        dayClasses.forEach(g=>{
+          const t=DataService.getUserById(g.teacherId);
+          const students=DataService.getStudentsByGroup?DataService.getStudentsByGroup(g.id):[];
+          html+=`<div class="timeline-item"><div class="timeline-time">${timeLabel(g._time)}<br>${parseInt(g.duration)||60} د</div><div class="timeline-card" style="border-right-color:var(--success);"><strong>📚 ${g.name}</strong><div class="text-xs text-muted" style="margin-top:4px;">👨‍🏫 ${t?.name||'-'} · 🏢 ${g.center||'-'} · 👥 ${students.length} طالب</div></div></div>`;
+        });
+        html+='</div>';
+      }
+      
+      document.getElementById('calendarView').innerHTML=list.length||dayClasses.length?`<div class="day-timeline">${html}</div>`:`<div class="empty-state"><div class="empty-state-icon">📅</div>لا مهام لهذا اليوم</div>`;
     }
 
     function renderWeek(){
@@ -522,6 +1091,7 @@
       document.getElementById('calendarView').innerHTML=html;
     }
 
+    // ==================== ✅ Tasks ====================
     window.loadTasks=function(){
       fillTaskFilters();
       const q=(document.getElementById('taskSearch')?.value||'').toLowerCase(), tf=document.getElementById('taskTeacherFilter')?.value||'', ty=document.getElementById('taskTypeFilter')?.value||'', pr=document.getElementById('taskPrioFilter')?.value||'', st=document.getElementById('taskStatusFilter')?.value||'';
@@ -533,7 +1103,7 @@
 
     function fillTaskFilters(){
       const tf=document.getElementById('taskTeacherFilter'), ty=document.getElementById('taskTypeFilter');
-      if(tf&&!tf.dataset.done){tf.innerHTML='<option value="">كل المدرسين</option>'+TOPS.data.teachers.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');tf.dataset.done='1';}
+      if(tf&&!tf.dataset.done){tf.innerHTML='<option value="">كل المدرسين</option>'+DataService.getTeachers().map(t=>`<option value="${t.id}">${t.name}</option>`).join('');tf.dataset.done='1';}
       if(ty&&!ty.dataset.done){ty.innerHTML='<option value="">كل الأنواع</option>'+TOPS.data.types.map(t=>`<option value="${t.id}">${t.icon} ${t.name}</option>`).join('');ty.dataset.done='1';}
     }
 
@@ -552,7 +1122,7 @@
 
     window.openTaskModal=function(id,datePreset){
       const t=id?TOPS.data.tasks.find(x=>x.id===id):null, dateVal=t?.date||datePreset||dateStr(calDate);
-      const teacherOpts='<option value="">-- اختر --</option>'+TOPS.data.teachers.map(x=>`<option value="${x.id}" ${t?.teacherId===x.id?'selected':''}>${x.name}</option>`).join('');
+      const teacherOpts='<option value="">-- اختر --</option>'+DataService.getTeachers().map(x=>`<option value="${x.id}" ${t?.teacherId===x.id?'selected':''}>${x.name}</option>`).join('');
       const typeOpts=TOPS.data.types.map(x=>`<option value="${x.id}" ${t?.typeId===x.id?'selected':''}>${x.icon} ${x.name}</option>`).join('');
       const locOpts='<option value="">بدون مكان / Online</option>'+TOPS.data.locations.map(x=>`<option value="${x.id}" ${t?.locationId===x.id?'selected':''}>${x.name} - ${x.area||''}</option>`).join('');
       if(typeof ThemeManager?.openModal==='function'){
@@ -621,34 +1191,97 @@
       window.safeToast('تم إكمال المهمة ✓','success');loadTasks();
     };
 
+    // ==================== 👨‍🏫 Teachers ====================
     window.loadTeachers=function(){
       const q=(document.getElementById('tSearch')?.value||'').toLowerCase();
-      let list=TOPS.data.teachers;
+      let list=DataService.getTeachers();
+      const opsTeachers=TOPS.data.teachers;
+      
+      // دمج البيانات
+      list=list.map(t=>{
+        const opsT=opsTeachers.find(ot=>ot.name===t.name);
+        return {...t,...opsT};
+      });
+      
       if(q)list=list.filter(t=>(t.name||'').toLowerCase().includes(q)||(t.subject||'').toLowerCase().includes(q)||(t.mainArea||'').toLowerCase().includes(q));
+      
       document.getElementById('teachersList').innerHTML=list.length?list.map(t=>{
-        const rel=RELATIONS[t.relationType]||RELATIONS.assistant, prio=PRIORITIES[t.priority]||PRIORITIES.medium, taskCount=TOPS.data.tasks.filter(x=>x.teacherId===t.id).length;
-        return`<div class="teacher-row"><div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;"><div style="flex:1;"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span class="prio-dot" style="background:${prio.color};"></span><strong style="font-size:15px;">${t.name}</strong><span class="tag ${rel.cls}">${rel.ar}</span><span class="tag">Tasks: ${taskCount}</span></div><div class="text-sm text-muted" style="margin-top:6px;">📚 ${t.subject||'-'} · 📍 ${t.mainArea||'-'} · 📞 ${t.phone||'-'}</div><div style="margin-top:8px;">${(t.stages||[]).map(s=>`<span class="tag">${s}</span>`).join('')}${(t.workDays||[]).map(w=>`<span class="tag" style="background:var(--surface);color:var(--text-secondary);">${(DAYS.find(d=>d.en===w)||{}).ar||w}</span>`).join('')}</div>${t.notes?`<div class="text-xs text-muted" style="margin-top:8px;">📝 ${t.notes}</div>`:''}</div><div style="display:flex;gap:6px;flex-wrap:wrap;">${t.whatsapp?`<a class="btn btn-success btn-sm" href="https://wa.me/${t.whatsapp.replace(/\D/g,'')}" target="_blank">💬</a>`:''}<button class="btn btn-primary btn-sm" onclick="window.openTeacherProfile('${t.id}')">👁️ الملف</button><button class="btn btn-primary btn-sm" onclick="window.openTaskModal(null,'${todayStr()}');setTimeout(()=>{document.getElementById('taskTeacher').value='${t.id}'},50)">+ Task</button><button class="btn btn-secondary btn-sm" onclick="window.openTeacherModal('${t.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="window.deleteTeacher('${t.id}')">🗑️</button></div></div></div>`;
-      }).join(''):'<div class="empty-state"><div class="empty-state-icon">👨‍🏫</div>لا مدرسين بعد — أضف أول مدرس</div>';
+        const rel=RELATIONS[t.relationType]||RELATIONS.assistant, prio=PRIORITIES[t.priority]||PRIORITIES.medium;
+        const groups=DataService.getGroupsByTeacher?DataService.getGroupsByTeacher(t.id):[];
+        const studentsCount=groups.reduce((sum,g)=>sum+(DataService.getStudentsByGroup?DataService.getStudentsByGroup(g.id):[]).length,0);
+        const taskCount=TOPS.data.tasks.filter(x=>x.teacherId===t.id).length;
+        const photo=t.photoUrl?`<img src="${window.driveThumb(t.photoUrl)}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);">`:`<div class="user-avatar" style="width:48px;height:48px;font-size:18px;">${(t.name||'?').charAt(0)}</div>`;
+        
+        return`<div class="teacher-row"><div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;"><div style="flex:1;"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">${photo}<div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><strong style="font-size:15px;">${t.name}</strong><span class="tag ${rel.cls}">${rel.ar}</span><span class="tag" style="background:${prio.color}22;color:${prio.color};">${prio.icon} ${prio.ar}</span></div><div class="text-sm text-muted" style="margin-top:4px;">📚 ${t.subject||'-'} · 📍 ${t.mainArea||'-'} · 📞 ${t.phone||'-'}</div></div></div><div style="margin-top:8px;">${(t.stages||[]).map(s=>`<span class="tag">${s}</span>`).join('')}${(t.workDays||[]).map(w=>`<span class="tag" style="background:var(--surface);color:var(--text-secondary);">${(DAYS.find(d=>d.en===w)||{}).ar||w}</span>`).join('')}</div></div><div style="display:flex;gap:6px;flex-wrap:wrap;">${t.whatsapp?`<a class="btn btn-success btn-sm" href="https://wa.me/${t.whatsapp.replace(/\D/g,'')}" target="_blank">💬</a>`:''}<button class="btn btn-primary btn-sm" onclick="window.openTeacherProfile('${t.id}')">👁️ الملف</button><button class="btn btn-secondary btn-sm" onclick="window.openTeacherModal('${t.id}')">✏️</button></div></div><div class="profile-stats" style="margin-top:12px;"><div class="profile-stat"><div class="profile-stat-value">${groups.length}</div><div class="profile-stat-label">مجموعة</div></div><div class="profile-stat"><div class="profile-stat-value">${studentsCount}</div><div class="profile-stat-label">طالب</div></div><div class="profile-stat"><div class="profile-stat-value">${taskCount}</div><div class="profile-stat-label">مهمة</div></div></div></div>`;
+      }).join(''):'<div class="empty-state"><div class="empty-state-icon">👨‍🏫</div>لا مدرسين بعد</div>';
     };
 
     window.openTeacherProfile=function(id){currentTeacherProfile=id;window.showSection('teacher-profile');};
+    
     window.loadTeacherProfile=function(id){
-      const t=TOPS.data.teachers.find(x=>x.id===id);
+      const t=DataService.getUserById(id);
       if(!t){document.getElementById('teacherProfileContent').innerHTML='<div class="empty-state">المدرس غير موجود</div>';return;}
-      const rel=RELATIONS[t.relationType]||RELATIONS.assistant, prio=PRIORITIES[t.priority]||PRIORITIES.medium;
-      const teacherTasks=TOPS.data.tasks.filter(x=>x.teacherId===id), todayTasks=teacherTasks.filter(x=>x.date===todayStr());
-      const completedTasks=teacherTasks.filter(x=>x.status==='completed'), pendingTasks=teacherTasks.filter(x=>x.status==='pending'||x.status==='in_progress'), cancelledTasks=teacherTasks.filter(x=>x.status==='cancelled');
-      let totalHours=0;teacherTasks.forEach(x=>{if(x.startTime&&x.endTime){const s=minOf(x.startTime),e=taskEndMin(x);if(e>s)totalHours+=(e-s)/60;}});
-      const upcomingTasks=teacherTasks.filter(x=>x.date>todayStr()&&x.status!=='completed'&&x.status!=='cancelled').slice(0,5), pastTasks=teacherTasks.filter(x=>x.date<todayStr()).slice(-5).reverse();
-      document.getElementById('teacherProfileContent').innerHTML=`<div class="card"><button class="btn btn-ghost btn-sm" onclick="window.showSection('teachers')" style="margin-bottom:16px;">→ رجوع للمدرسين</button><div class="profile-header"><div class="profile-avatar">${t.name.charAt(0)}</div><div style="flex:1;"><h2 style="margin:0;">${t.name}</h2><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;"><span class="tag ${rel.cls}">${rel.ar}</span><span class="tag" style="background:${prio.color}22;color:${prio.color};">${prio.icon} ${prio.ar}</span><span class="tag">📚 ${t.subject||'-'}</span><span class="tag">📍 ${t.mainArea||'-'}</span></div><div class="text-sm text-muted" style="margin-top:8px;">📞 ${t.phone||'-'} · ${t.whatsapp?'💬 '+t.whatsapp:''}</div></div></div><div class="profile-stats"><div class="profile-stat"><div class="profile-stat-value">${teacherTasks.length}</div><div class="profile-stat-label">إجمالي المهام</div></div><div class="profile-stat"><div class="profile-stat-value" style="color:var(--success)">${completedTasks.length}</div><div class="profile-stat-label">مكتملة</div></div><div class="profile-stat"><div class="profile-stat-value" style="color:var(--warning)">${pendingTasks.length}</div><div class="profile-stat-label">معلقة</div></div><div class="profile-stat"><div class="profile-stat-value" style="color:var(--danger)">${cancelledTasks.length}</div><div class="profile-stat-label">ملغية</div></div><div class="profile-stat"><div class="profile-stat-value">${totalHours.toFixed(1)}</div><div class="profile-stat-label">ساعات العمل</div></div></div>${todayTasks.length?`<div style="margin-bottom:20px;"><h3 style="margin-bottom:12px;">📅 مهام اليوم</h3>${todayTasks.map(task=>taskRow(task)).join('')}</div>`:''}${upcomingTasks.length?`<div style="margin-bottom:20px;"><h3 style="margin-bottom:12px;">📌 المهام القادمة</h3>${upcomingTasks.map(task=>taskRow(task)).join('')}</div>`:''}${pastTasks.length?`<div style="margin-bottom:20px;"><h3 style="margin-bottom:12px;">📜 المهام السابقة</h3>${pastTasks.map(task=>taskRow(task)).join('')}</div>`:''}<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-primary" onclick="window.openTaskModal(null,'${todayStr()}');setTimeout(()=>{document.getElementById('taskTeacher').value='${t.id}'},50)">+ إضافة مهمة</button><button class="btn btn-secondary" onclick="window.openTeacherModal('${t.id}')">✏️ تعديل بيانات</button>${t.whatsapp?`<a class="btn btn-success" href="https://wa.me/${t.whatsapp.replace(/\D/g,'')}" target="_blank">💬 واتساب</a>`:''}</div></div>`;
+      
+      const groups=DataService.getGroupsByTeacher?DataService.getGroupsByTeacher(id):[];
+      const studentsCount=groups.reduce((sum,g)=>sum+(DataService.getStudentsByGroup?DataService.getStudentsByGroup(g.id):[]).length,0);
+      const opsT=TOPS.data.teachers.find(ot=>ot.id===id);
+      const teacherTasks=TOPS.data.tasks.filter(x=>x.teacherId===id);
+      const todayTasks=teacherTasks.filter(x=>x.date===todayStr());
+      const completedTasks=teacherTasks.filter(x=>x.status==='completed');
+      const pendingTasks=teacherTasks.filter(x=>x.status==='pending'||x.status==='in_progress');
+      
+      // 🆕 جدول الأسبوع الحقيقي
+      const todayEn=DAYS[new Date().getDay()].en;
+      const schedule={};DAYS.forEach(d=>schedule[d.en]=[]);
+      groups.forEach(g=>{
+        const schs=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}];
+        schs.forEach(s=>{if(s&&s.day&&schedule[s.day])schedule[s.day].push(g);});
+      });
+      
+      // 🆕 إحصائيات التصحيح
+      const d=db();
+      const pendingHw=(d.submissions||[]).filter(s=>{
+        const hw=(d.homework||[]).find(h=>h.id===s.homeworkId);
+        return hw && groups.some(g=>g.id===hw.groupId) && s.status==='pending_review';
+      }).length;
+      const pendingEx=(d.examAttempts||[]).filter(a=>{
+        const ex=(d.exams||[]).find(e=>e.id===a.examId);
+        return ex && groups.some(g=>g.id===ex.groupId) && (a.status==='pending'||a.status==='submitted');
+      }).length;
+      
+      const photo=t.photoUrl?`<img src="${window.driveThumb(t.photoUrl)}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--primary);">`:`<div class="profile-avatar">${t.name.charAt(0)}</div>`;
+      
+      document.getElementById('teacherProfileContent').innerHTML=`<div class="card"><button class="btn btn-ghost btn-sm" onclick="window.showSection('teachers')" style="margin-bottom:16px;">→ رجوع للمدرسين</button><div class="profile-header">${photo}<div style="flex:1;"><h2 style="margin:0;">${t.name}</h2><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;"><span class="tag">📚 ${t.subject||'-'}</span><span class="tag">📍 ${t.mainArea||'-'}</span></div><div class="text-sm text-muted" style="margin-top:8px;">📞 ${t.phone||'-'} · ${t.whatsapp?'💬 '+t.whatsapp:''}</div></div></div><div class="profile-stats"><div class="profile-stat"><div class="profile-stat-value">${groups.length}</div><div class="profile-stat-label">مجموعة</div></div><div class="profile-stat"><div class="profile-stat-value">${studentsCount}</div><div class="profile-stat-label">طالب</div></div><div class="profile-stat"><div class="profile-stat-value" style="color:var(--warning)">${pendingHw+pendingEx}</div><div class="profile-stat-label">بانتظار التصحيح</div></div><div class="profile-stat"><div class="profile-stat-value">${completedTasks.length}</div><div class="profile-stat-label">مهام مكتملة</div></div><div class="profile-stat"><div class="profile-stat-value" style="color:var(--warning)">${pendingTasks.length}</div><div class="profile-stat-label">مهام معلقة</div></div></div>
+      
+      <h3 style="margin:20px 0 12px;">📅 جدول الأسبوع</h3>
+      <div class="schedule-grid">
+        ${DAYS.map(d=>{
+          const classes=schedule[d.en];
+          const isToday=d.en===todayEn;
+          return `<div class="schedule-day ${isToday?'today':''}">
+            <div class="schedule-day-name">${d.ar}${isToday?' · اليوم':''}</div>
+            <div class="schedule-day-classes">
+              ${classes.length?classes.map(g=>`<div class="schedule-class" onclick="window.showSection('groups-mgmt')">
+                <div class="schedule-class-name">${g.name}</div>
+                <div class="schedule-class-meta">🕐 ${T(g.time)} · 🏢 ${g.center||'-'}</div>
+              </div>`).join(''):'<div class="text-xs text-muted" style="padding:10px;text-align:center;">لا حصص</div>'}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+      
+      ${todayTasks.length?`<div style="margin-top:20px;"><h3 style="margin-bottom:12px;">📌 مهام اليوم</h3>${todayTasks.map(task=>taskRow(task)).join('')}</div>`:''}
+      
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;"><button class="btn btn-primary" onclick="window.openTaskModal(null,'${todayStr()}');setTimeout(()=>{document.getElementById('taskTeacher').value='${id}'},50)">+ إضافة مهمة</button>${t.whatsapp?`<a class="btn btn-success" href="https://wa.me/${t.whatsapp.replace(/\D/g,'')}" target="_blank">💬 واتساب</a>`:''}</div></div>`;
     };
 
     window.openTeacherModal=function(id){
-      const t=id?TOPS.data.teachers.find(x=>x.id===id):null;
-      const locChecks=TOPS.data.locations.map(l=>`<label><input type="checkbox" class="t-loc" value="${l.id}" ${t&&t.locations&&t.locations.includes(l.id)?'checked':''}> ${l.name}</label>`).join('');
-      const dayChecks=DAYS.map(d=>`<label><input type="checkbox" class="t-day" value="${d.en}" ${t&&t.workDays&&t.workDays.includes(d.en)?'checked':''}> ${d.ar}</label>`).join('');
+      const t=id?DataService.getUserById(id):null;
+      const opsT=TOPS.data.teachers.find(ot=>ot.id===id);
+      const locChecks=TOPS.data.locations.map(l=>`<label><input type="checkbox" class="t-loc" value="${l.id}" ${opsT&&opsT.locations&&opsT.locations.includes(l.id)?'checked':''}> ${l.name}</label>`).join('');
+      const dayChecks=DAYS.map(d=>`<label><input type="checkbox" class="t-day" value="${d.en}" ${opsT&&opsT.workDays&&opsT.workDays.includes(d.en)?'checked':''}> ${d.ar}</label>`).join('');
       if(typeof ThemeManager?.openModal==='function'){
-        ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${t?'✏️ تعديل':'👨‍🏫 إضافة'} مدرس</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>اسم المدرس *</label><input type="text" id="tName" class="form-input" value="${t?.name||''}" required></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المادة</label><input type="text" id="tSubject" class="form-input" value="${t?.subject||''}"></div><div class="form-group"><label>المنطقة الأساسية</label><input type="text" id="tArea" class="form-input" value="${t?.mainArea||''}"></div></div><div class="form-group"><label>المرحلة / الصفوف</label><input type="text" id="tStages" class="form-input" value="${(t?.stages||[]).join('، ')}" placeholder="مثال: إعدادي، ثانوي"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>رقم الهاتف</label><input type="tel" id="tPhone" class="form-input" value="${t?.phone||''}"></div><div class="form-group"><label>WhatsApp</label><input type="tel" id="tWhats" class="form-input" value="${t?.whatsapp||''}"></div></div><div class="form-group"><label>أماكن المجموعات</label><div class="chk-grid">${locChecks||'<span class="text-muted text-sm">أضف أماكن أولاً</span>'}</div></div><div class="form-group"><label>أيام العمل المعتادة</label><div class="chk-grid">${dayChecks}</div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>بداية ساعات العمل</label><select id="tWorkStart" class="form-select">${timeOptions(t?.workStart||'12:00')}</select></div><div class="form-group"><label>نهاية ساعات العمل</label><select id="tWorkEnd" class="form-select">${timeOptions(t?.workEnd||'22:00')}</select></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>أولوية المدرس</label><select id="tPriority" class="form-select"><option value="critical" ${t?.priority==='critical'?'selected':''}>🔴 Critical</option><option value="high" ${t?.priority==='high'?'selected':''}>🟠 High</option><option value="medium" ${!t||t?.priority==='medium'?'selected':''}>🟡 Medium</option><option value="low" ${t?.priority==='low'?'selected':''}>🟢 Low</option></select></div><div class="form-group"><label>نوع العلاقة</label><select id="tRelation" class="form-select"><option value="assistant" ${t?.relationType==='assistant'?'selected':''}>Assistant</option><option value="business" ${t?.relationType==='business'?'selected':''}>Business Manager</option><option value="both" ${t?.relationType==='both'?'selected':''}>Assistant + Business Manager</option></select></div></div><div class="form-group"><label>ملاحظات</label><textarea id="tNotes" class="form-textarea" rows="2">${t?.notes||''}</textarea></div><button class="btn btn-primary w-full" onclick="window.saveTeacher('${id||''}')">💾 حفظ</button></div>`,'modal-lg');
+        ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${t?'✏️ تعديل':'👨‍🏫 إضافة'} مدرس</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>اسم المدرس *</label><input type="text" id="tName" class="form-input" value="${t?.name||opsT?.name||''}" required></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المادة</label><input type="text" id="tSubject" class="form-input" value="${t?.subject||opsT?.subject||''}"></div><div class="form-group"><label>المنطقة الأساسية</label><input type="text" id="tArea" class="form-input" value="${opsT?.mainArea||''}"></div></div><div class="form-group"><label>المرحلة / الصفوف</label><input type="text" id="tStages" class="form-input" value="${(opsT?.stages||[]).join('، ')}" placeholder="مثال: إعدادي، ثانوي"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>رقم الهاتف</label><input type="tel" id="tPhone" class="form-input" value="${t?.phone||opsT?.phone||''}"></div><div class="form-group"><label>WhatsApp</label><input type="tel" id="tWhats" class="form-input" value="${t?.whatsapp||opsT?.whatsapp||''}"></div></div><div class="form-group"><label>أماكن المجموعات</label><div class="chk-grid">${locChecks||'<span class="text-muted text-sm">أضف أماكن أولاً</span>'}</div></div><div class="form-group"><label>أيام العمل المعتادة</label><div class="chk-grid">${dayChecks}</div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>بداية ساعات العمل</label><select id="tWorkStart" class="form-select">${timeOptions(opsT?.workStart||'12:00')}</select></div><div class="form-group"><label>نهاية ساعات العمل</label><select id="tWorkEnd" class="form-select">${timeOptions(opsT?.workEnd||'22:00')}</select></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>أولوية المدرس</label><select id="tPriority" class="form-select"><option value="critical" ${opsT?.priority==='critical'?'selected':''}>🔴 Critical</option><option value="high" ${opsT?.priority==='high'?'selected':''}>🟠 High</option><option value="medium" ${!opsT||opsT?.priority==='medium'?'selected':''}>🟡 Medium</option><option value="low" ${opsT?.priority==='low'?'selected':''}>🟢 Low</option></select></div><div class="form-group"><label>نوع العلاقة</label><select id="tRelation" class="form-select"><option value="assistant" ${opsT?.relationType==='assistant'?'selected':''}>Assistant</option><option value="business" ${opsT?.relationType==='business'?'selected':''}>Business Manager</option><option value="both" ${opsT?.relationType==='both'?'selected':''}>Assistant + Business Manager</option></select></div></div><div class="form-group"><label>ملاحظات</label><textarea id="tNotes" class="form-textarea" rows="2">${opsT?.notes||''}</textarea></div><button class="btn btn-primary w-full" onclick="window.saveTeacher('${id||''}')">💾 حفظ</button></div>`,'modal-lg');
       }
     };
 
@@ -658,37 +1291,252 @@
       const stages=document.getElementById('tStages').value.split(/[،,]/).map(s=>s.trim()).filter(Boolean);
       const locations=[...document.querySelectorAll('.t-loc:checked')].map(c=>c.value), workDays=[...document.querySelectorAll('.t-day:checked')].map(c=>c.value);
       const obj={name,subject:document.getElementById('tSubject').value.trim(),mainArea:document.getElementById('tArea').value.trim(),stages,locations,workDays,phone:document.getElementById('tPhone').value.trim(),whatsapp:document.getElementById('tWhats').value.trim(),workStart:document.getElementById('tWorkStart').value,workEnd:document.getElementById('tWorkEnd').value,priority:document.getElementById('tPriority').value,relationType:document.getElementById('tRelation').value,notes:document.getElementById('tNotes').value.trim(),updatedAt:new Date().toISOString()};
-      if(id){const i=TOPS.data.teachers.findIndex(t=>t.id===id);if(i>-1)TOPS.data.teachers[i]={...TOPS.data.teachers[i],...obj};}
-      else{obj.id=TOPS.uid('teacher');obj.createdAt=new Date().toISOString();TOPS.data.teachers.push(obj);}
-      TOPS.save();if(typeof ThemeManager?.closeModal==='function')ThemeManager.closeModal();
+      
+      // حفظ في TOPS
+      if(id){
+        const i=TOPS.data.teachers.findIndex(t=>t.id===id);
+        if(i>-1)TOPS.data.teachers[i]={...TOPS.data.teachers[i],...obj};
+        else TOPS.data.teachers.push({id,...obj});
+      }else{
+        obj.id=TOPS.uid('teacher');obj.createdAt=new Date().toISOString();TOPS.data.teachers.push(obj);
+      }
+      TOPS.save();
+      
+      // حفظ في DataService لو موجود
+      if(id && typeof DataService.updateUser==='function'){
+        DataService.updateUser(id,{name,subject:obj.subject,phone:obj.phone,whatsapp:obj.whatsapp}).catch(e=>{});
+      }
+      
+      if(typeof ThemeManager?.closeModal==='function')ThemeManager.closeModal();
       window.safeToast('تم حفظ المدرس ✓','success');loadTeachers();
     };
 
-    window.deleteTeacher=function(id){
-      if(!confirm('حذف المدرس؟'))return;
-      TOPS.data.teachers=TOPS.data.teachers.filter(t=>t.id!==id);TOPS.save();
-      window.safeToast('تم الحذف ✓','success');loadTeachers();
+    // ==================== 👥 إدارة المجموعات ====================
+    window.loadGroupsMgmt=function(){
+      try{
+        const tf=document.getElementById('groupMgmtTeacherFilter')?.value||'';
+        const cf=document.getElementById('groupMgmtCenterFilter')?.value||'';
+        
+        let groups=DataService.getGroups();
+        if(tf) groups=groups.filter(g=>g.teacherId===tf);
+        if(cf) groups=groups.filter(g=>g.center===cf);
+        
+        const el=document.getElementById('groupsMgmtList');
+        if(!groups.length){
+          el.innerHTML='<div class="empty-state"><div class="empty-state-icon">👥</div><h3>لا توجد مجموعات</h3></div>';
+          return;
+        }
+        
+        el.innerHTML=groups.map(g=>{
+          const t=DataService.getUserById(g.teacherId);
+          const students=DataService.getStudentsByGroup?DataService.getStudentsByGroup(g.id):[];
+          const photo=t?.photoUrl?`<img src="${window.driveThumb(t.photoUrl)}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);">`:`<div class="user-avatar" style="width:48px;height:48px;font-size:18px;">👨‍🏫</div>`;
+          const sched=(g.schedules&&g.schedules.length)?g.schedules.map(s=>`${dayAr(s.day)} ${T(s.time)}`).join(' + '):`${dayAr(g.day)} ${T(g.time)}`;
+          
+          return `<div class="group-mgmt-card">
+            <div class="group-mgmt-header">
+              <div class="group-mgmt-info">
+                <div style="display:flex;align-items:center;gap:12px;">
+                  ${photo}
+                  <div>
+                    <div class="group-mgmt-name">${g.name}</div>
+                    <div class="group-mgmt-meta">👨‍🏫 ${t?.name||'-'} · 📅 ${sched} · 🏢 ${g.center||'-'}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="group-mgmt-stats">
+              <div class="group-mgmt-stat"><div class="group-mgmt-stat-value">${students.length}</div><div class="group-mgmt-stat-label">طالب</div></div>
+              <div class="group-mgmt-stat"><div class="group-mgmt-stat-value">${students.length*(g.monthlyFee||0)}</div><div class="group-mgmt-stat-label">إيراد شهري</div></div>
+              <div class="group-mgmt-stat"><div class="group-mgmt-stat-value">${g.sessionsPerMonth||8}</div><div class="group-mgmt-stat-label">حصص/شهر</div></div>
+              <div class="group-mgmt-stat"><div class="group-mgmt-stat-value">${g.sessionFee||0}</div><div class="group-mgmt-stat-label">سعر الحصة</div></div>
+            </div>
+            <div class="group-mgmt-actions" style="margin-top:12px;">
+              <button class="btn btn-secondary btn-sm" onclick="window.openSwapModal('${g.id}')">🔄 تبديل موعد</button>
+              <button class="btn btn-danger btn-sm" onclick="window.cancelGroupSession('${g.id}')">🚫 إلغاء حصة</button>
+              <button class="btn btn-primary btn-sm" onclick="window.openExceptionalSessionModal('${g.id}')">📅 موعد استثنائي</button>
+              ${g.whatsappLink?`<a href="${g.whatsappLink}" target="_blank" class="btn btn-success btn-sm">💬 واتساب</a>`:''}
+            </div>
+          </div>`;
+        }).join('');
+      }catch(e){
+        console.error('loadGroupsMgmt error:',e);
+        document.getElementById('groupsMgmtList').innerHTML='<div class="card" style="text-align:center;padding:20px;color:var(--danger);">خطأ في تحميل المجموعات</div>';
+      }
     };
 
+    window.openSwapModal=function(gid){
+      try{
+        const g=DataService.getGroups().find(x=>x.id===gid);
+        const sameTeacherGroups=DataService.getGroups().filter(x=>x.id!==gid && x.teacherId===g?.teacherId);
+        ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🔄 تبديل موعد: ${g?.name||''}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="filter-info">التبديل يكون داخل مجموعات نفس الأستاذ فقط</div><div class="form-group"><label>بدّل مع</label><select id="swapTarget" class="form-select">${sameTeacherGroups.map(x=>`<option value="${x.id}">${x.name} (${dayAr(x.day)} ${T(x.time)})</option>`).join('')}</select></div><button class="btn btn-primary w-full" onclick="window.doSwap('${gid}')">🔄 تنفيذ</button></div>`,'modal-sm');
+      }catch(e){}
+    };
+
+    window.doSwap=async function(gid){
+      try{
+        const t=document.getElementById('swapTarget')?.value;
+        const r=await DataService.swapGroupSchedule(gid,t);
+        if(r.success){ThemeManager.closeModal();window.safeToast('🔄 تم التبديل','success');loadGroupsMgmt();}
+        else {window.safeToast(r.message||'فشل التبديل','error');}
+      }catch(e){window.safeToast('خطأ في التبديل','error');}
+    };
+
+    window.cancelGroupSession=function(gid){
+      try{
+        const g=DataService.getGroups().find(x=>x.id===gid);
+        const date=prompt('تاريخ الحصة المراد إلغاؤها (YYYY-MM-DD):',todayStr());
+        if(!date) return;
+        const reason=prompt('سبب الإلغاء (هيظهر للطلاب):','ظرف طارئ');
+        if(reason===null) return;
+        
+        DataService.cancelSession(gid,date,reason,currentUser?.id||'').then(r=>{
+          if(r.success){
+            // إرسال إشعار للطلاب
+            if(typeof window.notifyGroup==='function'){
+              window.notifyGroup(gid,`🚫 حصة ملغية: ${g?.name||''}`,`تم إلغاء حصة يوم ${date}${reason?` — السبب: ${reason}`:''}.`,'session_cancel',{groupId:gid,date:date,reason:reason});
+            }
+            window.safeToast('🚫 تم إلغاء الحصة','warning');
+            loadGroupsMgmt();
+          }else{
+            window.safeToast(r.message||'فشل الإلغاء','error');
+          }
+        });
+      }catch(e){window.safeToast('خطأ','error');}
+    };
+
+    window.openExceptionalSessionModal=function(gid){
+      try{
+        const groups=DataService.getGroups();
+        const groupOpts=groups.map(g=>`<option value="${g.id}" ${gid===g.id?'selected':''}>${g.name}</option>`).join('');
+        
+        ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📅 موعد استثنائي</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
+        <div class="modal-body">
+          <div class="filter-info">💡 إضافة حصة استثنائية (مراجعة، امتحان، تعويض) — هتوصل إشعار لكل طلاب المجموعة.</div>
+          <div class="form-group"><label>المجموعة *</label><select id="excGroup" class="form-select">${groupOpts}</select></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="form-group"><label>التاريخ *</label><input type="date" id="excDate" class="form-input" value="${todayStr()}" min="${todayStr()}"></div>
+            <div class="form-group"><label>الوقت *</label><select id="excTime" class="form-select">${timeOptions('18:00')}</select></div>
+          </div>
+          <div class="form-group"><label>نوع الحصة</label><select id="excType" class="form-select"><option value="review">مراجعة</option><option value="exam">امتحان</option><option value="makeup">حصة تعويضية</option><option value="extra">حصة إضافية</option></select></div>
+          <div class="form-group"><label>ملاحظات (اختياري)</label><textarea id="excNotes" class="form-textarea" rows="2" placeholder="مثال: مراجعة الوحدة الأولى"></textarea></div>
+          <button class="btn btn-primary w-full" onclick="window.saveExceptionalSession()">💾 حفظ وإرسال إشعار</button>
+        </div>`,'modal-md');
+      }catch(e){console.error(e);}
+    };
+
+    window.saveExceptionalSession=async function(){
+      try{
+        const gid=document.getElementById('excGroup')?.value;
+        const date=document.getElementById('excDate')?.value;
+        const time=document.getElementById('excTime')?.value;
+        const type=document.getElementById('excType')?.value;
+        const notes=document.getElementById('excNotes')?.value||'';
+        
+        if(!gid||!date||!time){window.safeToast('أكمل البيانات المطلوبة','error');return;}
+        
+        const g=DataService.getGroups().find(x=>x.id===gid);
+        if(!g){window.safeToast('المجموعة غير موجودة','error');return;}
+        
+        const typeLabel={review:'مراجعة',exam:'امتحان',makeup:'حصة تعويضية',extra:'حصة إضافية'}[type]||'حصة';
+        
+        // حفظ في cancelledSessions كحصة استثنائية
+        const d=db();
+        d.exceptionalSessions=d.exceptionalSessions||[];
+        d.exceptionalSessions.push({
+          id:'exc_'+Date.now(),
+          groupId:gid,
+          date:date,
+          time:time,
+          type:type,
+          notes:notes,
+          createdBy:currentUser?.id||'',
+          createdAt:new Date().toISOString()
+        });
+        save(d);
+        
+        // إرسال إشعار للطلاب
+        if(typeof window.notifyGroup==='function'){
+          await window.notifyGroup(gid,`📅 ${typeLabel}: ${g.name}`,`حصة ${typeLabel} يوم ${date} الساعة ${timeLabel(time)}${notes?` — ${notes}`:''}`,'exceptional_session',{groupId:gid,date:date,time:time,type:type});
+        }
+        
+        ThemeManager.closeModal();
+        window.safeToast('✅ تم إضافة الموعد الاستثنائي وإرسال إشعار للطلاب','success');
+        loadGroupsMgmt();
+      }catch(e){window.safeToast('خطأ في الحفظ','error');}
+    };
+
+    // ==================== 📊 Reports ====================
     window.setReportRange=function(range,btn){reportRange=range;document.querySelectorAll('#section-reports-ops .filter-btn').forEach(b=>b.classList.toggle('active',b===btn));loadReports();};
+    
     window.loadReports=function(){
       const today=todayStr(), now=new Date();let startDate,endDate;
       if(reportRange==='today'){startDate=endDate=today;}
       else if(reportRange==='week'){startDate=dateStr(startOfWeek(now));endDate=dateStr(addDays(startOfWeek(now),6));}
       else if(reportRange==='month'){startDate=dateStr(new Date(now.getFullYear(),now.getMonth(),1));endDate=dateStr(new Date(now.getFullYear(),now.getMonth()+1,0));}
       else{startDate='2000-01-01';endDate=dateStr(addDays(now,365));}
+      
       const filteredTasks=TOPS.data.tasks.filter(t=>t.date>=startDate&&t.date<=endDate);
       const totalTasks=filteredTasks.length, completed=filteredTasks.filter(t=>t.status==='completed').length, pending=filteredTasks.filter(t=>t.status==='pending'||t.status==='in_progress').length, cancelled=filteredTasks.filter(t=>t.status==='cancelled').length, events=filteredTasks.filter(t=>t.fullDay).length, shootings=filteredTasks.filter(t=>t.typeId==='shooting').length;
       let totalHours=0;filteredTasks.forEach(t=>{if(t.startTime&&t.endTime){const s=minOf(t.startTime),e=taskEndMin(t);if(e>s)totalHours+=(e-s)/60;}});
-      const teacherStats=TOPS.data.teachers.map(t=>{const tasks=filteredTasks.filter(x=>x.teacherId===t.id),comp=tasks.filter(x=>x.status==='completed').length,pend=tasks.filter(x=>x.status==='pending'||x.status==='in_progress').length;let hours=0;tasks.forEach(x=>{if(x.startTime&&x.endTime){const s=minOf(x.startTime),e=taskEndMin(x);if(e>s)hours+=(e-s)/60;}});return{teacher:t,total:tasks.length,completed:comp,pending:pend,hours:hours.toFixed(1)};});
-      const locationCounts={};filteredTasks.filter(t=>t.locationId).forEach(t=>{const loc=locationName(t.locationId);locationCounts[loc]=(locationCounts[loc]||0)+1;});
-      const topLocations=Object.entries(locationCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
-      document.getElementById('reportsContent').innerHTML=`<div class="report-card"><h3 style="margin-bottom:16px;">📊 ملخص الفترة (${startDate} → ${endDate})</h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;"><div class="profile-stat"><div class="profile-stat-value">${totalTasks}</div><div class="profile-stat-label">إجمالي المهام</div></div><div class="profile-stat"><div class="profile-stat-value" style="color:var(--success)">${completed}</div><div class="profile-stat-label">مكتملة</div></div><div class="profile-stat"><div class="profile-stat-value" style="color:var(--warning)">${pending}</div><div class="profile-stat-label">معلقة</div></div><div class="profile-stat"><div class="profile-stat-value" style="color:var(--danger)">${cancelled}</div><div class="profile-stat-label">ملغية</div></div><div class="profile-stat"><div class="profile-stat-value">${events}</div><div class="profile-stat-label">Events</div></div><div class="profile-stat"><div class="profile-stat-value">${shootings}</div><div class="profile-stat-label">تصوير</div></div><div class="profile-stat"><div class="profile-stat-value">${totalHours.toFixed(1)}</div><div class="profile-stat-label">ساعات العمل</div></div></div></div><div class="report-card"><h3 style="margin-bottom:16px;">👨‍🏫 إحصائيات المدرسين</h3><table class="report-table"><thead><tr><th>المدرس</th><th>المهام</th><th>مكتملة</th><th>معلقة</th><th>ساعات</th></tr></thead><tbody>${teacherStats.map(s=>`<tr><td><strong>${s.teacher.name}</strong></td><td>${s.total}</td><td style="color:var(--success)">${s.completed}</td><td style="color:var(--warning)">${s.pending}</td><td>${s.hours}</td></tr>`).join('')}</tbody></table></div>${topLocations.length?`<div class="report-card"><h3 style="margin-bottom:16px;">📍 أكثر المناطق زيارة</h3><table class="report-table"><thead><tr><th>المنطقة</th><th>عدد الزيارات</th></tr></thead><tbody>${topLocations.map(([loc,count])=>`<tr><td>${loc}</td><td>${count}</td></tr>`).join('')}</tbody></table></div>`:''}`;
+      
+      const teachers=DataService.getTeachers();
+      const teacherStats=teachers.map(t=>{
+        const tasks=filteredTasks.filter(x=>x.teacherId===t.id);
+        const comp=tasks.filter(x=>x.status==='completed').length;
+        const pend=tasks.filter(x=>x.status==='pending'||x.status==='in_progress').length;
+        const groups=DataService.getGroupsByTeacher?DataService.getGroupsByTeacher(t.id):[];
+        const studentsCount=groups.reduce((sum,g)=>sum+(DataService.getStudentsByGroup?DataService.getStudentsByGroup(g.id):[]).length,0);
+        let hours=0;tasks.forEach(x=>{if(x.startTime&&x.endTime){const s=minOf(x.startTime),e=taskEndMin(x);if(e>s)hours+=(e-s)/60;}});
+        return{teacher:t,total:tasks.length,completed:comp,pending:pend,hours:hours.toFixed(1),groups:groups.length,students:studentsCount};
+      });
+      
+      document.getElementById('reportsContent').innerHTML=`
+        <div class="report-card">
+          <h3 style="margin-bottom:16px;">📊 ملخص الفترة (${startDate} → ${endDate})</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;">
+            <div class="profile-stat"><div class="profile-stat-value">${totalTasks}</div><div class="profile-stat-label">إجمالي المهام</div></div>
+            <div class="profile-stat"><div class="profile-stat-value" style="color:var(--success)">${completed}</div><div class="profile-stat-label">مكتملة</div></div>
+            <div class="profile-stat"><div class="profile-stat-value" style="color:var(--warning)">${pending}</div><div class="profile-stat-label">معلقة</div></div>
+            <div class="profile-stat"><div class="profile-stat-value" style="color:var(--danger)">${cancelled}</div><div class="profile-stat-label">ملغية</div></div>
+            <div class="profile-stat"><div class="profile-stat-value">${events}</div><div class="profile-stat-label">Events</div></div>
+            <div class="profile-stat"><div class="profile-stat-value">${shootings}</div><div class="profile-stat-label">تصوير</div></div>
+            <div class="profile-stat"><div class="profile-stat-value">${totalHours.toFixed(1)}</div><div class="profile-stat-label">ساعات العمل</div></div>
+          </div>
+        </div>
+        <div class="report-card">
+          <h3 style="margin-bottom:16px;">👨‍🏫 إحصائيات المدرسين</h3>
+          <table class="report-table">
+            <thead><tr><th>المدرس</th><th>المجموعات</th><th>الطلاب</th><th>المهام</th><th>مكتملة</th><th>معلقة</th><th>ساعات</th></tr></thead>
+            <tbody>${teacherStats.map(s=>`<tr><td><strong>${s.teacher.name}</strong></td><td>${s.groups}</td><td>${s.students}</td><td>${s.total}</td><td style="color:var(--success)">${s.completed}</td><td style="color:var(--warning)">${s.pending}</td><td>${s.hours}</td></tr>`).join('')}</tbody>
+          </table>
+        </div>
+      `;
     };
 
+    // ==================== 📍 Locations ====================
     window.loadLocations=function(){
       const list=TOPS.data.locations;
-      document.getElementById('locationsList').innerHTML=list.length?list.map(l=>`<div class="user-card"><div class="user-card-header"><div class="user-avatar">📍</div><div><div class="user-name">${l.name}</div><div class="user-meta"><span>🗺️ ${l.area||'-'}</span></div></div></div><div class="text-sm text-muted" style="margin-bottom:8px;">${l.address||''}</div><div class="user-meta"><span>⏱️ انتقال ~${l.travelTime||0} د</span></div><div class="user-actions">${l.mapsUrl?`<a class="btn btn-secondary btn-sm" href="${l.mapsUrl}" target="_blank">🗺️ Maps</a>`:''}<button class="btn btn-secondary btn-sm" onclick="window.openLocationModal('${l.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="window.deleteLocation('${l.id}')">🗑️</button></div></div>`).join(''):'<div class="empty-state" style="grid-column:1/-1;"><div class="empty-state-icon">📍</div>لا أماكن بعد</div>';
+      const centers=DataService.getCenters?DataService.getCenters():[];
+      
+      let html='';
+      
+      // 🆕 السناتر من المنصة
+      if(centers.length){
+        html+='<h3 style="margin-bottom:12px;">🏢 السناتر المسجلة</h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:20px;">';
+        html+=centers.map(c=>{
+          const groups=DataService.getGroups().filter(g=>g.center===c.name);
+          const studentsCount=new Set(groups.flatMap(g=>(DataService.getStudentsByGroup?DataService.getStudentsByGroup(g.id):[]).map(s=>s.id))).size;
+          return `<div class="user-card"><div class="user-card-header"><div class="user-avatar">🏢</div><div><div class="user-name">${c.name}</div><div class="user-meta"><span>📍 ${c.address||'-'}</span></div></div></div><div class="user-stats"><div class="user-stat"><div class="user-stat-value">${groups.length}</div><div class="user-stat-label">مجموعة</div></div><div class="user-stat"><div class="user-stat-value">${studentsCount}</div><div class="user-stat-label">طالب</div></div></div></div>`;
+        }).join('');
+        html+='</div>';
+      }
+      
+      // الأماكن المخصصة
+      html+='<h3 style="margin-bottom:12px;">📍 الأماكن المخصصة</h3>';
+      html+=list.length?list.map(l=>`<div class="user-card"><div class="user-card-header"><div class="user-avatar">📍</div><div><div class="user-name">${l.name}</div><div class="user-meta"><span>🗺️ ${l.area||'-'}</span></div></div></div><div class="text-sm text-muted" style="margin-bottom:8px;">${l.address||''}</div><div class="user-meta"><span>⏱️ انتقال ~${l.travelTime||0} د</span></div><div class="user-actions">${l.mapsUrl?`<a class="btn btn-secondary btn-sm" href="${l.mapsUrl}" target="_blank">🗺️ Maps</a>`:''}<button class="btn btn-secondary btn-sm" onclick="window.openLocationModal('${l.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="window.deleteLocation('${l.id}')">🗑️</button></div></div>`).join(''):'<div class="empty-state" style="grid-column:1/-1;"><div class="empty-state-icon">📍</div>لا أماكن مخصصة بعد</div>';
+      
+      document.getElementById('locationsList').innerHTML=html;
     };
 
     window.openLocationModal=function(id){
@@ -714,6 +1562,7 @@
       window.safeToast('تم الحذف ✓','success');loadLocations();
     };
 
+    // ==================== 🏷️ Types ====================
     window.loadTypes=function(){
       const fixed=TOPS.defaultTypes.map(t=>t.id);
       document.getElementById('typesList').innerHTML=TOPS.data.types.map(t=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--surface-hover);border-radius:10px;border:1px solid var(--border);"><div><span style="font-size:20px;margin-inline-end:8px;">${t.icon}</span><strong>${t.name}</strong></div>${!fixed.includes(t.id)?`<button class="btn btn-danger btn-sm" onclick="window.deleteType('${t.id}')">🗑️</button>`:''}</div>`).join('');
@@ -734,6 +1583,7 @@
 
     window.deleteType=function(id){TOPS.data.types=TOPS.data.types.filter(t=>t.id!==id);TOPS.save();loadTypes();};
 
+    // ==================== ⚙️ Settings ====================
     window.loadSettingsUI=function(){
       const s=TOPS.data.settings;
       document.getElementById('setWorkStart').innerHTML=timeOptions(s.workStart||'12:00');
@@ -748,6 +1598,17 @@
 
     window.handleLogout=function(){
       if(confirm('خروج؟')){if(typeof AuthService?.logout==='function')AuthService.logout();else window.location.href='login.html';}
+    };
+    
+    // 🆕 دالة تكبير الصور
+    window.openImageZoom=function(src){
+      try{
+        const overlay=document.createElement('div');
+        overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:4000;display:flex;align-items:center;justify-content:center;padding:20px;cursor:pointer;';
+        overlay.innerHTML=`<button style="position:absolute;top:20px;right:20px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:24px;cursor:pointer;" onclick="this.parentElement.remove()">✕</button><img src="${src}" style="max-width:100%;max-height:90vh;border-radius:12px;" onclick="event.stopPropagation()">`;
+        overlay.addEventListener('click',function(){overlay.remove();});
+        document.body.appendChild(overlay);
+      }catch(e){}
     };
   </script>
   <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}</script>
