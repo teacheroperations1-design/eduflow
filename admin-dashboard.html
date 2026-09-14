@@ -1750,6 +1750,7 @@ window.deleteBarcodeRequest=async function(id){
 window.openTeacherModal=function(){
 ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">👨‍🏫 مدرس جديد</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return window.saveTeacher(event)">
 <div class="form-group"><label>الاسم *</label><input type="text" id="tName" class="form-input" required></div>
+<div class="form-group"><label>📧 الإيميل (بريد الدخول) *</label><input type="email" id="tEmail" class="form-input" placeholder="teacher@center.com" required></div>
 <div class="form-group"><label>📸 صورة الأستاذ (Drive)</label><input type="url" id="tPhoto" class="form-input" placeholder="https://drive.google.com/file/d/..."></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المادة</label><input type="text" id="tSub" class="form-input"></div><div class="form-group"><label>الهاتف</label><input type="tel" id="tPhone" class="form-input"></div></div>
 <div class="filter-info">🌐 روابط السوشيال ميديا — دي اللي هتظهر للطلاب وولي الأمر في صفحات الأستاذ</div>
@@ -1768,6 +1769,7 @@ try{
 e.preventDefault();
 await DataService.addUser({
 name:document.getElementById('tName').value,
+email:document.getElementById('tEmail').value,
 photoUrl:document.getElementById('tPhoto').value,
 subject:document.getElementById('tSub').value,
 phone:document.getElementById('tPhone').value,
@@ -1789,6 +1791,7 @@ const t=DataService.getUserById(id);
 const soc=t.social||{};
 ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">✏️ تعديل مدرس</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return window.saveTeacherEdit(event,'${id}')">
 <div class="form-group"><label>الاسم</label><input type="text" id="teName" class="form-input" value="${t.name}"></div>
+<div class="form-group"><label>📧 الإيميل (بريد الدخول)</label><input type="email" id="teEmail" class="form-input" value="${t.email||''}"></div>
 <div class="form-group"><label>📸 صورة الأستاذ</label><input type="url" id="tePhoto" class="form-input" value="${t.photoUrl||''}"></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المادة</label><input type="text" id="teSub" class="form-input" value="${t.subject||''}"></div><div class="form-group"><label>الهاتف</label><input type="tel" id="tePhone" class="form-input" value="${t.phone||''}"></div></div>
 <div class="filter-info">🌐 روابط السوشيال ميديا — دي اللي هتظهر للطلاب وولي الأمر</div>
@@ -1807,6 +1810,7 @@ try{
 e.preventDefault();
 await DataService.updateUser(id,{
 name:document.getElementById('teName').value,
+email:document.getElementById('teEmail').value,
 photoUrl:document.getElementById('tePhoto').value,
 subject:document.getElementById('teSub').value,
 phone:document.getElementById('tePhone').value,
@@ -1840,7 +1844,7 @@ soc.youtube?`<a class="btn btn-secondary btn-sm" href="${soc.youtube}" target="_
 soc.tiktok?`<a class="btn btn-secondary btn-sm" href="${soc.tiktok}" target="_blank" title="تيك توك">🎵</a>`:'',
 (t.whatsapp||t.phone)?`<a class="btn btn-success btn-sm" href="https://wa.me/2${(t.whatsapp||t.phone||'').replace(/\D/g,'')}" target="_blank" title="واتساب">💬</a>`:''
 ].filter(Boolean).join('');
-return `<div class="user-card"><div class="user-card-header">${photo}<div><div class="user-name">${t.name}</div><div class="user-meta"><span>📚 ${t.subject||'-'}</span>${t.phone?`<span>📱 ${t.phone}</span>`:''}</div></div></div><div class="user-stats"><div class="user-stat"><div class="user-stat-value">${gs.length}</div><div class="user-stat-label">مجموعة</div></div><div class="user-stat"><div class="user-stat-value">${st}</div><div class="user-stat-label">طالب</div></div></div>${socBtns?`<div style="display:flex;gap:6px;flex-wrap:wrap;">${socBtns}</div>`:''}<div class="user-actions"><button class="btn btn-secondary btn-sm" onclick="window.openTeacherEdit('${t.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="window.delUser('${t.id}')">🗑️</button></div></div>`;
+return `<div class="user-card"><div class="user-card-header">${photo}<div><div class="user-name">${t.name}</div><div class="user-meta"><span>📚 ${t.subject||'-'}</span><span>📧 ${t.email||'-'}</span>${t.phone?`<span>📱 ${t.phone}</span>`:''}</div></div></div><div class="user-stats"><div class="user-stat"><div class="user-stat-value">${gs.length}</div><div class="user-stat-label">مجموعة</div></div><div class="user-stat"><div class="user-stat-value">${st}</div><div class="user-stat-label">طالب</div></div></div>${socBtns?`<div style="display:flex;gap:6px;flex-wrap:wrap;">${socBtns}</div>`:''}<div class="user-actions"><button class="btn btn-secondary btn-sm" onclick="window.openTeacherEdit('${t.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="window.delUser('${t.id}')">🗑️</button></div></div>`;
 }).join('')||'<p class="text-muted">لا مدرسون</p>';
 }catch(e){console.error(e);}
 };

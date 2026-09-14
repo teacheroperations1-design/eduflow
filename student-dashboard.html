@@ -49,9 +49,7 @@
 .points-item-info{flex:1;margin-right:8px}
 .points-item-label{font-size:11px;color:var(--text-muted)}
 .points-item-value{font-weight:800;font-family:var(--font-en);font-size:14px;color:var(--primary)}
-.parent-company-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:9999px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#fff;font-size:11px;font-weight:700}
 
-/* 🆕 كارت ولي الأمر الكبير */
 .parent-info-card{background:linear-gradient(135deg,rgba(251,191,36,.12),rgba(245,158,11,.08));border:2px dashed rgba(251,191,36,.5);border-radius:16px;padding:20px;margin-bottom:16px;text-align:center;transition:all .2s}
 .parent-info-card:hover{border-color:var(--primary);border-style:solid;background:linear-gradient(135deg,rgba(99,102,241,.05),rgba(139,92,246,.05))}
 .parent-info-card .pi-icon{font-size:40px;margin-bottom:8px}
@@ -60,7 +58,6 @@
 .parent-info-card .pi-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;text-decoration:none;box-shadow:0 4px 16px rgba(245,158,11,.3);transition:all .2s;width:100%;}
 .parent-info-card .pi-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(245,158,11,.4);}
 
-/* 🆕 رسالة ترحيب مصغّرة */
 .welcome-compact{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:2px 0;}
 .welcome-compact .wc-title{margin:0;font-size:15px;font-weight:700;}
 .welcome-compact .wc-sub{margin:2px 0 0;opacity:.9;font-size:12px;}
@@ -78,7 +75,6 @@
 .result-stat-box{background:var(--surface-hover);padding:10px;border-radius:8px;text-align:center}
 .result-stat-value{font-size:20px;font-weight:800;font-family:var(--font-en);color:var(--primary)}
 .result-stat-label{font-size:11px;color:var(--text-muted);margin-top:2px}
-.result-teacher-points{flex-shrink:0}
 .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:16px;overflow-x:auto}
 .tab-btn{padding:8px 14px;background:none;border:none;color:var(--text-secondary);cursor:pointer;font-weight:700;font-size:13px;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s}
 .tab-btn:hover{color:var(--primary)}
@@ -152,7 +148,6 @@
 .nc-dot{width:12px;height:12px;border-radius:50%;background:var(--success);animation:ncPulse 1.4s infinite;flex-shrink:0;}
 @keyframes ncPulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.45;transform:scale(.85);}}
 .nc-count{font-family:var(--font-en);font-weight:900;font-size:20px;color:var(--primary);background:var(--primary-bg);padding:6px 12px;border-radius:10px;letter-spacing:1px;flex-shrink:0;}
-.parent-compact{background:linear-gradient(135deg,rgba(251,191,36,.08),rgba(245,158,11,.08));border:1px dashed rgba(251,191,36,.45);border-radius:12px;padding:10px 12px;margin-bottom:14px;}
 .image-zoom-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:4000;display:flex;align-items:center;justify-content:center;padding:20px;cursor:pointer;}
 .image-zoom-overlay img{max-width:100%;max-height:90vh;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
 .image-zoom-close{position:absolute;top:20px;right:20px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
@@ -169,7 +164,6 @@
 .store-balance-value{font-size:48px;font-weight:900;font-family:var(--font-en);line-height:1;margin-bottom:6px;position:relative;}
 .store-balance-label{font-size:14px;opacity:.9;position:relative;}
 
-/* 🆕 مودال الجدول والمجموعات */
 .modal-schedule-wrap{padding:4px 0;}
 .schedule-modal-day{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px;}
 .schedule-modal-day.today{border-color:var(--primary);border-width:2px;}
@@ -193,13 +187,53 @@
 .gmc-stat-value{font-size:14px;font-weight:800;color:var(--primary);font-family:var(--font-en);}
 .gmc-stat-label{font-size:10px;color:var(--text-muted);margin-top:2px;}
 
-/* 🆕 شارة الباركود Login */
 .barcode-login-badge{
   display:inline-flex;align-items:center;gap:6px;
   padding:4px 10px;border-radius:9999px;
   background:linear-gradient(135deg,#10b981,#059669);
   color:#fff;font-size:11px;font-weight:700;
   margin-right:8px;
+}
+
+/* 🆕 Settings Cards */
+.settings-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:20px;
+  margin-bottom:16px;
+  max-width:600px;
+}
+.settings-card.editable{
+  border:2px dashed var(--primary);
+}
+.settings-card.readonly{
+  border:2px solid var(--warning);
+  background:linear-gradient(135deg,rgba(245,158,11,.03),transparent);
+}
+.readonly-field{
+  background:var(--surface-hover);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:12px;
+  margin-bottom:10px;
+}
+.readonly-field .lbl{
+  font-size:11px;
+  color:var(--text-muted);
+  margin-bottom:4px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.readonly-field .val{
+  font-weight:700;
+  font-size:14px;
+  color:var(--text);
+}
+.lock-icon{
+  color:var(--warning);
+  font-size:12px;
 }
 </style>
 </head>
@@ -370,7 +404,7 @@
 <div id="followupsList"></div>
 </section>
 
-<!-- 🆕 قسم الإعدادات - تغيير كلمة المرور -->
+<!-- ⚙️ الإعدادات -->
 <section class="section" id="section-settings">
   <div class="section-header">
     <div>
@@ -379,8 +413,11 @@
     </div>
   </div>
   
-  <div class="card" style="max-width:500px;">
-    <h3 class="card-title" style="margin-bottom:16px;">🔐 تغيير كلمة المرور</h3>
+  <!-- 🔐 تغيير كلمة المرور -->
+  <div class="settings-card editable">
+    <h3 class="card-title" style="margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+      <span style="font-size:20px;">🔐</span> تغيير كلمة المرور
+    </h3>
     <div class="filter-info" style="margin-bottom:16px;">
       💡 يمكنك تغيير كلمة المرور الخاصة بك في أي وقت. كلمة المرور الجديدة يجب أن تكون 4 أرقام على الأقل.
     </div>
@@ -405,28 +442,68 @@
     </button>
   </div>
   
-  <div class="card" style="max-width:500px;margin-top:16px;">
-    <h3 class="card-title" style="margin-bottom:12px;">👤 بياناتي الشخصية</h3>
-    <div class="detail-grid">
-      <div class="detail-box">
-        <div class="lbl">الكود</div>
-        <div class="val" id="myCodeDisplay">-</div>
-      </div>
-      <div class="detail-box">
-        <div class="lbl">الاسم</div>
-        <div class="val" id="myNameDisplay">-</div>
-      </div>
-      <div class="detail-box">
-        <div class="lbl">الهاتف</div>
-        <div class="val" id="myPhoneDisplay">-</div>
-      </div>
-      <div class="detail-box">
-        <div class="lbl">المرحلة</div>
-        <div class="val" id="myStageDisplay">-</div>
+  <!-- 📝 تحديث البيانات -->
+  <div class="settings-card editable">
+    <h3 class="card-title" style="margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+      <span style="font-size:20px;">📱</span> تحديث بياناتي
+    </h3>
+    <div class="filter-info" style="margin-bottom:16px;">
+      💡 يمكنك تحديث رقم هاتفك الشخصي. البيانات المقفلة تتطلب التواصل مع الإدارة لتعديلها.
+    </div>
+    
+    <div class="form-group">
+      <label>📱 رقم هاتفي الشخصي</label>
+      <input type="tel" id="editMyPhone" class="form-input" placeholder="01xxxxxxxxx" maxlength="11">
+    </div>
+    
+    <button class="btn btn-primary w-full" style="padding:14px;font-size:15px;" onclick="window.saveMyProfile()">
+      💾 حفظ التحديثات
+    </button>
+  </div>
+  
+  <!-- 🔒 بيانات لا يمكن تعديلها -->
+  <div class="settings-card readonly">
+    <h3 class="card-title" style="margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+      <span style="font-size:20px;">🔒</span> بيانات محمية (للقراءة فقط)
+    </h3>
+    <div class="filter-info" style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);color:var(--warning);margin-bottom:16px;">
+      ⚠️ <strong>تنبيه:</strong> البيانات التالية لا يمكن تعديلها من هنا. لتعديلها، يرجى التواصل مع الإدارة مباشرة أو إرسال طلب من خلال "المتابعات".
+    </div>
+    
+    <div class="readonly-field">
+      <div class="lbl"><span class="lock-icon">🔒</span> الاسم الكامل</div>
+      <div class="val" id="readonlyName">-</div>
+    </div>
+    
+    <div class="readonly-field">
+      <div class="lbl"><span class="lock-icon">🔒</span> الكود التعريفي</div>
+      <div class="val" id="readonlyCode">-</div>
+    </div>
+    
+    <div class="readonly-field">
+      <div class="lbl"><span class="lock-icon">🔒</span> رقم ولي الأمر</div>
+      <div class="val" id="readonlyParentPhone">-</div>
+      <div class="text-xs text-muted" style="margin-top:4px;">
+        رقم ولي الأمر هو القناة الرسمية لإشعارات الغياب والفواتير. لأي تغيير، يرجى التواصل مع الإدارة.
       </div>
     </div>
+    
+    <div class="readonly-field">
+      <div class="lbl"><span class="lock-icon">🔒</span> المرحلة الدراسية</div>
+      <div class="val" id="readonlyStage">-</div>
+    </div>
+    
+    <div class="readonly-field">
+      <div class="lbl"><span class="lock-icon">🔒</span> الصف الدراسي</div>
+      <div class="val" id="readonlyGrade">-</div>
+    </div>
+    
+    <button class="btn btn-secondary w-full" style="margin-top:12px;" onclick="window.requestDataChange()">
+      📨 طلب تعديل بيانات من الإدارة
+    </button>
   </div>
 </section>
+
 <section class="section" id="section-calendar">
 <div class="section-header"><div><h2 class="section-title">📅 جدول حصصي الأسبوعي</h2></div></div>
 <div class="card"><div id="calendarView"></div></div>
@@ -524,6 +601,7 @@
     }
   }catch(e){}
 })();
+
 const DAYS=[{en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},{en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'},{en:'Saturday',ar:'السبت'}];
 const dayAr=en=>(DAYS.find(d=>d.en===en)||{}).ar||en;
 const T=tm=>DataService?.formatTime12?DataService.formatTime12(tm):tm;
@@ -559,6 +637,7 @@ window.isExamReleased=function(att){
   if(att.visibleToStudent === false) return false;
   return !!(att.released || att.published || att.gradedBy);
 };
+
 window.uploadStudentImages=async function(files){
   const urls=[];
   for(const f of files){
@@ -593,6 +672,7 @@ window.getUnreadNotifs=function(){
     }).sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
   }catch(e){ return []; }
 };
+
 window.notifIcon=function(n){
   const t=n.type||'';
   if(t==='grade') return (n.meta&&n.meta.kind==='ex')?'🎓':'📝';
@@ -605,6 +685,7 @@ window.notifIcon=function(n){
   if(t==='store_purchase') return '🛒';
   return '🔔';
 };
+
 window.getNotifTeacher=function(n){
   try{
     const meta=n.meta||{};
@@ -616,6 +697,7 @@ window.getNotifTeacher=function(n){
     return null;
   }catch(e){ return null; }
 };
+
 window.getNotifAction=function(n){
   const meta=n.meta||{};
   const t=n.type||'';
@@ -671,6 +753,7 @@ window.markNotifRead=function(id){
     window.renderFloatNotifs();
   }catch(e){}
 };
+
 window.snoozeNotif=function(id){
   try{
     const d=db(); d.notificationSnoozed=d.notificationSnoozed||{};
@@ -693,6 +776,7 @@ window.getMySessionsList=function(){
     return list;
   }catch(e){ return []; }
 };
+
 window.computeNextClass=function(){
   try{
     const now=new Date();
@@ -716,6 +800,7 @@ window.computeNextClass=function(){
     return {live:live,liveEndSec:liveEndSec,next:next,nextDeltaSec:best,cancelledToday:cancelledToday};
   }catch(e){ return {live:null,liveEndSec:0,next:null,nextDeltaSec:Infinity,cancelledToday:null}; }
 };
+
 window.renderNextClass=function(){
   try{
     const el=document.getElementById('nextClassCard'); if(!el) return;
@@ -756,6 +841,7 @@ window.renderNextClass=function(){
     window._ncTick();
   }catch(e){ console.error(e); }
 };
+
 window._ncTick=function(){
   try{
     const r=window.computeNextClass();
@@ -773,6 +859,7 @@ window._ncTick=function(){
     if(ce&&r.live) ce.textContent=fmt(r.liveEndSec);
   }catch(e){}
 };
+
 setInterval(function(){ try{ window._ncTick(); }catch(e){} },1000);
 setInterval(function(){ try{ window.renderFloatNotifs(); }catch(e){} },30000);
 
@@ -828,7 +915,6 @@ window.buildMenu=function(){
     {s:'أساتذتي',items:[{id:'teachers',l:'قائمة الأساتذة',i:'👨‍🏫'}]},
     {s:'المالية والمتابعة',items:[{id:'payments',l:'المدفوعات',i:'💰'},{id:'followups',l:'المتابعات',i:'📌'},{id:'calendar',l:'التقويم',i:'📅'}]},
     {s:'⚙️ الحساب',items:[{id:'settings',l:'الإعدادات',i:'⚙️'}]}
-
   ];
   document.getElementById('sidebarNav').innerHTML=menu.map(sec=>`<div class="sidebar-section"><div class="sidebar-section-title">${sec.s}</div>${sec.items.map(it=>`<div class="sidebar-item" data-section="${it.id}" onclick="window.showSection('${it.id}')"><span class="sidebar-item-icon">${it.i}</span><span class="sidebar-item-label">${it.l}</span></div>`).join('')}</div>`).join('');
 };
@@ -853,12 +939,23 @@ window.loadSettings = function() {
   try {
     const s = DataService?.getUserById ? DataService.getUserById(activeStudentId) : currentUser;
     if (!s) return;
+    
+    // Load editable fields
+    const editMyPhone = document.getElementById('editMyPhone');
+    if(editMyPhone) editMyPhone.value = s.phone || '';
+    
+    // Load readonly fields
     const stage = EduFlowConfig?.educationLevels?.[s.stage]?.nameAr || '-';
-    document.getElementById('myCodeDisplay').textContent = s.code || '-';
-    document.getElementById('myNameDisplay').textContent = s.name || '-';
-    document.getElementById('myPhoneDisplay').textContent = s.phone || '-';
-    document.getElementById('myStageDisplay').textContent = stage;
-  } catch (e) { console.error('loadSettings error:', e); }
+    
+    document.getElementById('readonlyName').textContent = s.name || '-';
+    document.getElementById('readonlyCode').textContent = s.code || '-';
+    document.getElementById('readonlyParentPhone').textContent = s.parentPhone || '-';
+    document.getElementById('readonlyStage').textContent = stage;
+    document.getElementById('readonlyGrade').textContent = s.grade || '-';
+    
+  } catch (e) { 
+    console.error('loadSettings error:', e); 
+  }
 };
 
 window.changeMyPassword = async function() {
@@ -915,6 +1012,140 @@ window.changeMyPassword = async function() {
   } catch (e) {
     console.error('changeMyPassword error:', e);
     safeToast('خطأ في تغيير كلمة المرور: ' + e.message, 'error');
+  }
+};
+
+window.saveMyProfile = async function() {
+  try {
+    const myPhone = document.getElementById('editMyPhone')?.value?.trim();
+    
+    // Validation (التحقق من صحة الأرقام المصرية)
+    const phoneRegex = /^01[0-2,5]{1}[0-9]{8}$/; 
+    
+    if (myPhone && !phoneRegex.test(myPhone)) {
+      safeToast('❌ رقم هاتفك الشخصي غير صحيح (يجب أن يكون 11 رقم ويبدأ بـ 01)', 'error');
+      return;
+    }
+    
+    // Save to Database
+    const updates = {};
+    if (myPhone) updates.phone = myPhone;
+    
+    if (typeof DataService?.updateUser === 'function') {
+      await DataService.updateUser(activeStudentId, updates);
+    } else {
+      const d = db();
+      const user = (d.users || []).find(u => u.id === activeStudentId);
+      if (user) {
+        Object.assign(user, updates);
+        save(d);
+      }
+    }
+    
+    // Update Local Session
+    Object.assign(currentUser, updates);
+    localStorage.setItem('eduflow_user', JSON.stringify(currentUser));
+    localStorage.setItem('eduflow_barcode_session', JSON.stringify({...JSON.parse(localStorage.getItem('eduflow_barcode_session')||'{}'), ...updates}));
+    
+    safeToast('✅ تم حفظ بياناتك بنجاح', 'success');
+    window.loadSettings();
+    
+  } catch (e) {
+    console.error('saveMyProfile error:', e);
+    safeToast('خطأ في الحفظ: ' + e.message, 'error');
+  }
+};
+
+window.requestDataChange = function() {
+  try {
+    ThemeManager.openModal(`
+      <div class="modal-header">
+        <h3 class="modal-title">📨 طلب تعديل بيانات</h3>
+        <button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="filter-info" style="margin-bottom:16px;">
+          💡 سيتم إرسال طلبك للإدارة وسيتم التواصل معك خلال 24 ساعة لتعديل البيانات.
+        </div>
+        
+        <div class="form-group">
+          <label>نوع التعديل المطلوب *</label>
+          <select id="changeType" class="form-select">
+            <option value="name">تعديل الاسم</option>
+            <option value="parentPhone">تعديل رقم ولي الأمر</option>
+            <option value="other">أخرى</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>البيانات الجديدة المطلوبة *</label>
+          <textarea id="changeDetails" class="form-textarea" rows="3" placeholder="اكتب البيانات الجديدة أو سبب التعديل..."></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label>رقم التواصل معك</label>
+          <input type="tel" id="changeContact" class="form-input" value="${currentUser.phone || ''}">
+        </div>
+        
+        <button class="btn btn-primary w-full" onclick="window.submitDataChangeRequest()" style="padding:14px;font-size:15px;">
+          📤 إرسال الطلب
+        </button>
+      </div>
+    `, 'modal-md');
+  } catch (e) { 
+    safeToast('خطأ', 'error'); 
+  }
+};
+
+window.submitDataChangeRequest = async function() {
+  try {
+    const changeType = document.getElementById('changeType')?.value;
+    const changeDetails = document.getElementById('changeDetails')?.value?.trim();
+    const changeContact = document.getElementById('changeContact')?.value?.trim();
+    
+    if (!changeDetails) { 
+      safeToast('اكتب تفاصيل التعديل المطلوب', 'error'); 
+      return; 
+    }
+    
+    const d = db();
+    d.followUps = d.followUps || [];
+    
+    const typeLabels = {
+      'name': 'تعديل الاسم',
+      'parentPhone': 'تعديل رقم ولي الأمر',
+      'other': 'طلب تعديل بيانات'
+    };
+    
+    const newRequest = {
+      id: 'fu_' + Date.now(),
+      studentId: activeStudentId,
+      studentName: currentUser.name,
+      studentCode: currentUser.code,
+      title: '📨 ' + typeLabels[changeType],
+      reason: changeType,
+      details: changeDetails,
+      contact: changeContact || currentUser.phone,
+      status: 'open',
+      createdAt: new Date().toISOString(),
+      auto: false
+    };
+    
+    d.followUps.push(newRequest);
+    save(d);
+    
+    if (window.FirebaseService?.connected) {
+      try { 
+        await FirebaseService.saveDoc('followUps', newRequest.id, newRequest); 
+      } catch (e) {}
+    }
+    
+    ThemeManager.closeModal();
+    safeToast('✅ تم إرسال طلبك للإدارة', 'success');
+    
+  } catch (e) { 
+    console.error('submitDataChangeRequest error:', e);
+    safeToast('خطأ في إرسال الطلب', 'error'); 
   }
 };
 
@@ -1100,7 +1331,9 @@ window.loadAttendance=function(){
     </div>`;
   }).join(''):'<p class="text-muted">لا سجلات حضور بعد</p>';
 };
+
 window.startQRScanner=function(){ window.open('qr-scan.html','_blank'); };
+
 window.submitCode=function(){
   const code=document.getElementById('attCode')?.value.trim();
   if(!code){ safeToast('أدخل الكود','error'); return; }
@@ -1179,6 +1412,7 @@ window.openHomework=function(hwId, forceUpload){
   }
   ThemeManager.openModal(body,'modal-lg');
 };
+
 window.homeworkUploadZone=function(hwId){
   return `<div class="form-group"><label>📸 ارفع صورة حلك (ورقة أو أكثر)</label>
   <label class="image-upload-zone" id="stuUpZone_${hwId}">
@@ -1190,6 +1424,7 @@ window.homeworkUploadZone=function(hwId){
   <div id="stuUpPreview_${hwId}" class="answer-images-grid"></div>
   <button class="btn btn-success w-full" style="margin-top:10px;padding:12px;font-size:15px;" onclick="window.submitHomeworkImages('${hwId}')">📤 تسليم الحل</button></div>`;
 };
+
 window.previewStudentImages=function(hwId){
   try{
     const input=document.getElementById('stuUpFiles_'+hwId);
@@ -1205,6 +1440,7 @@ window.previewStudentImages=function(hwId){
     if(zone) zone.classList.add('has-image');
   }catch(e){ console.error(e); }
 };
+
 window.submitHomeworkImages=async function(hwId){
   try{
     const h=DataService?.getHomeworkById?DataService.getHomeworkById(hwId):null;
@@ -1328,6 +1564,7 @@ window.switchResultMode = function(ev, mode) {
   ev.target.classList.add('active');
   window.loadResults();
 };
+
 window.switchResultTab = function(ev, tab) {
   resultTab = tab;
   const tabs = document.querySelectorAll('#section-results .tabs')[1];
@@ -1925,11 +2162,13 @@ window.openBarcodeRequestModal = function() {
     `, 'modal-md');
   } catch (e) { safeToast('خطأ', 'error'); }
 };
+
 window.toggleCustomReason = function() {
   const select = document.getElementById('barcodeReason');
   const wrap = document.getElementById('customReasonWrap');
   if (select && wrap) wrap.style.display = select.value === 'أخرى' ? 'block' : 'none';
 };
+
 window.submitBarcodeRequest = async function() {
   try {
     const reasonSelect = document.getElementById('barcodeReason')?.value;

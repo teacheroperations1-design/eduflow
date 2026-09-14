@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>بطاقة الطالب | Habbash Group</title>
+<title>🎓 بطاقة الطالب | Habbash Group</title>
 <link rel="stylesheet" href="css/eduflow-theme.css">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Fira+Code:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
@@ -30,6 +30,43 @@ body{
 .qr-header h1{margin:0;font-size:20px;font-weight:800}
 .qr-header p{margin:6px 0 0;font-size:12px;opacity:.9}
 .qr-body{padding:24px}
+
+/* 🆕 كارت الترحيب */
+.welcome-card{
+  background:linear-gradient(135deg,rgba(16,185,129,.1),rgba(5,150,105,.08));
+  border:2px solid rgba(16,185,129,.3);
+  border-radius:16px;padding:20px;text-align:center;margin-bottom:16px;
+}
+.welcome-avatar{
+  width:80px;height:80px;border-radius:50%;
+  background:linear-gradient(135deg,#10b981,#059669);
+  color:#fff;display:flex;align-items:center;justify-content:center;
+  font-size:32px;font-weight:800;margin:0 auto 12px;
+  box-shadow:0 8px 24px rgba(16,185,129,.3);
+}
+.welcome-name{font-size:22px;font-weight:800;margin:0 0 4px;color:var(--text,#0f172a)}
+.welcome-sub{font-size:12px;color:var(--text-muted,#94a3b8);margin:0}
+
+/* 🆕 صندوق الباسورد */
+.credentials-box{
+  background:linear-gradient(135deg,#fef3c7,#fde68a);
+  border:2px dashed #f59e0b;
+  border-radius:14px;padding:16px;text-align:center;margin-bottom:16px;
+}
+.credentials-label{
+  font-size:12px;color:#92400e;font-weight:800;margin-bottom:8px;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.credentials-value{
+  font-family:'Fira Code',monospace;font-size:22px;font-weight:800;
+  color:#78350f;background:#fff;padding:10px 20px;
+  border-radius:10px;display:inline-block;letter-spacing:3px;
+  border:2px solid #f59e0b;
+}
+.credentials-hint{
+  font-size:11px;color:#92400e;margin-top:8px;font-weight:700;
+}
+
 .student-card{
   background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(139,92,246,.08));
   border:2px solid var(--primary-border,#e0e7ff);
@@ -78,9 +115,10 @@ body{
 .group-info{flex:1;min-width:0}
 .group-name{font-size:13px;font-weight:700;margin:0;color:var(--text,#0f172a)}
 .group-meta{font-size:11px;color:var(--text-muted,#94a3b8);margin-top:2px}
+
 .action-btn{
   display:block;width:100%;padding:14px;border:none;border-radius:12px;
-  font-weight:800;font-size:14px;cursor:pointer;margin-bottom:8px;
+  font-weight:800;font-size:15px;cursor:pointer;margin-bottom:8px;
   transition:all .2s;text-decoration:none;text-align:center;
 }
 .action-btn:last-child{margin-bottom:0}
@@ -89,11 +127,17 @@ body{
   box-shadow:0 4px 12px rgba(99,102,241,.3);
 }
 .action-btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(99,102,241,.4)}
+.action-btn-success{
+  background:linear-gradient(135deg,#10b981,#059669);color:#fff;
+  box-shadow:0 4px 12px rgba(16,185,129,.3);
+}
+.action-btn-success:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(16,185,129,.4)}
 .action-btn-secondary{
   background:var(--surface-hover,#f8fafc);color:var(--text,#0f172a);
   border:1px solid var(--border,#e2e8f0);
 }
 .action-btn-secondary:hover{background:var(--border,#e2e8f0)}
+
 .error-box{
   background:rgba(239,68,68,.1);border:2px solid rgba(239,68,68,.3);
   border-radius:16px;padding:24px;text-align:center;color:#dc2626;
@@ -113,6 +157,38 @@ body{
   animation:spin 1s linear infinite;margin:0 auto 16px;
 }
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* 🆕 شاشة الدخول المباشر */
+.direct-login-screen{
+  text-align:center;padding:40px 20px;
+}
+.direct-login-icon{
+  font-size:64px;margin-bottom:16px;
+  animation:bounceIn .6s ease;
+}
+@keyframes bounceIn{
+  0%{transform:scale(0);}
+  50%{transform:scale(1.2);}
+  100%{transform:scale(1);}
+}
+.direct-login-title{
+  font-size:22px;font-weight:800;margin:0 0 8px;color:var(--text,#0f172a);
+}
+.direct-login-sub{
+  font-size:14px;color:var(--text-muted,#94a3b8);margin:0 0 20px;
+}
+.login-progress{
+  width:60px;height:4px;background:var(--border,#e2e8f0);
+  border-radius:2px;margin:0 auto;overflow:hidden;
+}
+.login-progress-bar{
+  width:100%;height:100%;background:linear-gradient(90deg,var(--primary,#6366f1),#8b5cf6);
+  animation:progressAnim 1.5s ease-in-out infinite;
+}
+@keyframes progressAnim{
+  0%{transform:translateX(-100%);}
+  100%{transform:translateX(100%);}
+}
 </style>
 </head>
 <body>
@@ -124,7 +200,7 @@ body{
   <div class="qr-body" id="qrBody">
     <div class="loading-state">
       <div class="loading-spinner"></div>
-      <p style="color:var(--text-muted);margin:0">جاري تحميل البيانات...</p>
+      <p style="color:var(--text-muted);margin:0">جاري التحقق...</p>
     </div>
   </div>
   <div class="qr-footer">
@@ -142,7 +218,7 @@ body{
 <script src="js/ui-helpers.js"></script>
 
 <script>
-// 🆕 الصفحة دي Public - مفيش أي auth check
+// 🎯 الصفحة دي Public - مفيش أي auth check
 (async function boot(){
   try{
     document.getElementById('yearSpan').textContent = new Date().getFullYear();
@@ -156,7 +232,7 @@ body{
       if(branding?.name){
         document.getElementById('brandName').textContent = branding.name;
         document.getElementById('footerBrand').textContent = branding.name;
-        document.title = 'بطاقة الطالب | ' + branding.name;
+        document.title = '🎓 بطاقة الطالب | ' + branding.name;
       }
     }catch(e){ console.log('Branding load skipped'); }
     
@@ -172,15 +248,27 @@ body{
     // البحث عن الطالب بالكود (بدون أي auth)
     await DataService.init();
     const allUsers = DataService.getUsers ? DataService.getUsers() : [];
-    const student = allUsers.find(u => u.role === 'student' && (u.code||'').toUpperCase() === code.toUpperCase());
+    const student = allUsers.find(u => 
+      u.role === 'student' && 
+      (u.code||'').toUpperCase() === code.toUpperCase()
+    );
     
     if(!student){
       showError('طالب غير موجود', 'الكود "' + code + '" غير مسجل في النظام');
       return;
     }
     
-    // عرض البيانات فوراً
-    renderStudentCard(student);
+    // 🎯 التحقق من أول مرة دخول
+    const firstTimeKey = 'eduflow_first_visit_' + student.id;
+    const hasVisited = localStorage.getItem(firstTimeKey);
+    
+    if(!hasVisited){
+      // 🎉 أول مرة: اعرض البيانات والباسورد
+      renderFirstTimeView(student, firstTimeKey);
+    } else {
+      // 🚀 مرات تانية: ادخل مباشرة للداشبورد
+      directLoginToDashboard(student);
+    }
     
   }catch(err){
     console.error('QR Page Error:', err);
@@ -188,21 +276,27 @@ body{
   }
 })();
 
-function renderStudentCard(student){
+// 🎉 أول مرة دخول: اعرض البيانات والباسورد
+function renderFirstTimeView(student, firstTimeKey){
   const body = document.getElementById('qrBody');
   
-  // جلب معلومات المجموعات والأستاذ
   const teachers = (typeof DataService?.getStudentTeachers === 'function') 
     ? DataService.getStudentTeachers(student.id) 
     : [];
   
   const stageLabel = (typeof EduFlowConfig !== 'undefined' && EduFlowConfig?.educationLevels?.[student.stage]?.nameAr) || '';
   
+  // حساب الإحصائيات
+  const d = (DataService._getData && DataService._getData()) || {};
+  const attendance = (d.attendance||[]).filter(a => a.status==='approved' && a.records.some(r => r.studentId===student.id));
+  const present = attendance.filter(a => a.records.find(r => r.studentId===student.id)?.status==='present').length;
+  const attRate = attendance.length ? Math.round(present/attendance.length*100) : 0;
+  
   let groupsHtml = '';
   if(teachers.length){
     groupsHtml = `
       <div class="groups-list">
-        <h3 class="groups-title">👥 المجموعات المسجل فيها (${teachers.length})</h3>
+        <h3 class="groups-title">👥 مجموعاتك (${teachers.length})</h3>
         ${teachers.map(t => `
           <div class="group-item">
             <div class="group-icon">📚</div>
@@ -211,7 +305,6 @@ function renderStudentCard(student){
               <div class="group-meta">
                 👨‍🏫 ${t.teacher?.name || '-'} 
                 ${t.group?.center ? ' · 🏢 ' + t.group.center : ''}
-                ${t.group?.day ? ' · 📅 ' + t.group.day : ''}
               </div>
             </div>
           </div>
@@ -220,19 +313,25 @@ function renderStudentCard(student){
     `;
   }
   
-  // حساب الإحصائيات البسيطة
-  const d = (DataService._getData && DataService._getData()) || {};
-  const attendance = (d.attendance||[]).filter(a => a.status==='approved' && a.records.some(r => r.studentId===student.id));
-  const present = attendance.filter(a => a.records.find(r => r.studentId===student.id)?.status==='present').length;
-  const attRate = attendance.length ? Math.round(present/attendance.length*100) : 0;
-  
-  const subs = (d.submissions||[]).filter(s => s.studentId===student.id && s.status==='graded');
-  const avgHw = subs.length ? Math.round(subs.reduce((a,s) => a+(s.score||0), 0)/subs.length) : 0;
-  
   body.innerHTML = `
-    <div class="student-card">
-      <div class="student-avatar">${(student.name||'?').charAt(0)}</div>
-      <h2 class="student-name">${student.name}</h2>
+    <div class="welcome-card">
+      <div class="welcome-avatar">${(student.name||'?').charAt(0)}</div>
+      <h2 class="welcome-name">أهلاً بيك يا ${student.name}! 🎉</h2>
+      <p class="welcome-sub">تم التحقق من الباركود بنجاح</p>
+    </div>
+    
+    <div class="credentials-box">
+      <div class="credentials-label">
+        <span>🔑</span>
+        <span>كلمة المرور الخاصة بك</span>
+      </div>
+      <div class="credentials-value">${student.password || '1234'}</div>
+      <div class="credentials-hint">
+        ⚠️ احفظ الرقم ده — لن يظهر مرة تانية
+      </div>
+    </div>
+    
+    <div class="student-card" style="padding:14px;">
       <div class="student-code">${student.code}</div>
     </div>
     
@@ -250,30 +349,120 @@ function renderStudentCard(student){
         <div class="info-value" style="color:${attRate>=75?'var(--success,#10b981)':'var(--warning,#f59e0b)'}">${attRate}%</div>
       </div>
       <div class="info-box">
-        <div class="info-label">📝 الواجبات</div>
-        <div class="info-value">${subs.length > 0 ? avgHw + '%' : '-'}</div>
+        <div class="info-label">👥 المجموعات</div>
+        <div class="info-value">${teachers.length}</div>
       </div>
     </div>
     
     ${groupsHtml}
     
-    ${student.phone ? `
-      <a href="tel:${student.phone}" class="action-btn action-btn-primary">
-        📞 اتصل بالطالب
-      </a>
-    ` : ''}
+    <button class="action-btn action-btn-success" onclick="window.markVisitedAndLogin('${student.id}', '${firstTimeKey}')">
+      🚀 ادخل للداشبورد
+    </button>
     
-    ${student.parentPhone ? `
-      <a href="https://wa.me/2${String(student.parentPhone).replace(/\D/g,'')}" target="_blank" class="action-btn action-btn-primary" style="background:linear-gradient(135deg,#25d366,#128c7e);">
-        💬 واتساب ولي الأمر
-      </a>
-    ` : ''}
-    
-    <a href="login.html" class="action-btn action-btn-secondary">
-      🔐 دخول لوحة الطالب
-    </a>
+    <button class="action-btn action-btn-secondary" onclick="window.showChangePassword('${student.id}')">
+      🔒 تغيير كلمة المرور
+    </button>
   `;
 }
+
+// ✅ تسجيل الزيارة الأولى والدخول
+window.markVisitedAndLogin = function(studentId, firstTimeKey){
+  try{
+    localStorage.setItem(firstTimeKey, 'true');
+    localStorage.setItem('eduflow_first_visit_timestamp_' + studentId, new Date().toISOString());
+    
+    const allUsers = DataService.getUsers ? DataService.getUsers() : [];
+    const student = allUsers.find(u => u.id === studentId);
+    
+    if(student){
+      directLoginToDashboard(student);
+    } else {
+      alert('خطأ: بيانات الطالب غير موجودة');
+    }
+  }catch(e){
+    console.error('Mark visited error:', e);
+    alert('خطأ في تسجيل الزيارة');
+  }
+};
+
+// 🚀 الدخول المباشر للداشبورد
+function directLoginToDashboard(student){
+  const body = document.getElementById('qrBody');
+  
+  // 1. عرض شاشة التحميل الجميلة
+  body.innerHTML = `
+    <div class="direct-login-screen">
+      <div class="direct-login-icon">✅</div>
+      <h2 class="direct-login-title">أهلاً ${student.name}!</h2>
+      <p class="direct-login-sub">جاري فتح الداشبورد...</p>
+      <div class="login-progress">
+        <div class="login-progress-bar"></div>
+      </div>
+    </div>
+  `;
+  
+  // 2. إنشاء session مؤقت
+  try{
+    const sessionData = {
+      id: student.id,
+      code: student.code,
+      name: student.name,
+      role: 'student',
+      barcodeLogin: true,
+      loginAt: Date.now(),
+      expiresAt: Date.now() + (30 * 24 * 60 * 60 * 1000) // 30 يوم
+    };
+    
+    // حفظ في localStorage
+    localStorage.setItem('eduflow_user', JSON.stringify(student));
+    localStorage.setItem('eduflow_session', JSON.stringify(sessionData));
+    localStorage.setItem('eduflow_barcode_session', JSON.stringify(sessionData));
+    
+    // حفظ في sessionStorage كبديل
+    try{
+      sessionStorage.setItem('eduflow_user', JSON.stringify(student));
+      sessionStorage.setItem('eduflow_session', JSON.stringify(sessionData));
+    }catch(e){}
+    
+  }catch(e){
+    console.error('Session save error:', e);
+  }
+  
+  // 3. الانتقال للداشبورد بعد ثانية
+  setTimeout(() => {
+    const targetUrl = 'student-dashboard.html?barcode=' + encodeURIComponent(student.id) + '&direct=1';
+    window.location.href = targetUrl;
+  }, 1000);
+}
+
+// 🔒 تغيير كلمة المرور
+window.showChangePassword = function(studentId){
+  const newPass = prompt('اكتب كلمة المرور الجديدة (4 أرقام على الأقل):');
+  if(!newPass || newPass.length < 4){
+    alert('كلمة المرور لازم تكون 4 أرقام على الأقل');
+    return;
+  }
+  
+  try{
+    const d = DataService._getData ? DataService._getData() : {};
+    const user = (d.users || []).find(u => u.id === studentId);
+    if(user){
+      user.password = newPass;
+      user.updatedAt = new Date().toISOString();
+      if(typeof DataService._saveData === 'function'){
+        DataService._saveData(d);
+      }
+      alert('✅ تم تغيير كلمة المرور بنجاح');
+      // تحديث العرض
+      const credValue = document.querySelector('.credentials-value');
+      if(credValue) credValue.textContent = newPass;
+    }
+  }catch(e){
+    console.error('Change password error:', e);
+    alert('خطأ في تغيير كلمة المرور');
+  }
+};
 
 function showError(title, msg){
   document.getElementById('qrBody').innerHTML = `
@@ -282,7 +471,7 @@ function showError(title, msg){
       <h3 class="error-title">${title}</h3>
       <p class="error-msg">${msg}</p>
       <a href="login.html" class="action-btn action-btn-primary" style="margin-top:16px;">
-        🔐 تسجيل الدخول
+        🔐 تسجيل الدخول العادي
       </a>
     </div>
   `;
