@@ -192,6 +192,15 @@
 .gmc-stat{background:var(--surface-hover);padding:8px;border-radius:8px;text-align:center;}
 .gmc-stat-value{font-size:14px;font-weight:800;color:var(--primary);font-family:var(--font-en);}
 .gmc-stat-label{font-size:10px;color:var(--text-muted);margin-top:2px;}
+
+/* 🆕 شارة الباركود Login */
+.barcode-login-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 10px;border-radius:9999px;
+  background:linear-gradient(135deg,#10b981,#059669);
+  color:#fff;font-size:11px;font-weight:700;
+  margin-right:8px;
+}
 </style>
 </head>
 <body data-theme="dark">
@@ -444,12 +453,10 @@
   /* 🎯 نظام الدخول الفوري بالباركود */
 (function handleBarcodeAutoLogin() {
   try {
-    // 1. التحقق من parameter في URL
     const params = new URLSearchParams(location.search);
     const barcodeId = params.get('barcode');
     const isDirect = params.get('direct') === '1';
     
-    // 2. التحقق من session في sessionStorage/localStorage
     let barcodeSession = null;
     try {
       barcodeSession = JSON.parse(sessionStorage.getItem('eduflow_barcode_session') || 'null');
@@ -461,32 +468,28 @@
       } catch(e) {}
     }
     
-    // 3. لو في session صالح
     if (barcodeSession && barcodeSession.barcodeLogin && barcodeSession.expiresAt > Date.now()) {
       const userId = barcodeSession.id;
       const user = (DataService?.getUsers ? DataService.getUsers() : []).find(u => u.id === userId);
       
       if (user && user.role === 'student') {
-        // 🎯 تجاوز تسجيل الدخول!
         window.__BARCODE_LOGIN_USER = user;
         window.__VIEWAS_USER = user;
+        window.__BARCODE_LOGIN = true;
         
-        // Override AuthService.getCurrentUser
         if (window.AuthService) {
           const originalGetCurrentUser = AuthService.getCurrentUser;
           AuthService.getCurrentUser = function() { 
             return window.__BARCODE_LOGIN_USER || originalGetCurrentUser?.call(this); 
           };
           
-          // Override requireRole
           if (typeof AuthService.requireRole === 'function') {
             AuthService.requireRole = function(roles) {
               if (!roles || roles.includes('student')) return true;
-              return true; // السماح دائماً للباركود
+              return true;
             };
           }
           
-          // Override logout
           const origLogout = AuthService.logout?.bind(AuthService);
           AuthService.logout = function() {
             sessionStorage.removeItem('eduflow_barcode_session');
@@ -495,6 +498,7 @@
             localStorage.removeItem('eduflow_user');
             window.__BARCODE_LOGIN_USER = null;
             window.__VIEWAS_USER = null;
+            window.__BARCODE_LOGIN = false;
             if (origLogout) origLogout();
             else location.href = 'login.html';
           };
@@ -527,7 +531,6 @@ const db=()=>DataService?._getData?DataService._getData():{};
 const save=d=>DataService?._saveData?DataService._saveData(d):null;
 const safeToast=(msg,type='info')=>{ if(typeof ThemeManager?.toast==='function') ThemeManager.toast(msg,type); };
 
-/* 🆕 دالة تحميل صور محسّنة مع fallback + lazy */
 window.driveThumb=function(url){
   try{
     if(!url) return '';
@@ -778,7 +781,7 @@ setInterval(function(){ try{ window.renderFloatNotifs(); }catch(e){} },30000);
     if(typeof DataService?.init==='function') await DataService.init();
     try{
       const p=new URLSearchParams(location.search);
-      const vid=p.get('viewas')||p.get('license')||p.get('code');
+      const vid=p.get('viewas')||p.get('license')||p.get('code')||p.get('barcode');
       if(vid && !AuthService?.getCurrentUser()){
         const u=(DataService.getUsers?DataService.getUsers():[]).find(x=>x.id===vid||(x.code||'').toUpperCase()===String(vid).toUpperCase());
         if(u){ if(window.setEduUser) window.setEduUser(u); else sessionStorage.setItem('eduflow_user',JSON.stringify(u)); }
@@ -797,10 +800,10 @@ setInterval(function(){ try{ window.renderFloatNotifs(); }catch(e){} },30000);
     } else {
       activeStudentId = currentUser.id;
       document.getElementById('userName').textContent=currentUser.name||'طالب';
-      document.getElementById('userRole').textContent=currentUser.grade||'طالب';
+      const isBarcodeLogin = window.__BARCODE_LOGIN === true;
+      document.getElementById('userRole').innerHTML = (currentUser.grade||'طالب') + (isBarcodeLogin ? ' <span class="barcode-login-badge">📱 باركود</span>' : '');
       document.getElementById('userAvatar').textContent=(currentUser.name||'S').charAt(0);
     }
-    // 🆕 تطبيق البراندنج (اللوجو + الاسم) من الإعدادات
     try{
       const b=(typeof Ops?.getBranding==='function'&&Ops.getBranding())||(db().branding)||{};
       if(b.name) document.querySelectorAll('[data-brand-name]').forEach(el=>el.textContent=b.name);
@@ -839,12 +842,13 @@ window.showSection=function(id){
     exams:window.loadExams, results:window.loadResults, points:window.loadPoints, store:window.loadStore,
     teachers:window.loadTeachers, videos:window.loadVideos, challenges:window.loadChallenges,
     classPosts:window.loadClassPosts, interactive:window.loadInteractive, payments:window.loadPayments,
-    followups:window.loadFollowups, calendar:window.loadCalendar, barcodeRequests:window.loadBarcodeRequests
+    followups:window.loadFollowups, calendar:window.loadCalendar, barcodeRequests:window.loadBarcodeRequests,
+    settings:window.loadSettings
   };
   if(L[id]) L[id]();
   if(window.innerWidth<=1024) document.getElementById('sidebar')?.classList.remove('open');
 };
-// 🆕 دوال الإعدادات وتغيير كلمة المرور
+
 window.loadSettings = function() {
   try {
     const s = DataService?.getUserById ? DataService.getUserById(activeStudentId) : currentUser;
@@ -868,7 +872,6 @@ window.changeMyPassword = async function() {
     if (newPass.length < 4) { safeToast('كلمة المرور يجب أن تكون 4 أرقام على الأقل', 'error'); return; }
     if (newPass !== confirmPass) { safeToast('كلمتا المرور غير متطابقتين', 'error'); return; }
     
-    // محاولة استخدام DataService.changePassword لو موجودة
     if (typeof DataService?.changePassword === 'function') {
       const result = await DataService.changePassword(activeStudentId, currentPass, newPass);
       if (result.success) {
@@ -882,7 +885,6 @@ window.changeMyPassword = async function() {
       return;
     }
     
-    // 🆕 Fallback: تغيير مباشر من الداتا
     const d = db();
     const users = d.users || [];
     const user = users.find(u => u.id === activeStudentId);
@@ -897,7 +899,6 @@ window.changeMyPassword = async function() {
     user.updatedAt = new Date().toISOString();
     save(d);
     
-    // حفظ في Firebase لو متصل
     if (window.FirebaseService?.connected) {
       try { 
         await FirebaseService.saveDoc('users', user.id, user); 
@@ -916,7 +917,7 @@ window.changeMyPassword = async function() {
     safeToast('خطأ في تغيير كلمة المرور: ' + e.message, 'error');
   }
 };
-/* 🆕 رسالة ترحيب مصغّرة + كارت ولي أمر كبير */
+
 window.loadDashboard=function(){
   const displayName = currentUser.role==='parent' ? (currentUser.parentOf || 'ولي الأمر') : currentUser.name;
   document.getElementById('welcomeBanner').innerHTML=`
@@ -958,7 +959,6 @@ window.loadDashboard=function(){
   `;
 };
 
-/* 🆕 مودال "جدولي" - جدول أسبوعي كامل */
 window.openMyScheduleModal=function(){
   try{
     const ts=DataService?.getStudentTeachers?DataService.getStudentTeachers(activeStudentId):[];
@@ -998,7 +998,6 @@ window.openMyScheduleModal=function(){
   }catch(e){ console.error(e); safeToast('خطأ في تحميل الجدول','error'); }
 };
 
-/* 🆕 مودال "مجموعاتي" - تفاصيل كل مجموعة مع إحصائيات */
 window.openMyGroupsModal=function(){
   try{
     const ts=DataService?.getStudentTeachers?DataService.getStudentTeachers(activeStudentId):[];
@@ -1008,7 +1007,6 @@ window.openMyGroupsModal=function(){
     ts.forEach(t=>{
       const g=t.group; const teacher=t.teacher;
       const photo=teacher?.photoUrl?`<img src="${window.driveThumb(teacher.photoUrl)}" class="gmc-photo" loading="lazy" onerror="this.outerHTML='<div class=\\'gmc-photo\\' style=\\'display:flex;align-items:center;justify-content:center;background:var(--primary-bg);color:var(--primary);font-size:20px;\\'>👨‍🏫</div>'">`:'<div class="gmc-photo" style="display:flex;align-items:center;justify-content:center;background:var(--primary-bg);color:var(--primary);font-size:20px;">👨‍🏫</div>';
-      // حساب الإحصائيات
       const myAtt=allAtt.filter(a=>a.status==='approved'&&a.groupId===g.id&&a.records.some(r=>r.studentId===activeStudentId));
       const present=myAtt.filter(a=>a.records.find(r=>r.studentId===activeStudentId)?.status==='present').length;
       const attRate=myAtt.length?Math.round(present/myAtt.length*100):0;
@@ -2013,7 +2011,15 @@ window.openStudentProfile = function() {
     ThemeManager.openModal(body, 'modal-md');
 };
 
-window.handleLogout=function(){ if(confirm('خروج؟')) AuthService.logout(); };
+window.handleLogout=function(){ 
+  if(confirm('خروج؟')) {
+    sessionStorage.removeItem('eduflow_barcode_session');
+    localStorage.removeItem('eduflow_barcode_session');
+    window.__BARCODE_LOGIN_USER = null;
+    window.__BARCODE_LOGIN = false;
+    AuthService.logout();
+  }
+};
 
 </script>
 </body>

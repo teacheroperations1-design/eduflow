@@ -90,7 +90,6 @@ body {
   border-color: var(--scan-danger);
 }
 
-/* Container الكاميرا */
 .scan-container {
   position: relative;
   width: 100%;
@@ -110,7 +109,6 @@ body {
   background: #000;
 }
 
-/* Overlay المسح */
 .scan-overlay {
   position: absolute;
   inset: 0;
@@ -126,7 +124,6 @@ body {
   position: relative;
 }
 
-/* زوايا الإطار */
 .scan-corner {
   position: absolute;
   width: 32px;
@@ -140,7 +137,6 @@ body {
 .scan-corner.bl { bottom: 0; left: 0; border-right: none; border-top: none; border-bottom-left-radius: 12px; }
 .scan-corner.br { bottom: 0; right: 0; border-left: none; border-top: none; border-bottom-right-radius: 12px; }
 
-/* خط المسح المتحرك */
 .scan-line {
   position: absolute;
   left: 5%;
@@ -159,7 +155,6 @@ body {
   90% { opacity: 1; }
 }
 
-/* تظليل خارج الإطار */
 .scan-overlay::before {
   content: '';
   position: absolute;
@@ -168,7 +163,6 @@ body {
   pointer-events: none;
 }
 
-/* نص التوجيه */
 .scan-hint {
   position: absolute;
   bottom: 24px;
@@ -202,7 +196,6 @@ body {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* زر تبديل الكاميرا */
 .camera-toggle {
   position: absolute;
   top: 16px;
@@ -227,7 +220,6 @@ body {
   background: rgba(99, 102, 241, 0.4);
 }
 
-/* زر الفلاش */
 .flash-toggle {
   position: absolute;
   top: 16px;
@@ -253,7 +245,6 @@ body {
   border-color: #fbbf24;
 }
 
-/* الإدخال اليدوي */
 .manual-entry {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -342,7 +333,6 @@ body {
   color: #94a3b8;
 }
 
-/* حالة النجاح/الخطأ */
 .result-overlay {
   position: absolute;
   inset: 0;
@@ -397,7 +387,6 @@ body {
   justify-content: center;
 }
 
-/* Camera Selector Modal */
 .camera-selector-modal {
   position: fixed;
   inset: 0;
@@ -467,7 +456,6 @@ body {
   font-weight: 700;
 }
 
-/* Responsive */
 @media (max-width: 640px) {
   .scan-wrapper { padding: 12px; }
   .scan-frame { width: 80%; height: 50%; }
@@ -480,7 +468,6 @@ body {
 <body data-theme="dark">
 
 <div class="scan-wrapper">
-  <!-- Header -->
   <header class="scan-header">
     <div class="scan-header-title">
       <div class="scan-header-icon">📷</div>
@@ -492,11 +479,9 @@ body {
     <button class="close-btn" onclick="window.closeScanner()" title="إغلاق">✕</button>
   </header>
 
-  <!-- Camera Container -->
   <div class="scan-container">
     <video id="videoElement" autoplay muted playsinline></video>
     
-    <!-- Overlay -->
     <div class="scan-overlay">
       <div class="scan-frame">
         <div class="scan-corner tl"></div>
@@ -507,17 +492,14 @@ body {
       </div>
     </div>
     
-    <!-- Controls -->
     <button class="camera-toggle" onclick="window.openCameraSelector()" title="اختيار الكاميرا">🔄</button>
     <button class="flash-toggle" id="flashToggle" onclick="window.toggleFlash()" title="الفلاش">⚡</button>
     
-    <!-- Status -->
     <div class="scan-hint" id="scanStatus">
       <span class="scanning-animation"></span>
       <span>جاري البحث عن باركود...</span>
     </div>
     
-    <!-- Result Overlay -->
     <div class="result-overlay" id="resultOverlay">
       <div class="result-icon" id="resultIcon">✅</div>
       <h2 class="result-title" id="resultTitle">تم المسح بنجاح</h2>
@@ -526,7 +508,6 @@ body {
     </div>
   </div>
 
-  <!-- Manual Entry -->
   <div class="manual-entry">
     <div class="manual-entry-label">
       <span>⌨️</span>
@@ -545,7 +526,6 @@ body {
     </div>
   </div>
 
-  <!-- Back Button -->
   <div style="text-align:center;padding-bottom:20px;">
     <button class="close-btn" style="width:auto;padding:10px 20px;border-radius:10px;gap:6px;display:inline-flex;align-items:center;" onclick="window.closeScanner()">
       <span>←</span> العودة
@@ -553,7 +533,6 @@ body {
   </div>
 </div>
 
-<!-- Camera Selector Modal -->
 <div class="camera-selector-modal" id="cameraModal">
   <div class="camera-selector-card">
     <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -565,7 +544,6 @@ body {
   </div>
 </div>
 
-<!-- Scripts -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -581,9 +559,6 @@ body {
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 
 <script>
-/* ================================================================
-   🔧 UTILITIES
-================================================================ */
 window.safeToast = function(msg, type='info') {
   try { 
     if (typeof ThemeManager?.toast === 'function') ThemeManager.toast(msg, type);
@@ -591,9 +566,6 @@ window.safeToast = function(msg, type='info') {
   } catch(e) { console.log('[Toast fallback]', msg); }
 };
 
-/* ================================================================
-   🎯 STATE
-================================================================ */
 let currentUser = null;
 let scanStream = null;
 let scanTimer = null;
@@ -603,21 +575,14 @@ let currentCameraId = null;
 let flashOn = false;
 let availableCameras = [];
 
-/* ================================================================
-   🚀 BOOT
-================================================================ */
 (async function boot() {
   try {
     if (typeof DataService?.init === 'function') await DataService.init();
     currentUser = AuthService?.getCurrentUser ? AuthService.getCurrentUser() : null;
     
-    // تحميل قائمة الكاميرات المتاحة
     await loadCameras();
-    
-    // بدء الكاميرا الموصى بها
     await startCamera();
     
-    // التركيز على الإدخال اليدوي
     setTimeout(() => {
       const input = document.getElementById('manualCode');
       if (input) input.focus();
@@ -629,9 +594,6 @@ let availableCameras = [];
   }
 })();
 
-/* ================================================================
-   📷 CAMERA MANAGEMENT (مع CameraHelper)
-================================================================ */
 async function loadCameras() {
   try {
     if (typeof window.CameraHelper?.listCameras === 'function') {
@@ -644,7 +606,6 @@ async function loadCameras() {
 
 async function startCamera(cameraId = null) {
   try {
-    // إيقاف الكاميرا القديمة
     stopCamera();
     
     if (!window.jsQR) {
@@ -654,7 +615,6 @@ async function startCamera(cameraId = null) {
     
     const video = document.getElementById('videoElement');
     
-    // 🎯 استخدام CameraHelper للحصول على الكاميرا الموصى بها
     if (typeof window.CameraHelper?.getPreferredCamera === 'function') {
       const preferred = await window.CameraHelper.getPreferredCamera();
       currentCameraId = preferred.deviceId;
@@ -673,7 +633,6 @@ async function startCamera(cameraId = null) {
       
       scanStream = await navigator.mediaDevices.getUserMedia(constraints);
     } else {
-      // Fallback لو CameraHelper مش موجود
       scanStream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment' }, 
         audio: false
@@ -740,9 +699,6 @@ function stopCamera() {
   }
 }
 
-/* ================================================================
-   🔄 CAMERA SELECTOR MODAL
-================================================================ */
 window.openCameraSelector = async function() {
   const modal = document.getElementById('cameraModal');
   const list = document.getElementById('cameraList');
@@ -778,7 +734,6 @@ window.switchCamera = async function(deviceId) {
   window.closeCameraModal();
   updateStatus('جاري تبديل الكاميرا...', 'scanning');
   
-  // استخدام CameraHelper لفتح كاميرا محددة
   if (typeof window.CameraHelper?.openCamera === 'function') {
     const video = document.getElementById('videoElement');
     stopCamera();
@@ -800,9 +755,6 @@ window.switchCamera = async function(deviceId) {
   }
 };
 
-/* ================================================================
-   ⚡ FLASH TOGGLE
-================================================================ */
 window.toggleFlash = async function() {
   try {
     if (!scanStream) return;
@@ -823,9 +775,6 @@ window.toggleFlash = async function() {
   }
 };
 
-/* ================================================================
-   📝 STATUS UPDATES
-================================================================ */
 function updateStatus(text, type = 'scanning') {
   const status = document.getElementById('scanStatus');
   if (!status) return;
@@ -843,9 +792,6 @@ function updateStatus(text, type = 'scanning') {
   }
 }
 
-/* ================================================================
-   🧠 SMART BARCODE PARSER
-================================================================ */
 window.parseBarcode = function(rawCode) {
   if (!rawCode) return null;
   const code = String(rawCode).trim();
@@ -853,7 +799,6 @@ window.parseBarcode = function(rawCode) {
   let extracted = null;
   let type = 'student';
   
-  // 1. JSON
   try {
     const parsed = JSON.parse(code);
     if (parsed.studentId || parsed.id || parsed.code) {
@@ -861,13 +806,11 @@ window.parseBarcode = function(rawCode) {
     }
   } catch(e) {}
   
-  // 2. URL parameter
   if (!extracted) {
     const urlMatch = code.match(/[?&]code=([A-Za-z0-9\-_]+)/i);
     if (urlMatch) extracted = urlMatch[1];
   }
   
-  // 3. EDUFLOW-ATT:XXX (QR حضور)
   if (!extracted) {
     const attMatch = code.match(/EDUFLOW-ATT:(.+)/i);
     if (attMatch) {
@@ -875,31 +818,26 @@ window.parseBarcode = function(rawCode) {
     }
   }
   
-  // 4. Student QR URL (مثل student-qr.html?code=XXX)
   if (!extracted) {
     const studentUrlMatch = code.match(/student-qr\.html.*[?&]code=([A-Za-z0-9\-_]+)/i);
     if (studentUrlMatch) extracted = studentUrlMatch[1];
   }
   
-  // 5. EDU-XXX أو EDU:XXX
   if (!extracted) {
     const eduMatch = code.match(/EDU[-:]([A-Za-z0-9\-_]+)/i);
     if (eduMatch) extracted = eduMatch[1];
   }
   
-  // 6. STUDENT-XXX
   if (!extracted) {
     const studentMatch = code.match(/STUDENT[-:]([A-Za-z0-9\-_]+)/i);
     if (studentMatch) extracted = studentMatch[1];
   }
   
-  // 7. أرقام/حروف فقط
   if (!extracted) {
     const cleanMatch = code.match(/^([A-Za-z0-9\-_]{3,30})$/);
     if (cleanMatch) extracted = cleanMatch[1];
   }
   
-  // 8. آخر جزء بعد : أو =
   if (!extracted) {
     const parts = code.split(/[:=]/);
     if (parts.length > 1) extracted = parts[parts.length - 1].trim();
@@ -912,9 +850,6 @@ window.parseBarcode = function(rawCode) {
   return null;
 };
 
-/* ================================================================
-   🎯 HANDLE BARCODE SCAN
-================================================================ */
 window.handleBarcodeScan = function(rawCode) {
   try {
     if (isProcessing) return;
@@ -929,7 +864,6 @@ window.handleBarcodeScan = function(rawCode) {
       return;
     }
     
-    // QR حضور (مش باركود طالب)
     if (parsed.type === 'attendance') {
       showResult('warning', '📋', 'QR حضور', 'هذا QR لتسجيل الحضور وليس باركود طالب');
       isProcessing = false;
@@ -938,7 +872,6 @@ window.handleBarcodeScan = function(rawCode) {
     
     const codeValue = parsed.value.toUpperCase();
     
-    // البحث عن الطالب
     const users = DataService?.getUsers ? DataService.getUsers() : [];
     const student = users.find(u => {
       if (u.role !== 'student') return false;
@@ -956,11 +889,9 @@ window.handleBarcodeScan = function(rawCode) {
       return;
     }
     
-    // نجاح!
     showResult('success', '✅', `مرحباً ${student.name}`, 'جاري فتح الداشبورد...');
     stopCamera();
     
-    // الدخول الفوري
     setTimeout(() => {
       window.directLoginToStudent(student);
     }, 800);
@@ -972,9 +903,6 @@ window.handleBarcodeScan = function(rawCode) {
   }
 };
 
-/* ================================================================
-   🎨 RESULT OVERLAY
-================================================================ */
 function showResult(type, icon, title, subtitle) {
   const overlay = document.getElementById('resultOverlay');
   const iconEl = document.getElementById('resultIcon');
@@ -986,7 +914,6 @@ function showResult(type, icon, title, subtitle) {
   titleEl.textContent = title;
   subtitleEl.textContent = subtitle;
   
-  // Actions حسب النوع
   if (type === 'error' || type === 'warning') {
     actionsEl.innerHTML = `
       <button class="scan-btn" onclick="window.hideResult()" style="background:rgba(255,255,255,0.1);">
@@ -1007,41 +934,14 @@ window.hideResult = function() {
 };
 
 /* ================================================================
-   🚀 DIRECT LOGIN (بدون تسجيل دخول)
-================================================================ */
+   🚀 DIRECT LOGIN - التوجيه لصفحة student-barcode-entry.html
+   ================================================================ */
 window.directLoginToStudent = function(student) {
   try {
-    // Session بيانات
-    const sessionData = {
-      id: student.id,
-      code: student.code,
-      name: student.name,
-      role: student.role || 'student',
-      barcodeLogin: true,
-      loginAt: Date.now(),
-      expiresAt: Date.now() + (24 * 60 * 60 * 1000)
-    };
+    // 🎯 التوجيه لصفحة student-barcode-entry.html (مش الداشبورد مباشرة)
+    // الصفحة دي هتتحقق من أول مرة وتعرض البيانات والباسورد
+    const targetUrl = 'student-barcode-entry.html?code=' + encodeURIComponent(student.code || student.id);
     
-    // حفظ في sessionStorage
-    try {
-      sessionStorage.setItem('eduflow_barcode_session', JSON.stringify(sessionData));
-      sessionStorage.setItem('eduflow_user', JSON.stringify(student));
-      sessionStorage.setItem('eduflow_viewas', JSON.stringify(student));
-    } catch(e) {}
-    
-    // حفظ في localStorage كبديل
-    try {
-      localStorage.setItem('eduflow_barcode_session', JSON.stringify(sessionData));
-      localStorage.setItem('eduflow_user', JSON.stringify(student));
-    } catch(e) {}
-    
-    // تحديد الصفحة المستهدفة
-    let targetPage = 'student-dashboard.html';
-    if (student.role === 'parent') targetPage = 'parent-dashboard.html';
-    else if (student.role === 'teacher') targetPage = 'teacher-dashboard.html';
-    
-    // الانتقال
-    const targetUrl = targetPage + '?barcode=' + encodeURIComponent(student.id) + '&direct=1';
     safeToast('✅ أهلاً ' + student.name, 'success');
     
     setTimeout(() => {
@@ -1055,9 +955,6 @@ window.directLoginToStudent = function(student) {
   }
 };
 
-/* ================================================================
-   🚪 CLOSE & CLEANUP
-================================================================ */
 window.closeScanner = function() {
   stopCamera();
   if (window.history.length > 1) {
@@ -1067,9 +964,6 @@ window.closeScanner = function() {
   }
 };
 
-/* ================================================================
-   ⌨️ KEYBOARD SHORTCUTS
-================================================================ */
 document.addEventListener('DOMContentLoaded', () => {
   const input = document.getElementById('manualCode');
   if (input) {
@@ -1080,7 +974,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   
-  // Escape للإغلاق
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       const modal = document.getElementById('cameraModal');
@@ -1093,9 +986,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-/* ================================================================
-   🧹 CLEANUP ON UNLOAD
-================================================================ */
 window.addEventListener('beforeunload', () => {
   stopCamera();
   if (typeof window.CameraHelper?.closeCamera === 'function') {
