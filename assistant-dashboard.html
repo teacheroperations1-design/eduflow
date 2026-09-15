@@ -585,6 +585,7 @@
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="js/footer-injector.js"></script>
 <script src="js/camera-helper.js"></script>
+<script src="js/smart-student.js"></script>
 <script>
   /* 🆕 View-As: لو الرابط فيه ?viewas= خد الهوية دي كالمستخدم الحالي للتبويب ده */
 (function(){
@@ -1167,95 +1168,160 @@ return `<div style="padding:12px;background:var(--surface-hover);border-radius:8
 }catch(e){}
 };
 // 🆕 مودال إضافة طالب (مقيد بالأستاذ المسؤول)
+/* ============ 🧠 المودال الذكي للطلاب (مساعد) ============ */
+SSM.register('assistant',{
+  nameId:'asName', myPhoneId:'asPhone', parentId:'asParentPhone',
+  stageId:'asStage', gradeId:'asGrade', stageCascade:'asStageCascade',
+  boxId:'asSmartBox', bannerId:'asLinkBanner',
+  listId:'asGroupsList', countId:'asGrpCount',
+  linkVar:'_asLinkMode', renderGroups:'renderAssistantGroups',
+  pickPreFn:'asSetPre', clearPreFn:'asClearPre', single:true
+});
+window.asSetPre=function(id){
+  const teacher=window.getMyTeacher?window.getMyTeacher():null;
+  window._asPre=(DataService.getStudentTeachers(id)||[]).filter(t=>!teacher||t.teacher.id===teacher.id).map(t=>t.group.id);
+};
+window.asClearPre=function(){ window._asPre=[]; };
+
+
 window.openAssistantAddStudentModal=function(){
 try{
 const assignment = typeof Ops?.getAssignment === 'function' ? Ops.getAssignment(currentUser.id) : null;
 const teacherId = assignment?.teacherId;
 const teacher = teacherId ? DataService.getUserById(teacherId) : null;
-if(!teacher) { window.safeToast('يجب ربطك بأستاذ أولاً من قبل الأدمن', 'error'); return; }
+if(!teacher) {
+window.safeToast('يجب ربطك بأستاذ أولاً من قبل الأدمن', 'error');
+return;
+}
 const stageOptions=Object.entries(EduFlowConfig?.educationLevels||{}).map(([k,v])=>`<option value="${k}">${v.nameAr}</option>`).join('');
-// 🆕 السناتر المتاحة من مجموعات أستاذي فقط
-const myGroups=DataService.getGroupsByTeacher(teacherId);
-const centers=[...new Set(myGroups.map(g=>g.center).filter(Boolean))];
-const centerOptions=centers.map(c=>`<option value="${c}">${c}</option>`).join('');
+const groups=DataService.getGroupsByTeacher(teacherId);
+
 ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🎓 إضافة طالب جديد</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
 <div class="modal-body">
-<div class="filter-info">💡 سيتم ربط الطالب تلقائياً بالأستاذ: <strong>${teacher.name}</strong></div>
+<div class="filter-info">💡 سيتم ربط هذا الطالب تلقائياً بالأستاذ: <strong>${teacher.name}</strong></div>
 <form onsubmit="return window.saveAssistantStudent(event)">
-<div class="stu-section">
-<div class="stu-section-title">👤 البيانات الأساسية</div>
-<div class="form-group"><label>الاسم الكامل *</label><input type="text" id="asName" class="form-input" required placeholder="مثال: أحمد محمد علي"></div>
+<div class="form-group"><label>الاسم الكامل *</label><input type="text" id="asName" class="form-input" required></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-<div class="form-group"><label>📱 هاتف الطالب</label><input type="tel" id="asPhone" class="form-input" oninput="window.checkExistingStudent()" placeholder="01xxxxxxxxx"></div>
-<div class="form-group"><label>👨‍👩‍ هاتف ولي الأمر</label><input type="tel" id="asParent" class="form-input" oninput="window.checkExistingStudent()" placeholder="01xxxxxxxxx"></div>
+<div class="form-group"><label>هاتف الطالب</label><input type="tel" id="asPhone" class="form-input"></div>
+<div class="form-group"><label>هاتف ولي الأمر</label><input type="tel" id="asParent" class="form-input"></div>
 </div>
-<div id="smartSearchResult" style="display:none;"></div>
-</div>
-<div class="stu-section">
-<div class="stu-section-title">🎓 المرحلة والصف والسنتر</div>
-<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+<div class="stage-grade-row">
 <div class="form-group"><label>المرحلة *</label><select id="asLevel" class="form-select" onchange="window.updAssistantStudentGrades();window.renderAssistantStudentGroups();">${stageOptions}</select></div>
 <div class="form-group"><label>الصف *</label><select id="asGrade" class="form-select" onchange="window.renderAssistantStudentGroups();"></select></div>
-<div class="form-group"><label>🏢 السنتر</label><select id="asCenter" class="form-select" onchange="window.renderAssistantStudentGroups();"><option value="">كل السناتر</option>${centerOptions}</select></div>
 </div>
+<div class="form-group">
+<label>👥 اختر المجموعة (التابعة للأستاذ ${teacher.name})</label>
+<div id="asGroups" style="max-height:200px;overflow-y:auto;padding:8px;background:var(--surface-hover);border-radius:8px;"></div>
 </div>
-<div class="stu-section">
-<div class="stu-section-title">👥 المجموعة <span id="asGrpCountBadge" class="points-badge" style="display:none;">0</span></div>
-<div id="asGroups" class="groups-box"></div>
-</div>
-<div class="stu-section">
-<div class="stu-section-title">🔑 بيانات الدخول</div>
 <div class="form-group"><label>كلمة المرور</label><input type="text" id="asPass" class="form-input" value="1234"></div>
-</div>
-<div class="modal-sticky-footer"><button class="btn btn-primary w-full btn-lg">💾 حفظ الطالب</button></div>
+<button class="btn btn-primary w-full">💾 حفظ الطالب</button>
 </form>
-</div>`,'modal-lg');
+</div>`);
 window.updAssistantStudentGrades();
 setTimeout(()=>{ window.renderAssistantStudentGroups(); }, 100);
 }catch(e){ console.error(e); }
 };
 
-// 🆕 الدالة الناقصة: تعبئة الصفوف حسب المرحلة المختارة
-window.updAssistantStudentGrades=function(sel){
-try{
-const lvl=document.getElementById('asLevel')?.value;
-const grades=(window.EduFlowConfig?.educationLevels?.[lvl]?.grades)||[];
-const el=document.getElementById('asGrade');
-if(el) el.innerHTML='<option value="">--</option>'+grades.map(g=>`<option ${sel===g?'selected':''}>${g}</option>`).join('');
-}catch(e){}
-};
-window.renderAssistantStudentGroups=function(preSelectedIds){
+window.renderAssistantStudentGroups=function(){
 try{
 const teacherId=window.getMyTeacherId();
-const stage=(document.getElementById('asLevel')?.value||'').trim();
-const grade=(document.getElementById('asGrade')?.value||'').trim();
-const center=(document.getElementById('asCenter')?.value||'').trim();
+const stage=document.getElementById('asLevel')?.value;
+const grade=document.getElementById('asGrade')?.value;
 const container=document.getElementById('asGroups');
 if(!container) return;
-const norm=s=>String(s||'').trim();
-const key=stage+'|'+grade+'|'+center;
-if(window._asGrpLastKey!==key){ window._asGrpShowAll=false; window._asGrpLastKey=key; }
-const all=(DataService?.getGroupsByTeacher?DataService.getGroupsByTeacher(teacherId):[]);
-let list=all;
-if(stage) list=list.filter(g=>norm(g.stage)===stage);
-if(grade) list=list.filter(g=>norm(g.grade)===grade);
-if(center) list=list.filter(g=>norm(g.center)===center);
-if(window._asGrpShowAll) list=all;
-const badge=document.getElementById('asGrpCountBadge');
-if(badge){ badge.textContent=list.length; badge.style.display=list.length?'inline-flex':'none'; }
-if(list.length){
-container.innerHTML=list.map(g=>`
-<label class="group-check-item">
-<input type="checkbox" class="as-grp" value="${g.id}" data-teacher="${teacherId}" ${preSelectedIds?.includes(g.id)?'checked':''}>
-<span style="flex:1;font-size:13px;">${g.name} <span class="text-xs text-muted">(${dayAr(g.day)} ${T(g.time)})</span></span>
-${g.center?`<span class="badge badge-success" style="font-size:10px;">🏢 ${g.center}</span>`:''}
-${g.grade?`<span class="badge badge-info" style="font-size:10px;">🎓 ${g.grade}</span>`:''}
-</label>`).join('');
+const groups=(DataService?.getGroupsByTeacher?DataService.getGroupsByTeacher(teacherId):[]).filter(g=>(!stage||!g.stage||g.stage===stage)&&(!grade||!g.grade||g.grade===grade));
+if(groups.length){
+container.innerHTML=groups.map(g=>`
+<label style="display:flex;gap:8px;align-items:center;margin-bottom:6px;padding:8px;background:var(--surface);border-radius:6px;cursor:pointer;">
+<input type="checkbox" class="as-grp" value="${g.id}" data-teacher="${teacherId}">
+<span style="font-size:13px;">${g.name} (${dayAr(g.day)} ${T(g.time)})</span>
+</label>
+`).join('');
 }else{
-container.innerHTML=`<p class="text-muted" style="font-size:12px;text-align:center;padding:10px;">مفيش مجموعات مطابقة ${grade||stage||center?'للاختيار ده':''} عند أستاذك</p>
-${all.length?`<button type="button" class="btn btn-ghost btn-sm w-full" onclick="window._asGrpShowAll=true;window.renderAssistantStudentGroups();">👀 عرض كل مجموعات الأستاذ</button>`:''}`;
+container.innerHTML='<p class="text-muted" style="font-size:12px;">لا توجد مجموعات مطابقة لهذا الأستاذ والمرحلة</p>';
 }
 }catch(e){ console.error(e); }
+};
+
+window.asStageCascade=function(){
+  try{
+    const st=document.getElementById('asStage')?.value||'';
+    const grades=(EduFlowConfig?.educationLevels?.[st]?.grades)||[];
+    const el=document.getElementById('asGrade');
+    if(el) el.innerHTML='<option value="">--</option>'+grades.map(g=>`<option>${g}</option>`).join('');
+  }catch(e){}
+};
+
+window.renderAssistantGroups=function(){
+  try{
+    const list=document.getElementById('asGroupsList'); if(!list) return;
+    const teacher=window.getMyTeacher?window.getMyTeacher():null;
+    if(!teacher){ list.innerHTML=''; return; }
+    const center=document.getElementById('asCenter')?.value||'';
+    const q=(document.getElementById('asGrpSearch')?.value||'').trim().toLowerCase();
+    const pre=(window._asPre||[]).slice();
+    let groups=(DataService.getGroupsByTeacher?DataService.getGroupsByTeacher(teacher.id):[]).slice();
+    const byId={}; groups.forEach(g=>byId[g.id]=g);
+    const preGroups=pre.map(id=>byId[id]).filter(Boolean);
+    let rest=groups.filter(g=>pre.indexOf(g.id)<0);
+    if(center) rest=rest.filter(g=>(g.center||'')===center);
+    if(q) rest=rest.filter(g=>(g.name||'').toLowerCase().indexOf(q)>=0);
+    function card(g,checked){
+      const cnt=(DataService.getStudentsByGroup)?DataService.getStudentsByGroup(g.id).length:0;
+      return `<label class="grp-card"><input type="checkbox" class="grp-check" value="${g.id}" data-teacher="${g.teacherId}" ${checked?'checked':''} onchange="SSM.onCheck('assistant',this)">
+        <div style="flex:1;min-width:0;"><div class="grp-name">${g.name}</div>
+        <div class="grp-meta">🏢 ${g.center||'-'} · 👥 ${cnt} طالب</div>
+        <div class="grp-times">🕐 ${SSM.groupTimes(g)}</div></div></label>`;
+    }
+    let html='';
+    if(preGroups.length){
+      html+=`<div class="sm-teacher-block"><div class="sm-teacher-name">📌 مجموعة الطالب الحالية</div>${preGroups.map(g=>card(g,true)).join('')}</div>`;
+    }
+    html+=rest.map(g=>card(g,false)).join('');
+    list.innerHTML=html||'<p class="text-muted" style="padding:10px;">لا توجد مجموعات مطابقة</p>';
+    SSM.updateCount('assistant');
+  }catch(e){ console.error('renderAssistantGroups error',e); }
+};
+
+window.saveAssistantStudent=async function(e){
+  try{
+    e.preventDefault();
+    const teacher=window.getMyTeacher?window.getMyTeacher():null;
+    if(!teacher){ window.safeToast('غير مرتبط بأستاذ','error'); return false; }
+    const name=(document.getElementById('asName')?.value||'').trim();
+    if(!name){ window.safeToast('اكتب الاسم','error'); return false; }
+    const data={
+      name:name,
+      phone:document.getElementById('asPhone')?.value||'',
+      parentPhone:document.getElementById('asParentPhone')?.value||'',
+      stage:document.getElementById('asStage')?.value||'',
+      grade:document.getElementById('asGrade')?.value||''
+    };
+    const sel=SSM.selected('assistant');
+    const pre=(window._asPre||[]).slice();
+    if(window._asLinkMode){
+      /* 🔗 ربط طالب موجود بمجموعات الأستاذ بدون تكرار */
+      const sid=window._asLinkMode.id;
+      if(typeof DataService.updateUser==='function') await DataService.updateUser(sid,data);
+      const cur=(DataService.getStudentTeachers(sid)||[]).map(t=>t.group.id);
+      for(const en of sel){ if(cur.indexOf(en.groupId)<0) await SSM.enroll(sid,en.groupId,en.teacherId); }
+      for(const gid of pre){ if(!sel.some(x=>x.groupId===gid)) await SSM.unenroll(sid,gid); }
+      window.safeToast('✅ تم ربط الطالب بدون تكرار','success');
+    } else {
+      /* 🎓 جديد */
+      if(!sel.length){ window.safeToast('اختار المجموعة','error'); return false; }
+      const pass=document.getElementById('asPass')?.value||'1234';
+      const r=await DataService.addStudentByAdmin(Object.assign({},data,{
+        password:pass,
+        enrollments:[{groupId:sel[0].groupId, teacherId:teacher.id}]
+      }));
+      window.safeToast('✅ تم إنشاء الطالب بالكود: '+r.code,'success');
+    }
+    ThemeManager.closeModal();
+    window._asLinkMode=null; window._asPre=[];
+    if(window.loadStudents) window.loadStudents();
+    return false;
+  }catch(err){ console.error('saveAssistantStudent error',err); window.safeToast('خطأ: '+err.message,'error'); return false; }
 };
 
 window.saveAssistantStudent=async function(e){
