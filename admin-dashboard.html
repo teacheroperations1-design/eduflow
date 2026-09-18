@@ -504,9 +504,13 @@
 <section class="section" id="section-groups">
 <div class="section-header"><div><h2 class="section-title">👥 المجموعات</h2></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-secondary" onclick="window.openBulkGroupsModal()">📋 إضافة بالجملة</button><button class="btn btn-primary" onclick="window.openGroupModal()">+ مجموعة</button></div></div>
 <div class="card" style="margin-bottom:12px;">
-<div class="form-group"><label>فلتر الأستاذ</label><select id="grpTeacherFilter" class="form-select" onchange="window.loadGroups()"><option value="">كل الأساتذة</option></select></div>
-<div class="form-group"><label>فلتر السنتر</label><select id="grpCenterFilter" class="form-select" onchange="window.loadGroups()"><option value="">كل السناتر</option></select></div>
-<div class="search-bar"><input type="text" id="gSearchBar" class="form-input" placeholder="بحث عن مجموعة..." onkeyup="window.loadGroups()"></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
+<div class="form-group"><label>👨‍🏫 فلتر الأستاذ</label><select id="grpTeacherFilter" class="form-select" onchange="window.loadGroups()"><option value="">كل الأساتذة</option></select></div>
+<div class="form-group"><label>🏢 فلتر السنتر</label><select id="grpCenterFilter" class="form-select" onchange="window.loadGroups()"><option value="">كل السناتر</option></select></div>
+<div class="form-group"><label>🎓 فلتر الصف</label><select id="grpGradeFilter" class="form-select" onchange="window.loadGroups()"><option value="">كل الصفوف</option></select></div>
+<div class="form-group"><label>📅 فلتر اليوم</label><select id="grpDayFilter" class="form-select" onchange="window.loadGroups()"><option value="">كل الأيام</option></select></div>
+</div>
+<div class="search-bar" style="margin-top:12px;"><input type="text" id="gSearchBar" class="form-input" placeholder="بحث عن مجموعة..." onkeyup="window.loadGroups()"></div>
 </div>
 <div id="groupsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;"></div>
 </section>
@@ -539,7 +543,6 @@
 </div>
 </section>
 
-<!-- 🤖 AI Control Center -->
 
 <!-- 🎁 نظام النقاط -->
 <section class="section" id="section-points">
@@ -961,12 +964,37 @@ window.fillTeacherFilters=function(){
 };
 
 window.fillCenterFilters=function(){
-  try{
-    const centers=DataService.getCenters?DataService.getCenters():[];
-    const el=document.getElementById('grpCenterFilter');
-    if(el){ el.innerHTML='<option value="">كل السناتر</option>'+centers.map(c=>`<option value="${c.name}">${c.name}</option>`).join(''); }
-  }catch(e){}
+try{
+// 🆕 جلب السناتر من مصادر متعددة
+let centers=[];
+if(DataService.getCenters){
+  centers=(DataService.getCenters()||[]).map(c=>c.name).filter(Boolean);
+}
+if(!centers.length && window.getAllCenters){
+  centers=window.getAllCenters();
+}
+centers=[...new Set(centers)];
+
+const el=document.getElementById('grpCenterFilter');
+if(el){ el.innerHTML='<option value="">كل السناتر</option>'+centers.map(c=>`<option value="${c}">${c}</option>`).join(''); }
+
+// 🆕 فلتر الصفوف
+const gradeEl=document.getElementById('grpGradeFilter');
+if(gradeEl){
+  const grades=(typeof EduFlowConfig!=='undefined'&&EduFlowConfig.educationLevels)?
+    Object.values(EduFlowConfig.educationLevels).flatMap(l=>l.grades||[]):[];
+  gradeEl.innerHTML='<option value="">كل الصفوف</option>'+grades.map(g=>`<option value="${g}">${g}</option>`).join('');
+}
+
+// 🆕 فلتر الأيام
+const dayEl=document.getElementById('grpDayFilter');
+if(dayEl){
+  dayEl.innerHTML='<option value="">كل الأيام</option>'+DAYS.map(d=>`<option value="${d.en}">${d.ar}</option>`).join('');
+}
+}catch(e){console.error(e);}
 };
+
+
 // 🤖 حساب خطر تسرب الطالب (غياب + دفعات + واجبات + درجات)
 window.calculateChurnRisk=function(studentId){
   try{
@@ -1397,7 +1425,18 @@ window._linkMode=null;
 const s=editId?(DataService.getUserById(editId)):null;
 window._preChecked = s ? (DataService.getStudentTeachers(s.id)||[]).map(t=>t.group.id) : [];
 window._preTeachers = s ? (DataService.getStudentTeachers(s.id)||[]).map(t=>t.teacher.id) : [];
-const centers=window.getAllCenters?window.getAllCenters():[];
+// 🆕 جلب السناتر من مصادر متعددة (السناتر المسجلة + السناتر من المجموعات)
+let centers=[];
+// أولاً: حاول من السناتر المسجلة في النظام
+if(DataService.getCenters){
+  centers=(DataService.getCenters()||[]).map(c=>c.name).filter(Boolean);
+}
+// ثانياً: لو مفيش سناتر مسجلة، استخدم اللي من المجموعات كـ fallback
+if(!centers.length && window.getAllCenters){
+  centers=window.getAllCenters();
+}
+// إزالة التكرار
+centers=[...new Set(centers)];
 const stageOpts=Object.entries(EduFlowConfig?.educationLevels||{}).map(([k,v])=>`<option value="${k}">${v.nameAr}</option>`).join('');
 const esc=v=>String(v==null?'':v).replace(/"/g,'&quot;');
 ThemeManager.openModal(`
@@ -1454,50 +1493,40 @@ window.renderStudentGroups();
 }catch(e){}
 };
 
-window.renderStudentGroups=function(){
-try{
-const list=document.getElementById('sGroupsList'); if(!list) return;
-const center=document.getElementById('sCenter')?.value||'';
-const q=(document.getElementById('grpSearch')?.value||'').trim().toLowerCase();
-const stage=(document.getElementById('sStage')?.value||'').trim();
-const grade=(document.getElementById('sGrade')?.value||'').trim();
-const pre=(window._preChecked||[]).slice();
-const selectedTeachers=Array.from(document.querySelectorAll('#teacherSelectionGrid input[type=checkbox]:checked')).map(c=>c.value);
-let groups=(DataService.getGroups?DataService.getGroups():[]).slice();
-const byId={}; groups.forEach(g=>byId[g.id]=g);
-const preGroups=pre.map(id=>byId[id]).filter(Boolean);
-let rest=groups.filter(g=>pre.indexOf(g.id)<0);
-if(selectedTeachers.length) rest=rest.filter(g=>selectedTeachers.includes(g.teacherId));
-if(stage) rest=rest.filter(g=>!g.stage||g.stage===stage);
-if(grade) rest=rest.filter(g=>!g.grade||g.grade===grade);
-if(center) rest=rest.filter(g=>(g.center||'')===center);
-if(q) rest=rest.filter(g=>(g.name||'').toLowerCase().indexOf(q)>=0);
-function card(g,checked){
-const t=(DataService.getUserById)?DataService.getUserById(g.teacherId):null;
-const cnt=(DataService.getStudentsByGroup)?DataService.getStudentsByGroup(g.id).length:0;
-return `<label class="grp-card"><input type="checkbox" class="grp-check" value="${g.id}" data-teacher="${g.teacherId}" ${checked?'checked':''} onchange="SSM.onCheck('admin',this)">
-<div style="flex:1;min-width:0;"><div class="grp-name">${g.name}</div>
-<div class="grp-meta">👨‍ ${t?.name||'-'} · 🏢 ${g.center||'-'} · 👥 ${cnt} طالب</div>
-<div class="grp-times">🕐 ${SSM.groupTimes(g)}</div></div></label>`;
-}
-let html='';
-if(preGroups.length){
-html+=`<div class="sm-teacher-block"><div class="sm-teacher-name">📌 مجموعات الطالب الحالية</div>${preGroups.map(g=>card(g,true)).join('')}</div>`;
-}
-if(!selectedTeachers.length && !preGroups.length){
-list.innerHTML=`<p class="text-muted" style="text-align:center;padding:16px;">👆 اختر أستاذاً من الخطوة 1 لعرض مجموعاته</p>`;
-if(window.SSM) SSM.updateCount('admin');
-return;
-}
-const byTeacher={};
-rest.forEach(g=>{ (byTeacher[g.teacherId]=byTeacher[g.teacherId]||[]).push(g); });
-Object.keys(byTeacher).forEach(tid=>{
-const tName=(DataService.getUserById?DataService.getUserById(tid):null)?.name||'-';
-html+=`<div class="sm-teacher-block"><div class="sm-teacher-name">👨🏫 ${tName} <span class="points-badge">${byTeacher[tid].length}</span></div>${byTeacher[tid].map(g=>card(g,false)).join('')}</div>`;
-});
-list.innerHTML=html||'<p class="text-muted" style="padding:10px;">لا توجد مجموعات مطابقة — غيّر الفلاتر أو أضف مجموعات للأستاذ ده</p>';
-if(window.SSM) SSM.updateCount('admin');
-}catch(e){ console.error('renderStudentGroups error',e); }
+window.renderStudentGroups=function(preSelectedIds){
+  try{
+    const center=document.getElementById('sCenter')?.value||'';
+    const list=document.getElementById('sGroupsList');
+    if(!list) return;
+    let groups=DataService.getGroups?DataService.getGroups():[];
+    if(center){
+      groups=groups.filter(g=>(g.center||'')===center);
+    }
+    const byId={}; groups.forEach(g=>byId[g.id]=g);
+    const pre=(window._preChecked||[]).slice();
+    const preGroups=pre.map(id=>byId[id]).filter(Boolean);
+    let rest=groups.filter(g=>pre.indexOf(g.id)<0);
+    function card(g,checked){
+      const t=(DataService.getUserById)?DataService.getUserById(g.teacherId):null;
+      const cnt=(DataService.getStudentsByGroup)?DataService.getStudentsByGroup(g.id).length:0;
+      return `<label class="grp-card"><input type="checkbox" class="grp-check" value="${g.id}" data-teacher="${g.teacherId}" ${checked?'checked':''} onchange="SSM.onCheck('admin',this)">
+      <div style="flex:1;min-width:0;"><div class="grp-name">${g.name}</div>
+      <div class="grp-meta">👨‍🏫 ${t?.name||'-'} · 🏢 ${g.center||'-'} · 👥 ${cnt} طالب</div>
+      <div class="grp-times">🕐 ${SSM.groupTimes(g)}</div></div></label>`;
+    }
+    let html='';
+    if(preGroups.length){
+      html+=`<div class="sm-teacher-block"><div class="sm-teacher-name">📌 مجموعات الطالب الحالية</div>${preGroups.map(g=>card(g,true)).join('')}</div>`;
+    }
+    const byTeacher={};
+    rest.forEach(g=>{ (byTeacher[g.teacherId]=byTeacher[g.teacherId]||[]).push(g); });
+    Object.keys(byTeacher).forEach(tid=>{
+      const t=(DataService.getUserById)?DataService.getUserById(tid):null;
+      html+=`<div class="sm-teacher-block"><div class="sm-teacher-name">👨‍🏫 ${t?.name||'-'}</div>${byTeacher[tid].map(g=>card(g,false)).join('')}</div>`;
+    });
+    list.innerHTML=html||'<p class="text-muted" style="padding:10px;">لا توجد مجموعات في السنتر ده</p>';
+    if(window.SSM) SSM.updateCount('admin');
+  }catch(e){ console.error('renderStudentGroups error',e); }
 };
 
 window.saveStudent=async function(e,editId){
@@ -2061,10 +2090,16 @@ window.deletePending=async function(id){ try{ if(!confirm('حذف؟'))return; aw
    ================================================================ */
 window.loadGroups=function(){
 try{
-const q=(document.getElementById('gSearchBar')?.value||'').toLowerCase(), tf=document.getElementById('grpTeacherFilter')?.value||'', cf=document.getElementById('grpCenterFilter')?.value||'';
+const q=(document.getElementById('gSearchBar')?.value||'').toLowerCase(), 
+      tf=document.getElementById('grpTeacherFilter')?.value||'', 
+      cf=document.getElementById('grpCenterFilter')?.value||'',
+      gf=document.getElementById('grpGradeFilter')?.value||'',
+      df=document.getElementById('grpDayFilter')?.value||'';
 let list=DataService.getGroups();
 if(tf) list=list.filter(g=>g.teacherId===tf);
 if(cf) list=list.filter(g=>g.center===cf);
+if(gf) list=list.filter(g=>g.grade===gf);
+if(df) list=list.filter(g=>g.day===df);
 if(q)list=list.filter(g=>(g.name||'').toLowerCase().includes(q));
 const el=document.getElementById('groupsList');
 if(el)el.innerHTML=list.map(g=>{
@@ -2119,7 +2154,7 @@ window.openGroupModal=function(editId){
     
     <div class="form-group"><label>🏢 السنتر *</label><select id="gCenter" class="form-select" required><option value="">-- اختر --</option>${centers.map(c=>`<option value="${c.name}" ${g?.center===c.name?'selected':''}>${c.name}</option>`).join('')}</select></div>
     <div class="form-group"><label>📱 واتساب الجروب</label><input type="url" id="gWhatsapp" class="form-input" value="${g?.whatsappLink||''}" placeholder="https://chat.whatsapp.com/..."></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;"><div class="form-group"><label>مدة (دقيقة)</label><input type="number" id="gDuration" class="form-input" value="${g?.duration||60}"></div><div class="form-group"><label>حصص/شهر *</label><input type="number" id="gSessions" class="form-input" value="${g?.sessionsPerMonth||8}" required></div><div class="form-group"><label>سعر الشهر *</label><input type="number" id="gMonthly" class="form-input" value="${g?.monthlyFee||0}" required></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;"><div class="form-group"><label>مدة (دقيقة)</label><input type="number" id="gDuration" class="form-input" value="${g?.duration||60}"></div><div class="form-group"><label>حصص/شهر *</label><input type="number" id="gSessions" class="form-input" value="${g?.sessionsPerMonth||8}" required></div><div class="form-group"><label>سعر الشهر *</label><input type="number" id="gMonthly" class="form-input" value="${g?.monthlyFee||80}" required></div></div>
     <button class="btn btn-primary w-full">💾 حفظ</button></form></div>`,'modal-lg');
     
     window.updGroupGrades(g?.grade);
@@ -2872,50 +2907,52 @@ const r=document.documentElement;
 if(b.primaryColor) r.style.setProperty('--primary', b.primaryColor);
 if(b.accentColor) r.style.setProperty('--accent', b.accentColor);
 document.querySelectorAll('[data-brand-name]').forEach(el=>{ el.textContent=b.name||'EduFlow'; });
-document.querySelectorAll('[data-logo]').forEach(el=>{ el.innerHTML=b.logoUrl?`<img src="${window.resolveImageUrl(b.logoUrl,200)}" alt="logo" style="width:100%;height:100%;object-fit:cover;">`:'🎓'; });
+document.querySelectorAll('[data-logo]').forEach(el=>{
+if(b.logoUrl){
+const logoSrc=window.driveThumb?window.driveThumb(b.logoUrl):b.logoUrl;
+el.innerHTML='<img src="'+logoSrc+'" alt="logo" style="width:100%;height:100%;object-fit:cover;">';
+}else{
+el.innerHTML='🎓';
+}
+});
 }catch(e){}
 };
 
 window.saveBranding = async function(){
-  try {
-    const data = {
-      name: document.getElementById('bName').value,
-      tagline: document.getElementById('bTagline').value,
-      logoUrl: document.getElementById('bLogoUrl').value,
-      primaryColor: document.getElementById('bPrimary').value,
-      accentColor: document.getElementById('bAccent').value,
-      phone: document.getElementById('bPhone').value,
-      whatsapp: document.getElementById('bWhatsapp').value,
-      facebook: document.getElementById('bFacebook').value,
-      aboutCompany: document.getElementById('bAboutCompany').value,
-      aboutContact: document.getElementById('bAboutContact').value,
-      updatedAt: new Date().toISOString()
-    };
-
-    // 1. حفظ في الداتا المحلية
-    const d = db();
-    d.branding = data;
-    save(d);
-    localStorage.setItem('eduflow_branding', JSON.stringify(data));
-
-    // 2. تطبيق البراندنج فوراً على الشاشة
-    if (typeof window.applyBranding === 'function') window.applyBranding(data);
-    if (typeof DataService?.applyBrandingColors === 'function') DataService.applyBrandingColors(data);
-
-    // 3. رفع للسحابة (Cloud-First)
-    if (window.FirebaseService?._db) {
-      try {
-        await FirebaseService.saveMeta('branding', data);
-      } catch (e) {
-        console.warn('Cloud queue:', e);
-      }
-    }
-
-    window.safeToast('✅ تم حفظ الإعدادات وتطبيقها فوراً', 'success');
-  } catch(e) {
-    console.error(e);
-    window.safeToast('خطأ في الحفظ: ' + e.message, 'error');
-  }
+try {
+const data = {
+name: document.getElementById('bName').value,
+tagline: document.getElementById('bTagline').value,
+logoUrl: document.getElementById('bLogoUrl').value,
+primaryColor: document.getElementById('bPrimary').value,
+accentColor: document.getElementById('bAccent').value,
+phone: document.getElementById('bPhone').value,
+whatsapp: document.getElementById('bWhatsapp').value,
+facebook: document.getElementById('bFacebook').value,
+aboutCompany: document.getElementById('bAboutCompany').value,
+aboutContact: document.getElementById('bAboutContact').value,
+updatedAt: new Date().toISOString()
+};
+const d = db();
+d.branding = data;
+save(d);
+localStorage.setItem('eduflow_branding', JSON.stringify(data));
+if (typeof window.applyBranding === 'function') window.applyBranding(data);
+if (typeof DataService?.applyBrandingColors === 'function') DataService.applyBrandingColors(data);
+try {
+if (window.FirebaseService && FirebaseService._db) {
+await FirebaseService._db.collection('meta').doc('branding').set(data);
+} else if (window.FirebaseService && typeof FirebaseService.saveMeta === 'function') {
+await FirebaseService.saveMeta('branding', data);
+}
+} catch (cloudErr) {
+console.warn('Cloud branding save:', cloudErr);
+}
+window.safeToast('✅ تم حفظ الإعدادات وتطبيقها فوراً', 'success');
+} catch(e) {
+console.error(e);
+window.safeToast('خطأ في الحفظ: ' + e.message, 'error');
+}
 };
 
 /* ================================================================
@@ -3185,6 +3222,7 @@ window.loadBattles();
 }catch(e){}
 };
 
+
 /* ================================================================
    🚪 LOGOUT
    ================================================================ */
@@ -3204,13 +3242,30 @@ window.getActiveSessionsNow=function(){
     const groups=DataService?.getGroups?DataService.getGroups():[];
     const active=[],upcoming=[];
     groups.forEach(g=>{
-      if(g.day!==dayEn) return;
-      const parts=String(g.time||'00:00').split(':');
-      const start=(+parts[0])*60+(+parts[1]||0);
-      const dur=parseInt(g.duration)||60;
-      if(mins>=start && mins<start+dur) active.push(Object.assign({},g,{_start:start,_end:start+dur,_state:'live'}));
-      else if(mins<start && (start-mins)<=60) upcoming.push(Object.assign({},g,{_start:start,_end:start+dur,_state:'soon'}));
+      const schedules=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}];
+      schedules.forEach(sch=>{
+        if(sch.day!==dayEn) return;
+        const parts=String(sch.time||'00:00').split(':');
+        const start=(+parts[0])*60+(+parts[1]||0);
+        const dur=parseInt(g.duration)||60;
+        const end=start+dur;
+        if(mins>=start&&mins<end){
+          active.push(Object.assign({},g,{
+            _schedDay:sch.day,_schedTime:sch.time,
+            _start:start,_end:end,_state:'live',
+            _remainingMin:end-mins
+          }));
+        }else if(mins<start&&(start-mins)<=90){
+          upcoming.push(Object.assign({},g,{
+            _schedDay:sch.day,_schedTime:sch.time,
+            _start:start,_end:end,_state:'soon',
+            _remainingMin:start-mins
+          }));
+        }
+      });
     });
+    active.sort((a,b)=>a._start-b._start);
+    upcoming.sort((a,b)=>a._start-b._start);
     return {active:active,upcoming:upcoming};
   }catch(e){ return {active:[],upcoming:[]}; }
 };
@@ -3222,46 +3277,113 @@ window.loadLiveSessions=function(){
     if(badge) badge.textContent=res.active.length;
     const el=document.getElementById('liveSessionsNow');
     if(!el) return;
-    if(!res.active.length && !res.upcoming.length){
-      el.innerHTML='<p class="text-muted" style="text-align:center;padding:14px;">لا توجد حصص جارية الآن — الحصص اللي هتبدأ خلال ساعة هتظهر هنا</p>';
+    if(!res.active.length&&!res.upcoming.length){
+      el.innerHTML='<p class="text-muted" style="text-align:center;padding:14px;">لا توجد حصص جارية أو قادمة حالياً</p>';
       return;
     }
     let html='';
     if(res.active.length){
-      html+='<div class="text-xs text-muted" style="margin-bottom:6px;">🔴 جارية الآن</div>';
+      html+='<div style="margin-bottom:12px;font-weight:700;color:var(--success);">🔴 حصص جارية الآن ('+res.active.length+')</div>';
       html+=res.active.map(g=>{
         const t=DataService.getUserById(g.teacherId);
         const stu=DataService.getStudentsByGroup(g.id).length;
-        const now=new Date(); const mins=now.getHours()*60+now.getMinutes();
+        const mins=new Date().getHours()*60+new Date().getMinutes();
         const elapsed=mins-g._start;
         return `<div class="live-class" style="border-right:4px solid var(--success);">
           <div class="live-dot"></div>
           <div style="flex:1;min-width:0;">
-            <strong>${g.name}</strong> <span class="badge badge-success">لايف</span>
-            <div class="text-xs text-muted">👨‍🏫 ${t?.name||'-'} · 🏢 ${g.center||'-'} · ⏱️ بدأت من ${elapsed} دقيقة · 👥 ${stu} طالب</div>
+            <strong>${g.name}</strong> <span class="badge badge-success">جارية</span>
+            <div class="text-xs text-muted">👨‍🏫 ${t?.name||'-'} · 🏢 ${g.center||'-'} · 🕐 ${T(g._schedTime)} · بدأت من ${elapsed} د · باقي ${g._remainingMin} د · 👥 ${stu} طالب</div>
           </div>
-          <button class="btn btn-primary btn-sm" onclick="window.openLiveSessionDetails('${g.id}')">👁️ عرض تفاصيل</button>
+          <button class="btn btn-success btn-sm" onclick="window.openLiveSessionDetails('${g.id}')">👁️ تفاصيل</button>
         </div>`;
       }).join('');
     }
     if(res.upcoming.length){
-      html+='<div class="text-xs text-muted" style="margin:10px 0 6px;">⏰ تبدأ خلال ساعة</div>';
-      html+=res.upcoming.map(g=>{
-        const t=DataService.getUserById(g.teacherId);
-        const stu=DataService.getStudentsByGroup(g.id).length;
-        const now=new Date(); const mins=now.getHours()*60+now.getMinutes();
-        return `<div class="live-class" style="border-right:4px solid var(--info);">
-          <div style="width:10px;height:10px;border-radius:50%;background:var(--info);flex-shrink:0;"></div>
-          <div style="flex:1;min-width:0;">
-            <strong>${g.name}</strong> <span class="badge badge-info">بعد ${g._start-mins} دقيقة</span>
-            <div class="text-xs text-muted">👨‍🏫 ${t?.name||'-'} · 🏢 ${g.center||'-'} · 👥 ${stu} طالب</div>
-          </div>
-          <button class="btn btn-secondary btn-sm" onclick="window.openLiveSessionDetails('${g.id}')">👁️ عرض تفاصيل</button>
+      html+='<div style="margin:16px 0 12px;font-weight:700;color:var(--info);">⏰ الحصص القادمة ('+res.upcoming.length+')</div>';
+      const byTeacher={};
+      res.upcoming.forEach(g=>{
+        const tid=g.teacherId||'unknown';
+        if(!byTeacher[tid]) byTeacher[tid]=[];
+        byTeacher[tid].push(g);
+      });
+      html+=Object.entries(byTeacher).map(([tid,gs])=>{
+        const t=DataService.getUserById(tid);
+        return `<div style="margin-bottom:8px;">
+          <div style="font-weight:700;margin-bottom:6px;">👨‍🏫 ${t?.name||'أستاذ'} <span class="badge badge-info">${gs.length} حصة</span></div>
+          ${gs.map(g=>{
+            const stu=DataService.getStudentsByGroup(g.id).length;
+            return `<div class="live-class" style="border-right:4px solid var(--info);margin-bottom:6px;">
+              <div style="flex:1;min-width:0;">
+                <strong>${g.name}</strong>
+                <div class="text-xs text-muted">🕐 ${T(g._schedTime)} · بعد ${g._remainingMin} د · 🏢 ${g.center||'-'} · 👥 ${stu} طالب</div>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="window.openLiveSessionDetails('${g.id}')">👁️</button>
+            </div>`;
+          }).join('')}
         </div>`;
       }).join('');
     }
     el.innerHTML=html;
-  }catch(e){ console.error('loadLiveSessions error',e); }
+  }catch(e){ console.error('loadLiveSessions error:',e); }
+};
+
+window.loadLiveSessions=function(){
+  try{
+    const res=window.getActiveSessionsNow();
+    const badge=document.getElementById('liveCountBadge');
+    if(badge) badge.textContent=res.active.length;
+    const el=document.getElementById('liveSessionsNow');
+    if(!el) return;
+    if(!res.active.length&&!res.upcoming.length){
+      el.innerHTML='<p class="text-muted" style="text-align:center;padding:14px;">لا توجد حصص جارية أو قادمة حالياً</p>';
+      return;
+    }
+    let html='';
+    if(res.active.length){
+      html+='<div style="margin-bottom:12px;font-weight:700;color:var(--success);">🔴 حصص جارية الآن ('+res.active.length+')</div>';
+      html+=res.active.map(g=>{
+        const t=DataService.getUserById(g.teacherId);
+        const stu=DataService.getStudentsByGroup(g.id).length;
+        const mins=new Date().getHours()*60+new Date().getMinutes();
+        const elapsed=mins-g._start;
+        return `<div class="live-class" style="border-right:4px solid var(--success);">
+          <div class="live-dot"></div>
+          <div style="flex:1;min-width:0;">
+            <strong>${g.name}</strong> <span class="badge badge-success">جارية</span>
+            <div class="text-xs text-muted">👨‍🏫 ${t?.name||'-'} · 🏢 ${g.center||'-'} · 🕐 ${T(g._schedTime)} · بدأت من ${elapsed} د · باقي ${g._remainingMin} د · 👥 ${stu} طالب</div>
+          </div>
+          <button class="btn btn-success btn-sm" onclick="window.openLiveSessionDetails('${g.id}')">👁️ تفاصيل</button>
+        </div>`;
+      }).join('');
+    }
+    if(res.upcoming.length){
+      html+='<div style="margin:16px 0 12px;font-weight:700;color:var(--info);">⏰ الحصص القادمة ('+res.upcoming.length+')</div>';
+      const byTeacher={};
+      res.upcoming.forEach(g=>{
+        const tid=g.teacherId||'unknown';
+        if(!byTeacher[tid]) byTeacher[tid]=[];
+        byTeacher[tid].push(g);
+      });
+      html+=Object.entries(byTeacher).map(([tid,gs])=>{
+        const t=DataService.getUserById(tid);
+        return `<div style="margin-bottom:8px;">
+          <div style="font-weight:700;margin-bottom:6px;">👨‍🏫 ${t?.name||'أستاذ'} <span class="badge badge-info">${gs.length} حصة</span></div>
+          ${gs.map(g=>{
+            const stu=DataService.getStudentsByGroup(g.id).length;
+            return `<div class="live-class" style="border-right:4px solid var(--info);margin-bottom:6px;">
+              <div style="flex:1;min-width:0;">
+                <strong>${g.name}</strong>
+                <div class="text-xs text-muted">🕐 ${T(g._schedTime)} · بعد ${g._remainingMin} د · 🏢 ${g.center||'-'} · 👥 ${stu} طالب</div>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="window.openLiveSessionDetails('${g.id}')">👁️</button>
+            </div>`;
+          }).join('')}
+        </div>`;
+      }).join('');
+    }
+    el.innerHTML=html;
+  }catch(e){ console.error('loadLiveSessions error:',e); }
 };
 
 window.openLiveSessionDetails=function(groupId){
@@ -3272,10 +3394,8 @@ window.openLiveSessionDetails=function(groupId){
     const today=new Date().toISOString().split('T')[0];
     const attToday=(DataService.getAttendance?DataService.getAttendance():[]).find(a=>a.groupId===groupId&&a.date===today);
     const now=new Date(); const mins=now.getHours()*60+now.getMinutes();
-    const parts=String(g.time||'00:00').split(':');
-    const start=(+parts[0])*60+(+parts[1]||0);
-    const dur=parseInt(g.duration)||60;
-    const state=(mins>=start&&mins<start+dur)?'🔴 جارية الآن':(mins<start?(`⏰ تبدأ بعد ${start-mins} دقيقة`):'انتهت');
+    const schedules=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}];
+    const schedsHtml=schedules.map(s=>`<div class="text-xs" style="padding:4px 8px;background:var(--surface-hover);border-radius:6px;margin-bottom:4px;">📅 ${dayAr(s.day)} · 🕐 ${T(s.time)}</div>`).join('');
     const rows=students.map(s=>{
       const rec=attToday&&attToday.records?attToday.records.find(r=>r.studentId===s.id):null;
       const st=rec?rec.status:'none';
@@ -3287,14 +3407,16 @@ window.openLiveSessionDetails=function(groupId){
       <div class="detail-grid">
         <div class="detail-box"><div class="lbl">الأستاذ</div><div class="val">${t?.name||'-'}</div></div>
         <div class="detail-box"><div class="lbl">السنتر</div><div class="val">${g.center||'-'}</div></div>
-        <div class="detail-box"><div class="lbl">الموعد</div><div class="val">${dayAr(g.day)} ${T(g.time)} (${dur} د)</div></div>
-        <div class="detail-box"><div class="lbl">الحالة</div><div class="val">${state}</div></div>
+        <div class="detail-box"><div class="lbl">المدة</div><div class="val">${g.duration||60} دقيقة</div></div>
+        <div class="detail-box"><div class="lbl">السعر الشهري</div><div class="val">${g.monthlyFee||0} ج.م</div></div>
       </div>
+      <div style="margin:14px 0;"><div class="lbl" style="font-weight:700;margin-bottom:8px;">📅 مواعيد المجموعة</div>${schedsHtml}</div>
       <h4 style="margin:14px 0 8px;">👥 الطلاب (${students.length}) وحضور اليوم</h4>
       <div style="max-height:300px;overflow-y:auto;">${rows}</div>
-      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-        <button class="btn btn-secondary" style="flex:1;" onclick="ThemeManager.closeModal();window.showSection('attendance')">📋 صفحة الحضور</button>
-        ${t?`<button class="btn btn-ghost" style="flex:1;" onclick="ThemeManager.closeModal();window.viewAs('${t.id}')">👁️ فتح لوحة الأستاذ</button>`:''}
+      <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="ThemeManager.closeModal();window.openGroupModal('${g.id}')">✏️ تعديل المجموعة</button>
+        <button class="btn btn-secondary" onclick="ThemeManager.closeModal();window.showSection('attendance')">📋 صفحة الحضور</button>
+        ${t?`<button class="btn btn-ghost" onclick="ThemeManager.closeModal();window.viewAs('${t.id}')">👁️ فتح لوحة الأستاذ</button>`:''}
       </div>
     </div>`,'modal-lg');
   }catch(e){ console.error(e); }
@@ -3516,49 +3638,192 @@ window.loadTasks=function(){
   }catch(e){ console.error('loadTasks',e); }
 };
 
+/* ===================== 📅 التقويم المحسّن ===================== */
+window.calStateMap = {}; 
+
 /* ===================== 📅 التقويم ===================== */
 window.loadCalendar=function(){
-  try{
-    var d=dbp(); var view=document.getElementById('calendarView'); if(!view) return;
-    var sel=document.getElementById('calGroupFilter');
-    var groups=(DataService.getGroups?DataService.getGroups():[]);
-    if(sel&&sel.options.length<=1){ sel.innerHTML='<option value="">كل المجموعات</option>'+groups.map(function(g){return '<option value="'+g.id+'">'+g.name+'</option>';}).join(''); }
-    var gid=sel?sel.value:'';
-    var now=new Date(), y=now.getFullYear(), m=now.getMonth();
-    var dim=new Date(y,m+1,0).getDate();
-    var EN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    var AR=['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
-    var map={};
-    groups.filter(function(g){return !gid||g.id===gid;}).forEach(function(g){
-      var schs=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}];
-      schs.forEach(function(s){
-        if(!s||!s.day) return;
-        var di=EN.indexOf(s.day); if(di<0) return;
-        for(var dd=1;dd<=dim;dd++){
-          var dt=new Date(y,m,dd);
-          if(dt.getDay()===di){
-            var ds=dt.toISOString().split('T')[0];
-            map[ds]=map[ds]||[];
-            map[ds].push({name:g.name,time:s.time||'',
-              cancelled:(d.cancelledSessions||[]).some(function(c){return c.groupId===g.id&&c.date===ds;}),
-              attended:(d.attendance||[]).some(function(a){return a.groupId===g.id&&a.date===ds&&a.status==='approved';})});
-          }
+try{
+var d=dbp(); var view=document.getElementById('calendarView'); if(!view) return;
+var sel=document.getElementById('calGroupFilter');
+var groups=(DataService.getGroups?DataService.getGroups():[]);
+if(sel&&sel.options.length<=1){ sel.innerHTML='<option value="">كل المجموعات</option>'+groups.map(function(g){return '<option value="'+g.id+'">'+g.name+'</option>';}).join(''); }
+var gid=sel?sel.value:'';
+var now=new Date(), y=now.getFullYear(), m=now.getMonth();
+var dim=new Date(y,m+1,0).getDate();
+var EN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+var AR=['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
+var map={};
+groups.filter(function(g){return !gid||g.id===gid;}).forEach(function(g){
+var schs=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}];
+schs.forEach(function(s){
+if(!s||!s.day) return;
+var di=EN.indexOf(s.day); if(di<0) return;
+for(var dd=1;dd<=dim;dd++){
+var dt=new Date(y,m,dd);
+if(dt.getDay()===di){
+var ds=dt.toISOString().split('T')[0];
+map[ds]=map[ds]||[];
+map[ds].push({name:g.name,time:s.time||'',groupId:g.id,
+cancelled:(d.cancelledSessions||[]).some(function(c){return c.groupId===g.id&&c.date===ds;}),
+attended:(d.attendance||[]).some(function(a){return a.groupId===g.id&&a.date===ds&&a.status==='approved';})});
+}
+}
+});
+});
+var todayStr=now.toISOString().split('T')[0];
+var html='<div class="cal-grid">'+AR.map(function(n){return '<div style="text-align:center;font-size:11px;font-weight:700;color:var(--text-muted)">'+n+'</div>';}).join('');
+for(var i=0;i<new Date(y,m,1).getDay();i++) html+='<div class="cal-day empty"></div>';
+for(var dd2=1;dd2<=dim;dd2++){
+var ds2=new Date(y,m,dd2).toISOString().split('T')[0];
+var items=map[ds2]||[];
+var isToday=ds2===todayStr;
+html+='<div class="cal-day" style="cursor:pointer; '+(isToday?'border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-bg);':'')+'" onclick="window.openCalendarDayModal(\''+ds2+'\')"><div class="num">'+dd2+'</div>'+
+(items.length?'<div style="font-size:10px; font-weight:700; color:var(--primary); margin-bottom:2px;">'+items.length+' حصة</div>'+items.slice(0,2).map(function(it){ return '<div style="color:'+(it.cancelled?'var(--danger)':it.attended?'var(--success)':'var(--text-secondary)')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:9px;">'+(it.cancelled?'🚫':it.attended?'✓':'•')+' '+it.name+'</div>'; }).join('') + (items.length>2?'<div style="font-size:9px; color:var(--text-muted);">+'+(items.length-2)+' أخرى</div>':''):'')+
+'</div>';
+}
+view.innerHTML=html+'</div>';
+}catch(e){ console.error('loadCalendar',e); }
+};
+
+window.openCalendarDayModal = function(dateStr) {
+    try {
+        const d = dbp();
+        const groups = DataService.getGroups ? DataService.getGroups() : [];
+        const EN = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        const dateObj = new Date(dateStr);
+        const dayEn = EN[dateObj.getDay()];
+        
+        // Helper for 12h time format
+        const format12 = (tm) => {
+            if (DataService && DataService.formatTime12) return DataService.formatTime12(tm);
+            if (!tm) return '';
+            const parts = String(tm).split(':');
+            let h = parseInt(parts[0], 10);
+            const m = parts[1] || '00';
+            const ampm = h >= 12 ? 'م' : 'ص';
+            h = h % 12;
+            if (h === 0) h = 12;
+            return `${h}:${m} ${ampm}`;
+        };
+        
+        // Filter groups that have a schedule on this day
+        const dayGroups = groups.filter(g => {
+            const schedules = (g.schedules && g.schedules.length) ? g.schedules : [{day: g.day, time: g.time}];
+            return schedules.some(s => s.day === dayEn);
+        });
+
+        if (!dayGroups.length) {
+            window.safeToast('لا توجد حصص في هذا اليوم', 'info');
+            return;
         }
-      });
-    });
-    var todayStr=now.toISOString().split('T')[0];
-    var html='<div class="cal-grid">'+AR.map(function(n){return '<div style="text-align:center;font-size:11px;font-weight:700;color:var(--text-muted)">'+n+'</div>';}).join('');
-    for(var i=0;i<new Date(y,m,1).getDay();i++) html+='<div class="cal-day empty"></div>';
-    for(var dd2=1;dd2<=dim;dd2++){
-      var ds2=new Date(y,m,dd2).toISOString().split('T')[0];
-      var items=map[ds2]||[];
-      var isToday=ds2===todayStr;
-      html+='<div class="cal-day" style="'+(isToday?'border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-bg);':'')+'"><div class="num">'+dd2+'</div>'+
-        (items.length?items.map(function(it){ return '<div style="color:'+(it.cancelled?'var(--danger)':it.attended?'var(--success)':'var(--primary)')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(it.cancelled?'🚫':it.attended?'✓':'•')+' '+it.time+' '+it.name+'</div>'; }).join(''):'')+
-        '</div>';
+
+        // Group by Teacher
+        const byTeacher = {};
+        dayGroups.forEach(g => {
+            if (!byTeacher[g.teacherId]) byTeacher[g.teacherId] = [];
+            byTeacher[g.teacherId].push(g);
+        });
+
+        let html = `<div class="modal-header">
+            <h3 class="modal-title">📅 حصص يوم ${dateObj.toLocaleDateString('ar-EG', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</h3>
+            <button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button>
+        </div>`;
+        html += '<div class="modal-body" style="max-height: 75vh; overflow-y: auto; padding: 16px;">';
+
+        const teacherIds = Object.keys(byTeacher);
+        
+        teacherIds.forEach(tid => {
+            const teacher = DataService.getUserById ? DataService.getUserById(tid) : null;
+            const tName = teacher ? teacher.name : 'أستاذ غير معروف';
+            const tPhone = teacher ? (teacher.phone || teacher.whatsapp || '-') : '-';
+            const tPhoto = teacher && teacher.photoUrl ? `<img src="${window.driveThumb(teacher.photoUrl)}" class="teacher-photo-sm" onerror="this.style.display='none'">` : `<div class="user-avatar" style="width:40px;height:40px;font-size:16px;">👨‍🏫</div>`;
+            
+            const teacherGroups = byTeacher[tid];
+            
+            let minStart = 24 * 60;
+            let maxEnd = 0;
+            const centersSet = new Set();
+            
+            const sessionsHtml = teacherGroups.map(g => {
+                const schedules = (g.schedules && g.schedules.length) ? g.schedules : [{day: g.day, time: g.time}];
+                const todaySch = schedules.find(s => s.day === dayEn);
+                if (!todaySch) return '';
+                
+                if (g.center) centersSet.add(g.center);
+                
+                const timeStr = todaySch.time || '00:00';
+                const parts = timeStr.split(':');
+                const startMin = (+parts[0]) * 60 + (+parts[1] || 0);
+                const dur = parseInt(g.duration) || 60;
+                const endMin = startMin + dur;
+                
+                if (startMin < minStart) minStart = startMin;
+                if (endMin > maxEnd) maxEnd = endMin;
+                
+                const startTime12 = format12(timeStr);
+                const endTime12 = format12(`${Math.floor(endMin/60)%24}:${String(endMin%60).padStart(2,'0')}`);
+                
+                const isCancelled = (d.cancelledSessions || []).some(c => c.groupId === g.id && c.date === dateStr);
+                const isAttended = (d.attendance || []).some(a => a.groupId === g.id && a.date === dateStr && a.status === 'approved');
+                
+                let statusBadge = '';
+                if (isCancelled) statusBadge = '<span class="badge badge-danger" style="margin-inline-start:6px;">🚫 ملغية</span>';
+                else if (isAttended) statusBadge = '<span class="badge badge-success" style="margin-inline-start:6px;">✓ حضرتها</span>';
+                
+                return `
+                    <div class="sub-row" style="margin-bottom:8px; padding:10px; background:var(--surface-hover); border-radius:8px; border:1px solid var(--border);">
+                        <div style="flex:1;">
+                            <div style="font-weight:700; font-size:14px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                                ${g.name} ${statusBadge}
+                            </div>
+                            <div class="text-xs text-muted" style="margin-top:4px;">🏢 ${g.center || 'غير محدد'} · ⏱️ مدة الحصة: ${dur} دقيقة</div>
+                        </div>
+                        <div style="text-align:right; font-family:var(--font-en); font-weight:800; color:var(--primary); font-size:13px; white-space:nowrap;">
+                            ${startTime12} <br> ${endTime12}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const startWork = minStart < 24*60 ? format12(`${Math.floor(minStart/60)%24}:${String(minStart%60).padStart(2,'0')}`) : '-';
+            const endWork = maxEnd > 0 ? format12(`${Math.floor(maxEnd/60)%24}:${String(maxEnd%60).padStart(2,'0')}`) : '-';
+            const workDurationHours = maxEnd > minStart ? Math.round((maxEnd - minStart) / 60 * 10) / 10 : 0;
+            const centersStr = centersSet.size > 0 ? Array.from(centersSet).join('، ') : 'غير محدد';
+
+            const cardId = 'teacher_card_' + tid;
+
+            html += `
+                <div class="card" style="margin-bottom:16px; border:1px solid var(--border); border-radius:12px; overflow:hidden; background:var(--surface);">
+                    <div class="card-header" style="display:flex; gap:12px; align-items:center; padding:14px; background:linear-gradient(135deg, var(--surface-hover), var(--surface)); cursor:pointer; border-bottom:1px solid var(--border);" onclick="document.getElementById('${cardId}').style.display = document.getElementById('${cardId}').style.display === 'none' ? 'block' : 'none'">
+                        ${tPhoto}
+                        <div style="flex:1; min-width:0;">
+                            <div style="font-weight:800; font-size:15px; color:var(--text-main);">${tName}</div>
+                            <div class="text-xs text-muted" style="margin-top:4px; display:flex; flex-wrap:wrap; gap:8px;">
+                                <span>📱 ${tPhone}</span>
+                                <span>🏢 ${centersStr}</span>
+                            </div>
+                            <div class="text-xs" style="margin-top:4px; font-weight:700; color:var(--primary);">
+                                🕒 فترة العمل: ${startWork} إلى ${endWork} <span class="badge badge-muted" style="margin-inline-start:4px;">${workDurationHours} ساعة</span>
+                            </div>
+                        </div>
+                        <div style="font-size:20px; color:var(--text-muted); transition:transform 0.2s;" id="arrow_${cardId}">⌄</div>
+                    </div>
+                    <div id="${cardId}" style="padding:12px; display:none; background:var(--surface);">
+                        <div style="font-weight:700; font-size:13px; margin-bottom:10px; color:var(--text-secondary);">📋 تفاصيل الحصص (${teacherGroups.length}):</div>
+                        ${sessionsHtml}
+                    </div>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        
+        ThemeManager.openModal(html, 'modal-lg');
+    } catch(e) {
+        console.error('openCalendarDayModal error', e);
+        window.safeToast('خطأ في عرض تفاصيل اليوم', 'error');
     }
-    view.innerHTML=html+'</div>';
-  }catch(e){ console.error('loadCalendar',e); }
 };
 
 /* ===================== 🧠 مولد الأسئلة التلقائي ===================== */
@@ -3609,6 +3874,167 @@ window.runAIGenerator=function(){
       '<button class="btn btn-success w-full" onclick="window.saveAIGenerated()">💾 حفظ الأسئلة</button>';
   }catch(e){ console.error(e); window.safeToast('خطأ في التوليد','error'); }
 };
+/* ================================================================
+🕵️ كشف التداخل بين الأساتذة في نفس السنتر في نفس الوقت
+================================================================ */
+window.detectTeacherOverlaps=function(dayItems){
+try{
+  const overlaps=[];
+  const byCenter={};
+  
+  // تجميع الحصص حسب السنتر
+  (dayItems||[]).forEach(function(item){
+    const g=item.group;
+    const center=g.center||'بدون سنتر';
+    if(!byCenter[center]) byCenter[center]=[];
+    byCenter[center].push(item);
+  });
+
+  // لكل سنتر، كشف التداخل الزمني بين الأساتذة المختلفين
+  Object.keys(byCenter).forEach(function(center){
+    const sessions=byCenter[center];
+    const sessionsWithMinutes=sessions.map(function(item){
+      const parts=(item.time||'00:00').split(':');
+      const start=(+parts[0])*60+(+parts[1]||0);
+      const dur=(item.group.duration||60);
+      return {
+        teacherId:item.group.teacherId,
+        teacherName:(DataService.getUserById?DataService.getUserById(item.group.teacherId):null)?.name||'أستاذ',
+        groupName:item.group.name,
+        start:start,
+        end:start+dur,
+        startLabel:item.time,
+        endLabel:(function(){
+          const em=start+dur;
+          const hh=Math.floor(em/60), mm=em%60;
+          return String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+        })()
+      };
+    });
+
+    // مقارنة كل زوج من الحصص في نفس السنتر
+    for(let i=0;i<sessionsWithMinutes.length;i++){
+      for(let j=i+1;j<sessionsWithMinutes.length;j++){
+        const a=sessionsWithMinutes[i];
+        const b=sessionsWithMinutes[j];
+        // تداخل لو نفس الأستاذ مفيش مشكلة، إحنا عايزين أساتذة مختلفين
+        if(a.teacherId===b.teacherId) continue;
+        // التداخل الزمني
+        if(a.start<b.end && b.start<a.end){
+          overlaps.push({
+            center:center,
+            teacher1:a.teacherName,
+            teacher2:b.teacherName,
+            group1:a.groupName,
+            group2:b.groupName,
+            timeA:a.startLabel+' - '+a.endLabel,
+            timeB:b.startLabel+' - '+b.endLabel
+          });
+        }
+      }
+    }
+  });
+  return overlaps;
+}catch(e){ console.error(e); return []; }
+};
+
+/* ================================================================
+📋 مودال تفاصيل اليوم الكامل
+================================================================ */
+window.openDayDetails=function(ds){
+try{
+  const d=db();
+  const groups=(DataService.getGroups?DataService.getGroups():[]);
+  const dt=new Date(ds);
+  const EN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const dayEn=EN[dt.getDay()];
+  const dayArabic=dayAr(dayEn);
+
+  // جمع حصص اليوم
+  const dayItems=[];
+  groups.forEach(function(g){
+    const schs=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}];
+    schs.forEach(function(s){
+      if(s&&s.day===dayEn){
+        dayItems.push({group:g, time:s.time||''});
+      }
+    });
+  });
+
+  // كشف التداخل
+  const overlaps=window.detectTeacherOverlaps(dayItems);
+
+  // بناء عرض الحصص مرتبة بالوقت
+  dayItems.sort(function(a,b){
+    const pa=(a.time||'00:00').split(':'), pb=(b.time||'00:00').split(':');
+    return ((+pa[0])*60+(+pa[1]||0)) - ((+pb[0])*60+(+pb[1]||0));
+  });
+
+  let sessionsHtml='';
+  if(dayItems.length){
+    sessionsHtml=dayItems.map(function(item){
+      const g=item.group;
+      const teacher=(DataService.getUserById?DataService.getUserById(g.teacherId):null);
+      const isCancelled=(d.cancelledSessions||[]).some(c=>c.groupId===g.id&&c.date===ds);
+      const isDone=(d.attendance||[]).some(a=>a.groupId===g.id&&a.date===ds&&a.status==='approved');
+      
+      let stateBadge='<span style="color:#6366f1;font-weight:700;">• قادمة</span>';
+      if(isCancelled) stateBadge='<span style="color:#ef4444;font-weight:800;">✗ ملغية</span>';
+      else if(isDone) stateBadge='<span style="color:#10b981;font-weight:800;">✓ تمت</span>';
+
+      const cancelReason=(d.cancelledSessions||[]).find(c=>c.groupId===g.id&&c.date===ds)?.reason||'';
+      
+      return `<div style="padding:12px;background:${isCancelled?'rgba(239,68,68,.05)':isDone?'rgba(16,185,129,.05)':'var(--surface-hover)'};border-radius:10px;margin-bottom:8px;border-right:4px solid ${isCancelled?'#ef4444':isDone?'#10b981':'#6366f1'};">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <div style="flex:1;min-width:200px;">
+            <strong style="font-size:15px;">${g.name}</strong>
+            <div class="text-xs text-muted" style="margin-top:3px;">👨‍🏫 ${teacher?.name||'أستاذ'} · 🏢 ${g.center||'بدون سنتر'}</div>
+            <div class="text-xs text-muted" style="margin-top:2px;">🕐 ${item.time} · ⏱️ ${g.duration||60} دقيقة · 👥 ${DataService.getStudentsByGroup?DataService.getStudentsByGroup(g.id).length:0} طالب</div>
+            ${cancelReason?'<div class="text-xs" style="color:#ef4444;margin-top:3px;">سبب الإلغاء: '+cancelReason+'</div>':''}
+          </div>
+          <div>${stateBadge}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    sessionsHtml='<p class="text-muted" style="text-align:center;padding:20px;">لا توجد حصص في اليوم ده</p>';
+  }
+
+  // عرض تنبيهات التداخل
+  let overlapsHtml='';
+  if(overlaps.length){
+    overlapsHtml='<div style="margin-top:20px;"><h3 style="color:#ef4444;margin-bottom:12px;">⚠️ تنبيهات التداخل بين الأساتذة</h3>'
+      + overlaps.map(function(o){
+        return `<div style="padding:12px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:10px;margin-bottom:8px;">
+          <div style="font-weight:700;color:#ef4444;margin-bottom:6px;">⚠️ تداخل في ${o.center}</div>
+          <div class="text-sm" style="line-height:1.8;">
+            👨‍🏫 <strong>${o.teacher1}</strong> (${o.group1}) — ${o.timeA}<br>
+            👨‍🏫 <strong>${o.teacher2}</strong> (${o.group2}) — ${o.timeB}
+          </div>
+          <div class="text-xs" style="color:var(--text-muted);margin-top:6px;">💡 الأستاذين هيكونوا قريبين من بعض في نفس السنتر — ممكن تنسيق اجتماع أو تنسيق</div>
+        </div>`;
+      }).join('')
+      +'</div>';
+  } else {
+    overlapsHtml='<div style="margin-top:20px;padding:16px;background:rgba(16,185,129,.06);border-radius:10px;text-align:center;color:#10b981;">✅ لا يوجد تداخل بين الأساتذة في اليوم ده</div>';
+  }
+
+  ThemeManager.openModal(`
+    <div class="modal-header">
+      <h3 class="modal-title">📋 تفاصيل يوم ${dayArabic} ${ds}</h3>
+      <button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:16px;">
+        <h3 style="margin-bottom:12px;">📚 حصص اليوم (${dayItems.length})</h3>
+        ${sessionsHtml}
+      </div>
+      ${overlapsHtml}
+    </div>
+  `,'modal-lg');
+}catch(e){ console.error('openDayDetails',e); }
+};
+
 window.saveAIGenerated=async function(){
   try{
     var qs=window._aiGenQuestions||[];
@@ -3802,9 +4228,15 @@ window.awardAcademicPoints = async function(studentId, type, score, maxScore, re
 
   console.log('✅ Ops Master Patch applied successfully');
 })();
-/* ================================================================
-🎓 مودال إضافة الطالب المحسّن (أدمن)
-================================================================ */
+window.getAllCenters=function(){
+  try{
+    const set=new Set();
+    const centers=DataService.getCenters?DataService.getCenters():[];
+    centers.forEach(c=>{ if(c&&c.name) set.add(c.name); });
+    (DataService?.getGroups?DataService.getGroups():[]).forEach(g=>{ if(g.center) set.add(g.center); });
+    return [...set];
+  }catch(e){ return []; }
+};
 /* ================================================================
 🎓 مودال إضافة الطالب المحسّن (أدمن)
 ================================================================ */
@@ -3898,67 +4330,54 @@ window._groupCard = function(g, checked) {
     <div class="grp-times">🕐 ${SSM.groupTimes(g)}</div></div></label>`;
 };
 
-window.renderStudentGroups = function() {
-  try {
-    const list = document.getElementById('sGroupsList');
-    if(!list) return;
-    const center = document.getElementById('sCenter')?.value || '';
-    const q = (document.getElementById('grpSearch')?.value || '').trim().toLowerCase();
-    const stage = document.getElementById('sStage')?.value || '';
-    const grade = document.getElementById('sGrade')?.value || '';
-    const pre = (window._preChecked||[]).slice();
-    
-    // الأساتذة المختارين
-    const selectedTeacherIds = Array.from(document.querySelectorAll('#teacherSelectionGrid input:checked')).map(cb => cb.value);
-    
-    let groups = (DataService.getGroups ? DataService.getGroups() : []).slice();
-    
-    // فلترة بالأساتذة المختارين
-    if(selectedTeacherIds.length) {
-      groups = groups.filter(g => selectedTeacherIds.includes(g.teacherId));
+window.loadGroupsPage=function(){
+  try{
+    const stageFilter=document.getElementById('grpStageFilter')?.value||'';
+    const centerFilter=document.getElementById('grpCenterFilter')?.value||'';
+    const sortBy=document.getElementById('grpSortBy')?.value||'grade';
+    let groups=DataService.getGroups?DataService.getGroups():[];
+    if(stageFilter) groups=groups.filter(g=>(g.stage||'')===stageFilter);
+    if(centerFilter) groups=groups.filter(g=>(g.center||'')===centerFilter);
+    if(sortBy==='grade'){
+      groups.sort((a,b)=>{
+        const stageOrder=Object.keys(EduFlowConfig?.educationLevels||{});
+        const sa=stageOrder.indexOf(a.stage||'');
+        const sb=stageOrder.indexOf(b.stage||'');
+        if(sa!==sb) return sa-sb;
+        return (a.grade||'').localeCompare(b.grade||'');
+      });
     }
-    
-    // فلترة بالمرحلة والصف
-    if(stage) groups = groups.filter(g => (g.stage||'') === stage);
-    if(grade) groups = groups.filter(g => (g.grade||'') === grade);
-    
-    // فلترة بالسنتر
-    if(center) groups = groups.filter(g => (g.center||'') === center);
-    
-    // بحث
-    if(q) groups = groups.filter(g => (g.name||'').toLowerCase().indexOf(q) >= 0);
-    
-    // تقسيم حسب الأستاذ
-    const byTeacher = {};
-    groups.forEach(g => {
-      if(!byTeacher[g.teacherId]) byTeacher[g.teacherId] = [];
-      byTeacher[g.teacherId].push(g);
-    });
-    
-    let html = '';
-    
-    // المجموعات المختارة مسبقاً
-    const preGroups = pre.map(id => groups.find(g => g.id === id)).filter(Boolean);
-    if(preGroups.length) {
-      html += `<div class="sm-teacher-block"><div class="sm-teacher-name">📌 مجموعات الطالب الحالية</div>${preGroups.map(g => window._groupCard(g, true)).join('')}</div>`;
-    }
-    
-    // المجموعات حسب الأستاذ
-    Object.keys(byTeacher).forEach(tid => {
-      const teacher = DataService.getUserById ? DataService.getUserById(tid) : null;
-      html += `<div class="sm-teacher-block"><div class="sm-teacher-name">👨‍🏫 ${teacher?.name||'-'}</div>${byTeacher[tid].map(g => window._groupCard(g, false)).join('')}</div>`;
-    });
-    
-    list.innerHTML = html || '<p class="text-muted" style="padding:10px;">لا توجد مجموعات مطابقة — اختار أستاذ أو غير الفلاتر</p>';
-    
-    // تحديث العداد
-    const count = document.querySelectorAll('#sGroupsList input:checked').length;
-    const badge = document.getElementById('grpCountBadge');
-    if(badge) {
-      badge.textContent = count;
-      badge.style.display = count ? 'inline-flex' : 'none';
-    }
-  } catch(e) { console.error(e); }
+    const el=document.getElementById('groupsList');
+    if(!el) return;
+    el.innerHTML=groups.length?groups.map(g=>{
+      const t=DataService.getUserById(g.teacherId);
+      const stuCount=DataService.getStudentsByGroup(g.id).length;
+      const st=window.getGroupGradingStatus?window.getGroupGradingStatus(g):null;
+      return `<div class="user-card">
+        <div class="user-card-header">
+          <div class="user-avatar">👥</div>
+          <div>
+            <div class="user-name">${g.name}</div>
+            <div class="user-meta">
+              <span>👨‍🏫 ${t?.name||'-'}</span>
+              <span>🏢 ${g.center||'-'}</span>
+              <span>🎓 ${g.stage||'-'}</span>
+            </div>
+          </div>
+        </div>
+        <div class="user-meta" style="margin-top:8px;">
+          <span>📅 ${SSM.groupTimes(g)}</span>
+          <span>👥 ${stuCount} طالب</span>
+          <span>💰 ${g.monthlyFee||80} ج.م</span>
+        </div>
+        ${st&&st.state==='not_recorded'?'<div class="badge badge-danger" style="margin-top:8px;">❌ مش متسجلة</div>':st&&st.state==='needs_grading'?'<div class="badge badge-warning" style="margin-top:8px;">⏳ مطلوب تصحيح</div>':''}
+        <div class="user-actions" style="margin-top:10px;">
+          <button class="btn btn-ghost btn-sm" onclick="window.openGroupModal('${g.id}')">✏️ تعديل</button>
+          <a href="${g.whatsappLink||'#'}" target="_blank" class="btn btn-success btn-sm" style="${g.whatsappLink?'':'opacity:0.5;pointer-events:none;'}">💬 واتساب</a>
+        </div>
+      </div>`;
+    }).join(''):'<p class="text-muted">لا توجد مجموعات</p>';
+  }catch(e){ console.error(e); }
 };
 
 window.saveStudent = async function(e, editId) {
@@ -4017,7 +4436,18 @@ window.openBulkGroupsModal=function(){
 try{
 window._bulkGroupRows=[];
 const teachers=DataService.getTeachers();
-const centers=window.getAllCenters?window.getAllCenters():[];
+// 🆕 جلب السناتر من مصادر متعددة (السناتر المسجلة + السناتر من المجموعات)
+let centers=[];
+// أولاً: حاول من السناتر المسجلة في النظام
+if(DataService.getCenters){
+  centers=(DataService.getCenters()||[]).map(c=>c.name).filter(Boolean);
+}
+// ثانياً: لو مفيش سناتر مسجلة، استخدم اللي من المجموعات كـ fallback
+if(!centers.length && window.getAllCenters){
+  centers=window.getAllCenters();
+}
+// إزالة التكرار
+centers=[...new Set(centers)];
 const stageOpts=Object.entries(EduFlowConfig?.educationLevels||{}).map(([k,v])=>`<option value="${k}">${v.nameAr}</option>`).join('');
 ThemeManager.openModal(`
 <div class="modal-header"><h3 class="modal-title">📋 إضافة مجموعات بالجملة</h3><button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>

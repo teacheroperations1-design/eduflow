@@ -396,6 +396,7 @@
   <script src="js/footer-injector.js"></script>
 
   <script>
+    
     const DAYS=[{en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},{en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'},{en:'Saturday',ar:'السبت'}];
     const dayAr=en=>(DAYS.find(d=>d.en===en)||{}).ar||en;
     const T=tm=>DataService?.formatTime12?DataService.formatTime12(tm):tm;
@@ -1917,7 +1918,7 @@
         document.body.appendChild(overlay);
       }catch(e){}
     };
-  </script>
+   </script>
   <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}</script>
 </body>
 </html>
