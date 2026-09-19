@@ -1044,6 +1044,166 @@ window.loadChurnAlerts=function(){
       </div>`).join(''):'<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">✅</div><strong>لا يوجد طلاب معرضين للخطر حالياً</strong></div>';
   }catch(e){ console.error(e); }
 };
+// 🆕 نظام الذكاء لمودال المجموعات (زي مودال الطالب)
+window.SSG = {
+  scan: function() {
+    const name = (document.getElementById('gName')?.value || '').trim().toLowerCase();
+    const box = document.getElementById('gMatchBox');
+    if (!box) return;
+    
+    if (name.length < 2) {
+      box.innerHTML = '';
+      return;
+    }
+    
+    const groups = (DataService.getGroups ? DataService.getGroups() : []);
+    const teacherId = document.getElementById('gTeacher')?.value || currentUser?.id;
+    
+    // البحث عن مجموعات بنفس الاسم
+    const matches = groups.filter(g => 
+      (g.name || '').toLowerCase().includes(name)
+    );
+    
+    if (!matches.length) {
+      box.innerHTML = '<div class="sm-box"><div class="sm-empty">✅ لا توجد مجموعات بنفس الاسم — يمكنك إنشاء جديدة</div></div>';
+      return;
+    }
+    
+    // تقسيم النتائج: نفس الأستاذ = تحذير / أساتذة تانيين = مرجع
+    const sameTeacher = matches.filter(g => g.teacherId === teacherId);
+    const otherTeacher = matches.filter(g => g.teacherId !== teacherId);
+    
+    let html = '<div class="sm-box">';
+    
+    if (sameTeacher.length) {
+      html += '<div class="sm-title" style="color:var(--danger);">⚠️ مجموعات بنفس الاسم لنفس الأستاذ:</div>';
+      html += sameTeacher.map(g => `
+        <div class="sm-row" onclick="window.SSG.editExisting('${g.id}')">
+          <div style="flex:1;">
+            <strong>${g.name}</strong>
+            <div class="sm-meta">👨🏫 ${DataService.getUserById(g.teacherId)?.name || '-'} · ${dayAr(g.day)} ${T(g.time)} · ${g.center || '-'}</div>
+          </div>
+          <span class="sm-pick">✏️ تعديل الموجودة</span>
+        </div>
+      `).join('');
+    }
+    
+    if (otherTeacher.length) {
+      html += '<div class="sm-title" style="color:var(--info);">ℹ️ مجموعات بنفس الاسم لأساتذة تانيين:</div>';
+      html += otherTeacher.slice(0, 3).map(g => `
+        <div class="sm-row" style="opacity:0.7;">
+          <div style="flex:1;">
+            <strong>${g.name}</strong>
+            <div class="sm-meta">👨🏫 ${DataService.getUserById(g.teacherId)?.name || '-'}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    html += '<div class="sm-new" onclick="window.SSG.createNew()">➕ إنشاء مجموعة جديدة على أي حال</div>';
+    html += '</div>';
+    
+    box.innerHTML = html;
+  },
+  
+  editExisting: function(gid) {
+    const g = DataService.getGroups().find(x => x.id === gid);
+    if (!g) return;
+    // املأ الفورم ببيانات المجموعة الموجودة
+    document.getElementById('gName').value = g.name;
+    document.getElementById('gTeacher').value = g.teacherId;
+    if (document.getElementById('gStage')) {
+      document.getElementById('gStage').value = g.stage || '';
+      window.updGroupGrades(g.grade);
+      if (document.getElementById('gGrade')) document.getElementById('gGrade').value = g.grade || '';
+    }
+    if (document.getElementById('gDay')) document.getElementById('gDay').value = g.day;
+    if (document.getElementById('gTime')) document.getElementById('gTime').value = g.time;
+    if (document.getElementById('gCenter')) document.getElementById('gCenter').value = g.center || '';
+    if (document.getElementById('gWhatsapp')) document.getElementById('gWhatsapp').value = g.whatsappLink || '';
+    if (document.getElementById('gDuration')) document.getElementById('gDuration').value = g.duration || 60;
+    if (document.getElementById('gSessions')) document.getElementById('gSessions').value = g.sessionsPerMonth || 8;
+    if (document.getElementById('gMonthly')) document.getElementById('gMonthly').value = g.monthlyFee || 0;
+    
+    document.getElementById('gMatchBox').innerHTML = '';
+    safeToast('📝 تم تحميل بيانات المجموعة الموجودة — يمكنك تعديلها', 'info');
+  },
+  
+  createNew: function() {
+    document.getElementById('gMatchBox').innerHTML = '';
+    safeToast('➕ يمكنك الآن إنشاء مجموعة جديدة', 'info');
+  }
+};
+// 🆕 نظام الذكاء لمودال المجموعات (زي مودال الطالب)
+window.SSG = {
+scan: function() {
+const name = (document.getElementById('gName')?.value || '').trim().toLowerCase();
+const box = document.getElementById('gMatchBox');
+if (!box) return;
+if (name.length < 2) {
+box.innerHTML = '';
+return;
+}
+const groups = (DataService.getGroups ? DataService.getGroups() : []);
+const teacherId = document.getElementById('gTeacher')?.value || currentUser?.id;
+const matches = groups.filter(g =>
+(g.name || '').toLowerCase().includes(name)
+);
+if (!matches.length) {
+box.innerHTML = '<div style="padding:8px 12px;font-size:12px;color:var(--success);background:var(--success-bg);border-radius:8px;margin-top:4px;">✅ لا توجد مجموعات بنفس الاسم — يمكنك إنشاء جديدة</div>';
+return;
+}
+const sameTeacher = matches.filter(g => g.teacherId === teacherId);
+const otherTeacher = matches.filter(g => g.teacherId !== teacherId);
+let html = '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-top:4px;">';
+if (sameTeacher.length) {
+html += '<div style="padding:6px 12px;font-size:11px;font-weight:700;color:var(--danger);background:var(--danger-bg);">⚠️ مجموعات بنفس الاسم لنفس الأستاذ:</div>';
+html += sameTeacher.map(g => `
+<div style="padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;" onclick="window.SSG.editExisting('${g.id}')">
+<div><strong>${g.name}</strong><div style="font-size:10px;color:var(--text-muted);">👨‍🏫 ${(DataService.getUserById(g.teacherId)||{}).name||'-'} · ${dayAr(g.day)} ${T(g.time)}</div></div>
+<span style="font-size:11px;font-weight:700;color:var(--primary);">✏️ تعديل</span>
+</div>
+`).join('');
+}
+if (otherTeacher.length) {
+html += '<div style="padding:6px 12px;font-size:11px;font-weight:700;color:var(--info);background:var(--info-bg);">ℹ️ مجموعات بنفس الاسم لأساتذة تانيين:</div>';
+html += otherTeacher.slice(0, 3).map(g => `
+<div style="padding:8px 12px;border-bottom:1px solid var(--border);opacity:.7;">
+<strong>${g.name}</strong>
+<div style="font-size:10px;color:var(--text-muted);">👨‍🏫 ${(DataService.getUserById(g.teacherId)||{}).name||'-'}</div>
+</div>
+`).join('');
+}
+html += '<div style="padding:8px 12px;cursor:pointer;font-size:11px;font-weight:700;color:var(--text-secondary);" onclick="window.SSG.createNew()">➕ إنشاء مجموعة جديدة على أي حال</div>';
+html += '</div>';
+box.innerHTML = html;
+},
+editExisting: function(gid) {
+const g = DataService.getGroups().find(x => x.id === gid);
+if (!g) return;
+document.getElementById('gName').value = g.name;
+document.getElementById('gTeacher').value = g.teacherId;
+if (document.getElementById('gStage')) {
+document.getElementById('gStage').value = g.stage || '';
+window.updGroupGrades(g.grade);
+if (document.getElementById('gGrade')) document.getElementById('gGrade').value = g.grade || '';
+}
+if (document.getElementById('gCenter')) document.getElementById('gCenter').value = g.center || '';
+if (document.getElementById('gWhatsapp')) document.getElementById('gWhatsapp').value = g.whatsappLink || '';
+if (document.getElementById('gDuration')) document.getElementById('gDuration').value = g.duration || 60;
+if (document.getElementById('gSessions')) document.getElementById('gSessions').value = g.sessionsPerMonth || 8;
+if (document.getElementById('gMonthly')) document.getElementById('gMonthly').value = g.monthlyFee || 80;
+document.getElementById('gMatchBox').innerHTML = '';
+// بدل ما يفتح مودال جديد، غيّر الـ editId عشان الحفظ يعمل update
+window._groupEditOverride = g.id;
+safeToast('📝 تم تحميل بيانات المجموعة — عدّل اللي محتاجه ودوس حفظ', 'info');
+},
+createNew: function() {
+document.getElementById('gMatchBox').innerHTML = '';
+window._groupEditOverride = null;
+safeToast('➕ تقدر تكمل إنشاء المجموعة الجديدة', 'info');
+}
+};
 
 window.buildMenu=function(){
   const menu=[
@@ -2139,7 +2299,7 @@ window.openGroupModal=function(editId){
     const existingSchedules = g?.schedules || (g?.day && g?.time ? [{day: g.day, time: g.time}] : []);
     
     ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${g?'✏️':'👥'} مجموعة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return window.saveGroup(event,'${editId||''}')">
-    <div class="form-group"><label>الاسم *</label><input type="text" id="gName" class="form-input" value="${g?.name||''}" required></div>
+    <div class="form-group"><label>الاسم *</label><input type="text" id="gName" class="form-input" value="${g?.name||''}" required oninput="window.SSG.scan()"><div id="gMatchBox"></div></div>
     <div class="form-group"><label>👨‍🏫 المدرس *</label><select id="gTeacher" class="form-select" required><option value="">-- اختار --</option>${DataService.getTeachers().map(t=>`<option value="${t.id}" ${g?.teacherId===t.id?'selected':''}>${t.name}</option>`).join('')}</select></div>
     <div class="stage-grade-row"><div class="form-group"><label>المرحلة</label><select id="gStage" class="form-select" onchange="window.updGroupGrades()"><option value="">--</option>${stageOptions}</select></div><div class="form-group"><label>الصف</label><select id="gGrade" class="form-select"></select></div></div>
     
@@ -2190,7 +2350,7 @@ window.addScheduleRow=function(day='', time='', index=null){
       </div>
       <div class="form-group" style="margin:0;">
         <label style="font-size:11px;">الوقت</label>
-        <input type="time" class="form-input schedule-time" value="${time||'10:00'}" required>
+        <input type="time" class="form-input schedule-time" value="${time||'13:00'}" required>
       </div>
       <button type="button" class="btn btn-danger btn-sm" onclick="document.getElementById('${rowId}').remove()" style="margin-bottom:0;">✕</button>
     `;
@@ -2201,50 +2361,102 @@ window.addScheduleRow=function(day='', time='', index=null){
 window.updGroupGrades=function(sel){ try{ const stage=document.getElementById('gStage')?.value; const grades=EduFlowConfig?.educationLevels?.[stage]?.grades||[]; const el=document.getElementById('gGrade'); if(el)el.innerHTML='<option value="">--</option>'+grades.map(g=>`<option ${sel===g?'selected':''}>${g}</option>`).join(''); }catch(e){} };
 
 // 🆕 حفظ المجموعة مع مواعيد متعددة
-window.saveGroup=async function(e,editId){
-  try{
-    e.preventDefault();
-    const monthly=parseInt(document.getElementById('gMonthly')?.value)||0, sessions=parseInt(document.getElementById('gSessions')?.value)||8;
-    
-    // جمع المواعيد
-    const scheduleRows = document.querySelectorAll('.multi-schedule-row');
-    const schedules = [];
-    scheduleRows.forEach(row => {
-      const day = row.querySelector('.schedule-day')?.value;
-      const time = row.querySelector('.schedule-time')?.value;
-      if(day && time){
-        schedules.push({day, time});
-      }
-    });
-    
-    if(schedules.length === 0){
-      window.safeToast('يرجى إضافة موعد واحد على الأقل','error');
-      return false;
+// 🆕 حفظ المجموعة مع مواعيد متعددة + 🧠 الذكاء الاصطناعي لمنع التكرار
+window.saveGroup = async function(e, editId) {
+try {
+e.preventDefault();
+// لو المستخدم اختار مجموعة موجودة من الاقتراحات، استخدم الـ override
+if (window._groupEditOverride) editId = window._groupEditOverride;
+const groupName = (document.getElementById('gName')?.value || '').trim();
+        if (!groupName) {
+            window.safeToast('يرجى كتابة اسم المجموعة', 'error');
+            return false;
+        }
+
+        // 🧠 الذكاء: التحقق من وجود مجموعة بنفس الاسم ونفس الأستاذ (فقط عند الإضافة الجديدة وليس التعديل)
+        if (!editId) {
+            const allGroups = (typeof DataService !== 'undefined' && DataService.getGroups) ? DataService.getGroups() : [];
+            const existingGroup = allGroups.find(g => 
+                g.name && g.name.trim().toLowerCase() === groupName.toLowerCase() && 
+                g.teacherId === teacherId
+            );
+
+            if (existingGroup) {
+                const confirmEdit = confirm(
+                    `⚠️ تنبيه ذكي:\nيوجد مجموعة بالفعل باسم "${groupName}" لنفس الأستاذ.\n\n` +
+                    `هل تريد فتح هذه المجموعة لتعديل بياناتها بدلاً من إنشاء مجموعة جديدة؟\n\n` +
+                    `[موافق] = فتح المجموعة للتعديل\n[إلغاء] = العودة لتغيير الاسم`
+                );
+                
+                if (confirmEdit) {
+                    ThemeManager.closeModal();
+                    window.openGroupModal(existingGroup.id); // فتح مودال التعديل للمجموعة الموجودة
+                    return false;
+                } else {
+                    window.safeToast('تم الإلغاء. قم بتغيير اسم المجموعة إذا كنت تريد إنشاء مجموعة جديدة.', 'info');
+                    return false;
+                }
+            }
+        }
+
+        // --- باقي كود الحفظ العادي ---
+        const monthly = parseInt(document.getElementById('gMonthly')?.value) || 0;
+        const sessions = parseInt(document.getElementById('gSessions')?.value) || 8;
+        
+        // جمع المواعيد (للأدمن)
+        const scheduleRows = document.querySelectorAll('.multi-schedule-row');
+        const schedules = [];
+        scheduleRows.forEach(row => {
+            const day = row.querySelector('.schedule-day')?.value;
+            const time = row.querySelector('.schedule-time')?.value;
+            if (day && time) {
+                schedules.push({ day, time });
+            }
+        });
+
+        // لو مفيش مواعيد متعددة (زي في لوحة المدرس)، نستخدم اليوم والوقت الأساسيين
+        if (schedules.length === 0) {
+            const day = document.getElementById('gDay')?.value;
+            const time = document.getElementById('gTime')?.value;
+            if (day && time) schedules.push({ day, time });
+        }
+
+        if (schedules.length === 0) {
+            window.safeToast('يرجى تحديد موعد واحد على الأقل', 'error');
+            return false;
+        }
+
+        const primarySchedule = schedules[0];
+        const data = {
+            name: document.getElementById('gName').value,
+            teacherId: teacherId,
+            stage: document.getElementById('gStage')?.value || '',
+            grade: document.getElementById('gGrade')?.value || '',
+            day: primarySchedule.day,       
+            time: primarySchedule.time,     
+            schedules: schedules,            
+            duration: parseInt(document.getElementById('gDuration')?.value) || 60,
+            monthlyFee: monthly,
+            sessionsPerMonth: sessions,
+            sessionFee: Math.round(monthly / (sessions || 1)),
+            center: document.getElementById('gCenter')?.value || '',
+            whatsappLink: document.getElementById('gWhatsapp')?.value || ''
+        };
+
+        if (editId) await DataService.updateGroup(editId, data); 
+        else await DataService.addGroup(data);
+        
+        ThemeManager.closeModal(); 
+        if(window.loadGroups) window.loadGroups(); 
+        if(window.fillTeacherFilters) window.fillTeacherFilters(); 
+        window.safeToast(`✅ تم الحفظ بنجاح (${schedules.length} موعد)`, 'success');
+        return false;
+
+    } catch (e2) {
+        console.error(e2);
+        window.safeToast('خطأ في الحفظ: ' + e2.message, 'error');
+        return false;
     }
-    
-    // استخدام أول موعد كـ primary (للتوافق مع الكود القديم)
-    const primarySchedule = schedules[0];
-    
-    const data={
-      name:document.getElementById('gName').value,
-      teacherId:document.getElementById('gTeacher').value,
-      stage:document.getElementById('gStage').value,
-      grade:document.getElementById('gGrade').value,
-      day:primarySchedule.day,       // Primary day (backward compatibility)
-      time:primarySchedule.time,     // Primary time (backward compatibility)
-      schedules:schedules,            // 🆕 كل المواعيد
-      duration:parseInt(document.getElementById('gDuration')?.value)||60,
-      monthlyFee:monthly,
-      sessionsPerMonth:sessions,
-      sessionFee:Math.round(monthly/sessions),
-      center:document.getElementById('gCenter').value,
-      whatsappLink:document.getElementById('gWhatsapp').value
-    };
-    
-    if(editId)await DataService.updateGroup(editId,data); else await DataService.addGroup(data);
-    
-    ThemeManager.closeModal(); window.loadGroups(); window.fillTeacherFilters(); window.safeToast(`✅ تم الحفظ (${schedules.length} موعد)`,'success');return false;
-  }catch(e2){window.safeToast('خطأ في الحفظ','error');return false;}
 };
 
 /* ================================================================
