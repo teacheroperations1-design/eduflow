@@ -1057,8 +1057,11 @@ window.SSG = {
     }
     
     const groups = (DataService.getGroups ? DataService.getGroups() : []);
-    const teacherId = document.getElementById('gTeacher')?.value || currentUser?.id;
-    
+const teacherId = document.getElementById('gTeacher')?.value || currentUser?.id || null;
+if (!teacherId) {
+    window.safeToast('⚠️ لم يتم تحديد الأستاذ — تأكد من اختيار الأستاذ أولاً', 'error');
+    return false;
+}    
     // البحث عن مجموعات بنفس الاسم
     const matches = groups.filter(g => 
       (g.name || '').toLowerCase().includes(name)
@@ -1145,7 +1148,11 @@ box.innerHTML = '';
 return;
 }
 const groups = (DataService.getGroups ? DataService.getGroups() : []);
-const teacherId = document.getElementById('gTeacher')?.value || currentUser?.id;
+const teacherId = document.getElementById('gTeacher')?.value || currentUser?.id || null;
+if (!teacherId) {
+    window.safeToast('⚠️ لم يتم تحديد الأستاذ — تأكد من اختيار الأستاذ أولاً', 'error');
+    return false;
+}
 const matches = groups.filter(g =>
 (g.name || '').toLowerCase().includes(name)
 );
@@ -2363,100 +2370,82 @@ window.updGroupGrades=function(sel){ try{ const stage=document.getElementById('g
 // 🆕 حفظ المجموعة مع مواعيد متعددة
 // 🆕 حفظ المجموعة مع مواعيد متعددة + 🧠 الذكاء الاصطناعي لمنع التكرار
 window.saveGroup = async function(e, editId) {
-try {
-e.preventDefault();
-// لو المستخدم اختار مجموعة موجودة من الاقتراحات، استخدم الـ override
-if (window._groupEditOverride) editId = window._groupEditOverride;
-const groupName = (document.getElementById('gName')?.value || '').trim();
-        if (!groupName) {
-            window.safeToast('يرجى كتابة اسم المجموعة', 'error');
-            return false;
-        }
-
-        // 🧠 الذكاء: التحقق من وجود مجموعة بنفس الاسم ونفس الأستاذ (فقط عند الإضافة الجديدة وليس التعديل)
-        if (!editId) {
-            const allGroups = (typeof DataService !== 'undefined' && DataService.getGroups) ? DataService.getGroups() : [];
-            const existingGroup = allGroups.find(g => 
-                g.name && g.name.trim().toLowerCase() === groupName.toLowerCase() && 
-                g.teacherId === teacherId
-            );
-
-            if (existingGroup) {
-                const confirmEdit = confirm(
-                    `⚠️ تنبيه ذكي:\nيوجد مجموعة بالفعل باسم "${groupName}" لنفس الأستاذ.\n\n` +
-                    `هل تريد فتح هذه المجموعة لتعديل بياناتها بدلاً من إنشاء مجموعة جديدة؟\n\n` +
-                    `[موافق] = فتح المجموعة للتعديل\n[إلغاء] = العودة لتغيير الاسم`
-                );
-                
-                if (confirmEdit) {
-                    ThemeManager.closeModal();
-                    window.openGroupModal(existingGroup.id); // فتح مودال التعديل للمجموعة الموجودة
-                    return false;
-                } else {
-                    window.safeToast('تم الإلغاء. قم بتغيير اسم المجموعة إذا كنت تريد إنشاء مجموعة جديدة.', 'info');
-                    return false;
-                }
-            }
-        }
-
-        // --- باقي كود الحفظ العادي ---
-        const monthly = parseInt(document.getElementById('gMonthly')?.value) || 0;
-        const sessions = parseInt(document.getElementById('gSessions')?.value) || 8;
-        
-        // جمع المواعيد (للأدمن)
-        const scheduleRows = document.querySelectorAll('.multi-schedule-row');
-        const schedules = [];
-        scheduleRows.forEach(row => {
-            const day = row.querySelector('.schedule-day')?.value;
-            const time = row.querySelector('.schedule-time')?.value;
-            if (day && time) {
-                schedules.push({ day, time });
-            }
-        });
-
-        // لو مفيش مواعيد متعددة (زي في لوحة المدرس)، نستخدم اليوم والوقت الأساسيين
-        if (schedules.length === 0) {
-            const day = document.getElementById('gDay')?.value;
-            const time = document.getElementById('gTime')?.value;
-            if (day && time) schedules.push({ day, time });
-        }
-
-        if (schedules.length === 0) {
-            window.safeToast('يرجى تحديد موعد واحد على الأقل', 'error');
-            return false;
-        }
-
-        const primarySchedule = schedules[0];
-        const data = {
-            name: document.getElementById('gName').value,
-            teacherId: teacherId,
-            stage: document.getElementById('gStage')?.value || '',
-            grade: document.getElementById('gGrade')?.value || '',
-            day: primarySchedule.day,       
-            time: primarySchedule.time,     
-            schedules: schedules,            
-            duration: parseInt(document.getElementById('gDuration')?.value) || 60,
-            monthlyFee: monthly,
-            sessionsPerMonth: sessions,
-            sessionFee: Math.round(monthly / (sessions || 1)),
-            center: document.getElementById('gCenter')?.value || '',
-            whatsappLink: document.getElementById('gWhatsapp')?.value || ''
-        };
-
-        if (editId) await DataService.updateGroup(editId, data); 
-        else await DataService.addGroup(data);
-        
-        ThemeManager.closeModal(); 
-        if(window.loadGroups) window.loadGroups(); 
-        if(window.fillTeacherFilters) window.fillTeacherFilters(); 
-        window.safeToast(`✅ تم الحفظ بنجاح (${schedules.length} موعد)`, 'success');
-        return false;
-
-    } catch (e2) {
-        console.error(e2);
-        window.safeToast('خطأ في الحفظ: ' + e2.message, 'error');
-        return false;
+  try {
+    e.preventDefault();
+    // ✅ تعريف آمن لـ teacherId (يقضي على خطأ teacherId is not defined)
+    var teacherId = '';
+    var gTeacherEl = document.getElementById('gTeacher');
+    if (gTeacherEl && gTeacherEl.value) {
+      teacherId = gTeacherEl.value;
+    } else if (typeof currentUser !== 'undefined' && currentUser && currentUser.id) {
+      teacherId = currentUser.id;
     }
+    if (!teacherId) { window.safeToast('⚠️ اختار الأستاذ الأول', 'error'); return false; }
+
+    var nameEl = document.getElementById('gName');
+    var groupName = (nameEl ? nameEl.value : '').trim();
+    if (!groupName) { window.safeToast('اكتب اسم المجموعة', 'error'); return false; }
+
+    // 🧠 منع التكرار: نفس الاسم + نفس الأستاذ = تعديل مش إضافة
+    if (!editId) {
+      var allGroups = (typeof DataService !== 'undefined' && DataService.getGroups) ? DataService.getGroups() : [];
+      var existingGroup = null;
+      for (var i = 0; i < allGroups.length; i++) {
+        var gg = allGroups[i];
+        if (gg && gg.name && gg.name.trim().toLowerCase() === groupName.toLowerCase() && gg.teacherId === teacherId) { existingGroup = gg; break; }
+      }
+      if (existingGroup) {
+        var goEdit = confirm('⚠️ فيه مجموعة بنفس الاسم "' + groupName + '" لنفس الأستاذ.\nعايز تفتحها للتعديل بدل ما تعمل نسخة مكررة؟\n\nموافق = تعديل الموجودة\nإلغاء = إلغاء الحفظ');
+        if (goEdit) { ThemeManager.closeModal(); window.openGroupModal(existingGroup.id); }
+        return false;
+      }
+    }
+
+    // 📅 جمع المواعيد من صفوف المواعيد المتعددة
+    var schedules = [];
+    document.querySelectorAll('.multi-schedule-row').forEach(function(row) {
+      var dayEl = row.querySelector('.schedule-day');
+      var timeEl = row.querySelector('.schedule-time');
+      if (dayEl && timeEl && dayEl.value && timeEl.value) schedules.push({ day: dayEl.value, time: timeEl.value });
+    });
+    // احتياطي: الحقول القديمة لو موجودة
+    if (!schedules.length) {
+      var dEl = document.getElementById('gDay');
+      var tEl = document.getElementById('gTime');
+      if (dEl && tEl && dEl.value && tEl.value) schedules.push({ day: dEl.value, time: tEl.value });
+    }
+    if (!schedules.length) { window.safeToast('ضيف موعد واحد على الأقل', 'error'); return false; }
+
+    var monthly = parseInt((document.getElementById('gMonthly') || {}).value) || 0;
+    var sessions = parseInt((document.getElementById('gSessions') || {}).value) || 8;
+    var data = {
+      name: groupName,
+      teacherId: teacherId,
+      stage: (document.getElementById('gStage') || {}).value || '',
+      grade: (document.getElementById('gGrade') || {}).value || '',
+      day: schedules[0].day,
+      time: schedules[0].time,
+      schedules: schedules,
+      duration: parseInt((document.getElementById('gDuration') || {}).value) || 60,
+      monthlyFee: monthly,
+      sessionsPerMonth: sessions,
+      sessionFee: Math.round(monthly / (sessions || 1)),
+      center: (document.getElementById('gCenter') || {}).value || '',
+      whatsappLink: (document.getElementById('gWhatsapp') || {}).value || ''
+    };
+    if (editId) { await DataService.updateGroup(editId, data); }
+    else { await DataService.addGroup(data); }
+    ThemeManager.closeModal();
+    if (window.loadGroups) window.loadGroups();
+    if (window.loadWhatsappGroups) window.loadWhatsappGroups();
+    if (window.fillTeacherFilters) window.fillTeacherFilters();
+    window.safeToast('✅ تم الحفظ (' + schedules.length + ' موعد)', 'success');
+    return false;
+  } catch (e2) {
+    console.error(e2);
+    window.safeToast('خطأ في الحفظ: ' + e2.message, 'error');
+    return false;
+  }
 };
 
 /* ================================================================
@@ -3112,59 +3101,82 @@ console.error(e);
 window.safeToast('خطأ في الحفظ: '+e.message,'error');
 }
 };
-window.applyBranding=function(b){
-try{
-if(!b) return;
-const r=document.documentElement;
-if(b.primaryColor) r.style.setProperty('--primary', b.primaryColor);
-if(b.accentColor) r.style.setProperty('--accent', b.accentColor);
-document.querySelectorAll('[data-brand-name]').forEach(el=>{ el.textContent=b.name||'EduFlow'; });
-document.querySelectorAll('[data-logo]').forEach(el=>{
-if(b.logoUrl){
-const logoSrc=window.driveThumb?window.driveThumb(b.logoUrl):b.logoUrl;
-el.innerHTML='<img src="'+logoSrc+'" alt="logo" style="width:100%;height:100%;object-fit:cover;">';
-}else{
-el.innerHTML='🎓';
-}
-});
-}catch(e){}
+window.applyBranding = function(b) {
+  try {
+    if (!b) return;
+    console.log('🎨 تطبيق البراندنج:', b);
+    
+    const r = document.documentElement;
+    if (b.primaryColor) r.style.setProperty('--primary', b.primaryColor);
+    if (b.accentColor) r.style.setProperty('--accent', b.accentColor);
+    
+    // تطبيق الاسم
+    document.querySelectorAll('[data-brand-name]').forEach(el => { 
+      el.textContent = b.name || 'EduFlow'; 
+    });
+    
+    // تطبيق اللوغو
+    document.querySelectorAll('[data-logo]').forEach(el => {
+      if (b.logoUrl) {
+        console.log('🖼️ تطبيق اللوغو:', b.logoUrl);
+        // استخدام driveThumb لو الرابط من Google Drive
+        const logoSrc = window.driveThumb ? window.driveThumb(b.logoUrl) : b.logoUrl;
+        el.innerHTML = `<img src="${logoSrc}" alt="logo" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><span style="display:none;font-size:32px;">🎓</span>`;
+      } else {
+        el.innerHTML = '<span style="font-size:32px;">🎓</span>';
+      }
+    });
+    
+    console.log('✅ تم تطبيق البراندنج بنجاح');
+  } catch(e) {
+    console.error('applyBranding error:', e);
+  }
 };
 
 window.saveBranding = async function(){
-try {
-const data = {
-name: document.getElementById('bName').value,
-tagline: document.getElementById('bTagline').value,
-logoUrl: document.getElementById('bLogoUrl').value,
-primaryColor: document.getElementById('bPrimary').value,
-accentColor: document.getElementById('bAccent').value,
-phone: document.getElementById('bPhone').value,
-whatsapp: document.getElementById('bWhatsapp').value,
-facebook: document.getElementById('bFacebook').value,
-aboutCompany: document.getElementById('bAboutCompany').value,
-aboutContact: document.getElementById('bAboutContact').value,
-updatedAt: new Date().toISOString()
-};
-const d = db();
-d.branding = data;
-save(d);
-localStorage.setItem('eduflow_branding', JSON.stringify(data));
-if (typeof window.applyBranding === 'function') window.applyBranding(data);
-if (typeof DataService?.applyBrandingColors === 'function') DataService.applyBrandingColors(data);
-try {
-if (window.FirebaseService && FirebaseService._db) {
-await FirebaseService._db.collection('meta').doc('branding').set(data);
-} else if (window.FirebaseService && typeof FirebaseService.saveMeta === 'function') {
-await FirebaseService.saveMeta('branding', data);
-}
-} catch (cloudErr) {
-console.warn('Cloud branding save:', cloudErr);
-}
-window.safeToast('✅ تم حفظ الإعدادات وتطبيقها فوراً', 'success');
-} catch(e) {
-console.error(e);
-window.safeToast('خطأ في الحفظ: ' + e.message, 'error');
-}
+  try {
+    const data = {
+      name: document.getElementById('bName').value,
+      tagline: document.getElementById('bTagline').value,
+      logoUrl: document.getElementById('bLogoUrl').value,
+      primaryColor: document.getElementById('bPrimary').value,
+      accentColor: document.getElementById('bAccent').value,
+      phone: document.getElementById('bPhone').value,
+      whatsapp: document.getElementById('bWhatsapp').value,
+      facebook: document.getElementById('bFacebook').value,
+      aboutCompany: document.getElementById('bAboutCompany').value,
+      aboutContact: document.getElementById('bAboutContact').value,
+      updatedAt: new Date().toISOString()
+    };
+    
+    // 1. حفظ في الداتا المحلية
+    const d = db();
+    d.branding = data;
+    save(d);
+    localStorage.setItem('eduflow_branding', JSON.stringify(data));
+    
+    // 2. تطبيق البراندنج فوراً على الشاشة
+    if (typeof window.applyBranding === 'function') window.applyBranding(data);
+    if (typeof DataService?.applyBrandingColors === 'function') DataService.applyBrandingColors(data);
+    
+    // 3. رفع للسحابة (Cloud-First) - ✅ محسّن
+    if (window.FirebaseService && FirebaseService._db) {
+      try {
+        console.log('📤 رفع البراندنج للسحابة...');
+        await FirebaseService._db.collection('meta').doc('branding').set(data, {merge: true});
+        console.log('✅ تم رفع البراندنج للسحابة بنجاح');
+        window.safeToast('✅ تم حفظ الإعدادات ورفعها للسحابة', 'success');
+      } catch (e) {
+        console.error('❌ فشل رفع البراندنج للسحابة:', e);
+        window.safeToast('⚠️ تم الحفظ محلياً فقط - فشل الرفع للسحابة: ' + e.message, 'warning');
+      }
+    } else {
+      window.safeToast('⚠️ Firebase غير متاح - تم الحفظ محلياً فقط', 'warning');
+    }
+  } catch(e) {
+    console.error(e);
+    window.safeToast('خطأ في الحفظ: ' + e.message, 'error');
+  }
 };
 
 /* ================================================================
@@ -4644,123 +4656,290 @@ window.saveStudent = async function(e, editId) {
 📋 إضافة مجموعات بالجملة (دفعة واحدة)
 ================================================================ */
 window._bulkGroupRows=[];
-window.openBulkGroupsModal=function(){
-try{
-window._bulkGroupRows=[];
-const teachers=DataService.getTeachers();
-// 🆕 جلب السناتر من مصادر متعددة (السناتر المسجلة + السناتر من المجموعات)
-let centers=[];
-// أولاً: حاول من السناتر المسجلة في النظام
-if(DataService.getCenters){
-  centers=(DataService.getCenters()||[]).map(c=>c.name).filter(Boolean);
-}
-// ثانياً: لو مفيش سناتر مسجلة، استخدم اللي من المجموعات كـ fallback
-if(!centers.length && window.getAllCenters){
-  centers=window.getAllCenters();
-}
-// إزالة التكرار
-centers=[...new Set(centers)];
-const stageOpts=Object.entries(EduFlowConfig?.educationLevels||{}).map(([k,v])=>`<option value="${k}">${v.nameAr}</option>`).join('');
-ThemeManager.openModal(`
-<div class="modal-header"><h3 class="modal-title">📋 إضافة مجموعات بالجملة</h3><button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
-<div class="modal-body">
-<div class="filter-info">💡 اكتب بيانات المجموعة ودوس "➕ إضافة للقائمة" — القائمة هتتجمع تحت، وفي الآخر دوس "💾 حفظ الكل" وهتتضاف كلها دفعة واحدة.</div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-<div class="form-group"><label>👨‍ الأستاذ *</label><select id="bgTeacher" class="form-select">${teachers.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}</select></div>
-<div class="form-group"><label>اسم المجموعة *</label><input type="text" id="bgName" class="form-input" placeholder="مثال: مجموعة 3 ثانوي علوم"></div>
-</div>
-<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
-<div class="form-group"><label>🏢 السنتر *</label><input type="text" id="bgCenter" class="form-input" list="bgCentersList" placeholder="اسم السنتر"><datalist id="bgCentersList">${centers.map(c=>`<option value="${c}">`).join('')}</datalist></div>
-<div class="form-group"><label>اليوم *</label><select id="bgDay" class="form-select">${DAYS.map(d=>`<option value="${d.en}">${d.ar}</option>`).join('')}</select></div>
-<div class="form-group"><label>الوقت *</label><input type="time" id="bgTime" class="form-input" value="18:00"></div>
-</div>
-<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;">
-<div class="form-group"><label>المرحلة</label><select id="bgStage" class="form-select" onchange="window.bgStageCascade()"><option value="">--</option>${stageOpts}</select></div>
-<div class="form-group"><label>الصف</label><select id="bgGrade" class="form-select"></select></div>
-<div class="form-group"><label>المدة (د)</label><input type="number" id="bgDuration" class="form-input" value="120"></div>
-<div class="form-group"><label>سعر الشهر *</label><input type="number" id="bgFee" class="form-input" value="0"></div>
-</div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-<div class="form-group"><label>حصص/شهر</label><input type="number" id="bgSessions" class="form-input" value="8"></div>
-<div class="form-group"><label>📱 واتساب الجروب (اختياري)</label><input type="url" id="bgWhatsapp" class="form-input" placeholder="https://chat.whatsapp.com/..."></div>
-</div>
-<button type="button" class="btn btn-secondary w-full" onclick="window.bulkGroupAddRow()">➕ إضافة للقائمة</button>
-<div class="form-group" style="margin-top:12px;"><label>📃 القائمة الجاهزة (<span id="bgCount">0</span> مجموعة)</label><div id="bgRowsList" style="max-height:200px;overflow-y:auto;"></div></div>
-<button class="btn btn-primary w-full" style="padding:14px;font-size:15px;" onclick="window.saveBulkGroups()">💾 حفظ الكل</button>
-</div>`,'modal-lg');
-window.bgStageCascade();
-window.renderBulkGroupRows();
-}catch(e){ console.error(e); }
+/* ================================================================
+📋 إضافة مجموعات بالجملة — باليوم والترتيب
+================================================================ */
+window._bulkGroupRows = [];
+
+window.openBulkGroupsModal = function() {
+    try {
+        window._bulkGroupRows = [];
+        const teachers = DataService.getTeachers ? DataService.getTeachers() : [];
+        
+        // جلب السناتر
+        let centers = [];
+        if (DataService.getCenters) {
+            centers = (DataService.getCenters() || []).map(c => c.name).filter(Boolean);
+        }
+        if (!centers.length && window.getAllCenters) {
+            centers = window.getAllCenters();
+        }
+        centers = [...new Set(centers)];
+        
+        const stageOpts = Object.entries(EduFlowConfig?.educationLevels || {}).map(([k, v]) => `<option value="${k}">${v.nameAr}</option>`).join('');
+        const dayOpts = DAYS.map(d => `<option value="${d.en}">${d.ar}</option>`).join('');
+        
+        ThemeManager.openModal(`
+        <div class="modal-header">
+            <h3 class="modal-title">📋 إضافة مجموعات بالجملة — باليوم</h3>
+            <button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="filter-info">💡 اختر اليوم والأستاذ والسنتر، بعدين ضيف المجموعات بالترتيب. كل مجموعة ليها توقيتين وتفاصيلها. لما تخلص هتطلع لك كل مجموعات الأستاذ في اليوم ده للمقارنة.</div>
+            
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+                <div class="form-group"><label>📅 اليوم *</label>
+                    <select id="bgDay" class="form-select">${dayOpts}</select>
+                </div>
+                <div class="form-group"><label>👨‍🏫 الأستاذ *</label>
+                    <select id="bgTeacher" class="form-select">${teachers.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}</select>
+                </div>
+                <div class="form-group"><label>🏢 السنتر *</label>
+                    <select id="bgCenter" class="form-select"><option value="">-- اختار --</option>${centers.map(c => `<option value="${c}">${c}</option>`).join('')}</select>
+                </div>
+            </div>
+            
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="form-group"><label>المرحلة (للكل)</label>
+                    <select id="bgStage" class="form-select" onchange="window.bgStageCascade()"><option value="">--</option>${stageOpts}</select>
+                </div>
+                <div class="form-group"><label>الصف (للكل)</label>
+                    <select id="bgGrade" class="form-select"><option value="">--</option></select>
+                </div>
+            </div>
+            
+            <hr style="border:0;border-top:1px solid var(--border);margin:16px 0;">
+            
+            <h4 style="margin-bottom:12px;">➕ أضف المجموعات بالترتيب</h4>
+            <div id="bgRowsContainer" style="max-height:350px;overflow-y:auto;"></div>
+            
+            <button type="button" class="btn btn-secondary w-full" style="margin-top:12px;" onclick="window.addBulkGroupRow()">
+                ➕ إضافة مجموعة جديدة
+            </button>
+            
+            <hr style="border:0;border-top:1px solid var(--border);margin:16px 0;">
+            
+            <div style="display:flex;gap:8px;align-items:center;">
+                <span style="font-weight:700;">📃 المجموعات المضافة: <span id="bgCount" class="points-badge">0</span></span>
+                <button class="btn btn-primary" style="margin-inline-start:auto;" onclick="window.saveBulkGroups()">💾 حفظ الكل</button>
+            </div>
+        </div>`, 'modal-lg');
+        
+        // إضافة أول صف تلقائياً
+        window.addBulkGroupRow();
+        
+    } catch (e) {
+        console.error('openBulkGroupsModal error:', e);
+        window.safeToast('خطأ في فتح المودال: ' + e.message, 'error');
+    }
 };
-window.bgStageCascade=function(){
-try{
-const st=document.getElementById('bgStage')?.value;
-const grades=(EduFlowConfig?.educationLevels?.[st]?.grades)||[];
-const el=document.getElementById('bgGrade');
-if(el) el.innerHTML='<option value="">--</option>'+grades.map(g=>`<option>${g}</option>`).join('');
-}catch(e){}
+
+// إضافة صف مجموعة جديد
+window.addBulkGroupRow = function() {
+    try {
+        const container = document.getElementById('bgRowsContainer');
+        if (!container) return;
+        
+        const idx = window._bulkGroupRows.length;
+        const rowId = 'bgRow_' + idx;
+        
+        const row = document.createElement('div');
+        row.id = rowId;
+        row.style.cssText = 'background:var(--surface-hover);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;';
+        row.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <strong style="color:var(--primary);">مجموعة ${idx + 1}</strong>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="window.removeBulkGroupRow('${rowId}')" title="حذف">✕</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div class="form-group" style="margin:0;"><label style="font-size:11px;">اسم المجموعة *</label>
+                    <input type="text" class="form-input bg-name" placeholder="مثال: مجموعة 3 ثانوي علوم" style="width:100%;">
+                </div>
+                <div class="form-group" style="margin:0;"><label style="font-size:11px;">⏰ الوقت الأول *</label>
+                    <input type="time" class="form-input bg-time1" value="16:00" style="width:100%;">
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+                <div class="form-group" style="margin:0;"><label style="font-size:11px;">⏰ الوقت الثاني (اختياري)</label>
+                    <input type="time" class="form-input bg-time2" value="" style="width:100%;">
+                </div>
+                <div class="form-group" style="margin:0;"><label style="font-size:11px;">⏱️ المدة (دقيقة)</label>
+                    <input type="number" class="form-input bg-duration" value="120" style="width:100%;">
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+                <div class="form-group" style="margin:0;"><label style="font-size:11px;">💰 سعر الشهر</label>
+                    <input type="number" class="form-input bg-fee" value="80" style="width:100%;">
+                </div>
+                <div class="form-group" style="margin:0;"><label style="font-size:11px;">📅 حصص/شهر</label>
+                    <input type="number" class="form-input bg-sessions" value="8" style="width:100%;">
+                </div>
+            </div>
+            <div class="form-group" style="margin:8px 0 0;"><label style="font-size:11px;">📱 واتساب الجروب (اختياري)</label>
+                <input type="url" class="form-input bg-whatsapp" placeholder="https://chat.whatsapp.com/..." style="width:100%;">
+            </div>
+        `;
+        container.appendChild(row);
+        window._bulkGroupRows.push({ rowId: rowId });
+        window.updateBulkCount();
+    } catch (e) {
+        console.error('addBulkGroupRow error:', e);
+    }
 };
-window.bulkGroupAddRow=function(){
-try{
-const name=(document.getElementById('bgName')?.value||'').trim();
-const teacherId=document.getElementById('bgTeacher')?.value;
-const center=(document.getElementById('bgCenter')?.value||'').trim();
-const day=document.getElementById('bgDay')?.value;
-const time=document.getElementById('bgTime')?.value;
-if(!name){ window.safeToast('اكتب اسم المجموعة','error'); return; }
-if(!teacherId){ window.safeToast('اختار الأستاذ','error'); return; }
-if(!center){ window.safeToast('اكتب السنتر','error'); return; }
-if(!day||!time){ window.safeToast('اختار اليوم والوقت','error'); return; }
-window._bulkGroupRows.push({
-name:name, teacherId:teacherId, center:center, day:day, time:time,
-duration:parseInt(document.getElementById('bgDuration')?.value)||120,
-stage:document.getElementById('bgStage')?.value||'',
-grade:document.getElementById('bgGrade')?.value||'',
-monthlyFee:parseInt(document.getElementById('bgFee')?.value)||0,
-sessionsPerMonth:parseInt(document.getElementById('bgSessions')?.value)||8,
-whatsappLink:document.getElementById('bgWhatsapp')?.value||''
-});
-document.getElementById('bgName').value='';
-document.getElementById('bgWhatsapp').value='';
-document.getElementById('bgName').focus();
-window.renderBulkGroupRows();
-}catch(e){ console.error(e); }
+
+window.removeBulkGroupRow = function(rowId) {
+    try {
+        const row = document.getElementById(rowId);
+        if (row) row.remove();
+        window._bulkGroupRows = window._bulkGroupRows.filter(r => r.rowId !== rowId);
+        window.updateBulkCount();
+    } catch (e) {}
 };
-window.bulkGroupRemoveRow=function(i){ window._bulkGroupRows.splice(i,1); window.renderBulkGroupRows(); };
-window.renderBulkGroupRows=function(){
-try{
-const el=document.getElementById('bgRowsList');
-const cnt=document.getElementById('bgCount');
-if(cnt) cnt.textContent=window._bulkGroupRows.length;
-if(!el) return;
-if(!window._bulkGroupRows.length){ el.innerHTML='<p class="text-muted" style="text-align:center;padding:10px;">القائمة فاضية — ضيف أول مجموعة من الفورم فوق</p>'; return; }
-el.innerHTML=window._bulkGroupRows.map((r,i)=>{
-const tName=(DataService.getUserById?DataService.getUserById(r.teacherId):null)?.name||'-';
-return `<div class="sub-row" style="margin-bottom:4px;"><div><strong>${r.name}</strong><div class="text-xs text-muted">👨‍🏫 ${tName} · 🏢 ${r.center} · 📅 ${dayAr(r.day)} ${T(r.time)} · 💰 ${r.monthlyFee} ج.م</div></div><button type="button" class="btn btn-ghost btn-sm" onclick="window.bulkGroupRemoveRow(${i})">✕</button></div>`;
-}).join('');
-}catch(e){}
+
+window.updateBulkCount = function() {
+    const el = document.getElementById('bgCount');
+    if (el) el.textContent = window._bulkGroupRows.length;
 };
-window.saveBulkGroups=async function(){
-try{
-if(!window._bulkGroupRows.length){ window.safeToast('القائمة فاضية — ضيف مجموعات الأول','error'); return; }
-let ok=0,fail=0;
-for(const r of window._bulkGroupRows){
-try{
-await DataService.addGroup({
-name:r.name, teacherId:r.teacherId, stage:r.stage, grade:r.grade,
-day:r.day, time:r.time, schedules:[{day:r.day,time:r.time}],
-duration:r.duration, sessionsPerMonth:r.sessionsPerMonth,
-monthlyFee:r.monthlyFee, sessionFee:Math.round((r.monthlyFee||0)/(r.sessionsPerMonth||8)),
-center:r.center, whatsappLink:r.whatsappLink
-});
-ok++;
-}catch(e){ fail++; }
-}
-window._bulkGroupRows=[];
-ThemeManager.closeModal();
-window.safeToast(`✅ تم إضافة ${ok} مجموعة${fail?` · فشل ${fail}`:''}`,'success');
-window.loadGroups();
-}catch(e){ console.error(e); window.safeToast('خطأ في الحفظ','error'); }
+
+window.bgStageCascade = function() {
+    try {
+        const st = document.getElementById('bgStage')?.value;
+        const grades = (EduFlowConfig?.educationLevels?.[st]?.grades) || [];
+        const el = document.getElementById('bgGrade');
+        if (el) el.innerHTML = '<option value="">--</option>' + grades.map(g => `<option>${g}</option>`).join('');
+    } catch (e) {}
+};
+
+window.saveBulkGroups = async function() {
+    try {
+        const day = document.getElementById('bgDay')?.value;
+        const teacherId = document.getElementById('bgTeacher')?.value;
+        const center = document.getElementById('bgCenter')?.value;
+        const stage = document.getElementById('bgStage')?.value || '';
+        const grade = document.getElementById('bgGrade')?.value || '';
+        
+        if (!day || !teacherId) {
+            window.safeToast('⚠️ اختر اليوم والأستاذ أولاً', 'error');
+            return;
+        }
+        
+        const rows = document.querySelectorAll('#bgRowsContainer > div');
+        if (!rows.length) {
+            window.safeToast('⚠️ أضف مجموعة واحدة على الأقل', 'error');
+            return;
+        }
+        
+        let ok = 0, fail = 0;
+        const schedules = [];
+        
+        for (const row of rows) {
+            const name = row.querySelector('.bg-name')?.value?.trim();
+            const time1 = row.querySelector('.bg-time1')?.value;
+            const time2 = row.querySelector('.bg-time2')?.value;
+            const duration = parseInt(row.querySelector('.bg-duration')?.value) || 120;
+            const fee = parseInt(row.querySelector('.bg-fee')?.value) || 80;
+            const sessions = parseInt(row.querySelector('.bg-sessions')?.value) || 8;
+            const whatsapp = row.querySelector('.bg-whatsapp')?.value || '';
+            
+            if (!name || !time1) {
+                fail++;
+                continue;
+            }
+            
+            // بناء المواعيد (وقت أول + وقت ثاني اختياري)
+            const schedules = [{ day: day, time: time1 }];
+            if (time2) {
+                schedules.push({ day: day, time: time2 });
+            }
+            
+            try {
+                await DataService.addGroup({
+                    name: name,
+                    teacherId: teacherId,
+                    stage: stage,
+                    grade: grade,
+                    day: day,
+                    time: time1,
+                    schedules: schedules,
+                    duration: duration,
+                    monthlyFee: fee,
+                    sessionsPerMonth: sessions,
+                    sessionFee: Math.round(fee / (sessions || 8)),
+                    center: center,
+                    whatsappLink: whatsapp
+                });
+                ok++;
+            } catch (err) {
+                fail++;
+            }
+        }
+        
+        window.safeToast(`✅ تم إضافة ${ok} مجموعة${fail ? ' · فشل ' + fail : ''}`, 'success');
+        
+        // عرض ملخص مجموعات الأستاذ في اليوم ده
+        window.showDaySummary(teacherId, day);
+        
+    } catch (e) {
+        console.error('saveBulkGroups error:', e);
+        window.safeToast('خطأ في الحفظ: ' + e.message, 'error');
+    }
+};
+
+// عرض ملخص مجموعات الأستاذ في اليوم للمقارنة
+window.showDaySummary = function(teacherId, day) {
+    try {
+        const groups = (DataService.getGroups ? DataService.getGroups() : [])
+            .filter(g => g.teacherId === teacherId && g.day === day)
+            .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+        
+        const teacher = DataService.getUserById ? DataService.getUserById(teacherId) : null;
+        const dayName = DAYS.find(d => d.en === day)?.ar || day;
+        
+        let html = `
+        <div class="modal-header">
+            <h3 class="modal-title">📋 جدول ${teacher?.name || 'الأستاذ'} — يوم ${dayName}</h3>
+            <button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="filter-info">📊 إجمالي المجموعات في اليوم ده: <strong>${groups.length}</strong> مجموعة</div>
+        `;
+        
+        if (!groups.length) {
+            html += '<p class="text-muted" style="text-align:center;padding:20px;">لا توجد مجموعات في اليوم ده</p>';
+        } else {
+            html += groups.map((g, i) => {
+                const t = DataService.getUserById ? DataService.getUserById(g.teacherId) : null;
+                const cnt = DataService.getStudentsByGroup ? DataService.getStudentsByGroup(g.id).length : 0;
+                const times = (g.schedules && g.schedules.length)
+                    ? g.schedules.map(s => `${dayAr(s.day)} ${T(s.time)}`).join(' + ')
+                    : `${dayAr(g.day)} ${T(g.time)}`;
+                
+                return `
+                <div style="background:var(--surface-hover);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;border-inline-start:4px solid ${isCancelled ? 'var(--danger)' : 'var(--primary)'};">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <strong>${g.name}</strong>
+                            <div class="text-xs text-muted" style="margin-top:3px;">🕐 ${times} · ⏱️ ${g.duration || 60} د · 👥 ${cnt} طالب</div>
+                            <div class="text-xs text-muted">🏢 ${g.center || '-'} · 💰 ${g.monthlyFee || 0} ج.م</div>
+                        </div>
+                        <span style="font-weight:700;color:var(--primary);font-size:13px;">#${i + 1}</span>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+        
+        html += `
+            <div style="display:flex;gap:8px;margin-top:16px;">
+                <button class="btn btn-secondary w-full" onclick="ThemeManager.closeModal();window.loadGroups();">👁️ عرض المجموعات</button>
+                <button class="btn btn-ghost w-full" onclick="ThemeManager.closeModal()">✕ إغلاق</button>
+            </div>
+        </div>`;
+        
+        ThemeManager.openModal(html, 'modal-lg');
+        
+    } catch (e) {
+        console.error('showDaySummary error:', e);
+    }
 };
 </script>
 </body>

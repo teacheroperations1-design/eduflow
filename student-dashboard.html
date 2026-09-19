@@ -617,6 +617,39 @@ window.driveThumb=function(url){
     return m?('https://lh3.googleusercontent.com/d/'+m[1]+'=w400'):u;
   }catch(e){ return url||''; }
 };
+// 🌐 جلب البراندنج من السحابة عند فتح الصفحة
+(async function loadBrandingFromCloud(){
+  try {
+    // محاولة جلب من السحابة أولاً
+    if (window.FirebaseService && FirebaseService._db) {
+      try {
+        console.log('📥 جاري جلب البراندنج من السحابة...');
+        const doc = await FirebaseService._db.collection('meta').doc('branding').get();
+        if (doc.exists) {
+          const branding = doc.data();
+          console.log('✅ تم جلب البراندنج من السحابة:', branding);
+          
+          // حفظ محلياً
+          localStorage.setItem('eduflow_branding', JSON.stringify(branding));
+          const d = db();
+          d.branding = branding;
+          save(d);
+          
+          // تطبيق البراندنج
+          if (typeof window.applyBranding === 'function') window.applyBranding(branding);
+          if (typeof DataService?.applyBrandingColors === 'function') DataService.applyBrandingColors(branding);
+        } else {
+          console.log('ℹ️ لا يوجد براندنج في السحابة');
+        }
+      } catch (e) {
+        console.warn('⚠️ فشل جلب البراندنج من السحابة، استخدام المحلي:', e.message);
+      }
+    }
+  } catch(e) {
+    console.error('loadBrandingFromCloud error:', e);
+  }
+})();
+
 window.ytId=function(url){ try{ const m=String(url||'').match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([\w-]{6,})/); return m?m[1]:null; }catch(e){ return null; } };
 
 let currentUser=null, activeStudentId=null;
