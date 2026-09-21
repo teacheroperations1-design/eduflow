@@ -586,6 +586,7 @@
 <script src="js/footer-injector.js"></script>
 <script src="js/camera-helper.js"></script>
 <script src="js/smart-student.js"></script>
+<script src="js/schedule-board.js"></script>
 <script>
   // 🌐 جلب البراندنج من السحابة عند فتح الصفحة
 (async function loadBrandingFromCloud(){
@@ -803,6 +804,7 @@ const menu=[
         {id:'battles',l:'⚔️ التحديات والتصفيات',i:'🏆'},
         {id:'aiTools',l:'🤖 أدوات الذكاء الاصطناعي',i:'🧠'}
     ]},
+    {s:'🏢 البنية',items:[{id:'groups',l:'المجموعات',i:'👥'},{id:'centers',l:'السناتر',i:'🏢'},{id:'scheduleBoard',l:'جدول الأساتذة',i:'🗓️'}]},
     {s:'المالية',items:[{id:'monthly',l:'تحصيل الشهرية',i:'💰'},{id:'accounting',l:'المحاسبة',i:'🧮'},{id:'expenses',l:'المصروفات',i:'💸'},{id:'payments',l:'المدفوعات',i:'💵'}]},
     {s:'🤖 الذكاء الاصطناعي',items:[{id:'aiTools',l:'أدوات الذكاء الاصطناعي',i:'🤖'}]},
 {s:'المحتوى',items:[{id:'interactive',l:'المواد التفاعلية',i:'🧩'},{id:'videos',l:'الفيديوهات',i:'🎬'},{id:'classPosts',l:'بوستات الحصة',i:'📰'},{id:'challenges',l:'المسابقات',i:'🏆'},{id:'battles',l:'التحديات والتصفيات',i:'⚔️'}]},
@@ -1315,6 +1317,8 @@ window.renderAssistantGroups=function(){
     SSM.updateCount('assistant');
   }catch(e){ console.error('renderAssistantGroups error',e); }
 };
+
+
 
 window.saveAssistantStudent=async function(e){
   try{
@@ -2630,6 +2634,7 @@ window.doRecordPay=async function(id){ try{ const gid=document.getElementById('p
 window.loadCalendar=function(){ try{ const sel=document.getElementById('calGroup'); if(sel&&!sel.options.length){ const gids=(typeof Ops?.groupsInScope==='function'&&currentUser)?Ops.groupsInScope(currentUser.id):[]; sel.innerHTML=gids.map(g=>`<option value="${g.id}">${g.name}</option>`).join(''); } const g=DataService?.getGroups?DataService.getGroups().find(x=>x.id===sel?.value):null; const viewEl=document.getElementById('calendarView'); if(!g||!viewEl)return; const now=new Date(); const y=now.getFullYear(),m=now.getMonth(); const days=new Date(y,m+1,0).getDate(); const wd=DAYS.map(d=>d.en); let html='<div class="cal-grid">'+['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'].map(d=>`<div style="text-align:center;font-size:11px;font-weight:700;color:var(--text-muted)">${d}</div>`).join(''); for(let i=0;i<new Date(y,m,1).getDay();i++)html+='<div class="cal-day empty"></div>'; for(let d=1;d<=days;d++){ const date=new Date(y,m,d); const ds=date.toISOString().split('T')[0]; let cls='',mark=''; if(wd[date.getDay()]===g.day){ if(DataService.isSessionCancelled(g.id,ds)){cls='cancel';mark='✗';} else if((db().attendance||[]).some(a=>a.groupId===g.id&&a.date===ds&&a.status==='approved')){cls='ok';mark='✓';} } html+=`<div class="cal-day ${cls}"><div class="num">${d}</div>${mark?`<div class="mark">${mark}</div>`:''}</div>`; } viewEl.innerHTML=html+'</div>'; }catch(e){} };
 window.loadReports=function(){ try{ const att=(DataService?.getAttendance?DataService.getAttendance():[]).filter(a=>a.status==='approved'); const el=document.getElementById('reportView'); if(el) el.innerHTML='<table class="table"><thead><tr><th>المجموعة</th><th>حاضر</th><th>غائب</th></tr></thead><tbody>'+((typeof Ops?.groupsInScope==='function'&&currentUser)?Ops.groupsInScope(currentUser.id):[]).map(g=>{ const ga=att.filter(a=>a.groupId===g.id); const pr=ga.reduce((s,a)=>s+a.records.filter(x=>x.status==='present').length,0); const tot=ga.reduce((s,a)=>s+a.records.length,0); return `<tr><td>${g.name}</td><td>${pr}</td><td>${tot-pr}</td></tr>`; }).join('')+'</tbody></table>'; }catch(e){} };
 window.loadLogs=function(){ try{ const el=document.getElementById('logsList'); if(el) el.innerHTML=(DataService?.getActivityLogs?DataService.getActivityLogs():[]).filter(l=>l.userId===currentUser?.id).map(l=>`<div class="activity-item"><div class="activity-dot"></div><div><div class="activity-title">${l.action}</div><div class="activity-meta"><span>🕐 ${new Date(l.timestamp).toLocaleString('ar-EG')}</span></div></div></div>`).join('')||'<p class="text-muted">لا سجل</p>'; }catch(e){} };
+
 /* ================================================================
 ⚔️ التحديات والتصفيات (المعارك)
 ================================================================ */

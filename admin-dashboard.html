@@ -527,6 +527,37 @@
 .cal-day.empty{background:transparent;border:none;}
 .cal-day .num{font-weight:800;font-family:var(--font-en);}
 </style>
+<!-- 🗓️ جدول الأساتذة -->
+<section class="section" id="section-scheduleBoard">
+<div class="section-header"><div><h2 class="section-title">🗓️ جدول الأساتذة الأسبوعي</h2><p class="text-sm text-muted">اسحب أي حصة وأفلتها لتعديل موعدها — الأسبوع يبدأ من السبت</p></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;">
+<button class="btn btn-secondary btn-sm" onclick="window.loadScheduleBoardAdmin()">🔄 تحديث</button>
+<button class="btn btn-primary btn-sm" onclick="window.openBulkGroupsModal()">📋 إضافة مجموعات بالجملة</button>
+</div></div>
+<div class="card" style="margin-bottom:12px;">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;">
+<div class="form-group" style="margin:0;"><label>👨‍ فلتر الأستاذ</label><select id="sbTeacherFilter" class="form-select" onchange="window.loadScheduleBoardAdmin()"><option value="all">كل الأساتذة</option></select></div>
+<div class="form-group" style="margin:0;"><label>👥 فلتر المجموعة</label><select id="sbGroupFilter" class="form-select" onchange="window.loadScheduleBoardAdmin()"><option value="all">كل المجموعات</option></select></div>
+<div class="form-group" style="margin:0;"><label>🏢 فلتر السنتر</label><select id="sbCenterFilter" class="form-select" onchange="window.loadScheduleBoardAdmin()"><option value="all">كل السناتر</option></select></div>
+<div class="form-group" style="margin:0;"><label>👁️ طريقة العرض</label><select id="sbViewMode" class="form-select" onchange="window.loadScheduleBoardAdmin()">
+<option value="week">📆 جدول أسبوعي بالأيام (يبدأ السبت)</option>
+<option value="month">📅 شهري (شبكة)</option>
+<option value="timeline">⏱️ خط زمني بالساعات</option>
+<option value="cards">🃏 بطاقات المجموعات</option>
+</select></div>
+<div class="form-group" style="margin:0;"><label>🔀 الترتيب</label><select id="sbSortBy" class="form-select" onchange="window.loadScheduleBoardAdmin()">
+<option value="time">⏰ حسب الوقت</option>
+<option value="teacher">👨‍🏫 حسب الأستاذ</option>
+<option value="center">🏢 حسب السنتر</option>
+<option value="name">🔤 حسب الاسم</option>
+</select></div>
+</div>
+</div>
+<div id="sbStats" style="margin-bottom:12px;"></div>
+<div id="sbConflicts" style="margin-bottom:12px;"></div>
+<div class="card"><div id="sbBoard"></div></div>
+<div class="card" style="margin-top:12px;"><div class="card-header"><h3 class="card-title">📜 سجل تغييرات المواعيد</h3></div><div id="sbLog"></div></div>
+</section>
 
 <!-- ✅ مهامي (أدمن) -->
 <section class="section" id="section-tasks">
@@ -536,11 +567,39 @@
 
 <!-- 📅 التقويم (أدمن) -->
 <section class="section" id="section-calendar">
-<div class="section-header"><div><h2 class="section-title">📅 التقويم</h2><p class="text-sm text-muted">حصص كل المجموعات خلال الشهر (ملغي / متحضر / قادم)</p></div></div>
-<div class="card">
-<div class="form-group"><label>فلتر المجموعة</label><select id="calGroupFilter" class="form-select" onchange="window.loadCalendar()"><option value="">كل المجموعات</option></select></div>
-<div id="calendarView"></div>
+<div class="section-header"><div><h2 class="section-title">📅 التقويم</h2><p class="text-sm text-muted">حصص كل المجموعات — فلاتر وطرق عرض متعددة</p></div></div>
+<style>
+.cal-table{width:100%;border-collapse:collapse;font-size:11px;}
+.cal-table th,.cal-table td{border:1px solid var(--border);padding:6px;vertical-align:top;}
+.cal-table th{background:var(--surface-hover);font-size:11px;}
+.cal-slot{background:var(--primary-bg);border-radius:6px;padding:4px 6px;margin-bottom:4px;border-right:3px solid var(--primary);cursor:pointer;}
+.cal-slot:hover{filter:brightness(1.1);}
+.tl-day-head{font-weight:800;font-size:12px;margin-bottom:6px;}
+.tl-lane{position:relative;height:34px;background:var(--surface-hover);border-radius:8px;margin-bottom:4px;}
+.tl-bar{position:absolute;top:3px;bottom:3px;border-radius:6px;background:linear-gradient(90deg,var(--primary),var(--accent));color:#fff;font-size:10px;display:flex;align-items:center;padding:0 8px;overflow:hidden;white-space:nowrap;cursor:pointer;}
+.tl-bar:hover{filter:brightness(1.15);}
+.tl-hours{display:flex;justify-content:space-between;font-size:9px;color:var(--text-muted);margin-bottom:6px;padding:0 4px;}
+</style>
+<div class="card" style="margin-bottom:12px;">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;">
+<div class="form-group" style="margin:0;"><label>👨‍ فلتر الأستاذ</label><select id="calTeacherFilter" class="form-select" onchange="window.loadCalendar()"><option value="">كل الأساتذة</option></select></div>
+<div class="form-group" style="margin:0;"><label>👥 فلتر المجموعة</label><select id="calGroupFilter" class="form-select" onchange="window.loadCalendar()"><option value="">كل المجموعات</option></select></div>
+<div class="form-group" style="margin:0;"><label>🏢 فلتر السنتر</label><select id="calCenterFilter" class="form-select" onchange="window.loadCalendar()"><option value="">كل السناتر</option></select></div>
+<div class="form-group" style="margin:0;"><label>👁️ طريقة العرض</label><select id="calViewMode" class="form-select" onchange="window.loadCalendar()">
+<option value="month">📅 شهري (شبكة)</option>
+<option value="week">📆 جدول أسبوعي بالأيام</option>
+<option value="cards">🃏 بطاقات المجموعات</option>
+<option value="timeline">⏱️ خط زمني بالساعات</option>
+</select></div>
+<div class="form-group" style="margin:0;"><label>🔀 الترتيب</label><select id="calSortBy" class="form-select" onchange="window.loadCalendar()">
+<option value="time">⏰ حسب الوقت</option>
+<option value="teacher">👨‍🏫 حسب الأستاذ</option>
+<option value="center">🏢 حسب السنتر</option>
+<option value="name">🔤 حسب الاسم</option>
+</select></div>
 </div>
+</div>
+<div id="calendarView"></div>
 </section>
 
 
@@ -1217,7 +1276,7 @@ window.buildMenu=function(){
     {s:'🏛️ برج التحكم',items:[{id:'tower',l:'نظرة عامة',i:'📊'}]},
     {s:'👥 إدارة الأشخاص',items:[{id:'students',l:'الطلاب',i:'🎓'},{id:'teachers',l:'المدرسون',i:'👨‍🏫'},{id:'assistants',l:'المساعدون',i:'🧑‍🏫'},{id:'pending',l:'طلبات التسجيل',i:'⏳'},{id:'barcode-requests',l:'طلبات الباركود',i:'🎟️'}]},
     {s:'🚀 التشغيل والعمليات',items:[{id:'ops', l:'إدارة وتشغيل الأساتذة', i:'⚙️', href:'teachers-operations.html'}]},
-    {s:'🏢 البنية',items:[{id:'groups',l:'المجموعات',i:'👥'},{id:'centers',l:'السناتر',i:'🏢'}]},
+    {s:'🏢 البنية',items:[{id:'groups',l:'المجموعات',i:'👥'},{id:'centers',l:'السناتر',i:'🏢'},{id:'scheduleBoard',l:'جدول الأساتذة',i:'🗓️'}]},
     {s:'🎁 التحفيز',items:[{id:'points',l:'نظام النقاط',i:'🏆'},{id:'gamification',l:'تحكم التحفيز',i:'🎁'},{id:'battles',l:'معارك المجموعات',i:'⚔️'},{id:'templates',l:'القوالب الجاهزة',i:'📄'}]},
     {s:'📊 التحليلات',items:[{id:'reports',l:'التقارير الإدارية',i:'📈'}]},
     {s:'المتابعة',items:[{id:'followups',l:'المتابعات',i:'📌'},{id:'churn',l:'تنبيهات التسرب',i:'🚨'},{id:'tasks',l:'مهامي',i:'✅'},{id:'calendar',l:'التقويم',i:'📅'}]},
@@ -1237,7 +1296,7 @@ window.showSection=function(id){
     const L={
       tower:window.loadTower, students:window.loadStudents, teachers:window.loadTeachers,
       assistants:window.loadAssistants, pending:window.loadPending, groups:window.loadGroups,
-      centers:window.loadCenters, points:()=>{window.loadPointsOverview();window.loadPointsRules();window.loadPointsHistory();window.loadPointsRanking();},
+      centers:window.loadCenters, scheduleBoard:window.loadScheduleBoardAdmin, points:()=>{window.loadPointsOverview();window.loadPointsRules();window.loadPointsHistory();window.loadPointsRanking();},
       churn:window.loadChurnAlerts, // <-- أضف هذا السطر
       followups:window.loadFollowups,
       templates:window.loadTemplates, reports:()=>window.renderReport(currentReport),
@@ -3863,51 +3922,206 @@ window.loadTasks=function(){
 };
 
 /* ===================== 📅 التقويم المحسّن ===================== */
-window.calStateMap = {}; 
-
-/* ===================== 📅 التقويم ===================== */
+window.calStateMap = {};
+window.fillCalendarFilters=function(){
+try{
+const tSel=document.getElementById('calTeacherFilter');
+const gSel=document.getElementById('calGroupFilter');
+const cSel=document.getElementById('calCenterFilter');
+if(tSel){
+const cur=tSel.value;
+const ts=DataService.getTeachers?DataService.getTeachers():[];
+tSel.innerHTML='<option value="">كل الأساتذة</option>'+ts.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+tSel.value=cur;
+}
+if(gSel){
+const cur=gSel.value;
+const gs=DataService.getGroups?DataService.getGroups():[];
+gSel.innerHTML='<option value="">كل المجموعات</option>'+gs.map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
+gSel.value=cur;
+}
+if(cSel){
+const cur=cSel.value;
+let centers=[];
+if(DataService.getCenters) centers=(DataService.getCenters()||[]).map(c=>c.name).filter(Boolean);
+if(!centers.length&&window.getAllCenters) centers=window.getAllCenters();
+centers=[...new Set(centers)];
+cSel.innerHTML='<option value="">كل السناتر</option>'+centers.map(c=>`<option value="${c}">${c}</option>`).join('');
+cSel.value=cur;
+}
+}catch(e){}
+};
+window.calFmt12=function(tm){
+if(!tm) return '';
+if(DataService&&DataService.formatTime12) return DataService.formatTime12(tm);
+const p=String(tm).split(':'); let h=parseInt(p[0],10)||0; const m=p[1]||'00';
+const ap=h>=12?'م':'ص'; h=h%12; if(h===0)h=12;
+return h+':'+m+' '+ap;
+};
+window.calSessionsOf=function(g){
+const schs=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}];
+return schs.filter(s=>s&&s.day);
+};
+window.calDateStrForDay=function(dayEn){
+const EN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const now=new Date();
+const diff=EN.indexOf(dayEn)-now.getDay();
+const dt=new Date(now.getFullYear(),now.getMonth(),now.getDate()+diff);
+return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+};
+window.calSortGroups=function(list,sortBy){
+const tName=id=>{const t=DataService.getUserById?DataService.getUserById(id):null;return (t&&t.name)||'';};
+const dayIdx=en=>{for(let i=0;i<DAYS.length;i++){if(DAYS[i].en===en)return i;}return 7;};
+const arr=list.slice();
+if(sortBy==='teacher') arr.sort((a,b)=>tName(a.teacherId).localeCompare(tName(b.teacherId),'ar')||dayIdx(a.day)-dayIdx(b.day)||(a.time||'').localeCompare(b.time||''));
+else if(sortBy==='center') arr.sort((a,b)=>(a.center||'').localeCompare(b.center||'','ar')||dayIdx(a.day)-dayIdx(b.day)||(a.time||'').localeCompare(b.time||''));
+else if(sortBy==='name') arr.sort((a,b)=>(a.name||'').localeCompare(b.name||'','ar'));
+else arr.sort((a,b)=>dayIdx(a.day)-dayIdx(b.day)||(a.time||'').localeCompare(b.time||''));
+return arr;
+};
 window.loadCalendar=function(){
 try{
-var d=dbp(); var view=document.getElementById('calendarView'); if(!view) return;
-var sel=document.getElementById('calGroupFilter');
-var groups=(DataService.getGroups?DataService.getGroups():[]);
-if(sel&&sel.options.length<=1){ sel.innerHTML='<option value="">كل المجموعات</option>'+groups.map(function(g){return '<option value="'+g.id+'">'+g.name+'</option>';}).join(''); }
-var gid=sel?sel.value:'';
-var now=new Date(), y=now.getFullYear(), m=now.getMonth();
-var dim=new Date(y,m+1,0).getDate();
-var EN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-var AR=['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
-var map={};
-groups.filter(function(g){return !gid||g.id===gid;}).forEach(function(g){
-var schs=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}];
-schs.forEach(function(s){
-if(!s||!s.day) return;
-var di=EN.indexOf(s.day); if(di<0) return;
-for(var dd=1;dd<=dim;dd++){
-var dt=new Date(y,m,dd);
-if(dt.getDay()===di){
-var ds=dt.toISOString().split('T')[0];
+window.fillCalendarFilters();
+const view=document.getElementById('calendarView'); if(!view) return;
+const gid=document.getElementById('calGroupFilter')?.value||'';
+const tid=document.getElementById('calTeacherFilter')?.value||'';
+const cid=document.getElementById('calCenterFilter')?.value||'';
+const mode=document.getElementById('calViewMode')?.value||'month';
+const sortBy=document.getElementById('calSortBy')?.value||'time';
+let groups=(DataService.getGroups?DataService.getGroups():[]);
+if(gid) groups=groups.filter(g=>g.id===gid);
+if(tid) groups=groups.filter(g=>g.teacherId===tid);
+if(cid) groups=groups.filter(g=>(g.center||'')===cid);
+groups=window.calSortGroups(groups,sortBy);
+if(mode==='week') view.innerHTML=window.renderCalWeek(groups);
+else if(mode==='cards') view.innerHTML=window.renderCalCards(groups);
+else if(mode==='timeline') view.innerHTML=window.renderCalTimeline(groups);
+else view.innerHTML=window.renderCalMonth(groups);
+}catch(e){ console.error('loadCalendar',e); }
+};
+/* ---- 📅 العرض 1: شهري (شبكة) ---- */
+window.renderCalMonth=function(groups){
+const d=dbp();
+const now=new Date(), y=now.getFullYear(), m=now.getMonth();
+const dim=new Date(y,m+1,0).getDate();
+const EN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const AR=['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
+const map={};
+window.calStateMap={};
+groups.forEach(g=>{
+window.calSessionsOf(g).forEach(s=>{
+const di=EN.indexOf(s.day); if(di<0) return;
+for(let dd=1;dd<=dim;dd++){
+const dt=new Date(y,m,dd);
+if(dt.getDay()!==di) continue;
+const ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(dd).padStart(2,'0');
 map[ds]=map[ds]||[];
 map[ds].push({name:g.name,time:s.time||'',groupId:g.id,
-cancelled:(d.cancelledSessions||[]).some(function(c){return c.groupId===g.id&&c.date===ds;}),
-attended:(d.attendance||[]).some(function(a){return a.groupId===g.id&&a.date===ds&&a.status==='approved';})});
-}
+cancelled:(d.cancelledSessions||[]).some(c=>c.groupId===g.id&&c.date===ds),
+attended:(d.attendance||[]).some(a=>a.groupId===g.id&&a.date===ds&&a.status==='approved')});
 }
 });
 });
-var todayStr=now.toISOString().split('T')[0];
-var html='<div class="cal-grid">'+AR.map(function(n){return '<div style="text-align:center;font-size:11px;font-weight:700;color:var(--text-muted)">'+n+'</div>';}).join('');
-for(var i=0;i<new Date(y,m,1).getDay();i++) html+='<div class="cal-day empty"></div>';
-for(var dd2=1;dd2<=dim;dd2++){
-var ds2=new Date(y,m,dd2).toISOString().split('T')[0];
-var items=map[ds2]||[];
-var isToday=ds2===todayStr;
-html+='<div class="cal-day" style="cursor:pointer; '+(isToday?'border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-bg);':'')+'" onclick="window.openCalendarDayModal(\''+ds2+'\')"><div class="num">'+dd2+'</div>'+
-(items.length?'<div style="font-size:10px; font-weight:700; color:var(--primary); margin-bottom:2px;">'+items.length+' حصة</div>'+items.slice(0,2).map(function(it){ return '<div style="color:'+(it.cancelled?'var(--danger)':it.attended?'var(--success)':'var(--text-secondary)')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:9px;">'+(it.cancelled?'🚫':it.attended?'✓':'•')+' '+it.name+'</div>'; }).join('') + (items.length>2?'<div style="font-size:9px; color:var(--text-muted);">+'+(items.length-2)+' أخرى</div>':''):'')+
+const todayStr=y+'-'+String(m+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+let html='<div class="cal-grid">'+AR.map(n=>'<div style="text-align:center;font-size:11px;font-weight:700;color:var(--text-muted)">'+n+'</div>').join('');
+for(let i=0;i<new Date(y,m,1).getDay();i++) html+='<div class="cal-day empty"></div>';
+for(let dd=1;dd<=dim;dd++){
+const ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(dd).padStart(2,'0');
+const items=map[ds]||[];
+const isToday=ds===todayStr;
+html+='<div class="cal-day" style="cursor:pointer; '+(isToday?'border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-bg);':'')+'" onclick="window.openCalendarDayModal(\''+ds+'\')"><div class="num">'+dd+'</div>'+
+(items.length?'<div style="font-size:10px;font-weight:700;color:var(--primary);margin-bottom:2px;">'+items.length+' حصة</div>'+items.slice(0,2).map(it=>'<div style="color:'+(it.cancelled?'var(--danger)':it.attended?'var(--success)':'var(--text-secondary)')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:9px;">'+(it.cancelled?'🚫':it.attended?'✓':'•')+' '+window.calFmt12(it.time)+' '+it.name+'</div>').join('')+(items.length>2?'<div style="font-size:9px;color:var(--text-muted);">+'+(items.length-2)+' أخرى</div>':''):'')+
 '</div>';
 }
-view.innerHTML=html+'</div>';
-}catch(e){ console.error('loadCalendar',e); }
+return html+'</div>';
+};
+/* ---- 📆 العرض 2: جدول أسبوعي بالأيام (صفوف وقت × أعمدة أيام) ---- */
+window.renderCalWeek=function(groups){
+const EN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const AR=['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
+const timesSet={};
+groups.forEach(g=>window.calSessionsOf(g).forEach(s=>{ timesSet[s.time||'00:00']=1; }));
+const times=Object.keys(timesSet).sort((a,b)=>a.localeCompare(b));
+if(!times.length) return '<div class="card" style="text-align:center;padding:30px;"><div style="font-size:40px;">📭</div><strong>لا توجد حصص في الفلاتر الحالية</strong></div>';
+const todayIdx=new Date().getDay();
+let html='<div class="card"><div style="overflow-x:auto;"><table class="cal-table"><thead><tr><th style="min-width:80px;">⏰ الوقت</th>';
+for(let i=0;i<7;i++) html+='<th'+(i===todayIdx?' style="background:var(--primary-bg);color:var(--primary);"':'')+'>'+AR[i]+'</th>';
+html+='</tr></thead><tbody>';
+times.forEach(t=>{
+html+='<tr><td style="font-weight:800;white-space:nowrap;">'+window.calFmt12(t)+'</td>';
+for(let i=0;i<7;i++){
+const dayEn=EN[i];
+const cellItems=[];
+groups.forEach(g=>{
+window.calSessionsOf(g).forEach(s=>{
+if(s.day===dayEn&&(s.time||'00:00')===t) cellItems.push({g:g,s:s});
+});
+});
+html+='<td>';
+cellItems.forEach(ci=>{
+const g=ci.g;
+const tName=(DataService.getUserById?DataService.getUserById(g.teacherId):null)?.name||'-';
+html+='<div class="cal-slot" onclick="window.openCalendarDayModal(\''+window.calDateStrForDay(dayEn)+'\')">'
++'<div style="font-weight:800;">'+g.name+'</div>'
++'<div style="font-size:9px;opacity:.8;">👨‍ '+tName+' · 🏢 '+(g.center||'-')+'</div>'
++'</div>';
+});
+html+='</td>';
+}
+html+='</tr>';
+});
+html+='</tbody></table></div></div>';
+return html;
+};
+/* ---- 🃏 العرض 3: بطاقات المجموعات ---- */
+window.renderCalCards=function(groups){
+if(!groups.length) return '<div class="card" style="text-align:center;padding:30px;"><div style="font-size:40px;">📭</div><strong>لا توجد مجموعات في الفلاتر الحالية</strong></div>';
+return '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">'+groups.map(g=>{
+const t=(DataService.getUserById?DataService.getUserById(g.teacherId):null);
+const cnt=(DataService.getStudentsByGroup?DataService.getStudentsByGroup(g.id).length:0);
+const chips=window.calSessionsOf(g).slice().sort((a,b)=>(a.time||'').localeCompare(b.time||'')).map(s=>'<span class="badge badge-info" style="margin:2px;">'+dayAr(s.day)+' '+window.calFmt12(s.time)+'</span>').join('');
+return '<div class="user-card"><div class="user-card-header"><div class="user-avatar">👥</div><div><div class="user-name">'+g.name+'</div><div class="user-meta"><span>👨‍🏫 '+((t&&t.name)||'-')+'</span><span>🏢 '+(g.center||'-')+'</span><span>👥 '+cnt+'</span></div></div></div>'
++'<div style="margin:8px 0;">'+chips+'</div>'
++'<div class="user-meta"><span>⏱️ '+(g.duration||60)+' د</span><span>💰 '+(g.monthlyFee||0)+' ج.م</span><span>📅 '+(g.sessionsPerMonth||8)+' حصص/شهر</span></div>'
++'<div class="user-actions" style="margin-top:10px;"><button class="btn btn-ghost btn-sm" onclick="window.openGroupModal(\''+g.id+'\')">✏️ تعديل</button>'+(g.whatsappLink?'<a class="btn btn-success btn-sm" href="'+g.whatsappLink+'" target="_blank">💬 واتساب</a>':'')+'</div></div>';
+}).join('')+'</div>';
+};
+/* ---- ⏱️ العرض 4: خط زمني بالساعات (بار لكل حصة) ---- */
+window.renderCalTimeline=function(groups){
+if(!groups.length) return '<div class="card" style="text-align:center;padding:30px;"><div style="font-size:40px;">📭</div><strong>لا توجد حصص في الفلاتر الحالية</strong></div>';
+const DAY_START=8*60, DAY_END=23*60, SPAN=DAY_END-DAY_START;
+const EN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const AR=['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
+const todayIdx=new Date().getDay();
+let html='<div class="card"><div class="tl-hours"><span>8 ص</span><span>11 ص</span><span>2 م</span><span>5 م</span><span>8 م</span><span>11 م</span></div>';
+for(let i=0;i<7;i++){
+const dayEn=EN[i];
+const items=[];
+groups.forEach(g=>window.calSessionsOf(g).forEach(s=>{ if(s.day===dayEn) items.push({g:g,s:s}); }));
+items.sort((a,b)=>(a.s.time||'').localeCompare(b.s.time||''));
+const lanes=[];
+items.forEach(it=>{
+const p=String(it.s.time||'00:00').split(':');
+const st=(+p[0])*60+(+p[1]||0);
+const dur=parseInt(it.g.duration)||60;
+let lane=0;
+while(lane<lanes.length&&lanes[lane]>st) lane++;
+lanes[lane]=st+dur;
+it._lane=lane; it._st=st; it._dur=dur;
+});
+html+='<div style="margin-bottom:14px;'+(i===todayIdx?'background:var(--primary-bg);border-radius:10px;padding:8px;':'')+'">';
+html+='<div class="tl-day-head">'+AR[i]+(i===todayIdx?' (اليوم)':'')+' <span class="badge badge-muted">'+items.length+' حصة</span></div>';
+if(!items.length){ html+='<div style="font-size:10px;color:var(--text-muted);padding:4px 8px;">لا حصص</div>'; }
+items.forEach(it=>{
+const rightPct=Math.max(0,Math.min(96,(it._st-DAY_START)/SPAN*100));
+const widthPct=Math.max(6,Math.min(100-rightPct,it._dur/SPAN*100));
+const tName=(DataService.getUserById?DataService.getUserById(it.g.teacherId):null)?.name||'-';
+html+='<div class="tl-lane"><div class="tl-bar" style="right:'+rightPct+'%;width:'+widthPct+'%;" title="'+it.g.name+' · '+tName+'" onclick="window.openCalendarDayModal(\''+window.calDateStrForDay(dayEn)+'\')">'+window.calFmt12(it.s.time)+' '+it.g.name+' · '+tName+'</div></div>';
+});
+html+='</div>';
+}
+html+='</div>';
+return html;
 };
 
 window.openCalendarDayModal = function(dateStr) {
@@ -4941,6 +5155,626 @@ window.showDaySummary = function(teacherId, day) {
         console.error('showDaySummary error:', e);
     }
 };
+
+/* 🗓️ ربط صفحة جدول الأساتذة — من غير تعديل أي سطر تاني */
+(function(){
+  if(window._sbBoardWired) return;
+  window._sbBoardWired = true;
+  var orig = window.showSection;
+  window.showSection = function(id){
+    try{ orig.apply(this, arguments); }catch(e){ console.error(e); }
+    if(id === 'scheduleBoard' && typeof window.loadScheduleBoard === 'function'){
+      try{ window.loadScheduleBoard(); }catch(e){ console.error(e); }
+    }
+  };
+  /* لو الصفحة مفتوحة بالفعل على الجدول */
+  var sec=document.getElementById('section-scheduleBoard');
+  if(sec && sec.classList.contains('active') && typeof window.loadScheduleBoard==='function'){
+    window.loadScheduleBoard();
+  }
+})();
+/* 🗓️ جدول الأساتذة — باتش شامل (القائمة الجانبية + التوجيه + اللوحة) */
+(function(){
+"use strict";
+
+/* ---------- 1) حقن عنصر القائمة الجانبية ---------- */
+function injectMenuItem(){
+  try{
+    const nav=document.getElementById('sidebarNav');
+    if(!nav) return;
+    if(nav.querySelector('[data-section="scheduleBoard"]')) return;
+    const itemHtml='<div class="sidebar-item" data-section="scheduleBoard" onclick="window.showSection(\'scheduleBoard\')"><span class="sidebar-item-icon">🗓️</span><span class="sidebar-item-label">جدول الأساتذة</span></div>';
+    const centersItem=nav.querySelector('[data-section="centers"]');
+    if(centersItem) centersItem.insertAdjacentHTML('afterend', itemHtml);
+    else nav.insertAdjacentHTML('beforeend','<div class="sidebar-section"><div class="sidebar-section-title">🗓️ الجداول</div>'+itemHtml+'</div>');
+  }catch(e){ console.error(e); }
+}
+if(typeof window.buildMenu==='function'){
+  const origBuild=window.buildMenu;
+  window.buildMenu=function(){ const r=origBuild.apply(this,arguments); injectMenuItem(); return r; };
+}
+injectMenuItem();
+
+/* ---------- 2) توجيه showSection للصفحة ---------- */
+if(typeof window.showSection==='function' && !window._sbSectionPatched){
+  window._sbSectionPatched=true;
+  const origShow=window.showSection;
+  window.showSection=function(id){
+    const r=origShow.apply(this,arguments);
+    try{ if(id==='scheduleBoard' && typeof window.loadScheduleBoardAdmin==='function') window.loadScheduleBoardAdmin(); }catch(e){ console.error(e); }
+    return r;
+  };
+}
+
+/* ---------- 3) اللوحة نفسها (لو مش متحملة من ملف خارجي) ---------- */
+if(!window.SB){
+window.SB={};
+SB.f12=function(tm){
+  if(!tm) return '';
+  try{ if(window.DataService&&DataService.formatTime12) return DataService.formatTime12(tm); }catch(e){}
+  const p=String(tm).split(':'); let h=parseInt(p[0],10)||0; const m=p[1]||'00';
+  const ap=h>=12?'م':'ص'; h=h%12; if(h===0)h=12;
+  return h+':'+m+' '+ap;
+};
+SB.min=function(tm){ const p=String(tm||'0:00').split(':'); return (parseInt(p[0],10)||0)*60+(parseInt(p[1],10)||0); };
+SB.hm=function(min){ min=((Math.round(min)%1440)+1440)%1440; const h=Math.floor(min/60), m=min%60; return (h<10?'0':'')+h+':'+(m<10?'0':'')+m; };
+SB.schedulesOf=function(g){
+  if(g&&g.schedules&&g.schedules.length) return g.schedules.map(s=>({day:s.day,time:s.time}));
+  if(g&&g.day) return [{day:g.day,time:g.time||'10:00'}];
+  return [];
+};
+SB.tName=function(tid){ const t=(DataService.getUserById)?DataService.getUserById(tid):null; return (t&&t.name)||'أستاذ'; };
+SB.color=function(tid){
+  const pal=['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#0ea5e9','#ec4899','#14b8a6','#f97316','#84cc16'];
+  const ts=(DataService.getTeachers)?DataService.getTeachers():[];
+  let i=-1; for(let k=0;k<ts.length;k++){ if(ts[k].id===tid){i=k;break;} } if(i<0)i=0;
+  return pal[i%pal.length];
+};
+SB.conflictsFor=function(day,time,dur,excludeGid){
+  const out={sameTeacher:[],sameCenter:[]};
+  const me=(DataService.getGroups?DataService.getGroups():[]).find(g=>g.id===excludeGid);
+  const m=SB.min(time), end=m+(dur||60);
+  (DataService.getGroups?DataService.getGroups():[]).forEach(g=>{
+    if(g.id===excludeGid) return;
+    const gd=parseInt(g.duration)||60;
+    SB.schedulesOf(g).forEach(s=>{
+      if(s.day!==day) return;
+      const gm=SB.min(s.time);
+      if(m<gm+gd && gm<end){
+        if(me&&g.teacherId===me.teacherId) out.sameTeacher.push({g:g,time:s.time});
+        else if(me&&g.center&&g.center===me.center) out.sameCenter.push({g:g,time:s.time});
+      }
+    });
+  });
+  return out;
+};
+SB.allConflicts=function(groups){
+  const rows=[];
+  for(let i=0;i<groups.length;i++)for(let j=i+1;j<groups.length;j++){
+    const a=groups[i],b=groups[j];
+    const sameT=a.teacherId===b.teacherId;
+    const sameC=!!a.center&&a.center===b.center;
+    if(!sameT&&!sameC) continue;
+    const da=parseInt(a.duration)||60, db2=parseInt(b.duration)||60;
+    SB.schedulesOf(a).forEach(sa=>{ SB.schedulesOf(b).forEach(sb=>{
+      if(sa.day!==sb.day) return;
+      const ma=SB.min(sa.time), mb=SB.min(sb.time);
+      if(ma<mb+db2&&mb<ma+da) rows.push({day:sa.day,a:a,b:b,sa:sa,sb:sb,sameT:sameT});
+    });});
+  }
+  return rows;
+};
+
+/* ---------- تحميل الصفحة ---------- */
+window.loadScheduleBoardAdmin=function(){
+  try{
+    const tSel=document.getElementById('sbTeacherFilter');
+    if(tSel&&tSel.options.length<=1){
+      const ts=(DataService.getTeachers?DataService.getTeachers():[]);
+      tSel.innerHTML='<option value="all">كل الأساتذة</option>'+ts.map(t=>'<option value="'+t.id+'">'+t.name+'</option>').join('');
+    }
+    const cSel=document.getElementById('sbCenterFilter');
+    if(cSel&&cSel.options.length<=1){
+      let centers=[];
+      if(DataService.getCenters) centers=(DataService.getCenters()||[]).map(c=>c.name).filter(Boolean);
+      if(!centers.length&&window.getAllCenters) centers=window.getAllCenters();
+      cSel.innerHTML='<option value="">كل السناتر</option>'+centers.map(c=>'<option value="'+c+'">'+c+'</option>').join('');
+    }
+    const tf=tSel?tSel.value:'all';
+    const cf=cSel?cSel.value:'';
+    let groups=(DataService.getGroups?DataService.getGroups():[]);
+    if(tf&&tf!=='all') groups=groups.filter(g=>g.teacherId===tf);
+    if(cf) groups=groups.filter(g=>(g.center||'')===cf);
+    SB.renderStats('sbStats',groups);
+    SB.renderConflicts('sbConflicts',groups);
+    SB.renderBoard('sbBoard',groups);
+    SB.renderLog('sbLog',tf);
+  }catch(e){ console.error(e); }
+};
+
+SB.renderStats=function(elId,groups){
+  const el=document.getElementById(elId); if(!el) return;
+  let sess=0,hours=0; const perDay={};
+  groups.forEach(g=>SB.schedulesOf(g).forEach(s=>{ sess++; hours+=(parseInt(g.duration)||60)/60; perDay[s.day]=(perDay[s.day]||0)+1; }));
+  const conf=SB.allConflicts(groups).length;
+  el.innerHTML='<div class="stat-mini">'+
+   '<div class="stat-mini-box"><div class="stat-mini-value">'+groups.length+'</div><div class="stat-mini-label">مجموعة</div></div>'+
+   '<div class="stat-mini-box"><div class="stat-mini-value">'+sess+'</div><div class="stat-mini-label">حصة أسبوعياً</div></div>'+
+   '<div class="stat-mini-box"><div class="stat-mini-value">'+(Math.round(hours*10)/10)+'</div><div class="stat-mini-label">ساعة تدريس</div></div>'+
+   '<div class="stat-mini-box"><div class="stat-mini-value" style="color:'+(conf?'var(--danger)':'var(--success)')+'">'+conf+'</div><div class="stat-mini-label">تعارضات</div></div>'+
+   '</div>';
+};
+
+SB.renderConflicts=function(elId,groups){
+  const el=document.getElementById(elId); if(!el) return;
+  const rows=SB.allConflicts(groups);
+  if(!rows.length){ el.innerHTML=''; return; }
+  el.innerHTML='<div class="card" style="border-color:rgba(239,68,68,.4);"><div class="card-header"><h3 class="card-title" style="color:var(--danger);">⚠️ تعارضات المواعيد ('+rows.length+')</h3></div>'+
+   rows.slice(0,10).map(r=>'<div class="sub-row"><div><strong>'+((window.dayAr)?dayAr(r.day):r.day)+':</strong> '+r.a.name+' ('+SB.f12(r.sa.time)+') ⇆ '+r.b.name+' ('+SB.f12(r.sb.time)+')<div class="text-xs text-muted">'+(r.sameT?'نفس الأستاذ — تعارض مباشر!':'نفس السنتر «'+(r.a.center||'-')+'» — مواعيد متداخلة')+'</div></div><button class="btn btn-ghost btn-sm" onclick="window.openGroupModal(\''+r.b.id+'\')">✏️</button></div>').join('')+
+   '</div>';
+};
+
+/* ---------- الشبكة الأسبوعية (سحب وإفلات) ---------- */
+SB.renderBoard=function(elId,groups){
+  const el=document.getElementById(elId); if(!el) return;
+  const DAYS=(window.DAYS||[]);
+  const H=56;
+  let minH=8,maxH=23; const starts=[],ends=[];
+  groups.forEach(g=>SB.schedulesOf(g).forEach(s=>{ const m=SB.min(s.time); const d=parseInt(g.duration)||60; starts.push(m); ends.push(m+d); }));
+  if(starts.length){ minH=Math.max(0,Math.floor(Math.min.apply(null,starts)/60)); maxH=Math.min(24,Math.ceil(Math.max.apply(null,ends)/60)); }
+  const colH=(maxH-minH)*H; const dayStart=minH*60;
+  const todayEn=(DAYS[new Date().getDay()]||{}).en||'';
+  let html='<div style="overflow-x:auto;"><div style="display:grid;grid-template-columns:56px repeat('+DAYS.length+',minmax(120px,1fr));min-width:900px;">';
+  html+='<div></div>';
+  DAYS.forEach(d=>{ html+='<div style="text-align:center;font-weight:800;font-size:12px;padding:8px 4px;background:var(--surface-hover);border:1px solid var(--border);'+(d.en===todayEn?'color:var(--primary);':'')+'">'+d.ar+'</div>'; });
+  html+='<div style="border:1px solid var(--border);border-top:none;">';
+  for(let h=minH;h<maxH;h++){ html+='<div style="height:'+H+'px;border-bottom:1px dashed var(--border);font-size:10px;color:var(--text-muted);padding:2px 4px;">'+SB.f12(h+':00')+'</div>'; }
+  html+='</div>';
+  DAYS.forEach(d=>{
+    html+='<div class="sb-col" data-day="'+d.en+'" style="position:relative;border:1px solid var(--border);border-top:none;border-left:none;background:var(--surface);height:'+colH+'px;">';
+    for(let h=minH;h<maxH;h++){ html+='<div style="position:absolute;left:0;right:0;top:'+((h*60-dayStart)/60*H)+'px;border-bottom:1px dashed var(--border);pointer-events:none;"></div>'; }
+    groups.forEach(g=>{
+      SB.schedulesOf(g).forEach((s,si)=>{
+        if(s.day!==d.en) return;
+        const m=SB.min(s.time); const dur=parseInt(g.duration)||60;
+        const top=(m-dayStart)/60*H; const hh=Math.max(34,dur/60*H-4);
+        const col=SB.color(g.teacherId);
+        html+='<div class="sb-card" draggable="true" style="position:absolute;left:4px;right:4px;top:'+top+'px;height:'+hh+'px;border:1px solid var(--border);border-right:4px solid '+col+';background:var(--surface-hover);border-radius:8px;padding:4px 6px;overflow:hidden;cursor:grab;" data-gid="'+g.id+'" data-si="'+si+'" data-day="'+d.en+'" data-time="'+(s.time||'')+'">'+
+         '<div style="font-weight:800;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+g.name+'</div>'+
+         '<div style="font-size:10px;color:var(--primary);font-weight:700;">'+SB.f12(s.time)+' - '+SB.f12(SB.hm(m+dur))+'</div>'+
+         '<div style="font-size:9px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">👨‍ '+SB.tName(g.teacherId)+' · 🏢 '+(g.center||'-')+'</div>'+
+         '</div>';
+      });
+    });
+    html+='</div>';
+  });
+  html+='</div></div>';
+  html+='<div class="filter-info" style="margin-top:10px;">💡 اسحب أي مجموعة وأفلتها في يوم/وقت تاني لتعديل موعدها — أو دوس عليها للتعديل الكامل.</div>';
+  el.innerHTML=html;
+  el.dataset.minh=minH;
+  SB.bindDnD(el);
+};
+
+SB.bindDnD=function(el){
+  el.querySelectorAll('.sb-card').forEach(card=>{
+    card.addEventListener('dragstart',ev=>{
+      window._sbDrag={gid:card.dataset.gid,si:+card.dataset.si,day:card.dataset.day,time:card.dataset.time};
+      card.style.opacity='.4';
+      try{ ev.dataTransfer.setData('text/plain',card.dataset.gid); }catch(e){}
+    });
+    card.addEventListener('dragend',()=>{ card.style.opacity='1'; });
+    card.addEventListener('click',()=>{ window.openGroupModal(card.dataset.gid); });
+  });
+  el.querySelectorAll('.sb-col').forEach(col=>{
+    col.addEventListener('dragover',ev=>{ ev.preventDefault(); col.style.background='var(--primary-bg)'; });
+    col.addEventListener('dragleave',()=>{ col.style.background='var(--surface)'; });
+    col.addEventListener('drop',ev=>{
+      ev.preventDefault(); col.style.background='var(--surface)';
+      const drag=window._sbDrag; if(!drag) return;
+      const rect=col.getBoundingClientRect();
+      const y=ev.clientY-rect.top;
+      const minH=+el.dataset.minh||8; const H=56;
+      const mins=minH*60+Math.round((y/H*60)/30)*30;
+      SB.openMoveModal(drag.gid,drag.si,col.dataset.day,SB.hm(mins));
+      window._sbDrag=null;
+    });
+  });
+};
+
+/* ---------- مودال نقل الموعد ---------- */
+SB.openMoveModal=function(gid,si,day,time){
+  try{
+    const g=(DataService.getGroups?DataService.getGroups():[]).find(x=>x.id===gid); if(!g) return;
+    const sch=SB.schedulesOf(g)[si]||{day:day,time:time};
+    const dur=parseInt(g.duration)||60;
+    const conf=SB.conflictsFor(day,time,dur,gid);
+    let warn='';
+    if(conf.sameTeacher.length) warn+='<div class="filter-info" style="background:var(--danger-bg);border-color:var(--danger);color:var(--danger);">🚫 تعارض مباشر: نفس الأستاذ عنده حصة في نفس الوقت: '+conf.sameTeacher.map(x=>x.g.name+' ('+SB.f12(x.time)+')').join('، ')+'</div>';
+    if(conf.sameCenter.length) warn+='<div class="filter-info" style="background:var(--warning-bg);border-color:var(--warning);color:var(--warning);">⚠️ نفس السنتر فيه أستاذ تاني في نفس الوقت: '+conf.sameCenter.map(x=>x.g.name+' ('+SB.f12(x.time)+')').join('، ')+'</div>';
+    ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">🗓️ نقل موعد: '+g.name+'</h3><button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>'+
+    '<div class="modal-body">'+
+    '<div class="filter-info">الموعد الحالي: '+((window.dayAr)?dayAr(sch.day):sch.day)+' '+SB.f12(sch.time)+' ← الموعد الجديد:</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">'+
+    '<div class="form-group"><label>اليوم</label><select id="mvDay" class="form-select">'+(window.DAYS||[]).map(d=>'<option value="'+d.en+'" '+(d.en===day?'selected':'')+'>'+d.ar+'</option>').join('')+'</select></div>'+
+    '<div class="form-group"><label>الساعة</label><input type="time" id="mvTime" class="form-input" value="'+time+'"></div>'+
+    '<div class="form-group"><label>المدة (د)</label><input type="number" id="mvDur" class="form-input" value="'+dur+'"></div>'+
+    '</div>'+warn+
+    '<button class="btn btn-primary w-full" onclick="SB.confirmMove(\''+gid+'\','+si+')">💾 حفظ الموعد الجديد</button>'+
+    '</div>','modal-md');
+  }catch(e){ console.error(e); }
+};
+
+SB.confirmMove=async function(gid,si){
+  try{
+    const day=document.getElementById('mvDay').value;
+    const time=document.getElementById('mvTime').value;
+    const dur=parseInt(document.getElementById('mvDur').value)||60;
+    const g=(DataService.getGroups?DataService.getGroups():[]).find(x=>x.id===gid); if(!g) return;
+    const sch=SB.schedulesOf(g).slice();
+    const old=sch[si]||{day:g.day,time:g.time};
+    sch[si]={day:day,time:time};
+    await DataService.updateGroup(gid,{schedules:sch,day:sch[0].day,time:sch[0].time,duration:dur});
+    SB.logChange({groupId:gid,groupName:g.name,teacherId:g.teacherId,oldDay:old.day,oldTime:old.time,newDay:day,newTime:time});
+    ThemeManager.closeModal();
+    window.safeToast('✅ تم نقل الموعد','success');
+    window.loadScheduleBoardAdmin();
+  }catch(e){ window.safeToast('خطأ في النقل','error'); }
+};
+
+SB.logChange=function(entry){
+  try{
+    const d=(DataService._getData?DataService._getData():{});
+    d.scheduleChangeLog=d.scheduleChangeLog||[];
+    const me=(window.currentUser||null);
+    entry.id='sch_'+Date.now();
+    entry.at=new Date().toISOString();
+    entry.byName=me?me.name:''; entry.byRole=me?me.role:'';
+    d.scheduleChangeLog.unshift(entry);
+    if(d.scheduleChangeLog.length>200) d.scheduleChangeLog.length=200;
+    if(DataService._saveData) DataService._saveData(d);
+    if(window.FirebaseService&&FirebaseService.connected){ try{ FirebaseService.saveDoc('scheduleChangeLog',entry.id,entry); }catch(e){} }
+  }catch(e){}
+};
+
+SB.renderLog=function(elId,tf){
+  const el=document.getElementById(elId); if(!el) return;
+  let log=((DataService._getData?DataService._getData():{}).scheduleChangeLog)||[];
+  if(tf&&tf!=='all') log=log.filter(e=>e.teacherId===tf);
+  log=log.slice(0,12);
+  el.innerHTML=log.length?log.map(e=>'<div class="sub-row"><div><strong>'+e.groupName+'</strong><div class="text-xs text-muted">'+((window.dayAr)?dayAr(e.oldDay):e.oldDay)+' '+SB.f12(e.oldTime)+' → '+((window.dayAr)?dayAr(e.newDay):e.newDay)+' '+SB.f12(e.newTime)+' · بواسطة '+(e.byName||'-')+'</div></div><div class="text-xs text-muted">'+new Date(e.at||Date.now()).toLocaleString('ar-EG')+'</div></div>').join(''):'<p class="text-muted">لا توجد تغييرات مسجلة بعد</p>';
+};
+} /* نهاية if(!window.SB) */
+
+/* ---------- لو الصفحة مفتوحة على الصفحة دي خلاص حمّلها ---------- */
+try{
+  const sec=document.getElementById('section-scheduleBoard');
+  if(sec&&sec.classList.contains('active')&&typeof window.loadScheduleBoardAdmin==='function') window.loadScheduleBoardAdmin();
+}catch(e){}
+})();
+
+
+/* ================================================================
+🗓️ جدول الأساتذة — فلاتر كاملة + 4 طرق عرض + ترتيب + سحب وإفلات
+الأسبوع يبدأ من السبت
+================================================================ */
+(function(){
+var WEEK_SAT=['Saturday','Sunday','Monday','Tuesday','Wednesday','Thursday','Friday'];
+var AR_ORDER=['السبت','الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
+var EN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+function dbx(){ try{ return (window.DataService&&DataService._getData)?DataService._getData():{}; }catch(e){ return {}; } }
+function minOf(t){ var p=String(t||'0:00').split(':'); return (+p[0])*60+(+p[1]||0); }
+function hm(min){ min=((Math.round(min)%1440)+1440)%1440; var h=Math.floor(min/60),m=min%60; return (h<10?'0':'')+h+':'+(m<10?'0':'')+m; }
+function f12(t){ if(window.DataService&&DataService.formatTime12) return DataService.formatTime12(t); if(!t) return ''; var p=String(t).split(':'); var h=+p[0]||0,m=p[1]||'00'; var ap=h>=12?'م':'ص'; h=h%12; if(h===0)h=12; return h+':'+m+' '+ap; }
+function tName(id){ var t=(DataService.getUserById)?DataService.getUserById(id):null; return (t&&t.name)||'ـ'; }
+function scheds(g){ return (g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}]; }
+function dIdx(en){ return WEEK_SAT.indexOf(en); }
+function SBcolor(tid){
+ var pal=['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#0ea5e9','#ec4899','#14b8a6','#f97316','#84cc16'];
+ var ts=DataService.getTeachers?DataService.getTeachers():[];
+ var i=-1; for(var k=0;k<ts.length;k++){ if(ts[k].id===tid){ i=k; break; } }
+ if(i<0)i=0; return pal[i%pal.length];
+}
+window.sbFillFilters=function(){
+ try{
+  var tS=document.getElementById('sbTeacherFilter'), gS=document.getElementById('sbGroupFilter'), cS=document.getElementById('sbCenterFilter');
+  if(tS){ var c1=tS.value; var ts=DataService.getTeachers?DataService.getTeachers():[];
+    tS.innerHTML='<option value="all">كل الأساتذة</option>'+ts.map(t=>'<option value="'+t.id+'">'+t.name+'</option>').join(''); tS.value=c1||'all'; }
+  if(gS){ var c2=gS.value; var gs=DataService.getGroups?DataService.getGroups():[];
+    gS.innerHTML='<option value="all">كل المجموعات</option>'+gs.map(g=>'<option value="'+g.id+'">'+g.name+'</option>').join(''); gS.value=c2||'all'; }
+  if(cS){ var c3=cS.value; var cs=[]; if(DataService.getCenters) cs=(DataService.getCenters()||[]).map(c=>c.name).filter(Boolean); if(!cs.length&&window.getAllCenters) cs=window.getAllCenters(); cs=Array.from(new Set(cs));
+    cS.innerHTML='<option value="all">كل السناتر</option>'+cs.map(c=>'<option value="'+c+'">'+c+'</option>').join(''); cS.value=c3||'all'; }
+ }catch(e){}
+};
+function sbSort(list,sortBy){
+ var a=list.slice();
+ if(sortBy==='teacher') a.sort(function(x,y){ return tName(x.teacherId).localeCompare(tName(y.teacherId),'ar')||minOf(x.time)-minOf(y.time); });
+ else if(sortBy==='center') a.sort(function(x,y){ return (x.center||'').localeCompare(y.center||'','ar')||minOf(x.time)-minOf(y.time); });
+ else if(sortBy==='name') a.sort(function(x,y){ return (x.name||'').localeCompare(y.name||'','ar'); });
+ else a.sort(function(x,y){ return (dIdx(x.day)-dIdx(y.day))||(minOf(x.time)-minOf(y.time)); });
+ return a;
+};
+function sbFiltered(){
+ var tv=(document.getElementById('sbTeacherFilter')||{}).value||'all';
+ var gv=(document.getElementById('sbGroupFilter')||{}).value||'all';
+ var cv=(document.getElementById('sbCenterFilter')||{}).value||'all';
+ var sortBy=(document.getElementById('sbSortBy')||{}).value||'time';
+ var list=DataService.getGroups?DataService.getGroups():[];
+ if(tv&&tv!=='all') list=list.filter(g=>g.teacherId===tv);
+ if(gv&&gv!=='all') list=list.filter(g=>g.id===gv);
+ if(cv&&cv!=='all') list=list.filter(g=>(g.center||'')===cv);
+ return sbSort(list,sortBy);
+}
+function sbConflicts(list){
+ var out=[];
+ for(var i=0;i<list.length;i++)for(var j=i+1;j<list.length;j++){
+  var a=list[i],b=list[j];
+  var sameT=a.teacherId===b.teacherId, sameC=!!a.center&&a.center===b.center;
+  if(!sameT&&!sameC) continue;
+  var da=parseInt(a.duration)||60, db2=parseInt(b.duration)||60;
+  scheds(a).forEach(function(sa){ scheds(b).forEach(function(sb){
+   if(sa.day!==sb.day) return;
+   var ma=minOf(sa.time), mb=minOf(sb.time);
+   if(ma<mb+db2&&mb<ma+da) out.push({a:a,b:b,sa:sa,sb:sb,sameT:sameT});
+  });});
+ }
+ return out;
+}
+function sbRenderStats(list){
+ var el=document.getElementById('sbStats'); if(!el) return;
+ var sess=0,hours=0;
+ list.forEach(function(g){ scheds(g).forEach(function(s){ sess++; hours+=(parseInt(g.duration)||60)/60; }); });
+ var conf=sbConflicts(list).length;
+ el.innerHTML='<div class="stat-mini">'
+ +'<div class="stat-mini-box"><div class="stat-mini-value">'+list.length+'</div><div class="stat-mini-label">مجموعة</div></div>'
+ +'<div class="stat-mini-box"><div class="stat-mini-value">'+sess+'</div><div class="stat-mini-label">حصة أسبوعياً</div></div>'
+ +'<div class="stat-mini-box"><div class="stat-mini-value">'+(Math.round(hours*10)/10)+'</div><div class="stat-mini-label">ساعة تدريس</div></div>'
+ +'<div class="stat-mini-box"><div class="stat-mini-value" style="color:'+(conf?'var(--danger)':'var(--success)')+'">'+conf+'</div><div class="stat-mini-label">تعارضات</div></div>'
+ +'</div>';
+}
+function sbRenderConflicts(list){
+ var el=document.getElementById('sbConflicts'); if(!el) return;
+ var rows=sbConflicts(list);
+ el.innerHTML=rows.length?('<div class="card" style="border-color:rgba(239,68,68,.4);"><div class="card-header"><h3 class="card-title" style="color:var(--danger);">⚠️ تعارضات المواعيد ('+rows.length+')</h3></div>'+rows.slice(0,8).map(function(r){
+  return '<div class="sub-row"><div><strong>'+AR_ORDER[dIdx(r.sa.day)]+':</strong> '+r.a.name+' ('+f12(r.sa.time)+') ⇆ '+r.b.name+' ('+f12(r.sb.time)+')<div class="text-xs text-muted">'+(r.sameT?'نفس الأستاذ — تعارض مباشر!':'نفس السنتر «'+(r.a.center||'-')+'»')+'</div></div><button class="btn btn-ghost btn-sm" onclick="window.openGroupModal(\''+r.b.id+'\')">✏️</button></div>';
+ }).join('')+'</div>'):'';
+}
+/* ---- عرض 1: جدول أسبوعي (يبدأ السبت) + سحب وإفلات ---- */
+function sbRenderWeek(list){
+ var H=56, starts=[], ends=[];
+ list.forEach(function(g){ scheds(g).forEach(function(s){ var m=minOf(s.time), d=parseInt(g.duration)||60; starts.push(m); ends.push(m+d); }); });
+ var minH=starts.length?Math.max(0,Math.floor(Math.min.apply(null,starts)/60)):8;
+ var maxH=ends.length?Math.min(24,Math.ceil(Math.max.apply(null,ends)/60)):22;
+ if(maxH<=minH) maxH=minH+2;
+ var colH=(maxH-minH)*H;
+ var html='<div style="overflow-x:auto;"><div style="display:grid;grid-template-columns:64px repeat(7,minmax(130px,1fr));min-width:1000px;">';
+ html+='<div></div>';
+ AR_ORDER.forEach(function(n){ html+='<div style="text-align:center;font-weight:800;font-size:12px;padding:8px 4px;background:var(--surface-hover);border:1px solid var(--border);">'+n+'</div>'; });
+ html+='<div style="border:1px solid var(--border);border-top:none;">';
+ for(var h=minH;h<maxH;h++){ html+='<div style="height:'+H+'px;border-bottom:1px dashed var(--border);font-size:10px;color:var(--text-muted);padding:2px 4px;">'+f12(hm(h*60))+'</div>'; }
+ html+='</div>';
+ WEEK_SAT.forEach(function(en){
+  html+='<div class="sb-col" data-day="'+en+'" data-minh="'+minH+'" style="position:relative;border:1px solid var(--border);border-top:none;border-left:none;background:var(--surface);height:'+colH+'px;">';
+  for(var h=minH;h<maxH;h++){ html+='<div style="position:absolute;left:0;right:0;top:'+((h*60-minH*60)/60*H)+'px;border-bottom:1px dashed var(--border);pointer-events:none;"></div>'; }
+  list.forEach(function(g){
+   scheds(g).forEach(function(s,si){
+    if(s.day!==en) return;
+    var m=minOf(s.time), dur=parseInt(g.duration)||60;
+    var top=(m-minH*60)/60*H, hh=Math.max(34,dur/60*H-4);
+    html+='<div class="sb-card" draggable="true" data-gid="'+g.id+'" data-si="'+si+'" data-time="'+(s.time||'')+'" style="position:absolute;left:4px;right:4px;top:'+top+'px;height:'+hh+'px;border:1px solid var(--border);border-right:4px solid '+SBcolor(g.teacherId)+';background:var(--surface-hover);border-radius:8px;padding:4px 6px;overflow:hidden;cursor:grab;">'
+     +'<div style="font-weight:800;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+g.name+'</div>'
+     +'<div style="font-size:10px;color:var(--primary);font-weight:700;">'+f12(s.time)+' - '+f12(hm(m+dur))+'</div>'
+     +'<div style="font-size:9px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+tName(g.teacherId)+' · '+(g.center||'-')+'</div>'
+     +'</div>';
+   });
+  });
+  html+='</div>';
+ });
+ html+='</div></div>';
+ html+='<div class="filter-info" style="margin-top:10px;">💡 اسحب أي حصة وأفلتها في يوم/ساعة تانية لتعديل موعدها — الأسبوع بيبدأ من السبت.</div>';
+ return html;
+}
+/* ---- عرض 2: شهري شبكة (يبدأ السبت) + سحب ليوم تاني ---- */
+function sbRenderMonth(list){
+ var d=dbx();
+ var now=new Date(), y=now.getFullYear(), m=now.getMonth();
+ var dim=new Date(y,m+1,0).getDate();
+ var todayStr=y+'-'+String(m+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+ var firstIdx=WEEK_SAT.indexOf(EN[new Date(y,m,1).getDay()]);
+ var html='<div class="cal-grid">';
+ AR_ORDER.forEach(function(n){ html+='<div style="text-align:center;font-size:11px;font-weight:700;color:var(--text-muted);">'+n+'</div>'; });
+ for(var i=0;i<firstIdx;i++) html+='<div class="cal-day empty"></div>';
+ for(var dd=1;dd<=dim;dd++){
+  var ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(dd).padStart(2,'0');
+  var dayEn=EN[new Date(y,m,dd).getDay()];
+  var items=[];
+  list.forEach(function(g){ scheds(g).forEach(function(s,si){ if(s.day===dayEn) items.push({g:g,s:s,si:si}); }); });
+  items.sort(function(a,b){ return minOf(a.s.time)-minOf(b.s.time); });
+  var isToday=ds===todayStr;
+  html+='<div class="cal-day sb-month-cell" data-day="'+dayEn+'" style="cursor:pointer;'+(isToday?'border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-bg);':'')+'" onclick="window.sbDayClick(\''+ds+'\')"><div class="num">'+dd+'</div>';
+  items.slice(0,3).forEach(function(it){
+   var cancelled=(d.cancelledSessions||[]).some(function(c){return c.groupId===it.g.id&&c.date===ds;});
+   var done=(d.attendance||[]).some(function(a){return a.groupId===it.g.id&&a.date===ds&&a.status==='approved';});
+   html+='<div class="sb-card" draggable="true" data-gid="'+it.g.id+'" data-si="'+it.si+'" data-time="'+(it.s.time||'')+'" style="border:1px solid var(--border);border-right:3px solid '+(cancelled?'var(--danger)':done?'var(--success)':SBcolor(it.g.teacherId))+';background:var(--surface-hover);border-radius:6px;padding:2px 4px;margin-bottom:2px;cursor:grab;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:9px;">'+(cancelled?'🚫':done?'✓':'•')+' '+f12(it.s.time)+' '+it.g.name+'</div>';
+  });
+  if(items.length>3) html+='<div style="font-size:9px;color:var(--text-muted);">+'+(items.length-3)+' أخرى</div>';
+  html+='</div>';
+ }
+ html+='</div>';
+ html+='<div class="filter-info" style="margin-top:10px;">💡 دوس على أي يوم للتفاصيل — أو اسحب حصة ليوم تاني لتغيير يومها (الوقت يفضل زي ما هو).</div>';
+ return html;
+}
+/* ---- عرض 3: خط زمني بالساعات (يبدأ السبت) ---- */
+function sbRenderTimeline(list){
+ var S=8*60, E=23*60, SPAN=E-S;
+ var html='<div class="card"><div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-muted);margin-bottom:6px;"><span>8 ص</span><span>11 ص</span><span>2 م</span><span>5 م</span><span>8 م</span><span>11 م</span></div>';
+ WEEK_SAT.forEach(function(en,i){
+  var items=[];
+  list.forEach(function(g){ scheds(g).forEach(function(s,si){ if(s.day===en) items.push({g:g,s:s,si:si}); }); });
+  items.sort(function(a,b){ return minOf(a.s.time)-minOf(b.s.time); });
+  var lanes=[];
+  items.forEach(function(it){ var m=minOf(it.s.time), dur=parseInt(it.g.duration)||60, lane=0; while(lane<lanes.length&&lanes[lane]>m) lane++; lanes[lane]=m+dur; it._m=m; it._dur=dur; });
+  html+='<div style="margin-bottom:14px;'+(en===WEEK_SAT[new Date().getDay()]?'background:var(--primary-bg);border-radius:10px;padding:8px;':'')+'">';
+  html+='<div style="font-weight:800;font-size:12px;margin-bottom:6px;">'+AR_ORDER[i]+' <span class="points-badge">'+items.length+' حصة</span></div>';
+  if(!items.length) html+='<div style="font-size:10px;color:var(--text-muted);padding:4px 8px;">لا حصص</div>';
+  items.forEach(function(it){
+   var right=Math.max(0,Math.min(96,(it._m-S)/SPAN*100));
+   var width=Math.max(6,Math.min(100-right,it._dur/SPAN*100));
+   html+='<div style="position:relative;height:34px;background:var(--surface-hover);border-radius:8px;margin-bottom:4px;"><div class="sb-card" draggable="true" data-gid="'+it.g.id+'" data-si="'+it.si+'" data-time="'+(it.s.time||'')+'" style="position:absolute;top:3px;bottom:3px;right:'+right+'%;width:'+width+'%;border:none;border-right:4px solid '+SBcolor(it.g.teacherId)+';background:linear-gradient(90deg,var(--primary),var(--accent));color:#fff;border-radius:6px;font-size:10px;display:flex;align-items:center;padding:0 8px;overflow:hidden;white-space:nowrap;cursor:grab;">'+f12(it.s.time)+' '+it.g.name+' · '+tName(it.g.teacherId)+'</div></div>';
+  });
+  html+='</div>';
+ });
+ html+='</div>';
+ return html;
+}
+/* ---- عرض 4: بطاقات المجموعات ---- */
+function sbRenderCards(list){
+ if(!list.length) return '<div class="card" style="text-align:center;padding:30px;"><div style="font-size:40px;">📭</div><strong>لا مجموعات مطابقة</strong></div>';
+ return '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">'+list.map(function(g){
+  var chips=scheds(g).slice().sort(function(a,b){ return (dIdx(a.day)-dIdx(b.day))||minOf(a.time)-minOf(b.time); }).map(function(s){ return '<span class="badge badge-info" style="margin:2px;">'+AR_ORDER[dIdx(s.day)]+' '+f12(s.time)+'</span>'; }).join('');
+  var cnt=(DataService.getStudentsByGroup?DataService.getStudentsByGroup(g.id).length:0);
+  return '<div class="user-card"><div class="user-card-header"><div class="user-avatar">👥</div><div><div class="user-name">'+g.name+'</div><div class="user-meta"><span>👨‍ '+tName(g.teacherId)+'</span><span>🏢 '+(g.center||'-')+'</span><span>👥 '+cnt+'</span></div></div></div>'
+   +'<div style="margin:8px 0;">'+chips+'</div>'
+   +'<div class="user-meta"><span>⏱️ '+(g.duration||60)+' د</span><span>💰 '+(g.monthlyFee||0)+' ج.م</span></div>'
+   +'<div class="user-actions" style="margin-top:10px;"><button class="btn btn-ghost btn-sm" onclick="window.openGroupModal(\''+g.id+'\')">✏️ تعديل</button><button class="btn btn-secondary btn-sm" onclick="window.sbQuickMove(\''+g.id+'\',0)">🚚 نقل موعد</button></div></div>';
+ }).join('')+'</div>';
+}
+function sbRenderLog(){
+ var el=document.getElementById('sbLog'); if(!el) return;
+ var log=(dbx().scheduleChangeLog||[]).slice(0,12);
+ el.innerHTML=log.length?log.map(function(e){
+  return '<div class="sub-row"><div><strong>'+e.groupName+'</strong><div class="text-xs text-muted">'+AR_ORDER[dIdx(e.oldDay)]+' '+f12(e.oldTime)+' → '+AR_ORDER[dIdx(e.newDay)]+' '+f12(e.newTime)+' · بواسطة '+(e.byName||'-')+'</div></div><div class="text-xs text-muted">'+new Date(e.at||Date.now()).toLocaleString('ar-EG')+'</div></div>';
+ }).join(''):'<p class="text-muted">لا تغييرات مسجلة بعد</p>';
+}
+/* ---- السحب والإفلات ---- */
+function sbBindDnD(board){
+ board.querySelectorAll('.sb-card[draggable="true"]').forEach(function(card){
+  card.addEventListener('dragstart',function(ev){
+   window._sbDrag={gid:card.dataset.gid,si:+(card.dataset.si||0),time:card.dataset.time||''};
+   card.style.opacity='.4';
+   try{ ev.dataTransfer.setData('text/plain',card.dataset.gid); }catch(e){}
+  });
+  card.addEventListener('dragend',function(){ card.style.opacity='1'; });
+  card.addEventListener('click',function(ev){ ev.stopPropagation(); window.sbQuickMove(card.dataset.gid,+(card.dataset.si||0)); });
+ });
+ board.querySelectorAll('.sb-col').forEach(function(col){
+  col.addEventListener('dragover',function(ev){ ev.preventDefault(); col.style.outline='2px dashed var(--primary)'; col.style.outlineOffset='-3px'; });
+  col.addEventListener('dragleave',function(){ col.style.outline='none'; });
+  col.addEventListener('drop',function(ev){
+   ev.preventDefault(); col.style.outline='none';
+   var drag=window._sbDrag; if(!drag) return;
+   var rect=col.getBoundingClientRect(), y=ev.clientY-rect.top;
+   var H=56, minH=+(col.dataset.minh||8);
+   var mins=minH*60+Math.round((y/H*60)/30)*30;
+   window.sbOpenMoveModal(drag.gid,drag.si,col.dataset.day,hm(mins));
+   window._sbDrag=null;
+  });
+ });
+ board.querySelectorAll('.sb-month-cell').forEach(function(cell){
+  cell.addEventListener('dragover',function(ev){ ev.preventDefault(); cell.style.outline='2px dashed var(--primary)'; cell.style.outlineOffset='-3px'; });
+  cell.addEventListener('dragleave',function(){ cell.style.outline='none'; });
+  cell.addEventListener('drop',function(ev){
+   ev.preventDefault(); ev.stopPropagation(); cell.style.outline='none';
+   var drag=window._sbDrag; if(!drag) return;
+   window.sbOpenMoveModal(drag.gid,drag.si,cell.dataset.day,drag.time||'');
+   window._sbDrag=null;
+  });
+ });
+}
+/* ---- مودال نقل الموعد ---- */
+function sbConflictsFor(gid,day,time,dur){
+ var out={sameT:[],sameC:[]};
+ var me=(DataService.getGroups?DataService.getGroups():[]).find(function(x){return x.id===gid;}); if(!me) return out;
+ var m=minOf(time), end=m+dur;
+ (DataService.getGroups?DataService.getGroups():[]).forEach(function(g){
+  if(g.id===gid) return;
+  var gd=parseInt(g.duration)||60;
+  scheds(g).forEach(function(s){
+   if(s.day!==day) return;
+   var gm=minOf(s.time);
+   if(m<gm+gd&&gm<end){
+    if(g.teacherId===me.teacherId) out.sameT.push({g:g,time:s.time});
+    else if(me.center&&g.center===me.center) out.sameC.push({g:g,time:s.time});
+   }
+  });
+ });
+ return out;
+}
+window.sbQuickMove=function(gid,si){ window.sbOpenMoveModal(gid,si||0,null,null); };
+window.sbDayClick=function(ds){ if(window.openCalendarDayModal) window.openCalendarDayModal(ds); else if(window.openDayDetails) window.openDayDetails(ds); };
+window.sbOpenMoveModal=function(gid,si,day,time){
+ try{
+  var g=(DataService.getGroups?DataService.getGroups():[]).find(function(x){return x.id===gid;}); if(!g) return;
+  var sch=scheds(g); var s=sch[si]||sch[0]||{day:day||'Saturday',time:time||'10:00'};
+  day=day||s.day; time=time||s.time||'10:00';
+  var dur=parseInt(g.duration)||60;
+  var conf=sbConflictsFor(gid,day,time,dur);
+  var warn='';
+  if(conf.sameT.length) warn+='<div class="filter-info" style="background:var(--danger-bg);border-color:var(--danger);color:var(--danger);">🚫 نفس الأستاذ عنده حصة متداخلة: '+conf.sameT.map(function(x){return x.g.name+' ('+f12(x.time)+')';}).join('، ')+'</div>';
+  if(conf.sameC.length) warn+='<div class="filter-info" style="background:var(--warning-bg);border-color:var(--warning);color:var(--warning);">⚠️ نفس السنتر فيه أستاذ تاني متداخل: '+conf.sameC.map(function(x){return x.g.name+' ('+f12(x.time)+')';}).join('، ')+'</div>';
+  ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">🚚 نقل موعد: '+g.name+'</h3><button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>'
+   +'<div class="modal-body">'
+   +'<div class="filter-info">الموعد الحالي: '+AR_ORDER[dIdx(s.day)]+' '+f12(s.time)+' — الموعد الجديد:</div>'
+   +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">'
+   +'<div class="form-group"><label>اليوم</label><select id="sbMvDay" class="form-select">'+WEEK_SAT.map(function(en,i){ return '<option value="'+en+'" '+(en===day?'selected':'')+'>'+AR_ORDER[i]+'</option>'; }).join('')+'</select></div>'
+   +'<div class="form-group"><label>الساعة</label><input type="time" id="sbMvTime" class="form-input" value="'+time+'"></div>'
+   +'<div class="form-group"><label>المدة (د)</label><input type="number" id="sbMvDur" class="form-input" value="'+dur+'"></div>'
+   +'</div>'+warn
+   +'<button class="btn btn-primary w-full" onclick="window.sbApplyMove(\''+gid+'\','+si+')">💾 حفظ الموعد الجديد</button>'
+   +'</div>','modal-md');
+ }catch(e){ console.error(e); }
+};
+window.sbApplyMove=async function(gid,si){
+ try{
+  var day=document.getElementById('sbMvDay').value;
+  var time=document.getElementById('sbMvTime').value;
+  var dur=parseInt(document.getElementById('sbMvDur').value)||60;
+  var g=(DataService.getGroups?DataService.getGroups():[]).find(function(x){return x.id===gid;}); if(!g) return;
+  var sch=scheds(g).slice();
+  var old=sch[si]||{day:g.day,time:g.time};
+  sch[si]={day:day,time:time};
+  sch.sort(function(a,b){ return (dIdx(a.day)-dIdx(b.day))||(minOf(a.time)-minOf(b.time)); });
+  await DataService.updateGroup(gid,{schedules:sch,day:sch[0].day,time:sch[0].time,duration:dur});
+  try{
+   var d=dbx(); d.scheduleChangeLog=d.scheduleChangeLog||[];
+   var me=null; try{ me=(typeof currentUser!=='undefined'&&currentUser)?currentUser:null; }catch(e){}
+   d.scheduleChangeLog.unshift({id:'sch_'+Date.now(),at:new Date().toISOString(),groupId:gid,groupName:g.name,teacherId:g.teacherId,oldDay:old.day,oldTime:old.time,newDay:day,newTime:time,byName:me?me.name:'',byRole:me?me.role:''});
+   if(d.scheduleChangeLog.length>200) d.scheduleChangeLog.length=200;
+   (DataService._saveData||function(){})(d);
+  }catch(e){}
+  ThemeManager.closeModal();
+  window.safeToast('✅ تم نقل الموعد','success');
+  window.loadScheduleBoardAdmin();
+ }catch(e){ window.safeToast('خطأ في النقل','error'); }
+};
+/* ---- التحميل الرئيسي ---- */
+window.loadScheduleBoardAdmin=function(){
+ try{
+  window.sbFillFilters();
+  var list=sbFiltered();
+  var mode=(document.getElementById('sbViewMode')||{}).value||'week';
+  sbRenderStats(list);
+  sbRenderConflicts(list);
+  var board=document.getElementById('sbBoard'); if(!board) return;
+  if(mode==='month') board.innerHTML=sbRenderMonth(list);
+  else if(mode==='timeline') board.innerHTML=sbRenderTimeline(list);
+  else if(mode==='cards') board.innerHTML=sbRenderCards(list);
+  else board.innerHTML=sbRenderWeek(list);
+  sbBindDnD(board);
+  sbRenderLog();
+ }catch(e){ console.error('loadScheduleBoardAdmin',e); }
+};
+/* توصيل الصفحة بـ showSection */
+if(typeof window.showSection==='function' && !window._sbWired2){
+ window._sbWired2=true;
+ var _orig=window.showSection;
+ window.showSection=function(id){
+  var r=_orig.apply(this,arguments);
+  if(id==='scheduleBoard'){ try{ window.loadScheduleBoardAdmin(); }catch(e){} }
+  return r;
+ };
+}
+})();
 </script>
+<script src="js/schedule-board.js"></script>
 </body>
 </html>

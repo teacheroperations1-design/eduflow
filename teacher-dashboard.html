@@ -313,6 +313,7 @@
 <script src="js/theme-manager.js"></script>
 <script src="js/auth-service.js"></script>
 <script src="js/footer-injector.js"></script>
+<script src="js/schedule-board.js"></script>
 
 <script>
 /* ================================================================
@@ -417,7 +418,7 @@ document.body.innerHTML='<div style="min-height:100vh;display:flex;align-items:c
 window.buildMenu=function(){
 var menu=[
 {s:'الرئيسية',items:[{id:'overview',l:'نظرة عامة',i:'📊'},{id:'schedule',l:'جدول الحصص',i:'📅'}]},
-{s:'إدارة المجموعات',items:[{id:'groups',l:'مجموعاتي',i:'👥'},{id:'students',l:'طلابي',i:'🎓'},{id:'attendance',l:'الحضور',i:'📋'},{id:'calendar',l:'التقويم',i:'📅'}]},
+{s:'إدارة المجموعات',items:[{id:'groups',l:'مجموعاتي',i:'👥'},{id:'mySchedule',l:'جدولي الأسبوعي',i:'🗓️'},{id:'students',l:'طلابي',i:'🎓'},{id:'attendance',l:'الحضور',i:'📋'},{id:'calendar',l:'التقويم',i:'📅'}]},
 {s:'التقييم',items:[{id:'homework',l:'الواجبات',i:'📝'},{id:'exams',l:'الامتحانات',i:'🎓'},{id:'grades-report',l:'تقرير الدرجات',i:'📊'}]},
 {s:'🚀 التحفيز',items:[{id:'quickEval',l:'التقييم السريع',i:'⚡'},{id:'battles',l:'معارك المجموعات',i:'⚔️'}]},
 {s:'المحتوى',items:[{id:'videos',l:'الفيديوهات',i:'🎬'},{id:'classPosts',l:'بوستات الحصة',i:'📰'},{id:'challenges',l:'المسابقات',i:'🏆'},{id:'interactive',l:'مواد تفاعلية',i:'🧩'}]},
