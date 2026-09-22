@@ -18,6 +18,9 @@ SB.DAYS = [
 {en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},
 {en:'Friday',ar:'الجمعة'}];
 
+/* 🆕 مصفوفة أيام الأسبوع بالإنجليزي (تبدأ من الأحد) - عشان حساب اليوم الحالي */
+SB.EN = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
 /* CSS حقن مرة واحدة */
 (function(){
 if(document.getElementById('sbCss')) return;
@@ -31,6 +34,7 @@ st.textContent=
 '.sb-hour{border-bottom:1px dashed var(--border);font-size:10px;color:var(--text-muted);padding:2px 4px;font-family:var(--font-en);}'+
 '.sb-col{position:relative;border:1px solid var(--border);border-top:none;border-left:none;background:var(--surface);}'+
 '.sb-col.droppable{background:var(--primary-bg);outline:2px dashed var(--primary);outline-offset:-3px;}'+
+'.sb-col.today-col{background:rgba(99,102,241,.04);outline:3px solid var(--primary);outline-offset:-3px;}'+
 '.sb-line{position:absolute;left:0;right:0;border-bottom:1px dashed var(--border);pointer-events:none;}'+
 '.sb-card{position:absolute;left:4px;right:4px;border-radius:8px;border:1px solid var(--border);border-right:4px solid var(--primary);background:var(--surface-hover);padding:4px 6px;overflow:hidden;cursor:grab;box-shadow:0 1px 3px rgba(0,0,0,.15);}'+
 '.sb-card:active{cursor:grabbing;}'+
@@ -40,6 +44,7 @@ st.textContent=
 '.sb-card-sub{font-size:9px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'+
 '.sb-legend{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;font-size:11px;}'+
 '.sb-legend span{display:inline-flex;align-items:center;gap:5px;}'+
+'.sb-dot{width:10px;height:10px;border-radius:50%;display:inline-block;}'+
 '.sbm-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}'+
 '.sbm-cell{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px;min-height:80px;font-size:10px;overflow:hidden;cursor:copy;}'+
 '.sbm-cell.empty{background:transparent;border-style:dashed;}'+
@@ -59,6 +64,8 @@ function _sbSave(d){ if(window.DataService&&DataService._saveData) DataService._
 
 SB.DAY_IDX=function(en){ for(var i=0;i<SB.DAYS.length;i++) if(SB.DAYS[i].en===en) return i; return 0; };
 SB.DAY_AR=function(en){ var d=SB.DAYS[SB.DAY_IDX(en)]; return d?d.ar:en; };
+/* 🆕 اليوم الحالي بالإنجليزي (مصفوفة تبدأ من الأحد) */
+SB.todayEn=function(){ return SB.EN[new Date().getDay()]; };
 SB.fmt12=function(t){
 if(!t) return '';
 if(window.DataService&&DataService.formatTime12) return DataService.formatTime12(t);
@@ -73,10 +80,12 @@ if(g&&g.schedules&&g.schedules.length) return g.schedules.map(function(s){return
 if(g&&g.day) return [{day:g.day,time:g.time||'10:00'}];
 return [];
 };
-SB.teacherName=function(tid){ var t=(DataService.getUserById)?DataService.getUserById(tid):null; return (t&&t.name)||'أستاذ'; };
+SB.teacherName=function(tid){ var t=(window.DataService&&DataService.getUserById)?DataService.getUserById(tid):null; return (t&&t.name)||'أستاذ'; };
+/* 🆕 اختصار */
+SB.tName=SB.teacherName;
 SB.teacherColor=function(tid){
 var palette=['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#0ea5e9','#ec4899','#14b8a6','#f97316','#84cc16'];
-var ts=(DataService.getTeachers)?DataService.getTeachers():[];
+var ts=(window.DataService&&DataService.getTeachers)?DataService.getTeachers():[];
 var idx=-1; for(var i=0;i<ts.length;i++) if(ts[i].id===tid){idx=i;break;}
 if(idx<0) idx=0;
 return palette[idx%palette.length];
@@ -89,7 +98,7 @@ for(var i=0;i<gid.length;i++){ h=(h*31+gid.charCodeAt(i))>>>0; }
 return palette[h%palette.length];
 };
 SB.groupsInView=function(opts){
-var all=(DataService.getGroups)?DataService.getGroups():[];
+var all=(window.DataService&&DataService.getGroups)?DataService.getGroups():[];
 if(opts.teacherId) all=all.filter(function(g){return g.teacherId===opts.teacherId;});
 else if(opts.teacherFilter&&opts.teacherFilter!=='all') all=all.filter(function(g){return g.teacherId===opts.teacherFilter;});
 if(opts.groupFilter&&opts.groupFilter!=='all') all=all.filter(function(g){return g.id===opts.groupFilter;});
@@ -116,7 +125,8 @@ if(starts.length){ minH=Math.min(startHour,Math.floor(Math.min.apply(null,starts
 if(maxH<=minH) maxH=minH+1;
 SB.opts._minH=minH;
 var colH=(maxH-minH)*H; var dayStart=minH*60;
-var todayEn=SB.DAYS[new Date().getDay()].en;
+/* 🆕 اليوم الحالي من مصفوفة تبدأ من الأحد */
+var todayEn=SB.todayEn();
 
 /* легенда: لون لكل مجموعة (أول 12 مجموعة) */
 var legend='<div class="sb-legend">'+groups.slice(0,12).map(function(g){
@@ -130,7 +140,9 @@ html+='<div class="sb-times">';
 for(var h=minH;h<maxH;h++){ html+='<div class="sb-hour" style="height:'+H+'px;">'+SB.fmt12(h+':00')+'</div>'; }
 html+='</div>';
 SB.DAYS.forEach(function(d){
-html+='<div class="sb-col" data-day="'+d.en+'" style="height:'+colH+'px;">';
+/* 🆕 تمييز عمود اليوم الحالي */
+var todayClass=(d.en===todayEn)?' today-col':'';
+html+='<div class="sb-col'+todayClass+'" data-day="'+d.en+'" data-minh="'+minH+'" style="height:'+colH+'px;">';
 for(var h2=minH;h2<maxH;h2++){ html+='<div class="sb-line" style="top:'+((h2*60-dayStart)/60*H)+'px;"></div>'; }
 groups.forEach(function(g){
 var color=SB.groupColor(g.id); /* 🆕 لون المجموعة */
@@ -142,7 +154,7 @@ html+='<div class="sb-card" draggable="'+(opts.editable?'true':'false')+'" style
 +'<div class="sb-card-name">'+g.name+'</div>'
 +'<div class="sb-card-time" style="color:'+color+';">'+SB.fmt12(s.time)+' - '+SB.fmt12(SB.hm(m+dur))+'</div>'
 +(opts.showTeacher?'<div class="sb-card-sub">👨‍ '+SB.teacherName(g.teacherId)+'</div>':'')
-+'<div class="sb-card-sub">🏢 '+(g.center||'-')+' · 👥 '+((DataService.getStudentsByGroup)?DataService.getStudentsByGroup(g.id).length:0)+'</div>'
++'<div class="sb-card-sub">🏢 '+(g.center||'-')+' · 👥 '+((window.DataService&&DataService.getStudentsByGroup)?DataService.getStudentsByGroup(g.id).length:0)+'</div>'
 +'</div>';
 });
 });
@@ -163,13 +175,12 @@ var d0=_sbDb();
 var now=new Date(), y=now.getFullYear(), m=now.getMonth();
 var dim=new Date(y,m+1,0).getDate();
 var todayStr=y+'-'+String(m+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
-var EN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-var firstIdx=SB.DAY_IDX(EN[new Date(y,m,1).getDay()]);
+var firstIdx=SB.DAY_IDX(SB.EN[new Date(y,m,1).getDay()]);
 var html='<div class="sbm-grid">'+SB.DAYS.map(function(d){return '<div style="text-align:center;font-size:11px;font-weight:700;color:var(--text-muted);">'+d.ar+'</div>';}).join('');
 for(var i=0;i<firstIdx;i++) html+='<div class="sbm-cell empty"></div>';
 for(var dd=1;dd<=dim;dd++){
 var ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(dd).padStart(2,'0');
-var dayEn=EN[new Date(y,m,dd).getDay()];
+var dayEn=SB.EN[new Date(y,m,dd).getDay()];
 var items=[];
 groups.forEach(function(g){ SB.schedulesOf(g).forEach(function(s,si){ if(s.day===dayEn) items.push({g:g,s:s,si:si}); }); });
 items.sort(function(a,b){ return SB.min(a.s.time)-SB.min(b.s.time); });
@@ -193,7 +204,8 @@ var container=document.getElementById(opts.container); if(!container) return;
 SB.opts=opts;
 var groups=SB.groupsInView(opts);
 var S=(opts.startHour||8)*60, E=(opts.timelineEnd||23)*60, SPAN=E-S;
-var todayEn=SB.DAYS[new Date().getDay()].en;
+/* 🆕 اليوم الحالي من مصفوفة تبدأ من الأحد */
+var todayEn=SB.todayEn();
 var html='<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-muted);margin-bottom:6px;"><span>'+SB.fmt12(SB.hm(S))+'</span><span>'+SB.fmt12(SB.hm(S+SPAN*0.5))+'</span><span>'+SB.fmt12(SB.hm(E))+'</span></div>';
 SB.DAYS.forEach(function(d){
 var items=[];
@@ -225,7 +237,7 @@ var color=SB.groupColor(g.id);
 var chips=SB.schedulesOf(g).slice().sort(function(a,b){ return (SB.DAY_IDX(a.day)*1440+SB.min(a.time))-(SB.DAY_IDX(b.day)*1440+SB.min(b.time)); }).map(function(s){
 return '<span class="badge badge-info" style="margin:2px;border-right:3px solid '+color+';">'+SB.DAY_AR(s.day)+' '+SB.fmt12(s.time)+'</span>';
 }).join('');
-var cnt=(DataService.getStudentsByGroup)?DataService.getStudentsByGroup(g.id).length:0;
+var cnt=(window.DataService&&DataService.getStudentsByGroup)?DataService.getStudentsByGroup(g.id).length:0;
 return '<div class="user-card" style="border-top:3px solid '+color+';"><div class="user-card-header"><div class="user-avatar">👥</div><div><div class="user-name">'+g.name+'</div><div class="user-meta"><span>👨‍ '+SB.teacherName(g.teacherId)+'</span><span>🏢 '+(g.center||'-')+'</span><span>👥 '+cnt+'</span></div></div></div>'
 +'<div style="margin:8px 0;">'+chips+'</div>'
 +'<div class="user-meta"><span>⏱️ '+(g.duration||60)+' د</span><span>💰 '+(g.monthlyFee||0)+' ج.م</span></div>'
@@ -237,6 +249,7 @@ return '<div class="user-card" style="border-top:3px solid '+color+';"><div clas
 /* ---------------- سحب وإفلات + ضغط على الفاضي ---------------- */
 SB.bindDnD=function(container,opts){
 if(!opts.editable) return;
+/* 🆕 الكروت: سحب + ضغط */
 container.querySelectorAll('.sb-card').forEach(function(card){
 card.addEventListener('dragstart',function(ev){
 window._sbDrag={gid:card.dataset.gid, si:+(card.dataset.si||0), day:card.dataset.day, time:card.dataset.time};
@@ -249,32 +262,33 @@ container.querySelectorAll('.sb-col,.sbm-cell,.sbt-day').forEach(function(c){c.c
 });
 card.addEventListener('click',function(ev){
 ev.stopPropagation();
-/* 🆕 إصلاح: نمرر اليوم والوقت من الكارت مباشرة بدل الاعتماد على الـ si اللي ممكن يكون غلط */
-SB.openMoveModal(card.dataset.gid, +card.dataset.si||0, card.dataset.day, card.dataset.time);
+/* 🆕 نفتح مودال النقل باليوم والوقت من الكارت مباشرة */
+SB.openMoveModal(card.dataset.gid,+(card.dataset.si||0),card.dataset.day,card.dataset.time);
 });
 });
-/* أعمدة الأسبوعي */
+/* 🆕 أعمدة الجدول الأسبوعي: إفلات + ضغط على الفاضي */
 container.querySelectorAll('.sb-col').forEach(function(col){
+col.style.cursor='pointer';
 col.addEventListener('dragover',function(ev){ ev.preventDefault(); col.classList.add('droppable'); });
 col.addEventListener('dragleave',function(){ col.classList.remove('droppable'); });
 col.addEventListener('drop',function(ev){
 ev.preventDefault(); col.classList.remove('droppable');
 var drag=window._sbDrag; if(!drag) return;
-var rect=col.getBoundingClientRect();
-var y=ev.clientY-rect.top;
-var H=56; var minH=(SB.opts&&SB.opts._minH)||8;
-var mins=minH*60 + Math.round((y/H*60)/30)*30;
-SB.openMoveModal(drag.gid, drag.si, col.dataset.day, SB.hm(mins));
+var rect=col.getBoundingClientRect(), y=ev.clientY-rect.top;
+var H=56, minH=+(col.dataset.minh||8);
+/* 🆕 الحساب بضبط الساعة (كل 60 دقيقة) */
+var mins=minH*60+Math.round((y/H*60)/60)*60;
+SB.openMoveModal(drag.gid,drag.si,col.dataset.day,SB.hm(mins));
 window._sbDrag=null;
 });
-/* 🆕 ضغط على خانة فاضية = إضافة مجموعة */
+/* 🆕 الضغط على الخلية الفاضية لإضافة مجموعة */
 col.addEventListener('click',function(ev){
 if(ev.target.closest('.sb-card')) return;
-var rect=col.getBoundingClientRect();
-var y=ev.clientY-rect.top;
-var H=56; var minH=(SB.opts&&SB.opts._minH)||8;
-var mins=minH*60 + Math.floor((y/H*60)/30)*30;
-SB.addAt(col.dataset.day, SB.hm(mins));
+var rect=col.getBoundingClientRect(), y=ev.clientY-rect.top;
+var H=56, minH=+(col.dataset.minh||8);
+/* 🆕 الحساب بضبط الساعة (كل 60 دقيقة) */
+var mins=minH*60+Math.round((y/H*60)/60)*60;
+SB.addAt(col.dataset.day,SB.hm(mins));
 });
 });
 /* خلايا الشهري + أيام الخط الزمني */
@@ -293,6 +307,23 @@ SB.addAt(cell.dataset.day, null);
 });
 });
 };
+
+/* 🩹 PATCH: ربط صفحة جدول المدرسين */
+(function(){
+if(window._sbBoardWired) return;
+window._sbBoardWired=true;
+var orig=window.showSection;
+window.showSection=function(id){
+try{ orig.apply(this,arguments); }catch(e){ console.error(e); }
+if(id==='scheduleBoard'&&typeof window.loadScheduleBoardAdmin==='function'){
+try{ window.loadScheduleBoardAdmin(); }catch(e){ console.error(e); }
+}
+};
+var sec=document.getElementById('section-scheduleBoard');
+if(sec&&sec.classList.contains('active')&&typeof window.loadScheduleBoardAdmin==='function'){
+window.loadScheduleBoardAdmin();
+}
+})();
 
 /* 🆕 إضافة مجموعة من خانة فاضية: اليوم والوقت متعبئين + فلاتر الأستاذ/السنتر */
 SB.addAt=function(day,time){
@@ -321,7 +352,7 @@ if(window.safeToast) window.safeToast('اليوم والوقت متعبئين �
 SB.openMoveModal=function(gid,si,day,time){
 try{
 var opts=SB.opts||{};
-var g=(DataService.getGroups()).find(function(x){return x.id===gid;}); if(!g) return;
+var g=(window.DataService&&DataService.getGroups)?DataService.getGroups().find(function(x){return x.id===gid;}):null; if(!g) return;
 var sch=SB.schedulesOf(g); var s=sch[si]||sch[0]||{day:g.day,time:g.time||'10:00'};
 /* 🆕 إصلاح: لو اليوم والوقت ممررين من الكارت نستخدمهم مباشرة بدل البحث بالـ si */
 var newDay=day||s.day; var newTime=time||s.time;
@@ -350,9 +381,9 @@ if(durEl) durEl.onchange=function(){SB.checkMoveConflicts(gid);};
 
 SB.findConflicts=function(gid,day,time,dur){
 var out={sameTeacher:[],sameCenter:[]};
-var me=(DataService.getGroups()).find(function(x){return x.id===gid;}); if(!me) return out;
+var me=(window.DataService&&DataService.getGroups)?DataService.getGroups().find(function(x){return x.id===gid;}):null; if(!me) return out;
 var m=SB.min(time), end=m+dur;
-(DataService.getGroups()).forEach(function(g){
+(window.DataService&&DataService.getGroups?DataService.getGroups():[]).forEach(function(g){
 if(g.id===gid) return;
 var gd=parseInt(g.duration)||60;
 SB.schedulesOf(g).forEach(function(s){
@@ -394,16 +425,53 @@ SB.applyMove(gid,si,day,time,dur);
 SB.applyMove=async function(gid,si,day,time,dur){
 try{
 var opts=SB.opts||{};
-var g=(DataService.getGroups()).find(function(x){return x.id===gid;}); if(!g) return;
-var sch=SB.schedulesOf(g);
+var g=(window.DataService&&DataService.getGroups)?DataService.getGroups().find(function(x){return x.id===gid;}):null; if(!g) return;
+var sch=SB.schedulesOf(g).slice();
 var old=sch[si]||{day:g.day,time:g.time||'10:00'};
 sch[si]={day:day,time:time};
 sch.sort(function(a,b){ return (SB.DAY_IDX(a.day)*1440+SB.min(a.time))-(SB.DAY_IDX(b.day)*1440+SB.min(b.time)); });
-var upd={schedules:sch, day:sch[0].day, time:sch[0].time, duration:dur||g.duration||60};
+var upd={schedules:sch,day:sch[0].day,time:sch[0].time,duration:dur||g.duration||60};
 await DataService.updateGroup(gid,upd);
-if(opts.notifyAdmin){
+
+/* 🆕 دايماً نسجل التعديل ونبعت إشعار للأدمن والمساعد المرتبط */
 SB.logChange({groupId:gid,groupName:g.name,teacherId:g.teacherId,oldDay:old.day,oldTime:old.time,newDay:day,newTime:time,newDuration:dur});
+
+/* 🆕 إشعار للأدمن */
+try{
+if(typeof DataService!=='undefined'&&typeof DataService.addNotification==='function'&&typeof DataService.getUsers==='function'){
+DataService.getUsers().filter(function(u){return u.role==='super_admin'||u.role==='admin';}).forEach(function(u){
+DataService.addNotification({
+targetUserId:u.id,
+title:'🗓️ تعديل في جدول المواعيد',
+message:'مجموعة "'+g.name+'" اتغير موعدها من '+SB.DAY_AR(old.day)+' '+SB.fmt12(old.time)+' إلى '+SB.DAY_AR(day)+' '+SB.fmt12(time),
+type:'general',
+meta:{kind:'schedule_change',groupId:gid}
+});
+});
 }
+}catch(e){ console.error('notify admin error',e); }
+
+/* 🆕 إشعار للمساعد المرتبط بالأستاذ ده */
+try{
+if(typeof DataService!=='undefined'&&typeof DataService.getUsers==='function'&&typeof DataService.addNotification==='function'){
+var assistants=(DataService.getUsers?DataService.getUsers():[]).filter(function(u){return u.role==='assistant';});
+assistants.forEach(function(a){
+try{
+var assignment=(typeof Ops!=='undefined'&&typeof Ops.getAssignment==='function')?Ops.getAssignment(a.id):null;
+if(assignment&&assignment.teacherId===g.teacherId){
+DataService.addNotification({
+targetUserId:a.id,
+title:'🗓️ تعديل في جدول أستاذك',
+message:'مجموعة "'+g.name+'" اتغير موعدها من '+SB.DAY_AR(old.day)+' '+SB.fmt12(old.time)+' إلى '+SB.DAY_AR(day)+' '+SB.fmt12(time),
+type:'general',
+meta:{kind:'schedule_change',groupId:gid}
+});
+}
+}catch(e2){}
+});
+}
+}catch(e){ console.error('notify assistant error',e); }
+
 if(window.safeToast) window.safeToast('✅ تم نقل المجموعة وتحديث البيانات','success');
 try{ ThemeManager.closeModal(); }catch(e){}
 SB.refresh();
@@ -412,7 +480,7 @@ SB.refresh();
 
 SB.refresh=function(){
 var opts=SB.opts||{};
-if(opts.role==='teacher' && window.loadMyScheduleBoard) window.loadMyScheduleBoard();
+if(opts.role==='teacher'||opts.role==='assistant'){ if(window.loadMyScheduleBoard) window.loadMyScheduleBoard(); }
 else if(window.loadScheduleBoardAdmin) window.loadScheduleBoardAdmin();
 };
 
@@ -429,7 +497,7 @@ d.scheduleChangeLog.unshift(entry);
 if(d.scheduleChangeLog.length>200) d.scheduleChangeLog.length=200;
 _sbSave(d);
 if(window.FirebaseService&&FirebaseService.connected){ try{ FirebaseService.saveDoc('scheduleChangeLog',entry.id,entry); }catch(e){} }
-if(DataService.addNotification){
+if(window.DataService&&DataService.addNotification){
 (DataService.getUsers?DataService.getUsers():[]).filter(function(u){return u.role==='super_admin'||u.role==='admin';}).forEach(function(u){
 DataService.addNotification({targetUserId:u.id,title:'🗓️ تغيير موعد مجموعة',message:(entry.byName||'')+' نقل مجموعة '+entry.groupName+' من '+SB.DAY_AR(entry.oldDay)+' '+SB.fmt12(entry.oldTime)+' إلى '+SB.DAY_AR(entry.newDay)+' '+SB.fmt12(entry.newTime),type:'general',meta:{kind:'schedule_change',refId:entry.id}});
 });
@@ -564,7 +632,7 @@ rows+='</tr>';
 }
 var css='body{font-family:Tahoma,Arial,sans-serif;direction:rtl;margin:0;background:#f4f6fb;color:#1f2937;}'+
 '.sheet{max-width:1100px;margin:20px auto;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.15);}'+
-'.head{display:display:flex;align-items:center;gap:14px;padding:22px 26px;background:linear-gradient(135deg,'+(b.primaryColor||'#4f46e5')+','+(b.accentColor||'#7c3aed')+');color:#fff;}'+
+'.head{display:flex;align-items:center;gap:14px;padding:22px 26px;background:linear-gradient(135deg,'+(b.primaryColor||'#4f46e5')+','+(b.accentColor||'#7c3aed')+');color:#fff;}'+
 '.logo{width:56px;height:56px;border-radius:14px;object-fit:cover;background:#fff;padding:4px;}'+
 '.lf{width:56px;height:56px;border-radius:14px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:30px;}'+
 '.title{font-size:22px;font-weight:800;}.sub{font-size:12px;opacity:.92;}'+
@@ -611,17 +679,17 @@ try{
 SB.injectAdminControls();
 var tSel=document.getElementById('sbTeacherFilter');
 if(tSel&&tSel.options.length<=1){
-var ts=(DataService.getTeachers)?DataService.getTeachers():[];
+var ts=(window.DataService&&DataService.getTeachers)?DataService.getTeachers():[];
 tSel.innerHTML='<option value="all">كل الأساتذة</option>'+ts.map(function(t){return '<option value="'+t.id+'">'+t.name+'</option>';}).join('');
 }
 var gSel=document.getElementById('sbGroupFilter');
 if(gSel&&gSel.options.length<=1){
-var gs=(DataService.getGroups)?DataService.getGroups():[];
+var gs=(window.DataService&&DataService.getGroups)?DataService.getGroups():[];
 gSel.innerHTML='<option value="all">كل المجموعات</option>'+gs.map(function(g){return '<option value="'+g.id+'">'+g.name+'</option>';}).join('');
 }
 var cSel=document.getElementById('sbCenterFilter');
 if(cSel&&cSel.options.length<=1){
-var centers=[]; if(DataService.getCenters) centers=(DataService.getCenters()||[]).map(function(c){return c.name;}).filter(Boolean);
+var centers=[]; if(window.DataService&&DataService.getCenters) centers=(DataService.getCenters()||[]).map(function(c){return c.name;}).filter(Boolean);
 if(!centers.length&&window.getAllCenters) centers=window.getAllCenters();
 cSel.innerHTML='<option value="">كل السناتر</option>'+centers.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('');
 }
@@ -651,8 +719,41 @@ try{
 var uid=null;
 try{ uid=(typeof currentUser!=='undefined'&&currentUser)?currentUser.id:null; }catch(e){}
 if(!uid&&window.AuthService&&AuthService.getCurrentUser){ var u=AuthService.getCurrentUser(); uid=u?u.id:null; }
-var opts={container:'sbBoardT',editable:true,showTeacher:false,notifyAdmin:true,role:'teacher',teacherId:uid,sortBy:'time',startHour:8,timelineEnd:23};
+
+/* 🆕 لو المستخدم مساعد، نجيب الأستاذ اللي هو مرتبط بيه ونعرض جدوله بس */
+var role=null;
+try{ role=(typeof currentUser!=='undefined'&&currentUser)?currentUser.role:null; }catch(e){}
+if(!role&&window.AuthService&&AuthService.getCurrentUser){ var u2=AuthService.getCurrentUser(); role=u2?u2.role:null; }
+
+var targetTeacherId=uid;
+var isAssistant=false;
+if(role==='assistant'){
+isAssistant=true;
+/* نجيب الأستاذ اللي المساعد مرتبط بيه */
+try{
+var assignment=(typeof Ops!=='undefined'&&typeof Ops.getAssignment==='function')?Ops.getAssignment(uid):null;
+if(assignment&&assignment.teacherId){ targetTeacherId=assignment.teacherId; }
+}catch(e){}
+}
+
+var opts={container:'sbBoardT',editable:true,showTeacher:false,notifyAdmin:true,role:isAssistant?'assistant':'teacher',teacherId:targetTeacherId,sortBy:'time',startHour:8,timelineEnd:23};
 SB.opts=opts;
+
+/* 🆕 لو مساعد، نعرض اسم الأستاذ اللي بيشوف جدوله */
+if(isAssistant&&targetTeacherId!==uid){
+var tName=SB.teacherName(targetTeacherId);
+var infoEl=document.getElementById('sbAssistantInfo');
+if(!infoEl){
+infoEl=document.createElement('div');
+infoEl.id='sbAssistantInfo';
+infoEl.className='filter-info';
+infoEl.style.marginBottom='12px';
+var boardEl=document.getElementById('sbBoardT');
+if(boardEl&&boardEl.parentNode){ boardEl.parentNode.insertBefore(infoEl,boardEl); }
+}
+if(infoEl){ infoEl.innerHTML='👤 أنت مساعد بتعرض جدول الأستاذ: <strong>'+tName+'</strong> — أي تعديل هيتسجل ويبعت إشعار للأدمن.'; }
+}
+
 var mode=(document.getElementById('sbViewModeT')||{}).value||'week';
 if(mode==='month') SB.renderMonth(opts);
 else if(mode==='timeline') SB.renderTimeline(opts);

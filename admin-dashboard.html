@@ -9,11 +9,29 @@
 /* ========================================
    🎨 Core Layout & Responsive
    ======================================== */
+/* 🆕 طي القائمة الجانبية للديسكتوب */
+@media (min-width: 1025px) {
+  #sbCollapseBtn { display: block !important; }
+  .app-layout.sb-collapsed .sidebar { width: 70px !important; }
+  .app-layout.sb-collapsed .sidebar .sidebar-brand-name,
+  .app-layout.sb-collapsed .sidebar .sidebar-brand-tagline,
+  .app-layout.sb-collapsed .sidebar .sidebar-section-title,
+  .app-layout.sb-collapsed .sidebar .sidebar-item-label,
+  .app-layout.sb-collapsed .sidebar .sidebar-user-name,
+  .app-layout.sb-collapsed .sidebar .sidebar-user-role { display: none !important; }
+  .app-layout.sb-collapsed .sidebar .sidebar-header { justify-content: center; }
+  .app-layout.sb-collapsed .sidebar .sidebar-item { justify-content: center; padding: 12px 0; }
+  .app-layout.sb-collapsed .sidebar .sidebar-item-icon { font-size: 20px; margin: 0; }
+  .app-layout.sb-collapsed .main-content { margin-inline-start: 70px !important; width: calc(100% - 70px) !important; }
+  .app-layout.sb-collapsed .sidebar-footer { justify-content: center; }
+}
+/* نهاية طي القائمة */
+
 @media(max-width:1024px){
-  .app-layout{display:block!important}
-  .sidebar{position:fixed!important;top:0;bottom:0;right:0;width:280px;transform:translateX(100%);transition:transform .25s;z-index:1201!important;overflow-y:auto}
-  .sidebar.open{transform:translateX(0)!important}
-  .main-content{margin-inline-start:0!important;width:100%!important}
+.app-layout{display:block!important}
+.sidebar{position:fixed!important;top:0;bottom:0;right:0;width:280px;transform:translateX(100%);transition:transform .25s;z-index:1201!important;overflow-y:auto}
+.sidebar.open{transform:translateX(0)!important}
+.main-content{margin-inline-start:0!important;width:100%!important}
 }
 .sidebar.open ~ .main-content::before{content:'';position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1200}
 
@@ -358,7 +376,8 @@
 <main class="main-content" id="mainContent">
 <header class="main-header">
 <div class="main-header-right">
-  <button class="menu-toggle" id="menuToggle"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+<button class="menu-toggle" id="sbCollapseBtn" title="طي/فرد القائمة" style="display:none;">☰</button>
+<button class="menu-toggle" id="menuToggle"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
 </div>
 <div class="main-header-left">
   <div class="header-actions" style="position:relative;">
@@ -997,6 +1016,7 @@ if(typeof DataService?.init==='function') await DataService.init();
     const a=document.getElementById('userAvatar'); if(a)a.textContent=(currentUser.name||'A').charAt(0);
     const main=document.getElementById('mainContent');
     if(main && !main.dataset.sbBound){main.dataset.sbBound='1';main.addEventListener('click',()=>{if(window.innerWidth<=1024)document.getElementById('sidebar')?.classList.remove('open');});}
+    window.initSidebarCollapse();
     window.buildMenu(); 
     window.fillTeacherFilters();
     window.fillCenterFilters();
@@ -1271,9 +1291,22 @@ safeToast('➕ تقدر تكمل إنشاء المجموعة الجديدة', 'i
 }
 };
 
+window.initSidebarCollapse=function(){
+try{
+const btn=document.getElementById('sbCollapseBtn');
+const layout=document.querySelector('.app-layout');
+if(!btn||!layout) return;
+const isCollapsed=localStorage.getItem('sbSidebarCollapsed')==='true';
+if(isCollapsed) layout.classList.add('sb-collapsed');
+btn.addEventListener('click',function(){
+layout.classList.toggle('sb-collapsed');
+localStorage.setItem('sbSidebarCollapsed',layout.classList.contains('sb-collapsed'));
+});
+}catch(e){console.error('initSidebarCollapse error',e);}
+};
 window.buildMenu=function(){
-  const menu=[
-    {s:'🏛️ برج التحكم',items:[{id:'tower',l:'نظرة عامة',i:'📊'}]},
+const menu=[
+{s:'🏛️ برج التحكم',items:[{id:'tower',l:'نظرة عامة',i:'📊'}]},
     {s:'👥 إدارة الأشخاص',items:[{id:'students',l:'الطلاب',i:'🎓'},{id:'teachers',l:'المدرسون',i:'👨‍🏫'},{id:'assistants',l:'المساعدون',i:'🧑‍🏫'},{id:'pending',l:'طلبات التسجيل',i:'⏳'},{id:'barcode-requests',l:'طلبات الباركود',i:'🎟️'}]},
     {s:'🚀 التشغيل والعمليات',items:[{id:'ops', l:'إدارة وتشغيل الأساتذة', i:'⚙️', href:'teachers-operations.html'}]},
     {s:'🏢 البنية',items:[{id:'groups',l:'المجموعات',i:'👥'},{id:'centers',l:'السناتر',i:'🏢'},{id:'scheduleBoard',l:'جدول الأساتذة',i:'🗓️'}]},
@@ -1289,24 +1322,26 @@ window.buildMenu=function(){
 };
 
 window.showSection=function(id){
-  try{
-    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-    document.getElementById('section-'+id)?.classList.add('active');
-    document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.toggle('active',i.dataset.section===id));
-    const L={
-      tower:window.loadTower, students:window.loadStudents, teachers:window.loadTeachers,
-      assistants:window.loadAssistants, pending:window.loadPending, groups:window.loadGroups,
-      centers:window.loadCenters, scheduleBoard:window.loadScheduleBoardAdmin, points:()=>{window.loadPointsOverview();window.loadPointsRules();window.loadPointsHistory();window.loadPointsRanking();},
-      churn:window.loadChurnAlerts, // <-- أضف هذا السطر
-      followups:window.loadFollowups,
-      templates:window.loadTemplates, reports:()=>window.renderReport(currentReport),
+try{
+document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+document.getElementById('section-'+id)?.classList.add('active');
+document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.toggle('active',i.dataset.section===id));
+const L={
+tower:window.loadTower, students:window.loadStudents, teachers:window.loadTeachers,
+assistants:window.loadAssistants, pending:window.loadPending, groups:window.loadGroups,
+centers:window.loadCenters, points:()=>{window.loadPointsOverview();window.loadPointsRules();window.loadPointsHistory();window.loadPointsRanking();},
+churn:window.loadChurnAlerts,
+followups:window.loadFollowups,
+templates:window.loadTemplates, reports:()=>window.renderReport(currentReport),
 viewas:window.loadViewAs, settings:window.loadSettings, backup:()=>{}, logs:window.loadLogs,
 'barcode-requests':window.loadBarcodeRequests,
-gamification:window.loadGamification, battles:window.loadBattles, ai:window.loadAiSettings
-    };
-    if(L[id])L[id]();
-    if(window.innerWidth<=1024)document.getElementById('sidebar')?.classList.remove('open');
-  }catch(e){console.error(e);}
+gamification:window.loadGamification, battles:window.loadBattles, ai:window.loadAiSettings,
+scheduleBoard:()=>{if(window.loadScheduleBoardAdmin)window.loadScheduleBoardAdmin();},
+mySchedule:()=>{if(window.loadMyScheduleBoard)window.loadMyScheduleBoard();}
+};
+if(L[id])L[id]();
+if(window.innerWidth<=1024)document.getElementById('sidebar')?.classList.remove('open');
+}catch(e){console.error(e);}
 };
 
 window.doGlobalSearch=function(q){
@@ -1679,7 +1714,7 @@ ThemeManager.openModal(`
 <div class="form-group"><label>👨‍👩‍ هاتف ولي الأمر</label><input type="tel" id="sParentPhone" class="form-input" value="${esc(s?.parentPhone)}" placeholder="01XXXXXXXXX" oninput="SSM.scan('admin')"></div>
 </div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-<div class="form-group"><label>المرحلة</label><select id="sStage" class="form-select" onchange="window.sStageCascade()"><option value="">--</option>${stageOpts}</select></div>
+<div class="form-group"><label>المرحلة</label><select id="sStage" class="form-select" onchange="window.sStageCascade();window.renderStudentGroups()"><option value="">--</option>${stageOpts}</select></div>
 <div class="form-group"><label>الصف</label><select id="sGrade" class="form-select" onchange="window.renderStudentGroups()"></select></div>
 </div>
 ${s?'':'<div class="form-group"><label>🔑 كلمة المرور</label><input type="text" id="sPass" class="form-input" value="1234"></div>'}
@@ -1720,39 +1755,76 @@ window.renderStudentGroups();
 };
 
 window.renderStudentGroups=function(preSelectedIds){
-  try{
-    const center=document.getElementById('sCenter')?.value||'';
-    const list=document.getElementById('sGroupsList');
-    if(!list) return;
-    let groups=DataService.getGroups?DataService.getGroups():[];
-    if(center){
-      groups=groups.filter(g=>(g.center||'')===center);
-    }
-    const byId={}; groups.forEach(g=>byId[g.id]=g);
-    const pre=(window._preChecked||[]).slice();
-    const preGroups=pre.map(id=>byId[id]).filter(Boolean);
-    let rest=groups.filter(g=>pre.indexOf(g.id)<0);
-    function card(g,checked){
-      const t=(DataService.getUserById)?DataService.getUserById(g.teacherId):null;
-      const cnt=(DataService.getStudentsByGroup)?DataService.getStudentsByGroup(g.id).length:0;
-      return `<label class="grp-card"><input type="checkbox" class="grp-check" value="${g.id}" data-teacher="${g.teacherId}" ${checked?'checked':''} onchange="SSM.onCheck('admin',this)">
-      <div style="flex:1;min-width:0;"><div class="grp-name">${g.name}</div>
-      <div class="grp-meta">👨‍🏫 ${t?.name||'-'} · 🏢 ${g.center||'-'} · 👥 ${cnt} طالب</div>
-      <div class="grp-times">🕐 ${SSM.groupTimes(g)}</div></div></label>`;
-    }
-    let html='';
-    if(preGroups.length){
-      html+=`<div class="sm-teacher-block"><div class="sm-teacher-name">📌 مجموعات الطالب الحالية</div>${preGroups.map(g=>card(g,true)).join('')}</div>`;
-    }
-    const byTeacher={};
-    rest.forEach(g=>{ (byTeacher[g.teacherId]=byTeacher[g.teacherId]||[]).push(g); });
-    Object.keys(byTeacher).forEach(tid=>{
-      const t=(DataService.getUserById)?DataService.getUserById(tid):null;
-      html+=`<div class="sm-teacher-block"><div class="sm-teacher-name">👨‍🏫 ${t?.name||'-'}</div>${byTeacher[tid].map(g=>card(g,false)).join('')}</div>`;
-    });
-    list.innerHTML=html||'<p class="text-muted" style="padding:10px;">لا توجد مجموعات في السنتر ده</p>';
-    if(window.SSM) SSM.updateCount('admin');
-  }catch(e){ console.error('renderStudentGroups error',e); }
+try{
+const center=document.getElementById('sCenter')?.value||'';
+const stage=document.getElementById('sStage')?.value||'';
+const grade=document.getElementById('sGrade')?.value||'';
+const search=(document.getElementById('grpSearch')?.value||'').trim().toLowerCase();
+const list=document.getElementById('sGroupsList');
+if(!list) return;
+
+let groups=DataService.getGroups?DataService.getGroups():[];
+
+/* 🆕 فلتر السنتر */
+if(center){
+groups=groups.filter(g=>(g.center||'')===center);
+}
+
+/* 🆕 فلتر المرحلة */
+if(stage){
+groups=groups.filter(g=>(g.stage||'')===stage);
+}
+
+/* 🆕 فلتر الصف */
+if(grade){
+groups=groups.filter(g=>(g.grade||'')===grade);
+}
+
+/* 🆕 البحث بالاسم */
+if(search){
+groups=groups.filter(g=>(g.name||'').toLowerCase().includes(search)||(DataService.getUserById?(DataService.getUserById(g.teacherId)?.name||'').toLowerCase():'').includes(search));
+}
+
+const byId={}; groups.forEach(g=>byId[g.id]=g);
+const pre=(window._preChecked||[]).slice();
+const preGroups=pre.map(id=>byId[id]).filter(Boolean);
+let rest=groups.filter(g=>pre.indexOf(g.id)<0);
+
+function card(g,checked){
+const t=(DataService.getUserById)?DataService.getUserById(g.teacherId):null;
+const cnt=(DataService.getStudentsByGroup)?DataService.getStudentsByGroup(g.id).length:0;
+return `<label class="grp-card"><input type="checkbox" class="grp-check" value="${g.id}" data-teacher="${g.teacherId}" ${checked?'checked':''} onchange="SSM.onCheck('admin',this)">
+<div style="flex:1;min-width:0;"><div class="grp-name">${g.name}</div>
+<div class="grp-meta">👨‍🏫 ${t?.name||'-'} · 🏢 ${g.center||'-'} · 👥 ${cnt} طالب</div>
+<div class="grp-times">🕐 ${SSM.groupTimes(g)}</div></div></label>`;
+}
+
+let html='';
+
+/* 🆕 لو فيه فلاتر شغالة، نبين للمستخدم عدد النتائج */
+const hasFilters = center || stage || grade || search;
+if(hasFilters){
+html+=`<div style="padding:6px 10px;background:var(--info-bg);border:1px solid var(--info-border);border-radius:8px;margin-bottom:8px;font-size:11px;color:var(--info);">🔍 عرض ${groups.length} مجموعة مطابقة للفلاتر${stage?` · المرحلة: ${EduFlowConfig?.educationLevels?.[stage]?.nameAr||stage}`:''}${grade?` · الصف: ${grade}`:''}${center?` · السنتر: ${center}`:''}</div>`;
+}
+
+if(preGroups.length){
+html+=`<div class="sm-teacher-block"><div class="sm-teacher-name">📌 مجموعات الطالب الحالية</div>${preGroups.map(g=>card(g,true)).join('')}</div>`;
+}
+
+const byTeacher={};
+rest.forEach(g=>{ (byTeacher[g.teacherId]=byTeacher[g.teacherId]||[]).push(g); });
+Object.keys(byTeacher).forEach(tid=>{
+const t=(DataService.getUserById)?DataService.getUserById(tid):null;
+html+=`<div class="sm-teacher-block"><div class="sm-teacher-name">👨‍🏫 ${t?.name||'-'}</div>${byTeacher[tid].map(g=>card(g,false)).join('')}</div>`;
+});
+
+if(!groups.length){
+html+='<p class="text-muted" style="padding:14px;text-align:center;">لا توجد مجموعات مطابقة للفلاتر المختارة.<br>جرّب تغيير المرحلة أو الصف أو السنتر.</p>';
+}
+
+list.innerHTML=html;
+if(window.SSM) SSM.updateCount('admin');
+}catch(e){ console.error('renderStudentGroups error',e); }
 };
 
 window.saveStudent=async function(e,editId){
@@ -2355,13 +2427,11 @@ window.doSwap=async function(gid){
 };
 
 // 🆕 مودال المجموعة مع مواعيد متعددة
-window.openGroupModal=function(editId){
-  try{
-    const g=editId?DataService.getGroups().find(x=>x.id===editId):null;
-    const stageOptions=Object.entries(EduFlowConfig?.educationLevels||{}).map(([k,v])=>`<option value="${k}" ${g?.stage===k?'selected':''}>${v.nameAr}</option>`).join('');
-    const centers=DataService.getCenters?DataService.getCenters():[];
-    
-    // تحميل المواعيد الموجودة
+window.openGroupModal=function(editId, defaultDay, defaultTime){
+try{
+const g=editId?DataService.getGroups().find(x=>x.id===editId):null;
+const stageOptions=Object.entries(EduFlowConfig?.educationLevels||{}).map(([k,v])=>`<option value="${k}" ${g?.stage===k?'selected':''}>${v.nameAr}</option>`).join('');
+const centers=DataService.getCenters?DataService.getCenters():[];
     const existingSchedules = g?.schedules || (g?.day && g?.time ? [{day: g.day, time: g.time}] : []);
     
     ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${g?'✏️':'👥'} مجموعة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return window.saveGroup(event,'${editId||''}')">
@@ -2369,30 +2439,29 @@ window.openGroupModal=function(editId){
     <div class="form-group"><label>👨‍🏫 المدرس *</label><select id="gTeacher" class="form-select" required><option value="">-- اختار --</option>${DataService.getTeachers().map(t=>`<option value="${t.id}" ${g?.teacherId===t.id?'selected':''}>${t.name}</option>`).join('')}</select></div>
     <div class="stage-grade-row"><div class="form-group"><label>المرحلة</label><select id="gStage" class="form-select" onchange="window.updGroupGrades()"><option value="">--</option>${stageOptions}</select></div><div class="form-group"><label>الصف</label><select id="gGrade" class="form-select"></select></div></div>
     
-    <!-- 🆕 مواعيد متعددة -->
-    <div class="form-group">
-      <label>📅 مواعيد الحصة (يمكن إضافة أكثر من موعد)</label>
-      <div id="schedulesContainer"></div>
-      <button type="button" class="add-schedule-btn" onclick="window.addScheduleRow()">
-        ➕ إضافة موعد آخر
-      </button>
-    </div>
+  <div class="form-group"><label>📅 مواعيد الحصة (يمكن إضافة أكثر من موعد)</label>
+<div id="schedulesContainer"></div>
+<button type="button" class="add-schedule-btn" onclick="window.addScheduleRow()">
+➕ إضافة موعد آخر
+</button>
+</div>
+<input type="hidden" id="gDefaultDay" value="${defaultDay||''}">
+<input type="hidden" id="gDefaultTime" value="${defaultTime||''}">
     
     <div class="form-group"><label>🏢 السنتر *</label><select id="gCenter" class="form-select" required><option value="">-- اختر --</option>${centers.map(c=>`<option value="${c.name}" ${g?.center===c.name?'selected':''}>${c.name}</option>`).join('')}</select></div>
     <div class="form-group"><label>📱 واتساب الجروب</label><input type="url" id="gWhatsapp" class="form-input" value="${g?.whatsappLink||''}" placeholder="https://chat.whatsapp.com/..."></div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;"><div class="form-group"><label>مدة (دقيقة)</label><input type="number" id="gDuration" class="form-input" value="${g?.duration||60}"></div><div class="form-group"><label>حصص/شهر *</label><input type="number" id="gSessions" class="form-input" value="${g?.sessionsPerMonth||8}" required></div><div class="form-group"><label>سعر الشهر *</label><input type="number" id="gMonthly" class="form-input" value="${g?.monthlyFee||80}" required></div></div>
     <button class="btn btn-primary w-full">💾 حفظ</button></form></div>`,'modal-lg');
     
-    window.updGroupGrades(g?.grade);
-    
-    // تحميل المواعيد الموجودة
-    if(existingSchedules.length > 0){
-      existingSchedules.forEach((sch, idx) => {
-        window.addScheduleRow(sch.day, sch.time, idx);
-      });
-    } else {
-      window.addScheduleRow();
-    }
+    wwindow.updGroupGrades(g?.grade);
+// تحميل المواعيد الموجودة
+if(existingSchedules.length > 0){
+existingSchedules.forEach((sch, idx) => {
+window.addScheduleRow(sch.day, sch.time, idx);
+});
+} else {
+window.addScheduleRow(defaultDay||'', defaultTime||'');
+}
   }catch(e){}
 };
 
@@ -5748,21 +5817,33 @@ window.sbApplyMove=async function(gid,si){
 };
 /* ---- التحميل الرئيسي ---- */
 window.loadScheduleBoardAdmin=function(){
- try{
-  window.sbFillFilters();
-  var list=sbFiltered();
-  var mode=(document.getElementById('sbViewMode')||{}).value||'week';
-  sbRenderStats(list);
-  sbRenderConflicts(list);
-  var board=document.getElementById('sbBoard'); if(!board) return;
-  if(mode==='month') board.innerHTML=sbRenderMonth(list);
-  else if(mode==='timeline') board.innerHTML=sbRenderTimeline(list);
-  else if(mode==='cards') board.innerHTML=sbRenderCards(list);
-  else board.innerHTML=sbRenderWeek(list);
-  sbBindDnD(board);
-  sbRenderLog();
- }catch(e){ console.error('loadScheduleBoardAdmin',e); }
+try{
+window.sbFillFilters();
+var list=sbFiltered();
+var mode=(document.getElementById('sbViewMode')||{}).value||'week';
+sbRenderStats(list);
+sbRenderConflicts(list);
+var board=document.getElementById('sbBoard'); if(!board) return;
+if(mode==='month') board.innerHTML=sbRenderMonth(list);
+else if(mode==='timeline') board.innerHTML=sbRenderTimeline(list);
+else if(mode==='cards') board.innerHTML=sbRenderCards(list);
+else board.innerHTML=sbRenderWeek(list);
+sbBindDnD(board);
+sbRenderLog();
+/* تمييز اليوم الحالي */
+try{
+var todayEn=DAYS[new Date().getDay()].en;
+board.querySelectorAll('.sb-col').forEach(function(col){
+if(col.dataset.day===todayEn){
+col.style.outline='3px solid var(--primary)';
+col.style.outlineOffset='-3px';
+col.style.background='rgba(99,102,241,.04)';
+}
+});
+}catch(e){}
+}catch(e){ console.error('loadScheduleBoardAdmin',e); }
 };
+
 /* توصيل الصفحة بـ showSection */
 if(typeof window.showSection==='function' && !window._sbWired2){
  window._sbWired2=true;
@@ -5774,6 +5855,8 @@ if(typeof window.showSection==='function' && !window._sbWired2){
  };
 }
 })();
+
+
 </script>
 <script src="js/schedule-board.js"></script>
 </body>
