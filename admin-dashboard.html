@@ -2342,42 +2342,33 @@ window.doSwap=async function(gid){
 };
 
 // 🆕 مودال المجموعة مع مواعيد متعددة
-window.openGroupModal=function(editId, defaultDay, defaultTime){
-try{
-const g=editId?DataService.getGroups().find(x=>x.id===editId):null;
-const stageOptions=Object.entries(EduFlowConfig?.educationLevels||{}).map(([k,v])=>`<option value="${k}" ${g?.stage===k?'selected':''}>${v.nameAr}</option>`).join('');
-const centers=DataService.getCenters?DataService.getCenters():[];
-    const existingSchedules = g?.schedules || (g?.day && g?.time ? [{day: g.day, time: g.time}] : []);
-    
-    ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${g?'✏️':'👥'} مجموعة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return window.saveGroup(event,'${editId||''}')">
-    <div class="form-group"><label>الاسم *</label><input type="text" id="gName" class="form-input" value="${g?.name||''}" required oninput="window.SSG.scan()"><div id="gMatchBox"></div></div>
-    <div class="form-group"><label>👨‍🏫 المدرس *</label><select id="gTeacher" class="form-select" required><option value="">-- اختار --</option>${DataService.getTeachers().map(t=>`<option value="${t.id}" ${g?.teacherId===t.id?'selected':''}>${t.name}</option>`).join('')}</select></div>
-    <div class="stage-grade-row"><div class="form-group"><label>المرحلة</label><select id="gStage" class="form-select" onchange="window.updGroupGrades()"><option value="">--</option>${stageOptions}</select></div><div class="form-group"><label>الصف</label><select id="gGrade" class="form-select"></select></div></div>
-    
-  <div class="form-group"><label>📅 مواعيد الحصة (يمكن إضافة أكثر من موعد)</label>
-<div id="schedulesContainer"></div>
-<button type="button" class="add-schedule-btn" onclick="window.addScheduleRow()">
-➕ إضافة موعد آخر
-</button>
-</div>
-<input type="hidden" id="gDefaultDay" value="${defaultDay||''}">
-<input type="hidden" id="gDefaultTime" value="${defaultTime||''}">
-    
-    <div class="form-group"><label>🏢 السنتر *</label><select id="gCenter" class="form-select" required><option value="">-- اختر --</option>${centers.map(c=>`<option value="${c.name}" ${g?.center===c.name?'selected':''}>${c.name}</option>`).join('')}</select></div>
-    <div class="form-group"><label>📱 واتساب الجروب</label><input type="url" id="gWhatsapp" class="form-input" value="${g?.whatsappLink||''}" placeholder="https://chat.whatsapp.com/..."></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;"><div class="form-group"><label>مدة (دقيقة)</label><input type="number" id="gDuration" class="form-input" value="${g?.duration||60}"></div><div class="form-group"><label>حصص/شهر *</label><input type="number" id="gSessions" class="form-input" value="${g?.sessionsPerMonth||8}" required></div><div class="form-group"><label>سعر الشهر *</label><input type="number" id="gMonthly" class="form-input" value="${g?.monthlyFee||80}" required></div></div>
-    <button class="btn btn-primary w-full">💾 حفظ</button></form></div>`,'modal-lg');
-    
-    wwindow.updGroupGrades(g?.grade);
-// تحميل المواعيد الموجودة
-if(existingSchedules.length > 0){
-existingSchedules.forEach((sch, idx) => {
-window.addScheduleRow(sch.day, sch.time, idx);
-});
-} else {
-window.addScheduleRow(defaultDay||'', defaultTime||'');
-}
-  }catch(e){}
+window.openGroupModal = function(editId, defaultDay, defaultTime) {
+try {
+const g = editId ? (DataService.getGroups ? DataService.getGroups().find(x=>x.id===editId) : null) : null;
+let centers = [];
+try { if (DataService.getCenters) centers = (DataService.getCenters()||[]).map(c=>c.name).filter(Boolean); } catch(e){}
+if (!centers.length && window.getAllCenters) { try { centers = window.getAllCenters(); } catch(e){} }
+centers = [...new Set(centers)];
+const teachers = DataService.getTeachers ? DataService.getTeachers() : [];
+const stageOpts = Object.entries(EduFlowConfig?.educationLevels||{}).map(([k,v])=>`<option value="${k}" ${g&&g.stage===k?'selected':''}>${v.nameAr}</option>`).join('');
+const esc = v => String(v==null?'':v).replace(/"/g,'&quot;');
+const DAYS = (window.DAYS && window.DAYS.length) ? window.DAYS : [{en:'Saturday',ar:'السبت'},{en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},{en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'}];
+const addRow = function(day, time) {
+if (typeof window.addScheduleRow === 'function') { try { window.addScheduleRow(day||'', time||''); return; } catch(e){} }
+const cont = document.getElementById('schedulesContainer'); if (!cont) return;
+const row = document.createElement('div');
+row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:end;';
+row.innerHTML = '<div class="form-group" style="margin:0;"><select class="form-select sch-day">' + DAYS.map(d=>`<option value="${d.en}" ${(day||'')===d.en?'selected':''}>${d.ar}</option>`).join('') + '</select></div><div class="form-group" style="margin:0;"><input type="time" class="form-input sch-time" value="' + (time||'10:00') + '"></div><button type="button" class="btn btn-ghost btn-sm" onclick="this.parentElement.remove()">✕</button>';
+cont.appendChild(row);
+};
+window.__gAddRow = function(){ addRow('', ''); };
+ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${g?'✏️ تعديل مجموعة':'👥 إضافة مجموعة'}</h3><button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return window.saveGroup(event,'${editId||''}')"><div class="form-group"><label>اسم المجموعة *</label><input type="text" id="gName" class="form-input" value="${esc(g?.name)}" required></div><div class="form-group"><label>👨‍🏫 الأستاذ *</label><select id="gTeacher" class="form-select" required><option value="">-- اختر أستاذ --</option>${teachers.map(t=>`<option value="${t.id}" ${g&&g.teacherId===t.id?'selected':''}>${t.name}</option>`).join('')}</select></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المرحلة</label><select id="gStage" class="form-select" onchange="if(window.updGroupGrades)window.updGroupGrades(this.value);"><option value="">--</option>${stageOpts}</select></div><div class="form-group"><label>الصف</label><select id="gGrade" class="form-select">${(g&&g.grade)?`<option selected>${esc(g.grade)}</option>`:'<option value="">--</option>'}</select></div></div><div class="form-group"><label>📅 مواعيد الحصة (أسبوعياً)</label><div id="schedulesContainer"></div><button type="button" class="btn btn-secondary btn-sm" onclick="window.__gAddRow()">➕ إضافة موعد</button></div><div class="form-group"><label>🏢 السنتر *</label><select id="gCenter" class="form-select" required>${centers.length?centers.map(c=>`<option ${g&&g.center===c?'selected':''}>${esc(c)}</option>`).join(''):'<option value="">⚠️ لا توجد سناتر مسجلة</option>'}</select></div><div class="form-group"><label>📱 رابط واتساب المجموعة</label><input type="url" id="gWhatsapp" class="form-input" value="${esc(g?.whatsappLink)}" placeholder="https://chat.whatsapp.com/..."></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>مدة الحصة (دقيقة) *</label><input type="number" id="gDuration" class="form-input" value="${g?.duration||60}" required></div><div class="form-group"><label>حصص/شهر *</label><input type="number" id="gSessions" class="form-input" value="${g?.sessionsPerMonth||8}" oninput="if(window.calcSP)window.calcSP()" required></div></div><div class="form-group"><label>سعر الشهر *</label><input type="number" id="gMonthly" class="form-input" value="${g?.monthlyFee||0}" oninput="if(window.calcSP)window.calcSP()" required></div><div class="card" style="background:var(--info-bg);border-color:var(--info-border);padding:12px;margin-bottom:12px;">سعر الحصة: <strong id="autoSessionPrice">0</strong> ج.م</div><button class="btn btn-primary w-full">💾 حفظ</button></form></div>`,'modal-lg');
+const existing = (g && g.schedules && g.schedules.length) ? g.schedules : ((g && g.day) ? [{day:g.day, time:g.time}] : []);
+if (existing.length) { existing.forEach(s=>addRow(s.day, s.time)); }
+else { addRow(defaultDay||'', defaultTime||'10:00'); }
+if (window.updGroupGrades) { try { window.updGroupGrades(g ? g.stage : undefined); } catch(e){} }
+if (window.calcSP) { try { window.calcSP(); } catch(e){} }
+}catch(e){ console.error('openGroupModal error', e); }
 };
 
 // 🆕 إضافة صف موعد جديد
