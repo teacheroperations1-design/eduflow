@@ -1680,69 +1680,6 @@ SSM.register('admin',{
 window.adminSetPre=function(id){ window._preChecked=(DataService.getStudentTeachers(id)||[]).map(function(t){return t.group.id;}); };
 window.adminClearPre=function(){ window._preChecked=[]; };
 
-window.openStudentModal=function(editId){
-try{
-window._linkMode=null;
-const s=editId?(DataService.getUserById(editId)):null;
-window._preChecked = s ? (DataService.getStudentTeachers(s.id)||[]).map(t=>t.group.id) : [];
-window._preTeachers = s ? (DataService.getStudentTeachers(s.id)||[]).map(t=>t.teacher.id) : [];
-// 🆕 جلب السناتر من مصادر متعددة (السناتر المسجلة + السناتر من المجموعات)
-let centers=[];
-// أولاً: حاول من السناتر المسجلة في النظام
-if(DataService.getCenters){
-  centers=(DataService.getCenters()||[]).map(c=>c.name).filter(Boolean);
-}
-// ثانياً: لو مفيش سناتر مسجلة، استخدم اللي من المجموعات كـ fallback
-if(!centers.length && window.getAllCenters){
-  centers=window.getAllCenters();
-}
-// إزالة التكرار
-centers=[...new Set(centers)];
-const stageOpts=Object.entries(EduFlowConfig?.educationLevels||{}).map(([k,v])=>`<option value="${k}">${v.nameAr}</option>`).join('');
-const esc=v=>String(v==null?'':v).replace(/"/g,'&quot;');
-ThemeManager.openModal(`
-<div class="modal-header"><h3 class="modal-title">${s?'✏️ تعديل طالب':'🎓 إضافة طالب'}</h3><button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
-<div class="modal-body">
-<form onsubmit="return window.saveStudent(event,'${editId||''}')">
-<div id="linkBanner" class="link-banner" style="display:none;"></div>
-<div class="form-group"><label>الاسم الكامل *</label>
-<input type="text" id="sName" class="form-input" value="${esc(s?.name)}" required oninput="SSM.scan('admin')">
-<div id="smartMatchBox"></div>
-</div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-<div class="form-group"><label>📱 هاتف الطالب</label><input type="tel" id="sPhone" class="form-input" value="${esc(s?.phone)}" placeholder="01XXXXXXXXX"></div>
-<div class="form-group"><label>👨‍👩‍ هاتف ولي الأمر</label><input type="tel" id="sParentPhone" class="form-input" value="${esc(s?.parentPhone)}" placeholder="01XXXXXXXXX" oninput="SSM.scan('admin')"></div>
-</div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-<div class="form-group"><label>المرحلة</label><select id="sStage" class="form-select" onchange="window.sStageCascade();window.renderStudentGroups()"><option value="">--</option>${stageOpts}</select></div>
-<div class="form-group"><label>الصف</label><select id="sGrade" class="form-select" onchange="window.renderStudentGroups()"></select></div>
-</div>
-${s?'':'<div class="form-group"><label>🔑 كلمة المرور</label><input type="text" id="sPass" class="form-input" value="1234"></div>'}
-<div class="stu-section">
-<div class="stu-section-title">👨‍🏫 الخطوة 1: اختار الأستاذ/الأساتذة</div>
-<div class="filter-info">💡 دوس على الأستاذ عشان تظهر مجموعاته تحت في الخطوة 2 — تقدر تختار أكثر من أستاذ.</div>
-<div id="teacherSelectionGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;"></div>
-</div>
-<div class="stu-section">
-<div class="stu-section-title">👥 الخطوة 2: اختار المجموعات (واحدة فقط لكل أستاذ)</div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-<div class="form-group"><label>🏢 فلترة بالسنتر</label>
-<select id="sCenter" class="form-select" onchange="window.renderStudentGroups()"><option value="">كل السناتر</option>${centers.map(c=>`<option value="${c}">${c}</option>`).join('')}</select>
-</div>
-<div class="form-group"><label>🔍 بحث في المجموعات</label><input type="text" id="grpSearch" class="form-input" placeholder="اسم المجموعة..." oninput="window.renderStudentGroups()"></div>
-</div>
-<div id="sGroupsList" style="max-height:260px;overflow-y:auto;padding:4px;"></div>
-<div style="margin-top:6px;font-size:12px;">المختار: <span id="grpCountBadge" class="points-badge" style="display:none;">0</span></div>
-</div>
-<button class="btn btn-primary w-full" style="padding:14px;font-size:15px;">💾 حفظ</button>
-</form></div>`,'modal-lg');
-if(s){ const stEl=document.getElementById('sStage'); if(stEl) stEl.value=s.stage||''; }
-window.sStageCascade();
-if(s){ const grEl=document.getElementById('sGrade'); if(grEl) grEl.value=s.grade||''; }
-window.renderStudentTeachersGrid(window._preTeachers||[]);
-window.renderStudentGroups();
-}catch(e){ console.error('openStudentModal error',e); }
-};
 
 window.sStageCascade=function(sel){
 try{
@@ -1754,76 +1691,54 @@ window.renderStudentGroups();
 }catch(e){}
 };
 
-window.renderStudentGroups=function(preSelectedIds){
+window.renderStudentGroups=function(){
 try{
-const center=document.getElementById('sCenter')?.value||'';
-const stage=document.getElementById('sStage')?.value||'';
-const grade=document.getElementById('sGrade')?.value||'';
-const search=(document.getElementById('grpSearch')?.value||'').trim().toLowerCase();
-const list=document.getElementById('sGroupsList');
-if(!list) return;
-
-let groups=DataService.getGroups?DataService.getGroups():[];
-
-/* 🆕 فلتر السنتر */
-if(center){
-groups=groups.filter(g=>(g.center||'')===center);
-}
-
-/* 🆕 فلتر المرحلة */
-if(stage){
-groups=groups.filter(g=>(g.stage||'')===stage);
-}
-
-/* 🆕 فلتر الصف */
-if(grade){
-groups=groups.filter(g=>(g.grade||'')===grade);
-}
-
-/* 🆕 البحث بالاسم */
-if(search){
-groups=groups.filter(g=>(g.name||'').toLowerCase().includes(search)||(DataService.getUserById?(DataService.getUserById(g.teacherId)?.name||'').toLowerCase():'').includes(search));
-}
-
-const byId={}; groups.forEach(g=>byId[g.id]=g);
-const pre=(window._preChecked||[]).slice();
-const preGroups=pre.map(id=>byId[id]).filter(Boolean);
-let rest=groups.filter(g=>pre.indexOf(g.id)<0);
-
-function card(g,checked){
-const t=(DataService.getUserById)?DataService.getUserById(g.teacherId):null;
-const cnt=(DataService.getStudentsByGroup)?DataService.getStudentsByGroup(g.id).length:0;
-return `<label class="grp-card"><input type="checkbox" class="grp-check" value="${g.id}" data-teacher="${g.teacherId}" ${checked?'checked':''} onchange="SSM.onCheck('admin',this)">
-<div style="flex:1;min-width:0;"><div class="grp-name">${g.name}</div>
-<div class="grp-meta">👨‍🏫 ${t?.name||'-'} · 🏢 ${g.center||'-'} · 👥 ${cnt} طالب</div>
-<div class="grp-times">🕐 ${SSM.groupTimes(g)}</div></div></label>`;
-}
-
+const list=document.getElementById('sGroupsList'); if(!list) return;
+const center=(document.getElementById('sCenter')||{}).value||'';
+const stage=(document.getElementById('sStage')||{}).value||'';
+const grade=(document.getElementById('sGrade')||{}).value||'';
+const q=((document.getElementById('grpSearch')||{}).value||'').trim().toLowerCase();
+const pre={}; (window._preChecked||[]).forEach(id=>{pre[id]=1;});
+const groups=DataService.getGroups?DataService.getGroups():[];
+const teachers=DataService.getTeachers?DataService.getTeachers():[];
+const grpOnchange="if(this.checked){var b=this.closest('.sm-teacher-block');if(b){var all=b.querySelectorAll('input.grp-check');for(var i=0;i<all.length;i++){if(all[i]!==this)all[i].checked=false;}}}var c=document.getElementById('grpCountBadge');if(c)c.textContent=document.querySelectorAll('#sGroupsList input.grp-check:checked').length;";
+const tchOnchange="var b=this.closest('.sm-teacher-block');if(b){var body=b.querySelector('.smt-body');if(body)body.style.display=this.checked?'grid':'none';var car=b.querySelector('.smt-caret');if(car)car.textContent=this.checked?'▲':'▼';b.style.borderColor=this.checked?'var(--success)':'var(--border)';if(!this.checked){var all=b.querySelectorAll('input.grp-check');for(var i=0;i<all.length;i++)all[i].checked=false;}var c=document.getElementById('grpCountBadge');if(c)c.textContent=document.querySelectorAll('#sGroupsList input.grp-check:checked').length;}";
+const togOnclick="var b=this.closest('.sm-teacher-block');if(b){var body=b.querySelector('.smt-body');if(body){var open=body.style.display!=='none';body.style.display=open?'none':'grid';var car=b.querySelector('.smt-caret');if(car)car.textContent=open?'▼':'▲';}}";
 let html='';
-
-/* 🆕 لو فيه فلاتر شغالة، نبين للمستخدم عدد النتائج */
-const hasFilters = center || stage || grade || search;
-if(hasFilters){
-html+=`<div style="padding:6px 10px;background:var(--info-bg);border:1px solid var(--info-border);border-radius:8px;margin-bottom:8px;font-size:11px;color:var(--info);">🔍 عرض ${groups.length} مجموعة مطابقة للفلاتر${stage?` · المرحلة: ${EduFlowConfig?.educationLevels?.[stage]?.nameAr||stage}`:''}${grade?` · الصف: ${grade}`:''}${center?` · السنتر: ${center}`:''}</div>`;
-}
-
-if(preGroups.length){
-html+=`<div class="sm-teacher-block"><div class="sm-teacher-name">📌 مجموعات الطالب الحالية</div>${preGroups.map(g=>card(g,true)).join('')}</div>`;
-}
-
-const byTeacher={};
-rest.forEach(g=>{ (byTeacher[g.teacherId]=byTeacher[g.teacherId]||[]).push(g); });
-Object.keys(byTeacher).forEach(tid=>{
-const t=(DataService.getUserById)?DataService.getUserById(tid):null;
-html+=`<div class="sm-teacher-block"><div class="sm-teacher-name">👨‍🏫 ${t?.name||'-'}</div>${byTeacher[tid].map(g=>card(g,false)).join('')}</div>`;
+teachers.forEach(t=>{
+const tGroups=groups.filter(g=>g.teacherId===t.id);
+const preT=tGroups.filter(g=>pre[g.id]);
+const filt=tGroups.filter(g=>{
+if(pre[g.id]) return true;
+if(center&&(g.center||'')!==center) return false;
+if(stage&&(g.stage||'')!==stage) return false;
+if(grade&&(g.grade||'')!==grade) return false;
+if(q&&(g.name||'').toLowerCase().indexOf(q)<0) return false;
+return true;
 });
-
-if(!groups.length){
-html+='<p class="text-muted" style="padding:14px;text-align:center;">لا توجد مجموعات مطابقة للفلاتر المختارة.<br>جرّب تغيير المرحلة أو الصف أو السنتر.</p>';
-}
-
+if(!filt.length&&!preT.length) return;
+const picked=preT.length>0;
+html+=`<div class="sm-teacher-block" style="border:1px solid ${picked?'var(--success)':'var(--border)'};border-radius:10px;margin-bottom:10px;overflow:hidden;">
+<div style="display:flex;gap:8px;align-items:center;padding:8px 12px;background:${picked?'var(--success-bg)':'var(--surface-hover)'};font-weight:800;font-size:12px;">
+<input type="checkbox" class="teacher-pick" value="${t.id}" ${picked?'checked':''} onchange="${tchOnchange}">
+<span style="flex:1;cursor:pointer;" onclick="${togOnclick}">👨‍ ${t.name} <span class="badge badge-muted">${filt.length} مجموعة</span>${preT.length?' <span class="badge badge-success">✓ مشترك معاه</span>':''}</span>
+<button type="button" class="btn btn-ghost btn-sm" onclick="${togOnclick}"><span class="smt-caret">${picked?'▲':'▼'}</span></button>
+</div>
+<div class="smt-body" style="display:${picked?'grid':'none'};grid-template-columns:1fr 1fr;gap:6px;padding:8px;">`+
+filt.map(g=>{
+const isPre=!!pre[g.id];
+const cnt=DataService.getStudentsByGroup?DataService.getStudentsByGroup(g.id).length:0;
+return `<label style="display:flex;gap:8px;align-items:center;padding:8px;border:1px solid ${isPre?'var(--success)':'var(--border)'};background:${isPre?'var(--success-bg)':'var(--surface)'};border-radius:8px;cursor:pointer;">
+<input type="checkbox" class="grp-check" value="${g.id}" data-teacher="${t.id}" ${isPre?'checked':''} onchange="${grpOnchange}">
+<div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:700;">${g.name}${isPre?' <span class="badge badge-success">✓ حالياً</span>':''}</div>
+<div style="font-size:10px;color:var(--text-muted);">🏢 ${g.center||'-'} · ${g.grade||'-'} · 👥 ${cnt}</div></div></label>`;
+}).join('')+
+`</div></div>`;
+});
+if(!html) html='<p class="text-muted" style="padding:14px;text-align:center;">لا مجموعات مطابقة — غيّر الفلاتر.</p>';
 list.innerHTML=html;
-if(window.SSM) SSM.updateCount('admin');
+const c=document.getElementById('grpCountBadge');
+if(c) c.textContent=list.querySelectorAll('input.grp-check:checked').length;
 }catch(e){ console.error('renderStudentGroups error',e); }
 };
 
@@ -4748,58 +4663,25 @@ window.getAllCenters=function(){
 🎓 مودال إضافة الطالب المحسّن (أدمن)
 ================================================================ */
 window.openStudentModal = function(editId) {
-  try {
-    window._linkMode = null;
-    const s = editId ? DataService.getUserById(editId) : null;
-    window._preChecked = s ? (DataService.getStudentTeachers(s.id)||[]).map(t=>t.group.id) : [];
-    const centers = window.getAllCenters ? window.getAllCenters() : [];
-    const stageOpts = Object.entries(EduFlowConfig?.educationLevels||{}).map(([k,v])=>`<option value="${k}">${v.nameAr}</option>`).join('');
-    const esc = v => String(v==null?'':v).replace(/"/g,'&quot;');
-    
-    ThemeManager.openModal(`
-      <div class="modal-header"><h3 class="modal-title">${s?'✏️ تعديل طالب':'🎓 إضافة طالب'}</h3><button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
-      <div class="modal-body">
-        <form onsubmit="return window.saveStudent(event,'${editId||''}')">
-          <div id="linkBanner" class="link-banner" style="display:none;"></div>
-          <div class="form-group"><label>الاسم الكامل *</label>
-            <input type="text" id="sName" class="form-input" value="${esc(s?.name)}" required oninput="SSM.scan('admin')">
-            <div id="smartMatchBox"></div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <div class="form-group"><label>📱 هاتف الطالب</label><input type="tel" id="sPhone" class="form-input" value="${esc(s?.phone)}" placeholder="01XXXXXXXXX"></div>
-            <div class="form-group"><label>👨‍👩‍ هاتف ولي الأمر</label><input type="tel" id="sParentPhone" class="form-input" value="${esc(s?.parentPhone)}" placeholder="01XXXXXXXXX" oninput="SSM.scan('admin')"></div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <div class="form-group"><label>المرحلة</label><select id="sStage" class="form-select" onchange="window.sStageCascade();window.renderStudentGroups();"><option value="">--</option>${stageOpts}</select></div>
-            <div class="form-group"><label>الصف</label><select id="sGrade" class="form-select" onchange="window.renderStudentGroups();"></select></div>
-          </div>
-          ${s?'':'<div class="form-group"><label>🔑 كلمة المرور</label><input type="text" id="sPass" class="form-input" value="1234"></div>'}
-          
-          <div class="stu-section"><div class="stu-section-title">👨‍🏫 اختر الأساتذة</div>
-            <div id="teacherSelectionGrid" class="teacher-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;"></div>
-          </div>
-          
-          <div class="stu-section"><div class="stu-section-title">👥 المجموعات (مجموعة واحدة فقط لكل أستاذ)</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-              <div class="form-group"><label>🏢 فلترة بالسنتر</label>
-                <select id="sCenter" class="form-select" onchange="window.renderStudentGroups()"><option value="">كل السناتر</option>${centers.map(c=>`<option value="${c}">${c}</option>`).join('')}</select>
-              </div>
-              <div class="form-group"><label>🔍 بحث في المجموعات</label><input type="text" id="grpSearch" class="form-input" placeholder="اسم المجموعة..." oninput="window.renderStudentGroups()"></div>
-            </div>
-            <div id="sGroupsList" style="max-height:260px;overflow-y:auto;padding:4px;"></div>
-            <div style="margin-top:6px;font-size:12px;">المختار: <span id="grpCountBadge" class="points-badge" style="display:none;">0</span></div>
-          </div>
-          <button class="btn btn-primary w-full" style="padding:14px;font-size:15px;">💾 حفظ</button>
-        </form>
-      </div>
-    `, 'modal-lg');
-    
-    if(s) { const stEl = document.getElementById('sStage'); if(stEl) stEl.value = s.stage||''; }
-    window.sStageCascade();
-    if(s) { const grEl = document.getElementById('sGrade'); if(grEl) grEl.value = s.grade||''; }
-    window.renderStudentTeachersGrid();
-    window.renderStudentGroups();
-  } catch(e) { console.error(e); }
+try {
+window._linkMode = null;
+const s = editId ? DataService.getUserById(editId) : null;
+window._preChecked = s ? (DataService.getStudentTeachers(s.id)||[]).map(t=>t.group.id) : [];
+let centers = [];
+if (DataService.getCenters) { centers = (DataService.getCenters()||[]).map(c=>c.name).filter(Boolean); }
+if (!centers.length && window.getAllCenters) { centers = window.getAllCenters(); }
+centers = [...new Set(centers)];
+const stageOpts = Object.entries(EduFlowConfig?.educationLevels||{}).map(([k,v])=>`<option value="${k}" ${s&&s.stage===k?'selected':''}>${v.nameAr}</option>`).join('');
+const esc = v => String(v==null?'':v).replace(/"/g,'&quot;');
+ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${s?'✏️ تعديل طالب':'🎓 إضافة طالب'}</h3><button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return window.saveStudent(event,'${editId||''}')"><div id="linkBanner" class="link-banner" style="display:none;"></div><div class="filter-info">💡 اكتب الاسم أو رقم ولي الأمر — لو الطالب مسجل هيظهر تحذير أصفر ومفيش حفظ من غير موافقتك. في التعديل: علّم على أي أستاذ جديد تنزل مجموعاته تحت.</div><div class="form-group"><label>الاسم الكامل *</label><input type="text" id="sName" class="form-input" value="${esc(s?.name)}" required oninput="SSM.scan('admin')"><div id="smartMatchBox"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>📱 هاتف الطالب</label><input type="tel" id="sPhone" class="form-input" value="${esc(s?.phone)}" placeholder="01XXXXXXXXX" oninput="SSM.scan('admin')"></div><div class="form-group"><label>👨‍ هاتف ولي الأمر</label><input type="tel" id="sParentPhone" class="form-input" value="${esc(s?.parentPhone)}" placeholder="01XXXXXXXXX" oninput="SSM.scan('admin')"></div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;"><div class="form-group"><label>المرحلة</label><select id="sStage" class="form-select" onchange="if(window.sStageCascade)window.sStageCascade();window.renderStudentGroups();"><option value="">--</option>${stageOpts}</select></div><div class="form-group"><label>الصف</label><select id="sGrade" class="form-select" onchange="window.renderStudentGroups();"><option value="">--</option></select></div><div class="form-group"><label>🏢 السنتر</label><select id="sCenter" class="form-select" onchange="window.renderStudentGroups();"><option value="">كل السناتر</option>${centers.map(c=>`<option>${esc(c)}</option>`).join('')}</select></div></div>${editId?'':'<div class="form-group"><label>🔑 كلمة المرور</label><input type="text" id="sPass" class="form-input" value="1234"></div>'}<div class="form-group"><label>🔍 بحث في المجموعات</label><input type="text" id="grpSearch" class="form-input" placeholder="اسم المجموعة..." oninput="window.renderStudentGroups();"></div><div class="form-group"><label>👨‍ الأساتذة والمجموعات (مجموعة واحدة لكل أستاذ)</label><div id="sGroupsList" style="max-height:340px;overflow-y:auto;"></div><div class="text-xs text-muted" style="margin-top:4px;">المحدد: <span id="grpCountBadge">0</span> مجموعة</div></div><button class="btn btn-primary w-full">💾 حفظ</button></form></div>`,'modal-lg');
+if (s) {
+if (window.sStageCascade) window.sStageCascade();
+const g = document.getElementById('sGrade'); if (g) g.value = s.grade||'';
+const b = document.getElementById('linkBanner');
+if (b) { b.style.display='block'; b.innerHTML='✏️ <strong>وضع التعديل:</strong> الأساتذة المشترك معهم متعلمين ومفتوحين بالأخضر — تقدر تضيف أساتذة جداد أو تفك مجموعات قديمة.'; }
+}
+window.renderStudentGroups();
+}catch(e){ console.error('openStudentModal error',e); }
 };
 
 window.renderStudentTeachersGrid = function() {
@@ -4888,57 +4770,78 @@ window.loadGroupsPage=function(){
 };
 
 window.saveStudent = async function(e, editId) {
-  try {
-    e.preventDefault();
-    const name = (document.getElementById('sName')?.value || '').trim();
-    if(!name) { window.safeToast('اكتب الاسم', 'error'); return false; }
-    
-    const data = {
-      name: name,
-      phone: document.getElementById('sPhone')?.value || '',
-      parentPhone: document.getElementById('sParentPhone')?.value || '',
-      stage: document.getElementById('sStage')?.value || '',
-      grade: document.getElementById('sGrade')?.value || ''
-    };
-    
-    const enroll = Array.from(document.querySelectorAll('#sGroupsList input:checked')).map(cb => ({
-      groupId: cb.value,
-      teacherId: cb.dataset.teacher
-    }));
-    
-    const pre = (window._preChecked||[]).slice();
-    
-    if(window._linkMode) {
-      const sid = window._linkMode.id;
-      if(typeof DataService.updateUser === 'function') await DataService.updateUser(sid, data);
-      const cur = (DataService.getStudentTeachers(sid)||[]).map(t => t.group.id);
-      for(const en of enroll) { if(!cur.includes(en.groupId)) await SSM.enroll(sid, en.groupId, en.teacherId); }
-      for(const gid of pre) { if(!enroll.some(x => x.groupId === gid)) await SSM.unenroll(sid, gid); }
-      window.safeToast('✅ تم ربط الطالب بالمجموعات بدون تكرار', 'success');
-    } else if(editId) {
-      if(typeof DataService.updateUser === 'function') await DataService.updateUser(editId, data);
-      const cur = (DataService.getStudentTeachers(editId)||[]).map(t => t.group.id);
-      for(const en of enroll) { if(!cur.includes(en.groupId)) await SSM.enroll(editId, en.groupId, en.teacherId); }
-      for(const gid of pre) { if(!enroll.some(x => x.groupId === gid)) await SSM.unenroll(editId, gid); }
-      window.safeToast('✅ تم التعديل', 'success');
-    } else {
-      if(!enroll.length) { window.safeToast('اختار مجموعة واحدة على الأقل', 'error'); return false; }
-      const pass = document.getElementById('sPass')?.value || '1234';
-      const r = await DataService.addStudentByAdmin(Object.assign({}, data, {password: pass, enrollments: enroll}));
-      window.safeToast('✅ تم إنشاء الطالب بالكود: ' + r.code, 'success');
-    }
-    
-    ThemeManager.closeModal();
-    window._linkMode = null;
-    window._preChecked = [];
-    if(window.loadStudents) window.loadStudents();
-    return false;
-  } catch(err) { console.error(err); window.safeToast('خطأ: ' + err.message, 'error'); return false; }
+try {
+if (e && e.preventDefault) e.preventDefault();
+const name = String((document.getElementById('sName')||{}).value||'').trim();
+if (!name) { window.safeToast('اكتب الاسم','error'); return false; }
+const data = { name:name, phone:(document.getElementById('sPhone')||{}).value||'', parentPhone:(document.getElementById('sParentPhone')||{}).value||'', stage:(document.getElementById('sStage')||{}).value||'', grade:(document.getElementById('sGrade')||{}).value||'' };
+if (window._linkMode && window._linkMode.id && !editId) editId = window._linkMode.id;
+const gAll = DataService.getGroups?DataService.getGroups():[];
+const gById = {}; gAll.forEach(g=>{gById[g.id]=g;});
+const boxes = document.querySelectorAll('.modal-body input.grp-check:checked');
+const enroll = []; const seen = {};
+Array.prototype.forEach.call(boxes, cb=>{
+const gid = cb.value; if (!gid || !gById[gid] || seen[gid]) return; seen[gid]=1;
+enroll.push({ groupId:gid, teacherId: cb.getAttribute('data-teacher')||gById[gid].teacherId||'' });
+});
+const pre = (window._preChecked||[]).slice();
+const d = DataService._getData?DataService._getData():{};
+d.enrollments = d.enrollments||[];
+if (editId) {
+if (DataService.updateUser) await DataService.updateUser(editId, data);
+let added=0, removed=0;
+for (const en of enroll) {
+if (!d.enrollments.some(x=>x.studentId===editId&&x.groupId===en.groupId)) {
+const rec={id:'en_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7),studentId:editId,groupId:en.groupId,teacherId:en.teacherId,status:'active',enrolledAt:new Date().toISOString()};
+d.enrollments.push(rec); added++;
+if (window.FirebaseService&&FirebaseService.connected) { try{ await FirebaseService.saveDoc('enrollments',rec.id,rec); }catch(err){} }
+}
+}
+for (const gid of pre) {
+if (!enroll.some(x=>x.groupId===gid)) {
+const rec = d.enrollments.find(x=>x.studentId===editId&&x.groupId===gid);
+d.enrollments = d.enrollments.filter(x=>!(x.studentId===editId&&x.groupId===gid)); removed++;
+if (rec&&window.FirebaseService&&FirebaseService.connected) { try{ await FirebaseService.deleteDoc('enrollments',rec.id); }catch(err){} }
+}
+}
+if (DataService._saveData) DataService._saveData(d);
+window.safeToast('✅ تم الحفظ'+(added?' · ➕ '+added+' مجموعة':'')+(removed?' · ➖ '+removed+' مجموعة':''),'success');
+} else {
+if (!enroll.length) { window.safeToast('اختار مجموعة واحدة على الأقل','error'); return false; }
+const P = x=>String(x||'').replace(/\D/g,'');
+const pp = P(data.parentPhone); const nm = name.toLowerCase();
+const dup = (DataService.getUsers?DataService.getUsers():[]).find(u=>u.role==='student'&&(((u.name||'').trim().toLowerCase()===nm))||(u.role==='student'&&pp.length>5&&P(u.parentPhone)===pp));
+if (dup) {
+const ts = (DataService.getStudentTeachers?DataService.getStudentTeachers(dup.id):[]).map(t=>(t.teacher?t.teacher.name:'؟')+' / '+(t.group?t.group.name:'؟')).join('، ');
+const link = confirm('⚠️ طالب مسجل بالفعل: '+dup.name+' ('+(dup.code||'-')+')\nمشترك في: '+(ts||'لا مجموعات')+'\n\nOK = ربط بنفس الطالب بدون تكرار\nCancel = إنشاء طالب جديد منفصل');
+if (link) {
+if (DataService.updateUser) await DataService.updateUser(dup.id, data);
+let add2=0;
+for (const en of enroll) {
+if (!d.enrollments.some(x=>x.studentId===dup.id&&x.groupId===en.groupId)) {
+d.enrollments.push({id:'en_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7),studentId:dup.id,groupId:en.groupId,teacherId:en.teacherId,status:'active',enrolledAt:new Date().toISOString()});
+add2++;
+}
+}
+if (DataService._saveData) DataService._saveData(d);
+window.safeToast('🔗 تم الربط بالطالب الموجود · ➕ '+add2+' مجموعة','success');
+ThemeManager.closeModal(); window._linkMode=null; window._preChecked=[];
+if (window.loadStudents) window.loadStudents(); return false;
+}
+const sure = confirm('❗ إنشاء طالب جديد منفصل رغم التطابق مع '+dup.name+'؟\nOK = تأكيد\nCancel = إلغاء');
+if (!sure) { window.safeToast('تم إلغاء الحفظ','info'); return false; }
+}
+const pass = (document.getElementById('sPass')||{}).value||'1234';
+const r = await DataService.addStudentByAdmin(Object.assign({}, data, { password: pass, enrollments: enroll }));
+window.safeToast((r&&r.linked)?'🔗 تم الربط بدون تكرار':'✅ تم إنشاء الطالب بالكود: '+r.code,'success');
+}
+ThemeManager.closeModal();
+window._linkMode=null; window._preChecked=[];
+if (window.loadStudents) window.loadStudents();
+return false;
+}catch(err){ console.error('saveStudent error',err); window.safeToast('خطأ في الحفظ: '+err.message,'error'); return false; }
 };
-/* ================================================================
-📋 إضافة مجموعات بالجملة (دفعة واحدة)
-================================================================ */
-window._bulkGroupRows=[];
+
 /* ================================================================
 📋 إضافة مجموعات بالجملة — باليوم والترتيب
 ================================================================ */
@@ -5855,7 +5758,6 @@ if(typeof window.showSection==='function' && !window._sbWired2){
  };
 }
 })();
-
 
 </script>
 <script src="js/schedule-board.js"></script>
