@@ -6268,5 +6268,232 @@ return false;
 }
 };
 </script>
+<script>
+/* ============ 🎯 SB Override V3: تقسيم الخلية + الضغط على الساعة يطلع كل الأساتذة ============ */
+(function(){
+function ready(){
+if(!window.SB){ setTimeout(ready,300); return; }
+if(typeof window.loadScheduleBoard==='function'&&typeof window.loadScheduleBoardAdmin==='function'&&!window.__sbLoaderUnified){
+window.__sbLoaderUnified=true;
+window.loadScheduleBoard=function(){ return window.loadScheduleBoardAdmin(); };
+}
+/* 1) إفلات دقيق لأقرب 5 دقايق من مكان الوقوف */
+SB.bindDnD=function(container,opts){
+if(!opts||!opts.editable) return;
+container.querySelectorAll('.sb-card').forEach(function(card){
+card.addEventListener('dragstart',function(ev){
+window._sbDrag={gid:card.dataset.gid, si:+(card.dataset.si||0), day:card.dataset.day, time:card.dataset.time};
+try{ ev.dataTransfer.setData('text/plain',card.dataset.gid); }catch(e){}
+card.classList.add('dragging');
+});
+card.addEventListener('dragend',function(){
+card.classList.remove('dragging');
+container.querySelectorAll('.sb-col,.sbm-cell,.sbt-day').forEach(function(c){c.classList.remove('droppable');});
+});
+card.addEventListener('click',function(ev){
+ev.stopPropagation();
+SB.openMoveModal(card.dataset.gid,+(card.dataset.si||0),card.dataset.day,card.dataset.time);
+});
+});
+container.querySelectorAll('.sb-col').forEach(function(col){
+col.style.cursor='pointer';
+col.addEventListener('dragover',function(ev){ ev.preventDefault(); col.classList.add('droppable'); });
+col.addEventListener('dragleave',function(){ col.classList.remove('droppable'); });
+function minsAt(ev){
+var rect=col.getBoundingClientRect(), y=ev.clientY-rect.top;
+var H=56, minH=+(col.dataset.minh||8);
+var total=(y/H)*60;
+return minH*60+Math.max(0,Math.round(total/5)*5);
+}
+col.addEventListener('drop',function(ev){
+ev.preventDefault(); col.classList.remove('droppable');
+var drag=window._sbDrag; if(!drag) return;
+SB.openMoveModal(drag.gid,drag.si,col.dataset.day,SB.hm(minsAt(ev)));
+window._sbDrag=null;
+});
+col.addEventListener('click',function(ev){
+if(ev.target.closest('.sb-card')||ev.target.closest('.sb-split')) return;
+SB.addAt(col.dataset.day,SB.hm(minsAt(ev)));
+});
+});
+container.querySelectorAll('.sbm-cell,.sbt-day').forEach(function(cell){
+cell.addEventListener('dragover',function(ev){ ev.preventDefault(); cell.classList.add('droppable'); });
+cell.addEventListener('dragleave',function(){ cell.classList.remove('droppable'); });
+cell.addEventListener('drop',function(ev){
+ev.preventDefault(); ev.stopPropagation(); cell.classList.remove('droppable');
+var drag=window._sbDrag; if(!drag) return;
+SB.openMoveModal(drag.gid,drag.si,cell.dataset.day,(drag.time||null));
+window._sbDrag=null;
+});
+cell.addEventListener('click',function(ev){
+if(ev.target.closest('.sb-card')||ev.target.closest('.sbm-item')||ev.target.closest('.sbt-bar')) return;
+SB.addAt(cell.dataset.day,null);
+});
+});
+};
+/* 2) التعارض = نفس الأستاذ بس */
+SB.findConflicts=function(gid,day,time,dur){
+var out={sameTeacher:[],sameCenter:[]};
+var me=(window.DataService&&DataService.getGroups)?DataService.getGroups().find(function(x){return x.id===gid;}):null;
+if(!me) return out;
+var m=SB.min(time), end=m+dur;
+(DataService.getGroups?DataService.getGroups():[]).forEach(function(g){
+if(g.id===gid||g.teacherId!==me.teacherId) return;
+var gd=parseInt(g.duration)||60;
+SB.schedulesOf(g).forEach(function(s){
+if(s.day!==day) return;
+var gm=SB.min(s.time);
+if(m<gm+gd&&gm<end) out.sameTeacher.push({g:g,time:s.time});
+});
+});
+return out;
+};
+SB.allConflicts=function(groups){
+var rows=[];
+try{
+var list=groups||[];
+for(var i=0;i<list.length;i++)for(var j=i+1;j<list.length;j++){
+var a=list[i],b=list[j];
+if(a.teacherId!==b.teacherId) continue;
+var da=parseInt(a.duration)||60, db=parseInt(b.duration)||60;
+SB.schedulesOf(a).forEach(function(sa){ SB.schedulesOf(b).forEach(function(sb2){
+if(sa.day!==sb2.day) return;
+var ma=SB.min(sa.time), mb=SB.min(sb2.time);
+if(ma<mb+db&&mb<ma+da){
+rows.push({center:a.center||b.center||'',teacher1:SB.teacherName(a.teacherId),teacher2:SB.teacherName(b.teacherId),group1:a.name,group2:b.name,timeA:sa.time+' - '+SB.hm(ma+da),timeB:sb2.time+' - '+SB.hm(mb+db),day:sa.day});
+}
+});});
+}
+}catch(e){}
+return rows;
+};
+SB.countAllConflicts=function(opts){ return SB.allConflicts(SB.groupsInView?SB.groupsInView(opts||{}):[]).length; };
+SB.renderConflicts=function(elOrId,groupsOrOpts){
+var el=(typeof elOrId==='string')?document.getElementById(elOrId):elOrId;
+if(!el) return;
+var groups=Array.isArray(groupsOrOpts)?groupsOrOpts:(SB.groupsInView?SB.groupsInView(groupsOrOpts||{}):[]);
+var rows=SB.allConflicts(groups);
+if(!rows.length){ el.innerHTML=''; return; }
+el.innerHTML='<div class="card" style="border-color:rgba(239,68,68,.4);"><div class="card-header"><h3 class="card-title" style="color:var(--danger);">⚠️ تعارضات نفس الأستاذ ('+rows.length+')</h3></div>'+rows.slice(0,10).map(function(r){
+return '<div class="sub-row"><div><strong>'+(SB.DAY_AR?SB.DAY_AR(r.day):r.day)+':</strong> '+r.group1+' ('+r.timeA+') ⇆ '+r.group2+' ('+r.timeB+')<div class="text-xs text-muted">نفس الأستاذ عنده حصتين متداخلتين!</div></div></div>';
+}).join('')+'</div>';
+};
+/* 3) مودال: مين الشغالين في الفترة دي */
+SB.showHourTeachers=function(day,startMin,endMin){
+try{
+endMin=endMin||startMin+60;
+var groups=SB.groupsInView?SB.groupsInView(SB.opts||{}):(DataService.getGroups?DataService.getGroups():[]);
+var items=[];
+groups.forEach(function(g){ SB.schedulesOf(g).forEach(function(s){ var m=SB.min(s.time); var e=m+(parseInt(g.duration)||60); if(m<endMin&&startMin<e) items.push({g:g,s:s,m:m,e:e}); }); });
+items.sort(function(a,b){return a.m-b.m;});
+var byT={};
+items.forEach(function(it){ (byT[it.g.teacherId]=byT[it.g.teacherId]||[]).push(it); });
+var tids=Object.keys(byT);
+var html='<div class="modal-header"><h3 class="modal-title">👥 الشغالين الساعة '+SB.fmt12(SB.hm(startMin))+' - '+SB.fmt12(SB.hm(endMin))+' — '+(SB.DAY_AR?SB.DAY_AR(day):day)+'</h3><button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">';
+html+='<div class="filter-info" style="background:var(--success-bg);color:var(--success);">✅ '+tids.length+' أستاذ شغالين في الفترة دي — شيء طبيعي مش تعارض</div>';
+tids.forEach(function(tid){
+var c=SB.color?SB.color(tid):(SB.teacherColor?SB.teacherColor(tid):'#6366f1');
+html+='<div class="card" style="margin-bottom:10px;border-right:4px solid '+c+';"><div class="card-header"><h3 class="card-title">👨‍ '+SB.teacherName(tid)+'</h3><span class="chip" style="background:var(--surface-hover);">'+byT[tid].length+' حصة</span></div>'+byT[tid].map(function(it){
+return '<div class="sub-row"><div><strong>'+it.g.name+'</strong><div class="text-xs text-muted">🕐 '+SB.fmt12(it.s.time)+' - '+SB.fmt12(SB.hm(it.e))+' · 🏢 '+(it.g.center||'-')+' · 👥 '+((DataService.getStudentsByGroup?DataService.getStudentsByGroup(it.g.id).length:0))+' طالب</div></div></div>';
+}).join('')+'</div>';
+});
+if(!items.length) html+='<p class="text-muted">لا حصص في الفترة دي</p>';
+html+='</div>';
+ThemeManager.openModal(html,'modal-md');
+}catch(e){ console.error(e); }
+};
+window.showHourTeachers=SB.showHourTeachers;
+/* 4) تقسيم الخلية قطع على عدد الأساتذة (بيشتغل مع render و renderBoard الاتنين) */
+function injectSplits(container){
+try{
+container.querySelectorAll('.sb-hourchip,.sb-ovchip').forEach(function(c){ c.remove(); });
+container.querySelectorAll('.sb-split').forEach(function(c){ c.remove(); });
+var groups=SB.groupsInView?SB.groupsInView(SB.opts||{}):(DataService.getGroups?DataService.getGroups():[]);
+var H=56;
+container.querySelectorAll('.sb-col').forEach(function(col){
+var day=col.dataset.day;
+var minh=+(col.dataset.minh||8);
+var items=[];
+groups.forEach(function(g){ SB.schedulesOf(g).forEach(function(s){ if(s.day!==day) return; var m=SB.min(s.time); var dur=parseInt(g.duration)||60; items.push({m:m,end:m+dur,tid:g.teacherId}); }); });
+items.sort(function(a,b){return a.m-b.m;});
+var clusters=[]; var cur=null;
+items.forEach(function(it){ if(!cur||it.m>=cur.end){ cur={start:it.m,end:it.end,items:[]}; clusters.push(cur); } cur.end=Math.max(cur.end,it.end); cur.items.push(it); });
+clusters.forEach(function(cl){
+var tmap={}; cl.items.forEach(function(it){ tmap[it.tid]=1; });
+var tids=Object.keys(tmap);
+if(tids.length<2) return;
+var div=document.createElement('div');
+div.className='sb-split';
+div.style.top=Math.max(0,(cl.start-minh*60)/60*H)+'px';
+div.style.height=Math.max(26,(cl.end-cl.start)/60*H-2)+'px';
+div.title=tids.length+' أساتذة في الوقت ده — اضغط للتفاصيل';
+div.onclick=function(ev){ ev.stopPropagation(); SB.showHourTeachers(day,cl.start,cl.end); };
+tids.forEach(function(tid){
+var seg=document.createElement('div');
+var c=SB.color?SB.color(tid):(SB.teacherColor?SB.teacherColor(tid):'#6366f1');
+seg.style.background=c+'22';
+var lbl=document.createElement('span'); lbl.className='sg-lbl'; lbl.style.color=c;
+lbl.textContent=(SB.teacherName(tid)||'').split(' ')[0];
+seg.appendChild(lbl); div.appendChild(seg);
+});
+col.appendChild(div);
+});
+});
+}catch(e){ console.error(e); }
+}
+['render','renderBoard'].forEach(function(fn){
+if(typeof SB[fn]==='function'&&!SB['__wrapped_'+fn]){
+SB['__wrapped_'+fn]=true;
+var orig=SB[fn];
+SB[fn]=function(){
+var r=orig.apply(this,arguments);
+try{
+var container=null;
+if(arguments[0]&&arguments[0].container) container=document.getElementById(arguments[0].container);
+else if(typeof arguments[0]==='string') container=document.getElementById(arguments[0]);
+else if(arguments[0]&&arguments[0].nodeType) container=arguments[0];
+if(!container) container=document.getElementById('sbBoard')||document.getElementById('sbBoardT')||document.getElementById('myScheduleBoard');
+if(container) injectSplits(container);
+}catch(e){}
+return r;
+};
+}
+});
+/* 5) الضغط على أي ساعة فيها أستاذين+ يفتح المودال (قبل هاندلر إضافة مجموعة) */
+if(!window.__sbHourClickWired){
+window.__sbHourClickWired=true;
+document.addEventListener('click',function(ev){
+try{
+var col=ev.target.closest?ev.target.closest('.sb-col'):null;
+if(!col) return;
+if(ev.target.closest('.sb-card')||ev.target.closest('.sb-split')) return;
+var rect=col.getBoundingClientRect();
+var y=ev.clientY-rect.top;
+var H=56, minh=+(col.dataset.minh||8);
+var hour=minh+Math.floor(y/H);
+var s=hour*60, e=s+60;
+var day=col.dataset.day;
+var groups=SB.groupsInView?SB.groupsInView(SB.opts||{}):(DataService.getGroups?DataService.getGroups():[]);
+var tmap={};
+groups.forEach(function(g){ SB.schedulesOf(g).forEach(function(sc){ if(sc.day!==day) return; var m=SB.min(sc.time); var en=m+(parseInt(g.duration)||60); if(m<e&&s<en) tmap[g.teacherId]=1; }); });
+if(Object.keys(tmap).length>=2){ ev.stopPropagation(); ev.preventDefault(); SB.showHourTeachers(day,s,e); }
+}catch(e){}
+},true);
+}
+/* CSS التقسيم */
+if(!document.getElementById('sbSplitCss')){
+var st=document.createElement('style'); st.id='sbSplitCss';
+st.textContent='.sb-split{position:absolute;left:2px;right:2px;display:flex;z-index:0;border:1px dashed var(--border);border-radius:6px;overflow:hidden;cursor:pointer;}'+
+'.sb-split>div{flex:1;position:relative;}'+
+'.sb-split>div+div{border-right:1px dashed var(--border);}'+
+'.sb-split .sg-lbl{position:absolute;top:2px;right:4px;left:4px;font-size:8px;font-weight:800;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'+
+'.sb-col .sb-card{z-index:2;}'+
+'.sb-hourchip,.sb-ovchip{display:none!important;}';
+document.head.appendChild(st);
+}
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',ready); else ready();
+})();
+</script>
 </body>
 </html>
