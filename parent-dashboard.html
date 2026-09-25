@@ -777,8 +777,7 @@ window.renderActionItems=function(){
   const yStr = yesterday.toISOString().split('T')[0];
   const allAtt = DataService?.getAttendance ? DataService.getAttendance() : [];
   const yesterdayAtt = allAtt.filter(a => a.date === yStr && gids.includes(a.groupId) && a.status === 'approved');
-  const absentYesterday = yesterdayAtt.filter(a => a.records.some(r => r.studentId === activeChild.id && r.status === 'absent'));
-  if(absentYesterday.length > 0){
+  const absentYesterday = yesterdayAtt.filter(a => a.records.some(r => r.studentId === (activeChild?.id) && r.status === 'absent'));  if(absentYesterday.length > 0){
     alerts.push({icon: '⚠️', text: `ابنك غاب ${absentYesterday.length} حصة أمس`, type: 'danger'});
   }
 
@@ -1155,7 +1154,7 @@ window.openGradeDetails=function(type, id){
     answersHtml += questions.map((q, i) => {
       const ans = answers.find(a => a.questionId === q.id);
       const userAns = ans ? (ans.answer !== undefined ? ans.answer : 'لا توجد إجابة') : 'لم يجيب';
-      const isCorrect = ans && String(ans.answer) === String(q.correctAnswer);
+const isCorrect = ans && (String(ans.answer ?? '').trim().toLowerCase() === String(q.correctAnswer ?? '').trim().toLowerCase());
       let optHtml = '';
       
       if(q.type === 'mcq' && q.options){

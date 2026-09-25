@@ -391,7 +391,7 @@
 <div class="content-area">
 
 <!-- 🏛️ CONTROL TOWER -->
-<section class="section active" id="section-tower">
+<section class="section active" id="section-tower"><div style="margin-bottom:16px;"><button class="btn btn-primary btn-lg" onclick="window.open('monitor.html','_blank')" style="padding:14px 24px;font-size:16px;">🖥️ فتح غرفة المتابعة اللحظية</button></div>
 <div class="hero-stat" style="margin-bottom:20px;">
   <div class="hero-stat-value" id="towerTotalStudents">0</div>
   <div class="hero-stat-label">إجمالي الطلاب النشطين</div>
@@ -434,26 +434,46 @@
 <!-- 🎓 الطلاب -->
 <section class="section" id="section-students">
 <div class="section-header">
-  <div><h2 class="section-title">🎓 الطلاب</h2></div>
-  <div style="display:flex; gap:8px; flex-wrap:wrap;">
-    <button class="btn btn-success" onclick="window.openQuickAddStudentModal()">⚡ إضافة سريعة</button>
-    <button class="btn btn-secondary" onclick="window.openBulkAddStudentModal()">📋 إضافة مجمعة</button>
-    <button class="btn btn-primary" onclick="window.openStudentModal()">+ طالب جديد</button>
-  </div>
+<div><h2 class="section-title">🎓 الطلاب</h2></div>
+<div style="display:flex; gap:8px; flex-wrap:wrap;">
+<button class="btn btn-success" onclick="window.openQuickAddStudentModal()">⚡ إضافة سريعة</button>
+<button class="btn btn-secondary" onclick="window.openBulkAddStudentModal()">📋 إضافة مجمعة</button>
+<button class="btn btn-primary" onclick="window.openStudentModal()">+ طالب جديد</button>
+</div>
 </div>
 <div class="card">
-  <div class="form-group"><label>فلتر الأستاذ</label><select id="stuTeacherFilter" class="form-select" onchange="window.loadStudents()"><option value="">كل الأساتذة</option></select></div>
-  <div class="search-bar" style="margin-bottom:12px;"><input type="text" id="stuSearch" class="form-input" placeholder="بحث بالاسم أو الكود..." onkeyup="window.loadStudents()"></div>
-  <div style="overflow-x:auto;">
-    <table class="table">
-      <thead><tr><th>الكود</th><th>الاسم</th><th>المرحلة</th><th>الصف</th><th>الهاتف</th><th>النقاط 🏆</th><th>إجراءات</th></tr></thead>
-      <tbody id="studentsTable"></tbody>
-    </table>
-  </div>
+<!-- 🆕 الفلاتر الجديدة -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:12px;">
+    <div class="form-group" style="margin:0;">
+        <label>👨‍🏫 فلتر الأساتذة (الطلاب المشتركين)</label>
+        <div id="stuMultiTeacherWrap" style="position:relative;">
+            <input type="text" class="form-input" readonly placeholder="اختر الأساتذة للمقارنة..." onclick="document.getElementById('stuMultiTeacherList').style.display='block'" style="cursor:pointer;">
+            <div id="stuMultiTeacherList" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;max-height:250px;overflow-y:auto;z-index:50;padding:8px;box-shadow:0 4px 12px rgba(0,0,0,.15);"></div>
+        </div>
+        <div id="stuSelectedTeachersBadges" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;"></div>
+    </div>
+    <div class="form-group" style="margin:0;">
+        <label>🏢 فلتر السنتر</label>
+        <select id="stuCenterFilter" class="form-select" onchange="window.loadStudents()">
+            <option value="">كل السناتر</option>
+        </select>
+    </div>
+    <div class="form-group" style="margin:0;">
+        <label>🔍 بحث سريع</label>
+        <input type="text" id="stuSearch" class="form-input" placeholder="بحث بالاسم أو الكود..." onkeyup="window.loadStudents()">
+    </div>
+</div>
+
+<div style="overflow-x:auto;">
+<table class="table">
+<thead><tr><th>الكود</th><th>الاسم</th><th>المرحلة</th><th>الصف</th><th>الهاتف</th><th>النقاط 🏆</th><th>إجراءات</th></tr></thead>
+<tbody id="studentsTable"></tbody>
+</table>
+</div>
 </div>
 <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-  <button class="btn btn-primary" onclick="window.open('qr-scan.html','_blank')">📱 مسح باركود</button>
-  <button class="btn btn-secondary" onclick="window.open('print-qr.html','_blank')">🖨️ طباعة باركودات</button>
+<button class="btn btn-primary" onclick="window.open('qr-scan.html','_blank')">📱 مسح باركود</button>
+<button class="btn btn-secondary" onclick="window.open('print-qr.html','_blank')">🖨️ طباعة باركودات</button>
 </div>
 </section>
 
@@ -578,6 +598,8 @@
 <div class="card" style="margin-top:12px;"><div class="card-header"><h3 class="card-title">📜 سجل تغييرات المواعيد</h3></div><div id="sbLog"></div></div>
 </section>
 
+<!-- 🛒 المتجر (أدمن) --><section class="section" id="section-store"><div class="section-header"><div><h2 class="section-title">🏪 إدارة المتجر</h2><p class="text-sm text-muted">إدارة المذكرات والكتب والهدايا</p></div><button class="btn btn-primary" onclick="window.openStoreItemModal()">➕ إضافة منتج</button></div><div class="card" style="margin-bottom:12px;"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;"><div class="form-group" style="margin:0;"><label>🔍 بحث</label><input type="text" id="storeSearch" class="form-input" placeholder="اسم المنتج..." onkeyup="window.loadStoreCatalog()"></div><div class="form-group" style="margin:0;"><label>📂 الفئة</label><select id="storeCategoryFilter" class="form-select" onchange="window.loadStoreCatalog()"><option value="">كل الفئات</option><option value="مذكرة">مذكرة</option><option value="كتاب">كتاب</option><option value="هدايا">هدايا</option></select></div><div class="form-group" style="margin:0;"><label>🎯 المرحلة</label><select id="storeStageFilter" class="form-select" onchange="window.loadStoreCatalog()"><option value="">كل المراحل</option></select></div><div class="form-group" style="margin:0;"><label>🎓 الصف</label><select id="storeGradeFilter" class="form-select" onchange="window.loadStoreCatalog()"><option value="">كل الصفوف</option></select></div><div class="form-group" style="margin:0;"><label>🏢 السنتر</label><select id="storeCenterFilter" class="form-select" onchange="window.loadStoreCatalog()"><option value="">كل السناتر</option></select></div><div class="form-group" style="margin:0;"><label>📦 التوفر</label><select id="storeAvailFilter" class="form-select" onchange="window.loadStoreCatalog()"><option value="">الكل</option><option value="available">متاح</option><option value="unavailable">غير متاح</option><option value="coming_soon">قادم</option></select></div><div class="form-group" style="margin:0;"><label>👨‍ الأستاذ</label><select id="storeTeacherFilter" class="form-select" onchange="window.loadStoreCatalog()"><option value="">كل الأساتذة</option></select></div></div></div><div id="storeCatalogList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;"></div></section><!-- 📦 طلبات المتجر (أدمن) --><section class="section" id="section-storeOrders"><div class="section-header"><div><h2 class="section-title">📦 طلبات المتجر</h2><p class="text-sm text-muted">موافقة وتسليم الطلبات</p></div><button class="btn btn-ghost btn-sm" onclick="window.loadStoreOrders()">🔄 تحديث</button></div><div class="filter-bar" style="margin-bottom:12px;"><button class="filter-btn active" onclick="window.setStoreOrderFilter('pending',this)">⏳ معلقة</button><button class="filter-btn" onclick="window.setStoreOrderFilter('approved',this)">✅ موافق عليها</button><button class="filter-btn" onclick="window.setStoreOrderFilter('delivered',this)">📬 مسلّمة</button><button class="filter-btn" onclick="window.setStoreOrderFilter('cancelled',this)">❌ ملغية</button><button class="filter-btn" onclick="window.setStoreOrderFilter('all',this)">الكل</button></div><div class="card" style="margin-bottom:12px;"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;"><div class="form-group" style="margin:0;"><label>🔍 بحث (طالب/منتج)</label><input type="text" id="orderSearch" class="form-input" placeholder="اسم الطالب أو المنتج..." onkeyup="window.loadStoreOrders()"></div><div class="form-group" style="margin:0;"><label>🎯 الحالة</label><select id="orderStatusFilter" class="form-select" onchange="window.loadStoreOrders()"><option value="">كل الحالات</option><option value="pending_payment">⏳ بانتظار الدفع</option><option value="pending_reserve">⏳ بانتظار الحجز</option><option value="approved">✅ موافق عليه</option><option value="delivered">📬 مسلّم</option><option value="cancelled">❌ ملغي</option></select></div><div class="form-group" style="margin:0;"><label>👥 المجموعة</label><select id="orderGroupFilter" class="form-select" onchange="window.loadStoreOrders()"><option value="">كل المجموعات</option></select></div><div class="form-group" style="margin:0;"><label>🏢 السنتر</label><select id="orderCenterFilter" class="form-select" onchange="window.loadStoreOrders()"><option value="">كل السناتر</option></select></div><div class="form-group" style="margin:0;"><label>🎓 المرحلة</label><select id="orderStageFilter" class="form-select" onchange="window.loadStoreOrders()"><option value="">كل المراحل</option></select></div><div class="form-group" style="margin:0;"><label>👨‍🏫 الأستاذ</label><select id="orderTeacherFilter" class="form-select" onchange="window.loadStoreOrders()"><option value="">كل الأساتذة</option></select></div></div></div><div id="storeOrdersList"></div></section>
+<!-- 🔄 دورات الطلاب (أدمن) --><section class="section" id="section-cycles"><div class="section-header"><div><h2 class="section-title">🔄 دورات الطلاب</h2><p class="text-sm text-muted">متابعة العدادات والفواتير لكل طالب</p></div><div style="display:flex;gap:8px;"><button class="btn btn-success btn-sm" onclick="window.openEmergencySessionModal()">⚡ حصة طوارئ</button><button class="btn btn-ghost btn-sm" onclick="window.loadStudentCycles()">🔄 تحديث</button></div></div><div class="card" style="margin-bottom:12px;"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;"><div class="form-group" style="margin:0;"><label>🔍 بحث</label><input type="text" id="cycleSearch" class="form-input" placeholder="اسم الطالب..." onkeyup="window.loadStudentCycles()"></div><div class="form-group" style="margin:0;"><label>🎯 الحالة</label><select id="cycleStatusFilter" class="form-select" onchange="window.loadStudentCycles()"><option value="">كل الحالات</option><option value="active">نشط</option><option value="warning">إنذار (7/8)</option><option value="due">مستحق الدفع</option><option value="overdue">متأخر</option></select></div></div></div><div id="studentCyclesList"></div></section>
 <!-- ✅ مهامي (أدمن) -->
 <section class="section" id="section-tasks">
 <div class="section-header"><div><h2 class="section-title">✅ مهامي</h2><p class="text-sm text-muted">كل اللي محتاج إجراء منك دلوقتي — متجمع من كل النظام</p></div><button class="btn btn-ghost btn-sm" onclick="window.loadTasks()">🔄 تحديث</button></div>
@@ -1116,7 +1138,7 @@ window.loadChurnAlerts=function(){
             <div class="text-xs text-muted" style="margin-top:4px;">${r.reasons.join(' · ')||'-'}</div>
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
-            <button class="btn btn-primary btn-sm" onclick="window.openStudentProfile('${r.s.id}')">👁️ الملف</button>
+<button class="btn btn-ghost btn-sm" onclick="window.openStudentProfile('${c.student.id}')">👁️ الملف</button>${(c.cycle.isDue||c.cycle.isOverdue)?`<button class="btn btn-success btn-sm" onclick="window.recordCyclePayment('${c.student.id}','${c.group.id}')">💰 تسجيل دفع</button><button class="btn btn-ghost btn-sm" title="تذكير واتساب لولي الأمر" onclick="Ops.openPaymentReminderWa('${c.student.id}','${c.group.id}')">💬 تذكير</button>`:''}
             ${r.s.parentPhone?`<a class="btn btn-success btn-sm" href="https://wa.me/2${String(r.s.parentPhone).replace(/\D/g,'')}" target="_blank">💬 ولي الأمر</a>`:''}
           </div>
         </div>
@@ -1309,11 +1331,11 @@ const menu=[
 {s:'🏛️ برج التحكم',items:[{id:'tower',l:'نظرة عامة',i:'📊'}]},
     {s:'👥 إدارة الأشخاص',items:[{id:'students',l:'الطلاب',i:'🎓'},{id:'teachers',l:'المدرسون',i:'👨‍🏫'},{id:'assistants',l:'المساعدون',i:'🧑‍🏫'},{id:'pending',l:'طلبات التسجيل',i:'⏳'},{id:'barcode-requests',l:'طلبات الباركود',i:'🎟️'}]},
     {s:'🚀 التشغيل والعمليات',items:[{id:'ops', l:'إدارة وتشغيل الأساتذة', i:'⚙️', href:'teachers-operations.html'}]},
-    {s:'🏢 البنية',items:[{id:'groups',l:'المجموعات',i:'👥'},{id:'centers',l:'السناتر',i:'🏢'},{id:'scheduleBoard',l:'جدول الأساتذة',i:'🗓️'}]},
+    {s:'🏢 البنية',items:[{id:'groups',l:'المجموعات',i:'👥'},{id:'centers',l:'السناتر',i:'🏢'},{id:'scheduleBoard',l:'جدول الأساتذة',i:'🗓️'}]},{s:'🛒 المتجر',items:[{id:'store',l:'إدارة المتجر',i:'🏪'},{id:'storeOrders',l:'طلبات المتجر',i:'📦'}]},
     {s:'🎁 التحفيز',items:[{id:'points',l:'نظام النقاط',i:'🏆'},{id:'gamification',l:'تحكم التحفيز',i:'🎁'},{id:'battles',l:'معارك المجموعات',i:'⚔️'},{id:'templates',l:'القوالب الجاهزة',i:'📄'}]},
     {s:'📊 التحليلات',items:[{id:'reports',l:'التقارير الإدارية',i:'📈'}]},
-    {s:'المتابعة',items:[{id:'followups',l:'المتابعات',i:'📌'},{id:'churn',l:'تنبيهات التسرب',i:'🚨'},{id:'tasks',l:'مهامي',i:'✅'},{id:'calendar',l:'التقويم',i:'📅'}]},
-    {s:'🔐 النظام',items:[{id:'ai',l:'تحكم الذكاء الاصطناعي',i:'🤖'},{id:'viewas',l:'View As',i:'👁️'},{id:'settings',l:'الإعدادات',i:'⚙️'},{id:'backup',l:'النسخ الاحتياطي',i:'💾'},{id:'logs',l:'سجل النشاط',i:'📜'}]}
+    {s:'المتابعة',items:[{id:'followups',l:'المتابعات',i:'📌'},{id:'churn',l:'تنبيهات التسرب',i:'🚨'},{id:'cycles',l:'دورات الطلاب',i:'🔄'},{id:'tasks',l:'مهامي',i:'✅'},{id:'calendar',l:'التقويم',i:'📅'}]},
+    {s:'🔐 النظام',items:[{id:'ai',l:'تحكم الذكاء الاصطناعي',i:'🤖'},{id:'viewas',l:'View As',i:'👁️'},{id:'monitor',l:'غرفة المتابعة',i:'🖥️'},{id:'settings',l:'الإعدادات',i:'⚙️'},{id:'backup',l:'النسخ الاحتياطي',i:'💾'},{id:'logs',l:'سجل النشاط',i:'📜'}]}
   ];
   const nav=document.getElementById('sidebarNav');
   if(nav){
@@ -1323,11 +1345,13 @@ const menu=[
 
 window.showSection=function(id){
 try{
+  /* 🖥️ غرفة المتابعة — تفتح في تبويب جديد */
+if(id==='monitor'){ window.open('monitor.html','_blank'); return; }
 document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
 document.getElementById('section-'+id)?.classList.add('active');
 document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.toggle('active',i.dataset.section===id));
 const L={
-tower:window.loadTower, students:window.loadStudents, teachers:window.loadTeachers,
+tower:window.loadTower, students:()=>{window.fillStudentFilters();window.loadStudents();},
 assistants:window.loadAssistants, pending:window.loadPending, groups:window.loadGroups,
 centers:window.loadCenters, points:()=>{window.loadPointsOverview();window.loadPointsRules();window.loadPointsHistory();window.loadPointsRanking();},
 churn:window.loadChurnAlerts,
@@ -1438,24 +1462,48 @@ window.loadTower=function(){
    🎓 STUDENTS (قائمة كاملة)
    ================================================================ */
 window.loadStudents=function(){
-  try{
-    const q=(document.getElementById('stuSearch')?.value||'').toLowerCase();
-    const tf=document.getElementById('stuTeacherFilter')?.value||'';
-    let list=DataService.getStudents();
-    if(tf) list=list.filter(s=>(DataService.getStudentTeachers(s.id)||[]).some(t=>t.teacher?.id===tf));
-    if(q)list=list.filter(s=>(s.name||'').toLowerCase().includes(q)||(s.code||'').toLowerCase().includes(q)||(s.phone||'').toLowerCase().includes(q));
-    const tb=document.getElementById('studentsTable');
-    if(tb)tb.innerHTML=list.map(s=>{
-      const st=EduFlowConfig?.educationLevels?.[s.stage]?.nameAr||'-';
-      const points=(typeof Ops?.getStudentPoints==='function')?Ops.getStudentPoints(s.id,tf||undefined,'all'):0;
-      return `<tr><td><strong style="color:var(--primary)">${s.code||'—'}</strong></td><td>${s.name}</td><td>${st}</td><td>${s.grade||'-'}</td><td>${s.phone||'-'}</td><td><span class="points-badge">🏆 ${points}</span></td><td>
-        <button class="btn btn-primary btn-sm" onclick="window.openStudentProfile('${s.id}')">👁️</button>
-        <button class="btn btn-secondary btn-sm" onclick="window.openSwapStudentModal('${s.id}')">🔄 تبديل</button>
-        <button class="btn btn-ghost btn-sm" onclick="window.openStudentModal('${s.id}')">✏️</button>
-        <button class="btn btn-danger btn-sm" onclick="window.delUser('${s.id}')">🗑️</button>
-      </td></tr>`;
-    }).join('')||'<tr><td colspan="8" class="text-center text-muted">لا طلاب</td></tr>';
-  }catch(e){console.error(e);}
+try{
+const q=(document.getElementById('stuSearch')?.value||'').toLowerCase();
+
+// 🆕 جلب قيم الفلاتر الجديدة
+const selectedTeachers = Array.from(document.querySelectorAll('#stuMultiTeacherList input:checked')).map(cb => cb.value);
+const selectedCenter = document.getElementById('stuCenterFilter')?.value || '';
+
+let list=DataService.getStudents();
+
+// 🆕 تطبيق فلتر الأساتذة المتعدد (تقاطع - Intersection)
+// يعني الطالب لازم يكون مشترك مع كل الأساتذة اللي اتختاروا
+if(selectedTeachers.length > 0) {
+    list = list.filter(s => {
+        const studentTeachers = (DataService.getStudentTeachers(s.id) || []).map(t => t.teacher?.id);
+        return selectedTeachers.every(tid => studentTeachers.includes(tid));
+    });
+}
+
+// 🆕 تطبيق فلتر السنتر (الطالب يكون مسجل في مجموعة تابعة للسنتر ده)
+// 🆕 تطبيق فلتر السنتر
+if(selectedCenter) {
+    list = list.filter(s => {
+        const studentTeachers = DataService.getStudentTeachers(s.id) || [];  // ✅ أضفنا || []
+        return studentTeachers.some(t => t.group?.center === selectedCenter);
+    });
+}
+
+// فلتر البحث النصي
+if(q)list=list.filter(s=>(s.name||'').toLowerCase().includes(q)||(s.code||'').toLowerCase().includes(q)||(s.phone||'').toLowerCase().includes(q));
+
+const tb=document.getElementById('studentsTable');
+if(tb)tb.innerHTML=list.map(s=>{
+const st=EduFlowConfig?.educationLevels?.[s.stage]?.nameAr||'-';
+const points=(typeof Ops?.getStudentPoints==='function')?Ops.getStudentPoints(s.id,selectedTeachers[0]||undefined,'all'):0;
+return `<tr><td><strong style="color:var(--primary)">${s.code||'—'}</strong></td><td>${s.name}</td><td>${st}</td><td>${s.grade||'-'}</td><td>${s.phone||'-'}</td><td><span class="points-badge">🏆 ${points}</span></td><td>
+<button class="btn btn-primary btn-sm" onclick="window.openStudentProfile('${s.id}')">👁️</button>
+<button class="btn btn-secondary btn-sm" onclick="window.openSwapStudentModal('${s.id}')">🔄 تبديل</button>
+<button class="btn btn-ghost btn-sm" onclick="window.openStudentModal('${s.id}')">✏️</button>
+<button class="btn btn-danger btn-sm" onclick="window.delUser('${s.id}')">🗑️</button>
+</td></tr>`;
+}).join('')||'<tr><td colspan="8" class="text-center text-muted">لا طلاب مطابقين للفلاتر</td></tr>';
+}catch(e){console.error(e);}
 };
 
 // 🆕 مودال الإضافة السريعة
@@ -1787,27 +1835,17 @@ window.saveStudent=async function(e,editId){
 
 window.renderStudentTeachersGrid=function(selectedIds){
 try{
-const teachers=DataService.getTeachers();
-const grid=document.getElementById('teacherSelectionGrid');
-if(!grid) return;
-if(!teachers.length){ grid.innerHTML='<p class="text-muted" style="font-size:12px;">لا يوجد أساتذة — أضف أساتذة أولاً</p>'; return; }
-grid.innerHTML=teachers.map(t=>{
-const gCount=(DataService.getGroupsByTeacher?DataService.getGroupsByTeacher(t.id):[]).length;
-const sel=(selectedIds||[]).includes(t.id);
-return `<div class="teacher-select-card ${sel?'selected':''}" style="display:flex;gap:8px;align-items:center;" onclick="window.toggleStudentTeacher(this,'${t.id}')">
-<input type="checkbox" value="${t.id}" ${sel?'checked':''} style="pointer-events:none;">
-<div style="flex:1;"><div style="font-weight:700;font-size:13px;">${t.name}</div><div style="font-size:11px;color:var(--text-muted);">${t.subject||'-'} · ${gCount} مجموعة</div></div>
-</div>`;
+const grid=document.getElementById('teacherSelectionGrid'); if(!grid) return;
+const teachers=DataService.getTeachers?DataService.getTeachers():[];
+const sel=(selectedIds||[]).slice();
+(window._selectedTeachers||[]).forEach(function(id){ if(sel.indexOf(id)<0) sel.push(id); });
+grid.innerHTML=teachers.map(function(t){
+const on=sel.indexOf(t.id)>=0;
+return '<label class="teacher-select-card'+(on?' selected':'')+'" style="display:flex;gap:8px;align-items:center;padding:10px;border:1px solid '+(on?'var(--success)':'var(--border)')+';border-radius:10px;cursor:pointer;background:'+(on?'var(--success-bg)':'var(--surface)')+';">'+
+'<input type="checkbox" value="'+t.id+'" '+(on?'checked':'')+' onchange="var l=this.closest(\'label\');if(l){l.classList.toggle(\'selected\',this.checked);l.style.borderColor=this.checked?\'var(--success)\':\'var(--border)\';l.style.background=this.checked?\'var(--success-bg)\':\'var(--surface)\';}var ids=[];document.querySelectorAll(\'#teacherSelectionGrid input:checked\').forEach(function(c){ids.push(c.value);});window._selectedTeachers=ids;window._preTeachers=ids.slice();if(window.renderStudentGroups)window.renderStudentGroups();">'+
+'<div style="flex:1;min-width:0;"><strong style="font-size:13px;">'+t.name+'</strong><div class="text-xs text-muted">'+(t.subject||t.grade||'')+'</div></div></label>';
 }).join('');
-}catch(e){console.error('renderStudentTeachersGrid:',e);}
-};
-window.toggleStudentTeacher=function(el, tid){
-try{
-const cb=el.querySelector('input');
-cb.checked=!cb.checked;
-el.classList.toggle('selected', cb.checked);
-window.renderStudentGroups();
-}catch(e){}
+}catch(e){ console.error('renderStudentTeachersGrid error',e); }
 };
 
 window.toggleStudentTeacher=function(el, tid){
@@ -1828,7 +1866,71 @@ window.updStudentGrades=function(sel){
   }catch(e){}
 };
 
+/* ================================================================
+🆕 فلاتر الطلاب المتقدمة (أساتذة متعددين + سناتر)
+================================================================ */
+window.fillStudentFilters = function() {
+    try {
+        // 1. تعبئة قائمة الأساتذة
+        const teachers = DataService.getTeachers ? DataService.getTeachers() : [];
+        const listEl = document.getElementById('stuMultiTeacherList');
+        if(listEl && teachers && teachers.length) {  // ✅ أضفنا check للـ teachers
+            listEl.innerHTML = teachers.map(t => `
+                <label style="display:flex;gap:8px;align-items:center;padding:6px 8px;border-radius:6px;cursor:pointer;transition:all .2s;" 
+                       onmouseover="this.style.background='var(--surface-hover)'" 
+                       onmouseout="this.style.background='transparent'">
+                    <input type="checkbox" value="${t.id}" onchange="window.updateStudentTeacherFilter()" style="width:16px;height:16px;accent-color:var(--primary);">
+                    <span style="font-size:13px;font-weight:600;">${t.name}</span>
+                    <span style="font-size:11px;color:var(--text-muted);margin-inline-start:auto;">${t.subject||''}</span>
+                </label>
+            `).join('');
+        }
 
+        // 2. تعبئة قائمة السناتر
+        const centers = window.getAllCenters ? window.getAllCenters() : [];
+        const cEl = document.getElementById('stuCenterFilter');
+        if(cEl && cEl.options.length <= 1 && centers && centers.length) {  // ✅ أضفنا check للـ centers
+            cEl.innerHTML = '<option value="">كل السناتر</option>' + centers.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+    } catch(e) { 
+        console.error('fillStudentFilters error:', e); 
+    }
+};
+
+window.updateStudentTeacherFilter = function() {
+    const checked = Array.from(document.querySelectorAll('#stuMultiTeacherList input:checked'));
+    const badgesEl = document.getElementById('stuSelectedTeachersBadges');
+    
+    if(badgesEl) {
+        badgesEl.innerHTML = checked.map(cb => {
+            const labelSpan = cb.closest('label')?.querySelector('span');
+            const label = labelSpan ? labelSpan.textContent : 'أستاذ';  // ✅ حماية أفضل
+            return `<span class="badge badge-info" style="font-size:11px;display:inline-flex;align-items:center;gap:4px;">
+                        ${label} 
+                        <span style="cursor:pointer;font-weight:bold;margin-inline-start:2px;" onclick="event.stopPropagation();this.parentElement.remove();document.querySelector('#stuMultiTeacherList input[value=&quot;${cb.value}&quot;]').checked=false;window.loadStudents();">✕</span>
+                    </span>`;
+        }).join('') + (checked.length ? `<button class="btn btn-ghost btn-sm" style="font-size:11px;padding:2px 6px;" onclick="window.clearStudentTeacherFilter()">مسح الكل</button>` : '');
+    }
+    
+    const input = document.querySelector('#stuMultiTeacherWrap input');
+    if(input) input.placeholder = checked.length ? `تم اختيار ${checked.length} أستاذ (عرض المشتركين)` : 'اختر الأساتذة للمقارنة...';
+    
+    window.loadStudents();
+};
+
+window.clearStudentTeacherFilter = function() {
+    document.querySelectorAll('#stuMultiTeacherList input').forEach(cb => cb.checked = false);
+    window.updateStudentTeacherFilter();
+};
+
+// إغلاق القائمة المنسدلة عند الضغط خارجها
+document.addEventListener('click', function(e) {
+    const wrap = document.getElementById('stuMultiTeacherWrap');
+    const list = document.getElementById('stuMultiTeacherList');
+    if(wrap && list && !wrap.contains(e.target)) {
+        list.style.display = 'none';
+    }
+});
 
 
 window.delUser=async function(id){ 
@@ -3586,63 +3688,6 @@ window.loadLiveSessions=function(){
   }catch(e){ console.error('loadLiveSessions error:',e); }
 };
 
-window.loadLiveSessions=function(){
-  try{
-    const res=window.getActiveSessionsNow();
-    const badge=document.getElementById('liveCountBadge');
-    if(badge) badge.textContent=res.active.length;
-    const el=document.getElementById('liveSessionsNow');
-    if(!el) return;
-    if(!res.active.length&&!res.upcoming.length){
-      el.innerHTML='<p class="text-muted" style="text-align:center;padding:14px;">لا توجد حصص جارية أو قادمة حالياً</p>';
-      return;
-    }
-    let html='';
-    if(res.active.length){
-      html+='<div style="margin-bottom:12px;font-weight:700;color:var(--success);">🔴 حصص جارية الآن ('+res.active.length+')</div>';
-      html+=res.active.map(g=>{
-        const t=DataService.getUserById(g.teacherId);
-        const stu=DataService.getStudentsByGroup(g.id).length;
-        const mins=new Date().getHours()*60+new Date().getMinutes();
-        const elapsed=mins-g._start;
-        return `<div class="live-class" style="border-right:4px solid var(--success);">
-          <div class="live-dot"></div>
-          <div style="flex:1;min-width:0;">
-            <strong>${g.name}</strong> <span class="badge badge-success">جارية</span>
-            <div class="text-xs text-muted">👨‍🏫 ${t?.name||'-'} · 🏢 ${g.center||'-'} · 🕐 ${T(g._schedTime)} · بدأت من ${elapsed} د · باقي ${g._remainingMin} د · 👥 ${stu} طالب</div>
-          </div>
-          <button class="btn btn-success btn-sm" onclick="window.openLiveSessionDetails('${g.id}')">👁️ تفاصيل</button>
-        </div>`;
-      }).join('');
-    }
-    if(res.upcoming.length){
-      html+='<div style="margin:16px 0 12px;font-weight:700;color:var(--info);">⏰ الحصص القادمة ('+res.upcoming.length+')</div>';
-      const byTeacher={};
-      res.upcoming.forEach(g=>{
-        const tid=g.teacherId||'unknown';
-        if(!byTeacher[tid]) byTeacher[tid]=[];
-        byTeacher[tid].push(g);
-      });
-      html+=Object.entries(byTeacher).map(([tid,gs])=>{
-        const t=DataService.getUserById(tid);
-        return `<div style="margin-bottom:8px;">
-          <div style="font-weight:700;margin-bottom:6px;">👨‍🏫 ${t?.name||'أستاذ'} <span class="badge badge-info">${gs.length} حصة</span></div>
-          ${gs.map(g=>{
-            const stu=DataService.getStudentsByGroup(g.id).length;
-            return `<div class="live-class" style="border-right:4px solid var(--info);margin-bottom:6px;">
-              <div style="flex:1;min-width:0;">
-                <strong>${g.name}</strong>
-                <div class="text-xs text-muted">🕐 ${T(g._schedTime)} · بعد ${g._remainingMin} د · 🏢 ${g.center||'-'} · 👥 ${stu} طالب</div>
-              </div>
-              <button class="btn btn-secondary btn-sm" onclick="window.openLiveSessionDetails('${g.id}')">👁️</button>
-            </div>`;
-          }).join('')}
-        </div>`;
-      }).join('');
-    }
-    el.innerHTML=html;
-  }catch(e){ console.error('loadLiveSessions error:',e); }
-};
 
 window.openLiveSessionDetails=function(groupId){
   try{
@@ -3865,8 +3910,8 @@ window.loadChurnAlerts = function() {
                     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
                         <div class="risk-score ${r.level}">${r.score}%</div>
                         <div class="text-xs text-muted">احتمالية التسرب</div>
-                        <button class="btn btn-primary btn-sm" onclick="window.openStudentProfile('${r.id}')">👁️ الملف الكامل</button>
-                    </div>
+<button class="btn btn-ghost btn-sm" onclick="window.openStudentProfile('${c.student.id}')">👁️ الملف</button>${(c.cycle.isDue||c.cycle.isOverdue)?`<button class="btn btn-success btn-sm" onclick="window.recordCyclePayment('${c.student.id}','${c.group.id}')">💰 تسجيل دفع</button><button class="btn btn-ghost btn-sm" title="تذكير واتساب لولي الأمر" onclick="Ops.openPaymentReminderWa('${c.student.id}','${c.group.id}')">💬 تذكير</button>`:''}
+                        </div>
                 </div>
             </div>
         `).join('');
@@ -4650,6 +4695,366 @@ window.getAllCenters=function(){
     return [...set];
   }catch(e){ return []; }
 };
+/* ================================================================🛒 STORE (المتجر) — نسخة كاملة نظيفة================================================================ */
+let storeOrderFilter='pending';
+window.setStoreOrderFilter=function(f,btn){
+storeOrderFilter=f;
+document.querySelectorAll('#section-storeOrders .filter-btn').forEach(b=>b.classList.toggle('active',b===btn));
+window.loadStoreOrders();
+};
+window.storeFillFilters=function(){
+try{
+const centers=window.getAllCenters?window.getAllCenters():[];
+['storeCenterFilter','orderCenterFilter'].forEach(id=>{ const el=document.getElementById(id); if(el&&el.options.length<=1){ el.innerHTML='<option value="">كل السناتر</option>'+centers.map(c=>`<option value="${c}">${c}</option>`).join(''); } });
+const stages=(typeof EduFlowConfig!=='undefined'&&EduFlowConfig.educationLevels)?Object.values(EduFlowConfig.educationLevels).map(l=>l.nameAr):[];
+['storeStageFilter','orderStageFilter'].forEach(id=>{ const el=document.getElementById(id); if(el&&el.options.length<=1){ el.innerHTML='<option value="">كل المراحل</option>'+stages.map(s=>`<option value="${s}">${s}</option>`).join(''); } });
+const allGrades=(typeof EduFlowConfig!=='undefined'&&EduFlowConfig.educationLevels)?Object.values(EduFlowConfig.educationLevels).flatMap(l=>l.grades||[]):[];
+const gF=document.getElementById('storeGradeFilter');
+if(gF&&gF.options.length<=1){ gF.innerHTML='<option value="">كل الصفوف</option>'+allGrades.map(g=>`<option value="${g}">${g}</option>`).join(''); }
+const groups=DataService.getGroups?DataService.getGroups():[];
+const gEl=document.getElementById('orderGroupFilter');
+if(gEl&&gEl.options.length<=1){ gEl.innerHTML='<option value="">كل المجموعات</option>'+groups.map(g=>`<option value="${g.id}">${g.name}</option>`).join(''); }
+const teachers=DataService.getTeachers?DataService.getTeachers():[];
+['storeTeacherFilter','orderTeacherFilter'].forEach(id=>{ const el=document.getElementById(id); if(el&&el.options.length<=1){ el.innerHTML='<option value="">كل الأساتذة</option>'+teachers.map(t=>`<option value="${t.id}">${t.name}</option>`).join(''); } });
+}catch(e){console.error(e);}
+};
+window.loadStoreFilters=window.storeFillFilters;
+function storeDb(){ return DataService._getData(); }
+function storeSave(d){ DataService._saveData(d); }
+window.storeGetItems=function(){ return storeDb().storeCatalog||[]; };
+window.storeGetOrders=function(){ return storeDb().storeOrders||[]; };
+window.loadStoreCatalog=function(){
+try{
+window.storeFillFilters();
+/* 📦 قراءة من المصدر المحلي + localStorage العام */
+var d=storeDb();
+var items=(d.storeCatalog||[]).slice();
+if(!items.length){
+try{
+var raw=JSON.parse(localStorage.getItem('eduflow_db')||'{}');
+items=raw.storeCatalog||[];
+if(items.length){ d.storeCatalog=items; storeSave(d); }
+}catch(e){}
+}
+const q=(document.getElementById('storeSearch')||{}).value||'';
+const cat=(document.getElementById('storeCategoryFilter')||{}).value||'';
+const stage=(document.getElementById('storeStageFilter')||{}).value||'';
+const gradeF=(document.getElementById('storeGradeFilter')||{}).value||'';
+const center=(document.getElementById('storeCenterFilter')||{}).value||'';
+const avail=(document.getElementById('storeAvailFilter')||{}).value||'';
+const teacher=(document.getElementById('storeTeacherFilter')||{}).value||'';
+/* تم القراءة فوق */
+if(q) items=items.filter(i=>(i.name||'').toLowerCase().includes(q.toLowerCase()));
+if(cat) items=items.filter(i=>i.category===cat);
+if(stage) items=items.filter(i=>(i.stage||'')===stage);
+if(gradeF) items=items.filter(i=>(i.grade||'')===gradeF);
+if(center) items=items.filter(i=>(i.center||'')===center);
+if(avail) items=items.filter(i=>i.availability===avail);
+if(teacher) items=items.filter(i=>(i.teacherId||'')===teacher);
+const el=document.getElementById('storeCatalogList');
+if(!el) return;
+el.innerHTML=items.length?items.map(i=>`
+<div class="user-card">
+<div class="user-card-header">
+<div class="user-avatar" style="font-size:24px;">📚</div>
+<div>
+<div class="user-name">${i.name}</div>
+<div class="user-meta">
+<span>📂 ${i.category||'-'}</span>
+<span>🎯 ${i.stage||'كل المراحل'}${i.grade?' · '+i.grade:''}</span>
+<span>💰 ${i.price||0} ج.م</span>
+<span>👨‍ ${i.teacherId?((DataService.getUserById(i.teacherId)||{}).name||'-'):'عام'}</span>
+</div>
+</div>
+</div>
+<div class="user-stats">
+<div class="user-stat"><div class="user-stat-value">${i.stock||0}</div><div class="user-stat-label">متاح</div></div>
+<div class="user-stat"><div class="user-stat-value">${i.reserved||0}</div><div class="user-stat-label">محجوز</div></div>
+</div>
+<div class="user-actions">
+<button class="btn btn-ghost btn-sm" onclick="window.openStoreItemModal('${i.id}')">✏️ تعديل</button>
+<button class="btn btn-danger btn-sm" onclick="window.deleteStoreItem('${i.id}')">🗑️ حذف</button>
+</div>
+</div>
+`).join(''):'<div class="card" style="text-align:center;padding:30px;"><div style="font-size:40px;">📭</div><strong>لا توجد منتجات</strong></div>';
+}catch(e){console.error(e);}
+};
+window.openStoreItemModal=function(editId){
+try{
+const item=editId?window.storeGetItems().find(i=>i.id===editId):null;
+const teachers=DataService.getTeachers?DataService.getTeachers():[];
+const stages=(typeof EduFlowConfig!=='undefined'&&EduFlowConfig.educationLevels)?Object.values(EduFlowConfig.educationLevels).map(l=>l.nameAr):[];
+const centers=window.getAllCenters?window.getAllCenters():[];
+ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${item?'✏️ تعديل':'➕ إضافة'} منتج</h3><button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return window.saveStoreItem(event,'${editId||''}')"><div class="form-group"><label>الاسم *</label><input type="text" id="storeItemName" class="form-input" value="${item?.name||''}" required></div><div class="form-group"><label>الوصف</label><textarea id="storeItemDesc" class="form-textarea" rows="2">${item?.description||''}</textarea></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>📂 الفئة</label><select id="storeItemCat" class="form-select"><option value="مذكرة" ${item?.category==='مذكرة'?'selected':''}>مذكرة</option><option value="كتاب" ${item?.category==='كتاب'?'selected':''}>كتاب</option><option value="هدايا" ${item?.category==='هدايا'?'selected':''}>هدايا</option></select></div><div class="form-group"><label>💰 السعر *</label><input type="number" id="storeItemPrice" class="form-input" value="${item?.price||0}" min="0" required></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>📦 الكمية *</label><input type="number" id="storeItemStock" class="form-input" value="${item?.stock||0}" min="0" required></div><div class="form-group"><label>📦 التوفر</label><select id="storeItemAvail" class="form-select"><option value="available" ${item?.availability==='available'?'selected':''}>متاح</option><option value="unavailable" ${item?.availability==='unavailable'?'selected':''}>غير متاح</option><option value="coming_soon" ${item?.availability==='coming_soon'?'selected':''}>قادم</option></select></div></div><div class="form-group"><label>👨‍🏫 الأستاذ (مالك المذكرة)</label><select id="storeItemTeacher" class="form-select"><option value="">عام (كل الأساتذة)</option>${teachers.map(t=>`<option value="${t.id}" ${item&&item.teacherId===t.id?'selected':''}>${t.name}</option>`).join('')}</select></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;"><div class="form-group"><label>🎯 المرحلة</label><select id="storeItemStage" class="form-select" onchange="window.storeItemStageCascade()"><option value="">كل المراحل</option>${stages.map(s=>`<option value="${s}" ${item&&item.stage===s?'selected':''}>${s}</option>`).join('')}</select></div><div class="form-group"><label>🎓 الصف</label><select id="storeItemGrade" class="form-select"><option value="">كل الصفوف</option></select></div><div class="form-group"><label>🏢 السنتر</label><select id="storeItemCenter" class="form-select"><option value="">كل السناتر</option>${centers.map(c=>`<option value="${c}" ${item&&item.center===c?'selected':''}>${c}</option>`).join('')}</select></div></div><div class="form-group"><label>🖼️ صورة (رابط)</label><input type="text" id="storeItemImg" class="form-input" value="${item?.imageUrl||''}"></div><button class="btn btn-primary w-full">💾 حفظ</button></form>
+</div>`,'modal-md');
+try{ window.storeItemStageCascade(item?(item.grade||''):''); }catch(e){}
+}catch(e){console.error(e);window.safeToast('خطأ في فتح المودال: '+e.message,'error');}
+};
+/* 🎓 تعبئة الصفوف حسب المرحلة المختارة في مودال المتجر */
+window.storeItemStageCascade=function(selGrade){
+try{
+const stageName=(document.getElementById('storeItemStage')||{}).value||'';
+const el=document.getElementById('storeItemGrade');
+if(!el) return;
+let grades=[];
+if(stageName&&typeof EduFlowConfig!=='undefined'&&EduFlowConfig.educationLevels){
+const lvl=Object.values(EduFlowConfig.educationLevels).find(l=>l.nameAr===stageName);
+grades=(lvl&&lvl.grades)||[];
+}
+el.innerHTML='<option value="">كل الصفوف</option>'+grades.map(g=>`<option value="${g}">${g}</option>`).join('');
+if(selGrade) el.value=selGrade;
+}catch(e){}
+};
+window.saveStoreItem=async function(e,editId){
+try{
+if(e&&e.preventDefault) e.preventDefault();
+const name=(document.getElementById('storeItemName')||{}).value||'';
+if(!name.trim()){ window.safeToast('اكتب اسم المنتج','error'); return false; }
+const data={
+name:name.trim(),
+description:(document.getElementById('storeItemDesc')||{}).value||'',
+category:(document.getElementById('storeItemCat')||{}).value||'مذكرة',
+price:parseFloat((document.getElementById('storeItemPrice')||{}).value)||0,
+stock:parseInt((document.getElementById('storeItemStock')||{}).value)||0,
+availability:(document.getElementById('storeItemAvail')||{}).value||'available',
+teacherId:(document.getElementById('storeItemTeacher')||{}).value||'',
+stage:(document.getElementById('storeItemStage')||{}).value||'',
+grade:(document.getElementById('storeItemGrade')||{}).value||'',
+center:(document.getElementById('storeItemCenter')||{}).value||'',
+imageUrl:(document.getElementById('storeItemImg')||{}).value||''
+};
+/* ✅ حفظ مباشر في localStorage العام + Firebase */
+var raw=JSON.parse(localStorage.getItem('eduflow_db')||'{}');
+raw.storeCatalog=raw.storeCatalog||[];
+if(editId){
+var idx=raw.storeCatalog.findIndex(function(x){return x.id===editId;});
+if(idx>=0){ Object.assign(raw.storeCatalog[idx],data,{updatedAt:new Date().toISOString()}); }
+}else{
+data.id='cat_'+Date.now();
+data.createdAt=new Date().toISOString();
+data.reserved=0;
+data.createdBy=(typeof currentUser!=='undefined'&&currentUser)?currentUser.id:'admin';
+raw.storeCatalog.push(data);
+}
+localStorage.setItem('eduflow_db',JSON.stringify(raw));
+/* ✅ مزامنة فورية مع DataService المحلي */
+try{
+var d=DataService._getData?DataService._getData():{};
+d.storeCatalog=raw.storeCatalog;
+if(DataService._saveData) DataService._saveData(d);
+}catch(e2){}
+/* ✅ حفظ في Firebase */
+if(window.FirebaseService&&FirebaseService._db){
+try{ await FirebaseService._db.collection('storeCatalog').doc(data.id).set(data,{merge:true}); }catch(e3){ console.warn('FB save:',e3); }
+}
+ThemeManager.closeModal();
+window.safeToast('✅ تم حفظ المنتج بنجاح','success');
+window.loadStoreCatalog();
+return false;
+}catch(err){ console.error('saveStoreItem:',err); window.safeToast('خطأ في الحفظ: '+err.message,'error'); return false; }
+};
+
+window.deleteStoreItem=async function(id){
+try{
+if(!confirm('حذف المنتج؟')) return;
+const d=storeDb();
+d.storeCatalog=(d.storeCatalog||[]).filter(i=>i.id!==id);
+storeSave(d);
+if(window.FirebaseService&&FirebaseService.connected){ try{ await FirebaseService.deleteDoc('storeCatalog',id); }catch(err){} }
+window.safeToast('✅ تم الحذف','success');
+window.loadStoreCatalog();
+}catch(e){ window.safeToast('خطأ: '+e.message,'error'); }
+};
+window.loadStoreOrders=function(){
+try{
+window.storeFillFilters();
+const q=(document.getElementById('orderSearch')||{}).value||'';
+const status=(document.getElementById('orderStatusFilter')||{}).value||'';
+const group=(document.getElementById('orderGroupFilter')||{}).value||'';
+const center=(document.getElementById('orderCenterFilter')||{}).value||'';
+const stage=(document.getElementById('orderStageFilter')||{}).value||'';
+const teacher=(document.getElementById('orderTeacherFilter')||{}).value||'';
+let orders=window.storeGetOrders();
+if(storeOrderFilter==='pending') orders=orders.filter(o=>o.status==='pending_payment'||o.status==='pending_reserve');
+else if(storeOrderFilter&&storeOrderFilter!=='all') orders=orders.filter(o=>o.status===storeOrderFilter);
+if(q){ const ql=q.toLowerCase(); orders=orders.filter(o=>{ const st=DataService.getUserById(o.studentId); const it=window.storeGetItems().find(i=>i.id===o.catalogItemId); return (((st&&st.name)||'').toLowerCase().includes(ql))||(((it&&it.name)||'').toLowerCase().includes(ql)); }); }
+if(status) orders=orders.filter(o=>o.status===status);
+if(group) orders=orders.filter(o=>{ const ts=DataService.getStudentTeachers?DataService.getStudentTeachers(o.studentId):[]; return ts.some(t=>t.group&&t.group.id===group); });
+if(center) orders=orders.filter(o=>{ const st=DataService.getUserById(o.studentId); return ((st&&st.center)||'')===center; });
+if(stage) orders=orders.filter(o=>{ const st=DataService.getUserById(o.studentId); return ((st&&st.stage)||'')===stage; });
+if(teacher) orders=orders.filter(o=>{ const it=window.storeGetItems().find(i=>i.id===o.catalogItemId); if(it&&(it.teacherId||'')===teacher) return true; const ts=DataService.getStudentTeachers?DataService.getStudentTeachers(o.studentId):[]; return ts.some(t=>t.teacher&&t.teacher.id===teacher); });
+orders=orders.slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
+const el=document.getElementById('storeOrdersList');
+if(!el) return;
+const statusColors={pending_payment:'var(--warning)',pending_reserve:'var(--info)',approved:'var(--primary)',delivered:'var(--success)',cancelled:'var(--danger)'};
+const statusLabels={pending_payment:'⏳ بانتظار الدفع',pending_reserve:'⏳ بانتظار الحجز',approved:'✅ موافق عليه (محجوز)',delivered:'📬 مسلّم',cancelled:'❌ ملغي'};
+el.innerHTML=orders.length?orders.map(o=>{
+const student=DataService.getUserById(o.studentId);
+const item=window.storeGetItems().find(i=>i.id===o.catalogItemId);
+return `<div class="card" style="margin-bottom:10px;border-right:4px solid ${statusColors[o.status]||'var(--border)'};">
+<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+<div style="flex:1;min-width:200px;">
+<strong>${(student&&student.name)||'طالب محذوف'}</strong>
+<div class="text-xs text-muted">📚 ${(item&&item.name)||'منتج محذوف'} · 📅 ${new Date(o.createdAt||Date.now()).toLocaleDateString('ar-EG')}</div>
+<div class="text-xs text-muted">💰 ${(item&&item.price)||0} ج.م × ${o.quantity||1}</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+<span class="badge" style="background:${statusColors[o.status]||'var(--border)'};color:#fff;">${statusLabels[o.status]||o.status}</span>
+${(o.status==='pending_payment'||o.status==='pending_reserve')?`<div style="display:flex;gap:6px;"><button class="btn btn-success btn-sm" onclick="window.approveStoreOrder('${o.id}')">✅ موافقة</button><button class="btn btn-danger btn-sm" onclick="window.rejectStoreOrder('${o.id}')">❌ رفض</button></div>`:''}
+${o.status==='approved'?`<button class="btn btn-primary btn-sm" onclick="window.deliverStoreOrder('${o.id}')">📬 تسليم</button>`:''}
+</div>
+</div>
+</div>`;
+}).join(''):'<div class="card" style="text-align:center;padding:30px;"><div style="font-size:40px;">✅</div><strong>لا توجد طلبات</strong></div>';
+}catch(e){console.error(e);}
+};
+window.approveStoreOrder=async function(id){
+try{
+const d=storeDb();
+const order=(d.storeOrders||[]).find(o=>o.id===id); if(!order){ window.safeToast('الطلب مش موجود','error'); return; }
+const item=(d.storeCatalog||[]).find(i=>i.id===order.catalogItemId);
+if(!item||(item.stock||0)<(order.quantity||1)){ window.safeToast('المخزون غير كافي','error'); return; }
+order.status='approved'; order.approvedBy=(typeof currentUser!=='undefined'&&currentUser)?currentUser.id:'admin'; order.approvedAt=new Date().toISOString();
+item.reserved=(item.reserved||0)+(order.quantity||1);
+storeSave(d);
+if(window.FirebaseService&&FirebaseService.connected){ try{ await FirebaseService.saveDoc('storeOrders',id,order); await FirebaseService.saveDoc('storeCatalog',item.id,item); }catch(err){} }
+window.safeToast('✅ تم الموافقة — المنتج بقى محجوز','success');
+window.loadStoreOrders(); window.loadStoreCatalog();
+}catch(e){ window.safeToast('خطأ: '+e.message,'error'); }
+};
+window.rejectStoreOrder=async function(id){
+try{
+if(!confirm('رفض الطلب؟')) return;
+const d=storeDb();
+const order=(d.storeOrders||[]).find(o=>o.id===id); if(!order) return;
+order.status='cancelled'; order.cancelledAt=new Date().toISOString(); order.cancelReason='مرفوض من الإدارة';
+storeSave(d);
+if(window.FirebaseService&&FirebaseService.connected){ try{ await FirebaseService.saveDoc('storeOrders',id,order); }catch(err){} }
+window.safeToast('✅ تم الرفض','success');
+window.loadStoreOrders();
+}catch(e){ window.safeToast('خطأ: '+e.message,'error'); }
+};
+window.deliverStoreOrder=async function(id){
+try{
+const d=storeDb();
+const order=(d.storeOrders||[]).find(o=>o.id===id); if(!order) return;
+const item=(d.storeCatalog||[]).find(i=>i.id===order.catalogItemId); if(!item) return;
+order.status='delivered'; order.deliveredAt=new Date().toISOString(); order.deliveredBy=(typeof currentUser!=='undefined'&&currentUser)?currentUser.id:'admin';
+item.stock=Math.max(0,(item.stock||0)-(order.quantity||1));
+item.reserved=Math.max(0,(item.reserved||0)-(order.quantity||1));
+storeSave(d);
+if(window.FirebaseService&&FirebaseService.connected){ try{ await FirebaseService.saveDoc('storeOrders',id,order); await FirebaseService.saveDoc('storeCatalog',item.id,item); }catch(err){} }
+window.safeToast('✅ تم التسليم وخصم الكمية من المخزون','success');
+window.loadStoreOrders(); window.loadStoreCatalog();
+}catch(e){ window.safeToast('خطأ: '+e.message,'error'); }
+};
+/* توصيل الصفحات باللوادر مهما كان شكل showSection عندك */
+if(typeof window.showSection==='function'&&!window.__storeShowWrapped){
+window.__storeShowWrapped=true;
+var __origShowStore=window.showSection;
+window.showSection=function(id){
+var r=__origShowStore.apply(this,arguments);
+try{
+if(id==='store') window.loadStoreCatalog();
+if(id==='storeOrders') window.loadStoreOrders();
+}catch(e){console.error(e);}
+return r;
+};
+}
+/* ================================================================🔄 STUDENT CYCLES (دورات الطلاب)================================================================ */
+window.loadStudentCycles=function(){
+try{
+const q=(document.getElementById('cycleSearch')?.value||'').toLowerCase();
+const statusFilter=(document.getElementById('cycleStatusFilter')?.value)||'';
+const students=DataService.getStudents?DataService.getStudents():[];
+const groups=DataService.getGroups?DataService.getGroups():[];
+let cycles=[];
+students.forEach(s=>{
+const teachers=DataService.getStudentTeachers?DataService.getStudentTeachers(s.id):[];
+teachers.forEach(({group})=>{
+const cycle=DataService.getCycleStateForStudent?DataService.getCycleStateForStudent(s.id,group.id):null;
+if(cycle) cycles.push({student:s,group,cycle});
+});
+});
+if(q) cycles=cycles.filter(c=>(c.student.name||'').toLowerCase().includes(q));
+if(statusFilter) cycles=cycles.filter(c=>c.cycle.status===statusFilter);
+cycles=cycles.sort((a,b)=>{
+const order={overdue:0,due:1,warning:2,active:3};
+return (order[a.cycle.status]||99)-(order[b.cycle.status]||99);
+});
+const el=document.getElementById('studentCyclesList');
+if(!el) return;
+const statusColors={active:'var(--success)',warning:'var(--warning)',due:'var(--info)',overdue:'var(--danger)'};
+const statusLabels={active:'✓ نشط',warning:'⚠️ إنذار',due:'💰 مستحق',overdue:'🚨 متأخر'};
+el.innerHTML=cycles.length?cycles.map(c=>{
+return `<div class="card" style="margin-bottom:10px;border-right:4px solid ${statusColors[c.cycle.status]||'var(--border)'};">
+<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+<div style="flex:1;min-width:200px;">
+<strong>${c.student.name}</strong>
+<div class="text-xs text-muted">📚 ${c.group.name} · 👨‍ ${((DataService.getUserById(c.group.teacherId))||{}).name||'-'}</div>
+<div class="text-xs text-muted">🔄 دورة ${c.cycle.sessionsDone||0}/${c.cycle.sessionsRequired||8}</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+<span class="badge" style="background:${statusColors[c.cycle.status]||'var(--border)'};color:#fff;">${statusLabels[c.cycle.status]||c.cycle.status}</span>
+<div style="display:flex;gap:6px;">
+<button class="btn btn-ghost btn-sm" onclick="window.openStudentProfile('${c.student.id}')">👁️ الملف</button>
+${(c.cycle.isDue||c.cycle.isOverdue)?`<button class="btn btn-success btn-sm" onclick="window.recordCyclePayment('${c.student.id}','${c.group.id}')">💰 تسجيل دفع</button><button class="btn btn-ghost btn-sm" title="تذكير واتساب لولي الأمر" onclick="Ops.openPaymentReminderWa('${c.student.id}','${c.group.id}')">💬 تذكير</button>`:''}
+</div>
+</div>
+</div>
+</div>`;
+}).join(''):'<div class="card" style="text-align:center;padding:30px;"><div style="font-size:40px;">✅</div><strong>لا توجد دورات</strong></div>';
+}catch(e){console.error(e);}
+};
+window.openEmergencySessionModal=function(){
+try{
+const groups=DataService.getGroups?DataService.getGroups():[];
+ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">⚡ حصة طوارئ إضافية</h3><button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="filter-info">الحصة دي هتتحسب ضمن الـ 8 لكل طلاب المجموعة المختارة.</div><div class="form-group"><label>المجموعة *</label><select id="emGroup" class="form-select">${groups.map(g=>`<option value="${g.id}">${g.name} — ${((DataService.getUserById(g.teacherId))||{}).name||''}</option>`).join('')}</select></div><div class="form-group"><label>التاريخ *</label><input type="date" id="emDate" class="form-input" value="${new Date().toISOString().split('T')[0]}"></div><button class="btn btn-primary w-full" onclick="window.applyEmergencySession()">✅ إضافة الحصة</button></div>`,'modal-md');
+}catch(e){console.error(e);}
+};
+window.applyEmergencySession=async function(){
+try{
+const gid=(document.getElementById('emGroup')||{}).value;
+const date=(document.getElementById('emDate')||{}).value;
+if(!gid||!date){ window.safeToast('اختار المجموعة والتاريخ','error'); return; }
+if(typeof Ops==='undefined'||typeof Ops.recordEmergencySession!=='function'){ window.safeToast('الخدمة مش متوفرة في Ops','error'); return; }
+const r=await Ops.recordEmergencySession(gid,date,(typeof currentUser!=='undefined'&&currentUser)?currentUser.id:'admin');
+if(r&&r.success){ window.safeToast('✅ اتضافت الحصة لـ '+r.studentsCount+' طالب','success'); ThemeManager.closeModal(); window.loadStudentCycles(); }
+else window.safeToast((r&&r.message)||'فشل','error');
+}catch(e){ window.safeToast('خطأ: '+e.message,'error'); }
+};
+window.recordCyclePayment=async function(studentId,groupId){
+try{
+const d=DataService._getData();
+const cycle=DataService.getCycleStateForStudent?DataService.getCycleStateForStudent(studentId,groupId):null;
+if(!cycle){ window.safeToast('مفيش دورة','error'); return; }
+const g=(DataService.getGroups?DataService.getGroups():[]).find(x=>x.id===groupId);
+const amount=(g&&g.monthlyFee)||0;
+d.payments=d.payments||[];
+let inv=d.payments.find(p=>p.studentId===studentId&&p.groupId===groupId&&p.cycleStart===cycle.cycleStartDate&&p.status!=='paid');
+if(!inv){
+const id='inv_'+Date.now();
+inv={id:id,studentId:studentId,groupId:groupId,amount:amount,paidAmount:0,status:'unpaid',cycleStart:cycle.cycleStartDate,createdAt:new Date().toISOString(),history:[]};
+d.payments.push(inv);
+}
+inv.paidAmount=inv.amount; inv.status='paid'; inv.paidAt=new Date().toISOString();
+inv.history=inv.history||[]; inv.history.push({date:new Date().toISOString(),amount:inv.amount,method:'cash'});
+DataService._saveData(d);
+if(window.FirebaseService&&FirebaseService.connected){ try{ await FirebaseService.saveDoc('payments',inv.id,inv); }catch(e){} }
+window.safeToast('✅ تم تسجيل الدفع — الدورة بدأت من جديد','success');
+window.loadStudentCycles();
+if(window.renderTowerPanel) window.renderTowerPanel();
+}catch(e){ window.safeToast('خطأ: '+e.message,'error'); }
+};
+if(typeof window.showSection==='function'&&!window.__cyclesShowWrapped){
+window.__cyclesShowWrapped=true;
+var __origShowCycles=window.showSection;
+window.showSection=function(id){
+var r=__origShowCycles.apply(this,arguments);
+try{ if(id==='cycles'&&window.loadStudentCycles) window.loadStudentCycles(); }catch(e){}
+return r;
+};
+}
 /* ================================================================
 🎓 مودال إضافة الطالب المحسّن (أدمن)
 ================================================================ */
@@ -4658,20 +5063,21 @@ try {
 window._linkMode = null;
 const s = editId ? DataService.getUserById(editId) : null;
 window._preChecked = s ? (DataService.getStudentTeachers(s.id)||[]).map(t=>t.group.id) : [];
-let centers = [];
-if (DataService.getCenters) { centers = (DataService.getCenters()||[]).map(c=>c.name).filter(Boolean); }
-if (!centers.length && window.getAllCenters) { centers = window.getAllCenters(); }
-centers = [...new Set(centers)];
+const tIds = s ? (DataService.getStudentTeachers(s.id)||[]).map(t=>t.teacher&&t.teacher.id).filter(Boolean) : [];
+window._selectedTeachers = tIds.slice();
+window._preTeachers = tIds.slice();
+const centers = window.getAllCenters ? window.getAllCenters() : [];
 const stageOpts = Object.entries(EduFlowConfig?.educationLevels||{}).map(([k,v])=>`<option value="${k}" ${s&&s.stage===k?'selected':''}>${v.nameAr}</option>`).join('');
 const esc = v => String(v==null?'':v).replace(/"/g,'&quot;');
-ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${s?'✏️ تعديل طالب':'🎓 إضافة طالب'}</h3><button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return window.saveStudent(event,'${editId||''}')"><div id="linkBanner" class="link-banner" style="display:none;"></div><div class="filter-info">💡 اكتب الاسم أو رقم ولي الأمر — لو الطالب مسجل هيظهر تحذير أصفر ومفيش حفظ من غير موافقتك. في التعديل: علّم على أي أستاذ جديد تنزل مجموعاته تحت.</div><div class="form-group"><label>الاسم الكامل *</label><input type="text" id="sName" class="form-input" value="${esc(s?.name)}" required oninput="SSM.scan('admin')"><div id="smartMatchBox"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>📱 هاتف الطالب</label><input type="tel" id="sPhone" class="form-input" value="${esc(s?.phone)}" placeholder="01XXXXXXXXX" oninput="SSM.scan('admin')"></div><div class="form-group"><label>👨‍ هاتف ولي الأمر</label><input type="tel" id="sParentPhone" class="form-input" value="${esc(s?.parentPhone)}" placeholder="01XXXXXXXXX" oninput="SSM.scan('admin')"></div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;"><div class="form-group"><label>المرحلة</label><select id="sStage" class="form-select" onchange="if(window.sStageCascade)window.sStageCascade();window.renderStudentGroups();"><option value="">--</option>${stageOpts}</select></div><div class="form-group"><label>الصف</label><select id="sGrade" class="form-select" onchange="window.renderStudentGroups();"><option value="">--</option></select></div><div class="form-group"><label>🏢 السنتر</label><select id="sCenter" class="form-select" onchange="window.renderStudentGroups();"><option value="">كل السناتر</option>${centers.map(c=>`<option>${esc(c)}</option>`).join('')}</select></div></div>${editId?'':'<div class="form-group"><label>🔑 كلمة المرور</label><input type="text" id="sPass" class="form-input" value="1234"></div>'}<div class="form-group"><label>🔍 بحث في المجموعات</label><input type="text" id="grpSearch" class="form-input" placeholder="اسم المجموعة..." oninput="window.renderStudentGroups();"></div><div class="form-group"><label>👨‍ الأساتذة والمجموعات (مجموعة واحدة لكل أستاذ)</label><div id="sGroupsList" style="max-height:340px;overflow-y:auto;"></div><div class="text-xs text-muted" style="margin-top:4px;">المحدد: <span id="grpCountBadge">0</span> مجموعة</div></div><button class="btn btn-primary w-full">💾 حفظ</button></form></div>`,'modal-lg');
-if (s) {
-if (window.sStageCascade) window.sStageCascade();
-const g = document.getElementById('sGrade'); if (g) g.value = s.grade||'';
-const b = document.getElementById('linkBanner');
-if (b) { b.style.display='block'; b.innerHTML='✏️ <strong>وضع التعديل:</strong> الأساتذة المشترك معهم متعلمين ومفتوحين بالأخضر — تقدر تضيف أساتذة جداد أو تفك مجموعات قديمة.'; }
+ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${s?'✏️ تعديل طالب':'🎓 إضافة طالب'}</h3><button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return window.saveStudent(event,'${editId||''}')"><div id="linkBanner" class="link-banner" style="display:none;"></div><div class="filter-info">💡 في وضع التعديل تقدر تعلّم على أساتذة جداد وتضيف لهم مجموعات — الحفظ بيضيف الجديد ويشيل اللي اتفك تعليمه.</div><div class="form-group"><label>الاسم الكامل *</label><input type="text" id="sName" class="form-input" value="${esc(s?.name)}" required oninput="SSM.scan('admin')"><div id="smartMatchBox"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>📱 هاتف الطالب</label><input type="tel" id="sPhone" class="form-input" value="${esc(s?.phone)}" placeholder="01XXXXXXXXX" oninput="SSM.scan('admin')"></div><div class="form-group"><label>👨‍👩 هاتف ولي الأمر</label><input type="tel" id="sParentPhone" class="form-input" value="${esc(s?.parentPhone)}" placeholder="01XXXXXXXXX" oninput="SSM.scan('admin')"></div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;"><div class="form-group"><label>المرحلة</label><select id="sStage" class="form-select" onchange="if(window.sStageCascade)window.sStageCascade();if(window.renderStudentGroups)window.renderStudentGroups();"><option value="">--</option>${stageOpts}</select></div><div class="form-group"><label>الصف</label><select id="sGrade" class="form-select" onchange="if(window.renderStudentGroups)window.renderStudentGroups();"><option value="">--</option></select></div><div class="form-group"><label>🏢 فلتر السنتر</label><select id="sCenter" class="form-select" onchange="if(window.renderStudentGroups)window.renderStudentGroups();"><option value="">كل السناتر</option>${centers.map(c=>`<option>${esc(c)}</option>`).join('')}</select></div></div>${editId?'':'<div class="form-group"><label>🔑 كلمة المرور</label><input type="text" id="sPass" class="form-input" value="1234"></div>'}<div class="stu-section"><div class="stu-section-title">👨 الأساتذة (تقدر تختار أكتر من أستاذ)</div><div id="teacherSelectionGrid" class="teacher-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;"></div></div><div class="stu-section"><div class="stu-section-title">👥 المجموعات (مجموعة واحدة لكل أستاذ)</div><div id="sGroupsList" style="max-height:320px;overflow-y:auto;"></div><div class="text-xs text-muted" style="margin-top:4px;">المحدد: <span id="grpCountBadge">0</span> مجموعة</div></div><button class="btn btn-primary w-full">💾 حفظ</button></form></div>`,'modal-lg');
+if(s){
+if(window.sStageCascade) window.sStageCascade(); else if(window.adminFillGrades) window.adminFillGrades(s.stage);
+const g=document.getElementById('sGrade'); if(g) g.value=s.grade||'';
+const b=document.getElementById('linkBanner');
+if(b){ b.style.display='block'; b.innerHTML='✏️ <strong>وضع التعديل:</strong> بيانات الطالب محملة — الأساتذة الحاليين متعلمين بالأخضر، علّم على أي أستاذ جديد تنزل مجموعاته فوراً.'; }
 }
-window.renderStudentGroups();
+window.renderStudentTeachersGrid(window._selectedTeachers||[]);
+if(window.renderStudentGroups) window.renderStudentGroups();
 }catch(e){ console.error('openStudentModal error',e); }
 };
 
@@ -4762,73 +5168,72 @@ window.loadGroupsPage=function(){
 
 window.saveStudent = async function(e, editId) {
 try {
-if (e && e.preventDefault) e.preventDefault();
-const name = String((document.getElementById('sName')||{}).value||'').trim();
-if (!name) { window.safeToast('اكتب الاسم','error'); return false; }
-const data = { name:name, phone:(document.getElementById('sPhone')||{}).value||'', parentPhone:(document.getElementById('sParentPhone')||{}).value||'', stage:(document.getElementById('sStage')||{}).value||'', grade:(document.getElementById('sGrade')||{}).value||'' };
-if (window._linkMode && window._linkMode.id && !editId) editId = window._linkMode.id;
-const gAll = DataService.getGroups?DataService.getGroups():[];
-const gById = {}; gAll.forEach(g=>{gById[g.id]=g;});
-const boxes = document.querySelectorAll('.modal-body input.grp-check:checked');
-const enroll = []; const seen = {};
-Array.prototype.forEach.call(boxes, cb=>{
-const gid = cb.value; if (!gid || !gById[gid] || seen[gid]) return; seen[gid]=1;
-enroll.push({ groupId:gid, teacherId: cb.getAttribute('data-teacher')||gById[gid].teacherId||'' });
-});
-const pre = (window._preChecked||[]).slice();
-const d = DataService._getData?DataService._getData():{};
-d.enrollments = d.enrollments||[];
-if (editId) {
-if (DataService.updateUser) await DataService.updateUser(editId, data);
-let added=0, removed=0;
-for (const en of enroll) {
-if (!d.enrollments.some(x=>x.studentId===editId&&x.groupId===en.groupId)) {
-const rec={id:'en_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7),studentId:editId,groupId:en.groupId,teacherId:en.teacherId,status:'active',enrolledAt:new Date().toISOString()};
-d.enrollments.push(rec); added++;
-if (window.FirebaseService&&FirebaseService.connected) { try{ await FirebaseService.saveDoc('enrollments',rec.id,rec); }catch(err){} }
-}
-}
-for (const gid of pre) {
-if (!enroll.some(x=>x.groupId===gid)) {
-const rec = d.enrollments.find(x=>x.studentId===editId&&x.groupId===gid);
-d.enrollments = d.enrollments.filter(x=>!(x.studentId===editId&&x.groupId===gid)); removed++;
-if (rec&&window.FirebaseService&&FirebaseService.connected) { try{ await FirebaseService.deleteDoc('enrollments',rec.id); }catch(err){} }
-}
-}
-if (DataService._saveData) DataService._saveData(d);
-window.safeToast('✅ تم الحفظ'+(added?' · ➕ '+added+' مجموعة':'')+(removed?' · ➖ '+removed+' مجموعة':''),'success');
+if(e&&e.preventDefault) e.preventDefault();
+const name=(document.getElementById('sName')?.value||'').trim();
+if(!name){ window.safeToast('اكتب الاسم','error'); return false; }
+const data={name:name, phone:document.getElementById('sPhone')?.value||'', parentPhone:document.getElementById('sParentPhone')?.value||'', stage:document.getElementById('sStage')?.value||'', grade:document.getElementById('sGrade')?.value||''};
+const pre=(window._preChecked||[]).slice();
+const selectedTeachers=(window._selectedTeachers||[]).slice();
+const groups=(DataService.getGroups?DataService.getGroups():[]);
+const byId={}; groups.forEach(g=>{byId[g.id]=g;});
+const checkedGroups=Array.from(document.querySelectorAll('#sGroupsList input.grp-check:checked, #sGroupsList input.as-grp:checked')).map(cb=>({groupId:cb.value, teacherId:cb.getAttribute('data-teacher')||''}));
+const checkedGids=checkedGroups.map(x=>x.groupId);
+const enroll=[];
+selectedTeachers.forEach(tid=>{
+const myGroups=checkedGroups.filter(x=>x.teacherId===tid);
+if(myGroups.length){
+myGroups.forEach(x=>enroll.push(x));
 } else {
-if (!enroll.length) { window.safeToast('اختار مجموعة واحدة على الأقل','error'); return false; }
-const P = x=>String(x||'').replace(/\D/g,'');
-const pp = P(data.parentPhone); const nm = name.toLowerCase();
-const dup = (DataService.getUsers?DataService.getUsers():[]).find(u=>u.role==='student'&&(((u.name||'').trim().toLowerCase()===nm))||(u.role==='student'&&pp.length>5&&P(u.parentPhone)===pp));
-if (dup) {
-const ts = (DataService.getStudentTeachers?DataService.getStudentTeachers(dup.id):[]).map(t=>(t.teacher?t.teacher.name:'؟')+' / '+(t.group?t.group.name:'؟')).join('، ');
-const link = confirm('⚠️ طالب مسجل بالفعل: '+dup.name+' ('+(dup.code||'-')+')\nمشترك في: '+(ts||'لا مجموعات')+'\n\nOK = ربط بنفس الطالب بدون تكرار\nCancel = إنشاء طالب جديد منفصل');
-if (link) {
-if (DataService.updateUser) await DataService.updateUser(dup.id, data);
-let add2=0;
-for (const en of enroll) {
-if (!d.enrollments.some(x=>x.studentId===dup.id&&x.groupId===en.groupId)) {
-d.enrollments.push({id:'en_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7),studentId:dup.id,groupId:en.groupId,teacherId:en.teacherId,status:'active',enrolledAt:new Date().toISOString()});
-add2++;
+const firstG=groups.find(g=>g.teacherId===tid);
+if(firstG) enroll.push({groupId:firstG.id, teacherId:tid});
 }
+});
+checkedGroups.forEach(x=>{
+if(!enroll.some(e=>e.groupId===x.groupId)){
+enroll.push(x);
 }
-if (DataService._saveData) DataService._saveData(d);
-window.safeToast('🔗 تم الربط بالطالب الموجود · ➕ '+add2+' مجموعة','success');
-ThemeManager.closeModal(); window._linkMode=null; window._preChecked=[];
-if (window.loadStudents) window.loadStudents(); return false;
+});
+const doEnroll=async function(sid,gid,tid){
+try{ if(window.SSM&&typeof SSM.enroll==='function'){ await SSM.enroll(sid,gid,tid); return true; } }catch(err){}
+try{ if(DataService&&typeof DataService.addEnrollment==='function'){ await DataService.addEnrollment({studentId:sid,groupId:gid,teacherId:tid,status:'active'}); return true; } }catch(err){}
+try{
+const d=DataService._getData(); d.enrollments=d.enrollments||[];
+if(!d.enrollments.some(x=>x.studentId===sid&&x.groupId===gid)){
+const rec={id:'en_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),studentId:sid,groupId:gid,teacherId:tid,status:'active',enrolledAt:new Date().toISOString()};
+d.enrollments.push(rec); DataService._saveData(d);
+if(window.FirebaseService&&FirebaseService.connected){ try{ await FirebaseService.saveDoc('enrollments',rec.id,rec); }catch(err){} }
 }
-const sure = confirm('❗ إنشاء طالب جديد منفصل رغم التطابق مع '+dup.name+'؟\nOK = تأكيد\nCancel = إلغاء');
-if (!sure) { window.safeToast('تم إلغاء الحفظ','info'); return false; }
-}
-const pass = (document.getElementById('sPass')||{}).value||'1234';
-const r = await DataService.addStudentByAdmin(Object.assign({}, data, { password: pass, enrollments: enroll }));
-window.safeToast((r&&r.linked)?'🔗 تم الربط بدون تكرار':'✅ تم إنشاء الطالب بالكود: '+r.code,'success');
+return true;
+}catch(err){ return false; }
+};
+const doUnenroll=async function(sid,gid){
+try{ if(window.SSM&&typeof SSM.unenroll==='function'){ await SSM.unenroll(sid,gid); return true; } }catch(err){}
+try{
+const d=DataService._getData();
+const rec=(d.enrollments||[]).find(x=>x.studentId===sid&&x.groupId===gid);
+d.enrollments=(d.enrollments||[]).filter(x=>!(x.studentId===sid&&x.groupId===gid));
+DataService._saveData(d);
+if(rec&&window.FirebaseService&&FirebaseService.connected){ try{ await FirebaseService.deleteDoc('enrollments',rec.id); }catch(err){} }
+return true;
+}catch(err){ return false; }
+};
+if(window._linkMode&&window._linkMode.id&&!editId) editId=window._linkMode.id;
+if(editId){
+if(DataService.updateUser) await DataService.updateUser(editId,data);
+const cur=(DataService.getStudentTeachers?DataService.getStudentTeachers(editId):[]).map(t=>t.group.id);
+let added=0, removed=0;
+for(const en of enroll){ if(cur.indexOf(en.groupId)<0){ if(await doEnroll(editId,en.groupId,en.teacherId)) added++; } }
+for(const gid of pre){ if(!enroll.some(x=>x.groupId===gid)){ if(await doUnenroll(editId,gid)) removed++; } }
+window.safeToast('✅ تم حفظ التعديل'+(added?' · ➕ '+added+' مجموعة جديدة':'')+(removed?' · ➖ '+removed+' مجموعة':''),'success');
+}else{
+if(!enroll.length){ window.safeToast('اختار مجموعة واحدة على الأقل أو علّم على أستاذ','error'); return false; }
+const pass=document.getElementById('sPass')?.value||'1234';
+const r=await DataService.addStudentByAdmin(Object.assign({},data,{password:pass,enrollments:enroll}));
+window.safeToast(r&&r.linked?'🔗 تم الربط بدون تكرار':'✅ تم إنشاء الطالب بالكود: '+r.code,'success');
 }
 ThemeManager.closeModal();
-window._linkMode=null; window._preChecked=[];
-if (window.loadStudents) window.loadStudents();
+window._linkMode=null; window._preChecked=[]; window._selectedTeachers=[]; window._preTeachers=[];
+if(window.loadStudents) window.loadStudents();
 return false;
 }catch(err){ console.error('saveStudent error',err); window.safeToast('خطأ في الحفظ: '+err.message,'error'); return false; }
 };
@@ -5752,5 +6157,116 @@ if(typeof window.showSection==='function' && !window._sbWired2){
 
 </script>
 <script src="js/schedule-board.js"></script>
+<script>
+/* ============ 🧩 توصيل نهائي: صفحات المتجر + بانل الدورات في برج التحكم ============ */
+(function(){
+if(window.__adminFinalWired) return; window.__adminFinalWired=true;
+function renderTowerPanel(){
+try{
+var host=document.getElementById('towerCycleStorePanel'); if(!host) return;
+var students=DataService.getStudents?DataService.getStudents():[];
+var groups=DataService.getGroups?DataService.getGroups():[];
+var warn=0,due=0,over=0;
+students.forEach(function(s){ groups.forEach(function(g){ try{ var c=DataService.getCycleStateForStudent?DataService.getCycleStateForStudent(s.id,g.id):null; if(!c) return; if(c.isOverdue) over++; else if(c.isDue) due++; else if(c.isWarning) warn++; }catch(e){} }); });
+var st=window.storeGetItems?window.storeGetItems():[];
+var ords=window.storeGetOrders?window.storeGetOrders():[];
+var pendOrd=ords.filter(function(o){return o.status==='pending_payment'||o.status==='pending_reserve';}).length;
+var lowStock=st.filter(function(i){return (i.stock||0)<=5;}).length;
+var revenue=ords.filter(function(o){return o.status==='delivered';}).reduce(function(sum,o){ var it=null; for(var k=0;k<st.length;k++){ if(st[k].id===o.catalogItemId){ it=st[k]; break; } } return sum+((it?it.price:0)*(o.quantity||1)); },0);
+host.innerHTML='<div class="card" style="margin-bottom:12px;"><h3 class="card-title" style="margin-bottom:10px;">🔄 الدورات والمتجر — نظرة سريعة</h3><div class="stat-mini">'+
+'<div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--warning);">'+warn+'</div><div class="stat-mini-label">دورات عند إنذار 7</div></div>'+
+'<div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--info);">'+due+'</div><div class="stat-mini-label">فواتير مستحقة (8)</div></div>'+
+'<div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--danger);">'+over+'</div><div class="stat-mini-label">متأخرين بعد السماح</div></div>'+
+'<div class="stat-mini-box"><div class="stat-mini-value">'+pendOrd+'</div><div class="stat-mini-label">طلبات متجر معلقة</div></div>'+
+'<div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--warning);">'+lowStock+'</div><div class="stat-mini-label">مخزون منخفض</div></div>'+
+'<div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--success);">'+revenue+'</div><div class="stat-mini-label">إيراد المتجر (ج.م)</div></div>'+
+'</div></div>';
+}catch(e){console.error(e);}
+}
+window.renderTowerPanel=renderTowerPanel;
+var orig=window.showSection;
+if(typeof orig==='function'){
+window.showSection=function(id){
+var r=orig.apply(this,arguments);
+try{
+if(id==='store'&&window.loadStoreCatalog) window.loadStoreCatalog();
+if(id==='storeOrders'&&window.loadStoreOrders) window.loadStoreOrders();
+if(id==='tower') renderTowerPanel();
+}catch(e){}
+return r;
+};
+}
+})();
+</script>
+<script>
+/* ============ 🔐 FINAL FIX: حفظ اشتراكات الطالب (مجموعات + أساتذة) بشكل صحيح ============ */
+window.saveStudent = async function(e, editId){
+try{
+if(e&&e.preventDefault) e.preventDefault();
+if(window._linkMode && window._linkMode.id && !editId) editId=window._linkMode.id;
+function val(ids){ for(var i=0;i<ids.length;i++){ var el=document.getElementById(ids[i]); if(el&&el.value) return el.value; } return ''; }
+var name=(document.getElementById('sName')||{}).value||'';
+if(!name.trim()){ window.safeToast('اكتب اسم الطالب','error'); return false; }
+var data={
+name:name.trim(),
+phone:(document.getElementById('sPhone')||{}).value||'',
+parentPhone:(document.getElementById('sParentPhone')||{}).value||'',
+stage:val(['sStage','sLevel','asLevel']),
+grade:val(['sGrade','asGrade'])
+};
+/* ✅ نجمع فقط الـ checkboxes اللي قيمتها = id مجموعة حقيقية (أيًا كان مكانها في المودال) */
+var groups=DataService.getGroups?DataService.getGroups():[];
+var gmap={}; groups.forEach(function(g){ gmap[g.id]=g; });
+var boxes=Array.prototype.slice.call(document.querySelectorAll('.modal-body input[type="checkbox"]:checked'));
+var seen={}; var enroll=[];
+boxes.forEach(function(cb){
+var gid=cb.value;
+if(!gmap[gid]||seen[gid]) return;
+seen[gid]=1;
+enroll.push({groupId:gid, teacherId:(cb.getAttribute('data-teacher')||gmap[gid].teacherId||'')});
+});
+if(editId){
+/* ✏️ تعديل: تحديث البيانات + diff الاشتراكات */
+if(typeof DataService.updateUser==='function') await DataService.updateUser(editId,data);
+var orig=(DataService.getStudentTeachers?DataService.getStudentTeachers(editId):[]).map(function(t){return t.group.id;});
+var newIds=enroll.map(function(x){return x.groupId;});
+var d=DataService._getData(); d.enrollments=d.enrollments||[];
+var added=0, removed=0;
+orig.forEach(function(gid){
+if(newIds.indexOf(gid)>=0) return;
+var rec=null; for(var k=0;k<d.enrollments.length;k++){ if(d.enrollments[k].studentId===editId&&d.enrollments[k].groupId===gid){ rec=d.enrollments[k]; break; } }
+d.enrollments=d.enrollments.filter(function(x){ return !(x.studentId===editId&&x.groupId===gid); });
+removed++;
+if(rec&&window.FirebaseService&&FirebaseService.connected){ try{ FirebaseService.deleteDoc('enrollments',rec.id).catch(function(){}); }catch(err){} }
+});
+enroll.forEach(function(en){
+if(orig.indexOf(en.groupId)>=0) return;
+var id='enr_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+var rec={id:id,studentId:editId,groupId:en.groupId,teacherId:en.teacherId,status:'active',enrolledAt:new Date().toISOString()};
+d.enrollments.push(rec); added++;
+if(window.FirebaseService&&FirebaseService.connected){ try{ FirebaseService.saveDoc('enrollments',id,rec).catch(function(){}); }catch(err){} }
+});
+DataService._saveData(d);
+window._preChecked=newIds.slice();
+window.safeToast('✅ تم الحفظ'+(added?' · ➕ '+added+' مجموعة':'')+(removed?' · ➖ '+removed+' مجموعة':''),'success');
+try{ ThemeManager.closeModal(); }catch(err){}
+if(window.loadStudents) window.loadStudents();
+return false;
+}
+/* 🎓 طالب جديد */
+if(!enroll.length){ window.safeToast('اختار مجموعة واحدة على الأقل','error'); return false; }
+var pass=(document.getElementById('sPass')||{}).value||'1234';
+await DataService.addStudentByAdmin(Object.assign({},data,{password:pass,enrollments:enroll}));
+window.safeToast('✅ تم إضافة الطالب وربطه بـ '+enroll.length+' مجموعة','success');
+try{ ThemeManager.closeModal(); }catch(err){}
+if(window.loadStudents) window.loadStudents();
+return false;
+}catch(err){
+console.error('saveStudent final error',err);
+window.safeToast('خطأ في الحفظ: '+err.message,'error');
+return false;
+}
+};
+</script>
 </body>
 </html>

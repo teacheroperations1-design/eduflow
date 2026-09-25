@@ -10,12 +10,12 @@ const DataService = {
 
     // تهيئة Collections الجديدة
     const d = this._getData();
-    const newCollections = [
-      'manualPoints', 'interactionPoints', 'manualSessions', 'whatsappTemplates',
-      'centerSettlements', 'teacherEvaluations', 'interactiveMaterials',
-      'videos', 'classPosts', 'challenges', 'challengeAttempts',
-      'studentNotes', 'expenses'
-    ];
+const newCollections = [
+  'manualPoints', 'interactionPoints', 'manualSessions', 'whatsappTemplates',
+  'centerSettlements', 'teacherEvaluations', 'interactiveMaterials',
+  'videos', 'classPosts', 'challenges', 'challengeAttempts',
+  'studentNotes', 'expenses', 'storeCatalog', 'storeOrders'
+];
     newCollections.forEach(c => { if (!d[c]) d[c] = []; });
     if (!d.centerSettlements) d.centerSettlements = {};
     if (!d.assignments) d.assignments = {};
@@ -261,19 +261,34 @@ const DataService = {
     }catch(e){}
     return att;
   },
-   async approveAttendance(id, by) {
-    const d = this._getData();
-    const a = (d.attendance || []).find(x => x.id === id); if (!a) return;
-    a.status = 'approved'; a.approvedBy = by; a.approvedAt = new Date().toISOString();
-    this._saveData(d);
-    if (window.FirebaseService?.connected) await FirebaseService.saveDoc('attendance', id, a);
-    // 🔥 تحديث الستريك لكل طالب حاضر في الحصة المعتمدة
-    try{
-      if(window.Ops?.touchStreak){
-        (a.records||[]).filter(r=>r.status==='present').forEach(r=>{ Ops.touchStreak(r.studentId, by); });
+ async approveAttendance(id, by) {
+  const d = this._getData();
+  const a = (d.attendance || []).find(x => x.id === id); if (!a) return;
+  a.status = 'approved'; a.approvedBy = by; a.approvedAt = new Date().toISOString();
+  this._saveData(d);
+  if (window.FirebaseService?.connected) await FirebaseService.saveDoc('attendance', id, a);
+  
+  // 🔥 تحديث الستريك لكل طالب حاضر في الحصة المعتمدة
+  try{
+    if(window.Ops?.touchStreak){
+      (a.records||[]).filter(r=>r.status==='present').forEach(r=>{ Ops.touchStreak(r.studentId, by); });
+    }
+  }catch(e){}
+  
+  // 🆕 فحص الدورة لكل طالب في الحصة (إنذار 7 + فاتورة 8)
+  try {
+    if (window.Ops?.triggerCycleCheck) {
+      const records = a.records || [];
+      for (const r of records) {
+        if (r.status === 'present' || r.status === 'absent') {
+          await window.Ops.triggerCycleCheck(r.studentId, a.groupId, { type: 'attendance', date: a.date });
+        }
       }
-    }catch(e){}
-  },
+    }
+  } catch (e) {
+    console.error('triggerCycleCheck in approveAttendance error:', e);
+  }
+},
 
   // ===== CANCELLED SESSIONS + MAKEUPS =====
   getCancelledSessions() { return this._getData().cancelledSessions || []; },
@@ -711,51 +726,142 @@ const DataService = {
   },
 
   // ===== 🆕 BILLING (مصحح - يحل مشكلة cancelled.filter) =====
-  calculateBilling(groupId, month) {
-    const g = this.getGroups().find(x => x.id === groupId); if (!g) return null;
+calculateBilling(groupId, month) {
+  const g = this.getGroups().find(x => x.id === groupId); if (!g) return null;
+  const d = this._getData();
+  const sessionsRequired = g.sessionsPerMonth || 8;
 
-    const attendance = this.getAttendance().filter(a =>
-      a.groupId === groupId && (a.date || '').startsWith(month) && a.status === 'approved'
-    );
-    const actualSessions = attendance.length;
+  // 🆕 منطق الدورات: عدّاد لكل طالب داخل المجموعة
+  // (الدالة دي بتشتغل على مستوى المجموعة ككل، والعداد الفعلي بيكون في getCycleStateForStudent)
+  const attendance = this.getAttendance().filter(a =>
+    a.groupId === groupId && a.status === 'approved'
+  ).sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    // ✅ الإصلاح: تطبيع cancelledSessions كمصفوفة دائماً
-    const cancelledSessionsRaw = this.getCancelledSessions();
-    const cancelledArray = Array.isArray(cancelledSessionsRaw) ? cancelledSessionsRaw : [];
-    const cancelled = cancelledArray.filter(c =>
-      c.groupId === groupId && (c.date || '').startsWith(month)
-    );
-    const cancelledCount = cancelled.length;
+  const actualSessions = attendance.length;
 
-    const makeupDone = cancelled.filter(c => c.makeupStatus === 'done').length;
+  // ✅ الإصلاح: تطبيع cancelledSessions كمصفوفة دائماً
+  const cancelledSessionsRaw = this.getCancelledSessions();
+  const cancelledArray = Array.isArray(cancelledSessionsRaw) ? cancelledSessionsRaw : [];
+  const cancelled = cancelledArray.filter(c => c.groupId === groupId);
+  const cancelledCount = cancelled.length;
 
-    // 🆕 الحصص اليدوية المضافة
-    const manualSessions = this.getManualSessionsForBilling(groupId, null, month);
-    const manualSessionsCount = manualSessions.reduce((sum, ms) => sum + (ms.sessionsCount || 0), 0);
+  const makeupDone = cancelled.filter(c => c.makeupStatus === 'done').length;
 
-    const sessionsRequired = window.EduFlowConfig?.billing?.sessionsBeforePayment || 8;
-    const totalSessions = actualSessions + manualSessionsCount;
-    const shouldCharge = totalSessions >= sessionsRequired;
+  // 🆕 الحصص اليدوية المضافة (بما فيها حصص الطوارئ)
+  const manualSessions = this.getManualSessionsForBilling(groupId, null, month);
+  const manualSessionsCount = manualSessions.reduce((sum, ms) => sum + (ms.sessionsCount || 0), 0);
 
-    const billableSessions = actualSessions - cancelledCount + makeupDone + manualSessionsCount;
+  const totalSessions = actualSessions + manualSessionsCount;
+  const shouldCharge = totalSessions >= sessionsRequired;
 
-    return {
-      groupId, month,
-      sessionsPerMonth: g.sessionsPerMonth || 8,
-      actualSessions: actualSessions,
-      cancelledSessions: cancelledCount,
-      makeupDone: makeupDone,
-      manualSessionsCount: manualSessionsCount,
-      totalSessions: totalSessions,
-      billableSessions: Math.max(0, billableSessions),
-      sessionsRequired: sessionsRequired,
-      shouldCharge: shouldCharge,
-      sessionFee: g.sessionFee || 0,
-      total: shouldCharge ? (g.monthlyFee || 0) : 0,
-      monthlyFee: g.monthlyFee || 0
-    };
-  },
+  const billableSessions = actualSessions - cancelledCount + makeupDone + manualSessionsCount;
 
+  return {
+    groupId, month,
+    sessionsPerMonth: sessionsRequired,
+    actualSessions: actualSessions,
+    cancelledSessions: cancelledCount,
+    makeupDone: makeupDone,
+    manualSessionsCount: manualSessionsCount,
+    totalSessions: totalSessions,
+    billableSessions: Math.max(0, billableSessions),
+    sessionsRequired: sessionsRequired,
+    shouldCharge: shouldCharge,
+    sessionFee: g.sessionFee || 0,
+    total: shouldCharge ? (g.monthlyFee || 0) : 0,
+    monthlyFee: g.monthlyFee || 0
+  };
+},
+
+// 🆕 حالة الدورة للطالب داخل المجموعة
+getCycleStateForStudent(studentId, groupId) {
+  const g = this.getGroups().find(x => x.id === groupId); if (!g) return null;
+  const d = this._getData();
+  const sessionsRequired = g.sessionsPerMonth || 8;
+
+  // آخر دفعة مدفوعة للطالب في المجموعة دي
+  const lastPaid = (d.payments || [])
+    .filter(p => p.studentId === studentId && p.groupId === groupId && p.status === 'paid')
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+
+  const cycleStartDate = lastPaid ? new Date(lastPaid.createdAt) : new Date(0);
+
+  // الحصص المتعملة بعد آخر دفعة
+  const attendance = this.getAttendance().filter(a =>
+    a.groupId === groupId &&
+    a.status === 'approved' &&
+    new Date(a.date) > cycleStartDate &&
+    (a.records || []).some(r => r.studentId === studentId)
+  ).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  const actualSessions = attendance.length;
+
+  // الحصص الملغية (مش بتتحسب)
+  const cancelledArray = Array.isArray(this.getCancelledSessions()) ? this.getCancelledSessions() : [];
+  const cancelled = cancelledArray.filter(c =>
+    c.groupId === groupId && new Date(c.date) > cycleStartDate
+  );
+  const cancelledCount = cancelled.length;
+
+  // الحصص التعويضية المكتملة
+  const makeupDone = cancelled.filter(c => c.makeupStatus === 'done').length;
+
+  // الحصص اليدوية (بما فيها الطوارئ)
+  const manualSessions = (d.manualSessions || []).filter(ms =>
+    ms.groupId === groupId &&
+    ms.studentId === studentId &&
+    new Date(ms.addedAt) > cycleStartDate
+  );
+  const manualSessionsCount = manualSessions.reduce((sum, ms) => sum + (ms.sessionsCount || 0), 0);
+
+  // العدّاد النهائي
+  const sessionsDone = actualSessions - cancelledCount + makeupDone + manualSessionsCount;
+
+  // الحالة
+  let status = 'active'; // عادي
+  if (sessionsDone === sessionsRequired - 1) status = 'warning'; // إنذار (7 من 8)
+  if (sessionsDone >= sessionsRequired) status = 'due'; // مستحق الدفع (8+)
+
+  // الفاتورة الحالية
+  const invoice = (d.payments || []).find(p =>
+    p.studentId === studentId &&
+    p.groupId === groupId &&
+    p.cycleStart === cycleStartDate.toISOString() &&
+    p.status !== 'paid'
+  );
+
+  // فترة السماح: لحد أول حصة في الدورة الجديدة
+  let graceEndDate = null;
+  if (status === 'due') {
+    const nextSession = this.getAttendance().filter(a =>
+      a.groupId === groupId &&
+      a.status === 'approved' &&
+      new Date(a.date) > cycleStartDate &&
+      (a.records || []).some(r => r.studentId === studentId)
+    ).sort((a, b) => new Date(a.date) - new Date(b.date))[sessionsRequired];
+    if (nextSession) graceEndDate = nextSession.date;
+  }
+
+  // لو فاتت فترة السماح
+  if (status === 'due' && graceEndDate && new Date() > new Date(graceEndDate)) {
+    status = 'overdue';
+  }
+
+  return {
+    studentId,
+    groupId,
+    cycleStartDate: cycleStartDate.toISOString(),
+    sessionsDone,
+    sessionsRequired,
+    status,
+    isWarning: status === 'warning',
+    isDue: status === 'due',
+    isOverdue: status === 'overdue',
+    graceEndDate,
+    invoice,
+    nextSessionNumber: sessionsDone + 1
+  };
+},
   // ===== MATERIALS =====
   getMaterials() { return this._getData().materials || []; },
   getMaterialById(id) { return this.getMaterials().find(m => m.id === id); },
@@ -1435,11 +1541,115 @@ const DataService = {
     return expense;
   },
   async deleteExpense(id) {
-    const d = this._getData();
-    d.expenses = (d.expenses || []).filter(e => e.id !== id);
-    this._saveData(d);
-    if (window.FirebaseService?.connected) await FirebaseService.deleteDoc('expenses', id);
-  }
+  const d = this._getData();
+  d.expenses = (d.expenses || []).filter(e => e.id !== id);
+  this._saveData(d);
+  if (window.FirebaseService?.connected) await FirebaseService.deleteDoc('expenses', id);
+},
+
+// ===== 🆕 المتجر (Store) =====
+getCatalogItems(f = {}) {
+  let r = this._getData().storeCatalog || [];
+  if (f.category) r = r.filter(i => i.category === f.category);
+  if (f.availability) r = r.filter(i => i.availability === f.availability);
+  if (f.createdBy) r = r.filter(i => i.createdBy === f.createdBy);
+  return r.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+},
+getCatalogItemById(id) {
+  return (this._getData().storeCatalog || []).find(i => i.id === id) || null;
+},
+async addCatalogItem(data) {
+  const d = this._getData(); if (!d.storeCatalog) d.storeCatalog = [];
+  const id = 'cat_' + Date.now();
+  const item = {
+    id,
+    createdAt: new Date().toISOString(),
+    name: data.name || '',
+    description: data.description || '',
+    category: data.category || 'كتاب',
+    price: parseFloat(data.price) || 0,
+    stock: parseInt(data.stock) || 0,
+    reserved: 0,
+    availability: data.availability || 'available',
+    availableDate: data.availableDate || null,
+    imageUrl: data.imageUrl || '',
+    createdBy: data.createdBy || 'system'
+  };
+  d.storeCatalog.push(item); this._saveData(d);
+  if (window.FirebaseService?.connected) await FirebaseService.saveDoc('storeCatalog', id, item);
+  return item;
+},
+async updateCatalogItem(id, updates) {
+  const d = this._getData();
+  const item = (d.storeCatalog || []).find(i => i.id === id); if (!item) return null;
+  Object.assign(item, updates, { updatedAt: new Date().toISOString() });
+  this._saveData(d);
+  if (window.FirebaseService?.connected) await FirebaseService.saveDoc('storeCatalog', id, item);
+  return item;
+},
+async deleteCatalogItem(id) {
+  const d = this._getData();
+  d.storeCatalog = (d.storeCatalog || []).filter(i => i.id !== id);
+  this._saveData(d);
+  if (window.FirebaseService?.connected) await FirebaseService.deleteDoc('storeCatalog', id);
+},
+getStoreOrders(f = {}) {
+  let r = this._getData().storeOrders || [];
+  if (f.studentId) r = r.filter(o => o.studentId === f.studentId);
+  if (f.status) r = r.filter(o => o.status === f.status);
+  if (f.catalogItemId) r = r.filter(o => o.catalogItemId === f.catalogItemId);
+  return r.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+},
+getStudentStoreOrders(studentId) {
+  return this.getStoreOrders({ studentId });
+},
+async addStoreOrder(data) {
+  const d = this._getData(); if (!d.storeOrders) d.storeOrders = [];
+  const id = 'ord_' + Date.now();
+  const order = {
+    id,
+    createdAt: new Date().toISOString(),
+    studentId: data.studentId,
+    catalogItemId: data.catalogItemId,
+    quantity: parseInt(data.quantity) || 1,
+    status: data.status || 'pending_payment',
+    pickupDate: data.pickupDate || null,
+    deliveredAt: null,
+    cancelledAt: null,
+    cancelReason: '',
+    approvedBy: null,
+    deliveredBy: null
+  };
+  d.storeOrders.push(order); this._saveData(d);
+  if (window.FirebaseService?.connected) await FirebaseService.saveDoc('storeOrders', id, order);
+  return order;
+},
+async updateStoreOrder(id, updates) {
+  const d = this._getData();
+  const order = (d.storeOrders || []).find(o => o.id === id); if (!order) return null;
+  Object.assign(order, updates, { updatedAt: new Date().toISOString() });
+  this._saveData(d);
+  if (window.FirebaseService?.connected) await FirebaseService.saveDoc('storeOrders', id, order);
+  return order;
+},
+getCatalogStats() {
+  const items = this.getCatalogItems();
+  const orders = this.getStoreOrders();
+  const totalRevenue = orders.filter(o => o.status === 'delivered').reduce((sum, o) => {
+    const item = items.find(i => i.id === o.catalogItemId);
+    return sum + (item ? item.price * o.quantity : 0);
+  }, 0);
+  const pendingOrders = orders.filter(o => o.status === 'pending_payment' || o.status === 'pending_reserve').length;
+  const lowStock = items.filter(i => i.stock <= 5 && i.availability === 'available').length;
+  return {
+    totalItems: items.length,
+    totalOrders: orders.length,
+    pendingOrders,
+    deliveredOrders: orders.filter(o => o.status === 'delivered').length,
+    totalRevenue,
+    lowStockItems: lowStock
+  };
+}
 };
 
 // ⚡ مزامنة الكاش بين التبويبات
@@ -1449,6 +1659,32 @@ const DataService = {
       if (e.key === 'eduflow_db') DataService._cache = null;
     });
   } catch (e) { }
+})();
+
+/* ============ 💰 إشعار تلقائي عند تغيير سعر الشهرية ============ */
+(function(){
+if(window.__priceNotifyWrapped) return; window.__priceNotifyWrapped=true;
+var origUpdateGroup=DataService.updateGroup;
+DataService.updateGroup=async function(id,updates){
+var old=null;
+try{ old=(DataService.getGroups()||[]).find(function(g){return g.id===id;})||null; }catch(e){}
+var oldFee=(old&&old.monthlyFee!==undefined)?old.monthlyFee:null;
+var res=await origUpdateGroup.call(DataService,id,updates);
+try{
+if(updates&&updates.monthlyFee!==undefined&&oldFee!==null&&updates.monthlyFee!==oldFee){
+var g2=(DataService.getGroups()||[]).find(function(g){return g.id===id;});
+var msg='💰 تم تحديث سعر شهرية مجموعة '+(g2?g2.name:'')+' من '+oldFee+' ج.م إلى '+updates.monthlyFee+' ج.م.\nالتغيير بيتطبق من الدورة الجاية — الدورة الحالية بتكمل بسعرها القديم.';
+var studs=DataService.getStudentsByGroup?DataService.getStudentsByGroup(id):[];
+for(var i=0;i<studs.length;i++){
+await DataService.addNotification({title:'💰 تحديث سعر الشهرية',message:msg,targetUserId:studs[i].id,type:'price_change',priority:'high',meta:{groupId:id,oldFee:oldFee,newFee:updates.monthlyFee}});
+}
+if(g2&&g2.teacherId){ await DataService.addNotification({title:'💰 تحديث سعر مجموعة',message:msg,targetUserId:g2.teacherId,type:'price_change',priority:'medium',meta:{groupId:id}}); }
+var admins=(DataService.getUsers?DataService.getUsers():[]).filter(function(u){return u.role==='admin'||u.role==='super_admin';});
+for(var k=0;k<admins.length;k++){ await DataService.addNotification({title:'💰 تغيير سعر مسجل',message:msg,targetUserId:admins[k].id,type:'price_change',priority:'low',meta:{groupId:id}}); }
+}
+}catch(e){ console.error('price notify error',e); }
+return res;
+};
 })();
 
 window.DataService = DataService;

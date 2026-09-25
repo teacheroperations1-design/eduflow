@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🖥️ غرفة المتابعة - EduFlow</title>
+<link rel="stylesheet" href="css/eduflow-theme.css">
+<style>
+body{background:radial-gradient(1200px 600px at 80% -10%,rgba(99,102,241,.14),transparent),radial-gradient(1000px 500px at 10% 110%,rgba(16,185,129,.10),transparent),var(--bg);overflow-x:hidden}
+.mw{padding:18px 22px 70px;display:flex;flex-direction:column;gap:16px}
+.mhead{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.mtitle{font-size:clamp(20px,2vw,34px);font-weight:900}
+.mclock{font-family:var(--font-en);font-size:clamp(22px,2.2vw,40px);font-weight:900;color:var(--primary);letter-spacing:2px}
+.mdate{font-size:clamp(11px,1vw,16px);color:var(--text-muted)}
+.kpis{display:grid;grid-template-columns:repeat(8,1fr);gap:12px}
+@media(max-width:1600px){.kpis{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:linear-gradient(180deg,var(--surface),var(--surface-hover));border:1px solid var(--border);border-radius:16px;padding:14px 16px;position:relative;overflow:hidden}
+.kpi .v{font-size:clamp(26px,2.6vw,46px);font-weight:900;font-family:var(--font-en);line-height:1.1}
+.kpi .l{font-size:clamp(10px,.9vw,14px);color:var(--text-muted);font-weight:700;margin-top:2px}
+.kpi .s{font-size:clamp(9px,.8vw,12px);color:var(--text-secondary);margin-top:4px}
+.kpi.live{border-color:var(--success);box-shadow:0 0 0 1px var(--success),0 0 24px rgba(16,185,129,.25)}
+.kpi.done{border-color:var(--info)}
+.grid2{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
+.grid2b{display:grid;grid-template-columns:.9fr 1.1fr;gap:16px}
+@media(max-width:1200px){.grid2,.grid2b{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px 16px;min-height:120px}
+.ptitle{font-size:clamp(12px,1.1vw,18px);font-weight:800;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.livecard{border:1px solid var(--border);border-right:4px solid var(--success);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--surface-hover);box-shadow:0 0 18px rgba(16,185,129,.12)}
+.livecard.next{border-right-color:var(--info);box-shadow:none}
+.livecard.donec{border-right-color:var(--border);opacity:.7;box-shadow:none}
+.bar{height:8px;background:var(--surface-hover);border-radius:99px;overflow:hidden;margin-top:6px;position:relative}
+.bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--primary),var(--success));border-radius:99px;transition:width 1s}
+.bar .dot{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:var(--primary);border:2px solid var(--surface);transform:translate(50%,-50%);box-shadow:0 0 10px var(--primary)}
+table.mt{width:100%;border-collapse:collapse;font-size:clamp(10px,.95vw,15px)}
+table.mt th,table.mt td{border:1px solid var(--border);padding:7px 8px;text-align:center}
+table.mt th{background:var(--surface-hover);font-weight:800}
+.up{color:var(--success);font-weight:800}.down{color:var(--danger);font-weight:800}.flat{color:var(--text-muted);font-weight:700}
+.feed{max-height:360px;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
+.fitem{display:flex;gap:8px;align-items:center;background:var(--surface-hover);border-radius:10px;padding:7px 10px;font-size:clamp(10px,.9vw,14px)}
+.fitem .t{font-family:var(--font-en);color:var(--text-muted);font-size:.85em;white-space:nowrap}
+.ticker{position:fixed;bottom:0;left:0;right:0;height:46px;background:var(--surface);border-top:1px solid var(--border);overflow:hidden;z-index:50}
+.ticker>div{position:absolute;left:0;top:0;height:46px;display:flex;align-items:center;white-space:nowrap;will-change:transform;animation:tick 50s linear infinite;font-weight:700;font-size:clamp(11px,1vw,16px);padding:0 20px}
+@keyframes tick{from{transform:translateX(-100%)}to{transform:translateX(100vw)}}
+.pulse{animation:pl 1.6s infinite}
+@keyframes pl{0%,100%{opacity:1}50%{opacity:.45}}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:.8em;font-weight:800}
+.colhead{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px;background:var(--surface-hover);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;cursor:pointer;font-weight:800;font-size:clamp(11px,1vw,15px)}
+.colhead:hover{border-color:var(--primary-border)}
+.colbody{display:none;padding:4px 10px 10px;border:1px dashed var(--border);border-radius:10px;margin-bottom:10px}
+.colbody.open{display:block}
+.thbtn{background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:8px 16px;font-weight:800;cursor:pointer;font-size:clamp(11px,1vw,15px)}
+.thbtn:hover{border-color:var(--primary-border)}
+/* ============ 🎨 باليتة المتغيرات الكاملة (ليلي/نهاري) — مستقلة عن أي ملف خارجي ============ */
+html[data-theme="dark"], body[data-theme="dark"]{
+--bg:#0a0f1e; --surface:#101828; --surface-hover:#1a2436; --border:#263449;
+--text:#e5e7eb; --text-secondary:#cbd5e1; --text-muted:#8b98ab;
+--primary:#6366f1; --primary-bg:rgba(99,102,241,.12); --primary-border:rgba(99,102,241,.45);
+--success:#10b981; --success-bg:rgba(16,185,129,.12);
+--danger:#ef4444; --danger-bg:rgba(239,68,68,.12);
+--warning:#f59e0b; --warning-bg:rgba(245,158,11,.12);
+--info:#3b82f6; --info-bg:rgba(59,130,246,.12);
+--radius:12px; color-scheme:dark;
+}
+html[data-theme="light"], body[data-theme="light"]{
+--bg:#f9fafb; --surface:#ffffff; --surface-hover:#f3f4f6; --border:#e5e7eb;
+--text:#111827; --text-secondary:#374151; --text-muted:#6b7280;
+--primary:#4f46e5; --primary-bg:rgba(79,70,229,.08); --primary-border:rgba(79,70,229,.35);
+--success:#059669; --success-bg:rgba(5,150,105,.10);
+--danger:#dc2626; --danger-bg:rgba(220,38,38,.10);
+--warning:#d97706; --warning-bg:rgba(217,119,6,.12);
+--info:#2563eb; --info-bg:rgba(37,99,235,.10);
+--radius:12px; color-scheme:light;
+}
+body{background:radial-gradient(1200px 600px at 80% -10%,rgba(99,102,241,.14),transparent),radial-gradient(1000px 500px at 10% 110%,rgba(16,185,129,.10),transparent),var(--bg)!important;color:var(--text)!important}
+.panel,.kpi,.colhead,.fitem,.livecard{color:var(--text)}
+</style>
+</head>
+<body data-theme="dark">
+<div class="mw">
+<div class="mhead">
+<div><div class="mtitle">🖥️ غرفة المتابعة اللحظية <span id="brandName" style="color:var(--primary)"></span></div><div class="mdate" id="mDate"></div></div>
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+<button class="thbtn" id="themeBtn" onclick="toggleTheme()">☀️ وضع نهاري</button>
+<div style="text-align:left"><div class="mclock" id="mClock">--:--:--</div><div class="mdate">تحديث تلقائي كل 10 ثواني</div></div>
+</div>
+</div>
+<div class="kpis" id="kpiRow"></div>
+<div class="kpis" id="kpiRow2" style="margin-top:-4px"></div>
+<div class="grid2">
+<div class="panel" style="border-color:var(--warning)"><div class="ptitle">⚠️ تنبيهات الدورات <span id="cyclesChip" class="chip" style="background:var(--warning-bg);color:var(--warning);"></span></div><div id="cyclesAlerts" style="max-height:360px;overflow-y:auto"></div></div>
+<div class="panel" style="border-color:var(--info)"><div class="ptitle">🛒 طلبات المتجر المعلقة <span id="storeChip" class="chip" style="background:var(--info-bg);color:var(--info);"></span></div><div id="storePending" style="max-height:360px;overflow-y:auto"></div></div>
+</div>
+<div class="grid2">
+<div class="panel"><div class="ptitle">📡 اللي شغالين دلوقتي <span id="liveChip" class="chip" style="background:var(--success-bg);color:var(--success);"></span></div><div id="liveBox"></div></div>
+<div class="panel"><div class="ptitle">🌇 شريط نهاية اليوم <span id="eodChip" class="chip" style="background:var(--primary-bg);color:var(--primary);"></span></div><div id="eodBox"></div></div>
+</div>
+<div class="grid2">
+<div class="panel"><div class="ptitle">✅ الحصص اللي خلصت — حسب الأستاذ (<span id="doneCount">0</span>)</div><div id="doneByTeacher" style="max-height:360px;overflow-y:auto"></div></div>
+<div class="panel"><div class="ptitle">📚 حالة المجموعات النهارده (اتأخذت / اتلغت)</div><div id="groupStatus" style="max-height:360px;overflow-y:auto"></div></div>
+</div>
+<div class="grid2b">
+<div class="panel"><div class="ptitle">🔖 تفاصيل الباركود <select id="bcGroupSel" class="form-select" style="max-width:230px" onchange="renderBcDetail()"></select></div><div id="bcDetail"></div></div>
+<div class="panel"><div class="ptitle">👨‍ حركة الأساتذة النهارده</div><div style="overflow-x:auto"><table class="mt" id="teacherTable"></table></div></div>
+</div>
+<div class="grid2">
+<div class="panel"><div class="ptitle">⚡ آخر النشاط على المنصة</div><div class="feed" id="feedBox"></div></div>
+<div class="panel"><div class="ptitle">🏆 الأكثر تفاعلاً بالباركود النهارده</div><div id="topScanBox"></div></div>
+</div>
+</div>
+<div class="ticker"><div id="tickerText"></div></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+<script src="js/config.js"></script>
+<script src="js/firebase-service.js"></script>
+<script src="js/data-service.js"></script>
+<script src="js/operations-service.js"></script>
+<script src="js/theme-manager.js"></script>
+<script>
+/* ============ أدوات ============ */
+function db(){ return (window.DataService&&DataService._getData)?DataService._getData():{}; }
+function dayStr(off){ var d=new Date(Date.now()-(off||0)*86400000); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function minOf(t){ var p=String(t||'0:00').split(':'); return ((+p[0])||0)*60+((+p[1])||0); }
+function f12(t){ if(!t) return ''; var p=String(t).split(':'); var h=parseInt(p[0],10)||0; var m=p[1]||'00'; var ap=h>=12?'م':'ص'; h=h%12; if(h===0)h=12; return h+':'+m+' '+ap; }
+function hm2(min){ min=((Math.round(min)%1440)+1440)%1440; var h=Math.floor(min/60), m=min%60; return (h<10?'0':'')+h+':'+(m<10?'0':'')+m; }
+function p2(n){ return (n<10?'0':'')+n; }
+function students(){ return (DataService.getUsers?DataService.getUsers():[]).filter(function(u){return u.role==='student';}); }
+function groups(){ return DataService.getGroups?DataService.getGroups():[]; }
+function tName(tid){ var t=(DataService.getUserById)?DataService.getUserById(tid):null; return (t&&t.name)||'-'; }
+function stuName(sid){ var s=(DataService.getUserById)?DataService.getUserById(sid):null; return (s&&s.name)||'طالب'; }
+function groupsOfStudent(sid){ try{ return (DataService.getStudentTeachers?DataService.getStudentTeachers(sid):[]).map(function(t){return t.group;}).filter(Boolean); }catch(e){ return []; } }
+function cancelledToday(gid){ var d=db(); return (d.cancelledSessions||[]).some(function(c){ return c.groupId===gid&&c.date===dayStr(0); }); }
+function groupHeldToday(gid){ var d=db(); return (d.attendance||[]).some(function(a){ return a.groupId===gid&&a.date===dayStr(0); }); }
+function todaySessions(){
+var DAYSEN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+var todayEn=DAYSEN[new Date().getDay()];
+var nowMin=new Date().getHours()*60+new Date().getMinutes();
+var out=[];
+groups().forEach(function(g){
+var schs=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}];
+schs.forEach(function(s){ if(s.day!==todayEn) return;
+var st=minOf(s.time); var en=st+(parseInt(g.duration)||60);
+var cancelled=cancelledToday(g.id);
+var status=cancelled?'cancelled':((nowMin>=st&&nowMin<en)?'live':(nowMin>=en?'done':'next'));
+out.push({g:g,time:s.time,st:st,en:en,status:status,nowMin:nowMin});
+});
+});
+out.sort(function(a,b){return a.st-b.st;});
+return out;
+}
+function scansToday(){ return (db().barcodeScans||[]).filter(function(x){return x.day===dayStr(0);}); }
+function scansDay(off){ return (db().barcodeScans||[]).filter(function(x){return x.day===dayStr(off);}); }
+function activeNowIds(){
+var d=db(); var ids={};
+var cut5=Date.now()-5*60000, cut15=Date.now()-15*60000;
+Object.keys(d.presence||{}).forEach(function(k){ if(new Date(d.presence[k]).getTime()>=cut5) ids[k]=1; });
+scansToday().forEach(function(x){ if(Date.now()-new Date(x.at).getTime()<=cut15) ids[x.studentId]=1; });
+(d.submissions||[]).forEach(function(s){ if(s.submittedAt&&Date.now()-new Date(s.submittedAt).getTime()<=cut15) ids[s.studentId]=1; });
+(d.manualPoints||[]).forEach(function(m){ if(m.awardedAt&&Date.now()-new Date(m.awardedAt).getTime()<=cut15) ids[m.studentId]=1; });
+(d.interactionPoints||[]).forEach(function(m){ if(m.awardedAt&&Date.now()-new Date(m.awardedAt).getTime()<=cut15) ids[m.studentId]=1; });
+return Object.keys(ids);
+}
+function subsDay(off){ var day=dayStr(off||0); return (db().submissions||[]).filter(function(s){return (s.submittedAt||'').slice(0,10)===day;}); }
+function pointsDay(off){
+var day=dayStr(off||0); var n=0;
+(db().manualPoints||[]).forEach(function(m){ if((m.awardedAt||'').slice(0,10)===day) n++; });
+(db().interactionPoints||[]).forEach(function(m){ if((m.awardedAt||'').slice(0,10)===day) n++; });
+return n;
+}
+/* ============ 🔄 إحصائيات الدورات ============ */
+function cyclesData(){
+var warn=0, due=0, overdue=0, details=[];
+try{
+var stu=students();
+stu.forEach(function(s){
+var tgs=[];
+try{ tgs=DataService.getStudentTeachers?DataService.getStudentTeachers(s.id):[]; }catch(e){}
+tgs.forEach(function(t){
+var g=t.group; if(!g) return;
+var c=null;
+try{ c=DataService.getCycleStateForStudent?DataService.getCycleStateForStudent(s.id,g.id):null; }catch(e){}
+if(!c) return;
+if(c.isOverdue){ overdue++; details.push({s:s,g:g,c:c,type:'overdue'}); }
+else if(c.isDue){ due++; details.push({s:s,g:g,c:c,type:'due'}); }
+else if(c.isWarning){ warn++; details.push({s:s,g:g,c:c,type:'warning'}); }
+});
+});
+}catch(e){ console.warn('cyclesData error',e); }
+details.sort(function(a,b){
+var order={overdue:0,due:1,warning:2};
+return (order[a.type]||9)-(order[b.type]||9);
+});
+return {warn:warn, due:due, overdue:overdue, details:details};
+}
+/* ============ 🛒 إحصائيات المتجر ============ */
+function storeStats(){
+var d=db();
+var items=d.storeCatalog||[];
+var orders=d.storeOrders||[];
+var pending=orders.filter(function(o){return o.status==='pending_payment'||o.status==='pending_reserve';}).length;
+var approved=orders.filter(function(o){return o.status==='approved';}).length;
+var delivered=orders.filter(function(o){return o.status==='delivered';}).length;
+var revenue=orders.filter(function(o){return o.status==='delivered';}).reduce(function(sum,o){
+var it=null; for(var k=0;k<items.length;k++){ if(items[k].id===o.catalogItemId){ it=items[k]; break; } }
+return sum+((it?it.price:0)*(o.quantity||1));
+},0);
+var lowStock=items.filter(function(i){return (i.stock||0)<=5&&(i.stock||0)>0;}).length;
+var outOfStock=items.filter(function(i){return (i.stock||0)<=0;}).length;
+return {pending:pending, approved:approved, delivered:delivered, revenue:revenue, lowStock:lowStock, outOfStock:outOfStock, orders:orders, items:items};
+}
+function eventsAll(){
+var d=db(); var ev=[];
+(d.submissions||[]).forEach(function(s){ if(s.submittedAt) ev.push({at:s.submittedAt,ic:'📝',tx:'تسليم واجب: '+stuName(s.studentId)}); });
+(d.manualPoints||[]).forEach(function(m){ if(m.awardedAt) ev.push({at:m.awardedAt,ic:'🎙️',tx:'نقاط تسميع +'+(m.points||0)+' لـ '+stuName(m.studentId)}); });
+(d.interactionPoints||[]).forEach(function(m){ if(m.awardedAt) ev.push({at:m.awardedAt,ic:'🙋',tx:'نقاط تفاعل لـ '+stuName(m.studentId)}); });
+(d.barcodeScans||[]).forEach(function(x){ if(x.at) ev.push({at:x.at,ic:'🔖',tx:'فتح باركود: '+stuName(x.studentId)}); });
+(d.challengeAttempts||[]).forEach(function(a){ var at=a.attemptedAt||a.createdAt; if(at) ev.push({at:at,ic:'🏆',tx:'محاولة مسابقة: '+stuName(a.studentId)}); });
+(d.scheduleChangeLog||[]).forEach(function(e){ if(e.at) ev.push({at:e.at,ic:'🗓️',tx:'تعديل موعد: '+e.groupName+' → '+e.newDay+' '+f12(e.newTime)}); });
+(d.pendingRegistrations||d.registrations||[]).forEach(function(r){ if(r.createdAt) ev.push({at:r.createdAt,ic:'⏳',tx:'طلب تسجيل: '+(r.studentName||r.name||'')}); });
+(d.attendance||[]).forEach(function(a){ if(a.createdAt) ev.push({at:a.createdAt,ic:'📋',tx:'حضور مسلّم: '+a.groupName}); });
+ev.sort(function(a,b){ return new Date(b.at)-new Date(a.at); });
+return ev;
+}
+function arrow(t,y){ if(t>y) return '<span class="up">▲ +'+(t-y)+'</span>'; if(t<y) return '<span class="down">▼ -'+(y-t)+'</span>'; return '<span class="flat">＝ ثابت</span>'; }
+function kpi(cls,v,l,s){ return '<div class="kpi '+cls+'"><div class="v">'+v+'</div><div class="l">'+l+'</div><div class="s">'+(s||'')+'</div></div>'; }
+function toggleCollapse(id){ var el=document.getElementById(id); if(!el) return; el.classList.toggle('open'); var ar=document.getElementById('ar_'+id); if(ar) ar.textContent=el.classList.contains('open')?'⌃':'⌄'; }
+
+/* ============ الوضع الليلي/النهاري ============ */
+function applyTheme(t){
+try{ document.documentElement.setAttribute('data-theme',t); }catch(e){}
+try{ document.body.setAttribute('data-theme',t); }catch(e){}
+try{ localStorage.setItem('monitorTheme',t); }catch(e){}
+try{
+if(window.ThemeManager){
+if(typeof ThemeManager.setTheme==='function') ThemeManager.setTheme(t);
+else if(typeof ThemeManager.applyTheme==='function') ThemeManager.applyTheme(t);
+}
+}catch(e){}
+var b=document.getElementById('themeBtn'); if(b) b.textContent=(t==='dark')?'☀️ وضع نهاري':'🌙 وضع ليلي';
+}
+function toggleTheme(){ var cur=document.body.getAttribute('data-theme')==='dark'?'light':'dark'; applyTheme(cur); }
+window.toggleTheme=toggleTheme;
+
+/* ============ الرندر الرئيسي ============ */
+function render(){
+try{
+var d=db(); var today=dayStr(0);
+var sess=todaySessions();
+var live=sess.filter(function(x){return x.status==='live';});
+var next=sess.filter(function(x){return x.status==='next';});
+var done=sess.filter(function(x){return x.status==='done';});
+var cancelled=sess.filter(function(x){return x.status==='cancelled';});
+var act=activeNowIds();
+var scT=scansToday(), scY=scansDay(1);
+var scStu={}; scT.forEach(function(x){ scStu[x.studentId]=1; });
+var liveTeachers={}; live.forEach(function(x){ liveTeachers[x.g.teacherId]=1; });
+var sbT=subsDay(0), sbY=subsDay(1);
+var pT=pointsDay(0), pY=pointsDay(1);
+var pendReg=(d.pendingRegistrations||d.registrations||[]).filter(function(r){return r.status==='pending';}).length;
+var newStu=students().filter(function(s){return (s.createdAt||'').slice(0,10)===today;}).length;
+/* 🆕 إحصائيات الدورات والمتجر */
+var cyc=cyclesData();
+var sto=storeStats();
+
+/* KPIs الأساسيات (صف 1) */
+document.getElementById('kpiRow').innerHTML=
+kpi(act.length?'live':'','<span class="'+(act.length?'pulse':'')+'">'+act.length+'</span>','🟢 طالب أونلاين الآن','آخر 5 دقايق نشاط')+
+kpi('',''+scT.length+'','🔖 فتحات باركود النهارده',''+Object.keys(scStu).length+' طالب مختلف')+
+kpi(live.length?'live':'','<span class="'+(live.length?'pulse':'')+'">'+live.length+'</span>','📡 حصة لايف الآن',''+Object.keys(liveTeachers).length+' أستاذ شغال')+
+kpi('done',''+done.length+'','✅ حصص خلصت','من أصل '+sess.length+' حصة اليوم')+
+kpi('',''+next.length+'','⏳ حصص جاية','أولها '+((next[0])?f12(next[0].time):'-'))+
+kpi(cancelled.length?'warn':'',''+cancelled.length+'','🚫 حصص ملغية','النهارده')+
+kpi('',''+sbT.length+'','📝 تسليمات النهارده',arrow(sbT.length,sbY.length))+
+kpi('',''+pT+'','🎁 نقاط ممنوحة اليوم',arrow(pT,pY));
+
+/* 🆕 KPIs الدورات والمتجر (صف 2) */
+document.getElementById('kpiRow2').innerHTML=
+kpi(cyc.overdue>0?'':'','<span style="color:var(--danger);">'+cyc.overdue+'</span>','🚨 متأخرين بعد السماح','فاتورة متأخرة')+
+kpi(cyc.due>0?'':'','<span style="color:var(--warning);">'+cyc.due+'</span>','💰 فواتير مستحقة (8)','محتاج تسجيل دفع')+
+kpi(cyc.warn>0?'':'','<span style="color:var(--info);">'+cyc.warn+'</span>','⚠️ دورات عند إنذار 7','الحصة الجاية الدفع')+
+kpi(sto.pending>0?'':'','<span style="color:var(--info);">'+sto.pending+'</span>','📦 طلبات متجر معلقة','بانتظار موافقة')+
+kpi('',''+sto.revenue+' ج.م','💵 إيرادات المتجر',''+sto.delivered+' عملية مسلّمة')+
+kpi('',''+sto.approved+'','🧊 محجوزة حالياً','بانتظار الاستلام')+
+kpi(sto.lowStock>0?'':'','<span style="color:var(--warning);">'+sto.lowStock+'</span>','📉 مخزون منخفض','≤ 5 قطع')+
+kpi(sto.outOfStock>0?'':'','<span style="color:var(--danger);">'+sto.outOfStock+'</span>','🚫 نفذ من المخزون','محتاج إعادة تعبئة');
+
+/* 🆕 قسم تنبيهات الدورات */
+var cycHtml='';
+if(cyc.details.length){
+cyc.details.slice(0,15).forEach(function(r){
+var cls=r.type==='overdue'?'background:var(--danger-bg);color:var(--danger);':(r.type==='due'?'background:var(--warning-bg);color:var(--warning);':'background:var(--info-bg);color:var(--info);');
+var lbl=r.type==='overdue'?'🚨 متأخر':(r.type==='due'?'💰 مستحق':'⚠️ إنذار 7');
+cycHtml+='<div class="fitem"><span class="chip" style="'+cls+'">'+lbl+'</span><strong style="flex:1">'+r.s.name+'</strong><span class="mdate">📚 '+r.g.name+' · '+tName(r.g.teacherId)+'</span><span class="chip" style="background:var(--surface);border:1px solid var(--border);">'+(r.c.sessionsDone||0)+'/'+(r.c.sessionsRequired||8)+'</span></div>';
+});
+if(cyc.details.length>15) cycHtml+='<p class="text-muted" style="margin-top:6px;text-align:center;">+'+(cyc.details.length-15)+' حالة إضافية</p>';
+}else{
+cycHtml='<p class="text-muted" style="text-align:center;padding:20px;">✨ كل الدورات سليمة — مفيش محتاج إجراء</p>';
+}
+document.getElementById('cyclesAlerts').innerHTML=cycHtml;
+document.getElementById('cyclesChip').textContent=(cyc.overdue+cyc.due+cyc.warn)+' حالة';
+
+/* 🆕 قسم طلبات المتجر المعلقة */
+var stoHtml='';
+var pendingOrders=sto.orders.filter(function(o){return o.status==='pending_payment'||o.status==='pending_reserve';}).sort(function(a,b){return new Date(b.createdAt)-new Date(a.createdAt);});
+if(pendingOrders.length){
+pendingOrders.slice(0,12).forEach(function(o){
+var it=null; for(var k=0;k<sto.items.length;k++){ if(sto.items[k].id===o.catalogItemId){ it=sto.items[k]; break; } }
+var stName=stuName(o.studentId);
+var cls=o.status==='pending_payment'?'background:var(--warning-bg);color:var(--warning);':'background:var(--info-bg);color:var(--info);';
+var lbl=o.status==='pending_payment'?'💰 بانتظار الدفع':'🧊 محجوز';
+stoHtml+='<div class="fitem"><span class="chip" style="'+cls+'">'+lbl+'</span><strong style="flex:1">'+stName+'</strong><span class="mdate">📚 '+(it?it.name:'-')+' · 💵 '+(it?it.price:0)+' ج.م</span><span class="t">'+(new Date(o.createdAt)).toLocaleDateString('ar-EG',{month:'short',day:'numeric'})+'</span></div>';
+});
+if(pendingOrders.length>12) stoHtml+='<p class="text-muted" style="margin-top:6px;text-align:center;">+'+(pendingOrders.length-12)+' طلب إضافي</p>';
+}else{
+stoHtml='<p class="text-muted" style="text-align:center;padding:20px;">📭 مفيش طلبات معلقة حالياً</p>';
+}
+document.getElementById('storePending').innerHTML=stoHtml;
+document.getElementById('storeChip').textContent=pendingOrders.length+' طلب';
+
+/* اللايف */
+var lb='';
+live.forEach(function(x){
+var rem=x.en-x.nowMin; var pct=Math.round((x.nowMin-x.st)/(x.en-x.st)*100);
+lb+='<div class="livecard"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;"><strong>'+x.g.name+'</strong><span class="chip pulse" style="background:var(--success-bg);color:var(--success);">🔴 شغالة الآن</span></div><div class="mdate">👨 '+tName(x.g.teacherId)+' · 🏢 '+(x.g.center||'-')+' · 🕐 '+f12(x.time)+' - '+f12(hm2(x.en))+'</div><div class="bar"><i style="width:'+pct+'%"></i></div><div class="mdate">فاضل '+rem+' دقيقة على الانتهاء</div></div>';
+});
+if(!live.length){
+lb='<p class="text-muted" style="margin-bottom:8px">مفيش حصة شغالة حالياً.</p>';
+next.slice(0,4).forEach(function(x){ lb+='<div class="livecard next"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;"><strong>'+x.g.name+'</strong><span class="chip" style="background:var(--info-bg);color:var(--info);">⏰ جاية</span></div><div class="mdate">👨‍ '+tName(x.g.teacherId)+' · تبدأ '+f12(x.time)+'</div></div>'; });
+}
+document.getElementById('liveBox').innerHTML=lb;
+document.getElementById('liveChip').textContent=live.length+' لايف · '+Object.keys(liveTeachers).length+' أستاذ';
+/* شريط نهاية اليوم */
+var dayStart=sess.length?Math.min.apply(null,sess.map(function(x){return x.st;})):8*60;
+var dayEnd=sess.length?Math.max.apply(null,sess.map(function(x){return x.en;})):23*60;
+var nowMin=new Date().getHours()*60+new Date().getMinutes();
+var dayPct=Math.max(0,Math.min(100,Math.round((nowMin-dayStart)/(dayEnd-dayStart)*100)));
+var remMin=Math.max(0,dayEnd-nowMin);
+document.getElementById('eodChip').textContent=dayPct+'% من اليوم عدّى';
+document.getElementById('eodBox').innerHTML=
+'<div style="display:flex;justify-content:space-between;font-size:clamp(10px,.9vw,14px);color:var(--text-muted);margin-bottom:4px;"><span>بداية '+f12(hm2(dayStart))+'</span><span class="mclock" style="font-size:clamp(14px,1.4vw,24px);">'+f12(hm2(nowMin))+'</span><span>نهاية '+f12(hm2(dayEnd))+'</span></div>'+
+'<div class="bar" style="height:12px;"><i style="width:'+dayPct+'%"></i><span class="dot" style="right:'+dayPct+'%;"></span></div>'+
+'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;text-align:center;">'+
+'<div class="kpi" style="padding:10px"><div class="v" style="font-size:clamp(16px,1.6vw,28px);">'+Math.floor(remMin/60)+'س '+(remMin%60)+'د</div><div class="l">فاضل على نهاية اليوم</div></div>'+
+'<div class="kpi" style="padding:10px"><div class="v" style="font-size:clamp(16px,1.6vw,28px);color:var(--success);">'+done.length+'</div><div class="l">خلصت</div></div>'+
+'<div class="kpi" style="padding:10px"><div class="v" style="font-size:clamp(16px,1.6vw,28px);color:var(--success);">'+live.length+'</div><div class="l">شغالة</div></div>'+
+'<div class="kpi" style="padding:10px"><div class="v" style="font-size:clamp(16px,1.6vw,28px);color:var(--info);">'+next.length+'</div><div class="l">لسه جاية</div></div>'+
+'</div>'+
+'<div class="mdate" style="margin-top:10px;">📚 إجمالي حصص اليوم: '+sess.length+' · 🚫 ملغي: '+cancelled.length+' · 🎁 نقاط اليوم: '+pT+' · 📝 تسليمات: '+sbT.length+'</div>';
+/* الخلصت حسب الأستاذ (قوائم منسدلة) */
+var byT={};
+done.forEach(function(x){ var tn=tName(x.g.teacherId); (byT[tn]=byT[tn]||[]).push(x); });
+var tKeys=Object.keys(byT);
+document.getElementById('doneCount').textContent=done.length;
+document.getElementById('doneByTeacher').innerHTML=tKeys.length?tKeys.map(function(tn,i){
+var cid='doneT'+i;
+var items=byT[tn].sort(function(a,b){return a.st-b.st;});
+return '<div class="colhead" onclick="toggleCollapse(\''+cid+'\')"><span>👨‍ '+tn+' <span class="chip" style="background:var(--surface);border:1px solid var(--border);">'+items.length+' حصة خلصت</span></span><span id="ar_'+cid+'">⌄</span></div>'+
+'<div class="colbody" id="'+cid+'">'+items.map(function(x){
+var held=groupHeldToday(x.g.id);
+return '<div class="fitem"><span class="t">'+f12(x.time)+'-'+f12(hm2(x.en))+'</span><strong style="flex:1">'+x.g.name+'</strong><span class="mdate">🏢 '+(x.g.center||'-')+'</span><span class="chip" style="background:'+(held?'var(--success-bg);color:var(--success)':'var(--surface-hover);color:var(--text-muted)')+';">'+(held?'✔ بحضور':'بدون تسجيل')+'</span></div>';
+}).join('')+'</div>';
+}).join(''):'<p class="text-muted">لسه مفيش حصة خلصت النهارده</p>';
+/* حالة المجموعات */
+var gsHtml='';
+sess.forEach(function(x){
+var badge,cls;
+if(x.status==='cancelled'){ badge='🚫 اتلغت'; cls='background:var(--danger-bg);color:var(--danger);'; }
+else if(x.status==='live'){ badge='🔴 جارية الآن'; cls='background:var(--success-bg);color:var(--success);'; }
+else if(x.status==='done'){ badge=cancelledToday(x.g.id)?'🚫 اتلغت':'✔ اتأخذت'; cls=cancelledToday(x.g.id)?'background:var(--danger-bg);color:var(--danger);':'background:var(--success-bg);color:var(--success);'; }
+else { badge='⏳ جاية'; cls='background:var(--info-bg);color:var(--info);'; }
+gsHtml+='<div class="fitem"><span class="t">'+f12(x.time)+'</span><strong style="flex:1">'+x.g.name+'</strong><span class="mdate">👨‍ '+tName(x.g.teacherId)+'</span><span class="chip" style="'+cls+'">'+badge+'</span></div>';
+});
+document.getElementById('groupStatus').innerHTML=gsHtml||'<p class="text-muted">لا حصص اليوم</p>';
+/* الباركود بقائمة منسدلة */
+var sel=document.getElementById('bcGroupSel');
+var curSel=sel.value||'all';
+var glist=groups();
+sel.innerHTML='<option value="all">كل المجموعات</option>'+glist.map(function(g){ return '<option value="'+g.id+'">'+g.name+' — '+tName(g.teacherId)+'</option>'; }).join('');
+if([].some.call(sel.options,function(o){return o.value===curSel;})) sel.value=curSel; else sel.value='all';
+renderBcDetail();
+/* جدول الأساتذة */
+var trows='';
+(DataService.getTeachers?DataService.getTeachers():[]).forEach(function(t){
+var gs=glist.filter(function(g){return g.teacherId===t.id;});
+var st={}; gs.forEach(function(g){ (DataService.getStudentsByGroup?DataService.getStudentsByGroup(g.id):[]).forEach(function(s){st[s.id]=1;}); });
+var todayN=sess.filter(function(x){return x.g.teacherId===t.id;}).length;
+var liveN=live.filter(function(x){return x.g.teacherId===t.id;}).length;
+var doneN=done.filter(function(x){return x.g.teacherId===t.id;}).length;
+var pts=0; (d.manualPoints||[]).forEach(function(m){ if((m.awardedAt||'').slice(0,10)===today&&gs.some(function(g){return groupsOfStudent(m.studentId).some(function(x){return x.id===g.id;});})) pts+=m.points||0; });
+trows+='<tr><td style="font-weight:800">'+t.name+'</td><td>'+gs.length+'</td><td>'+Object.keys(st).length+'</td><td>'+todayN+'</td><td class="'+(liveN?'up pulse':'')+'">'+(liveN?'🔴 '+liveN:'-')+'</td><td>'+doneN+'</td><td>'+pts+'</td></tr>';
+});
+document.getElementById('teacherTable').innerHTML='<thead><tr><th>الأستاذ</th><th>مجموعات</th><th>طلاب</th><th>حصص اليوم</th><th>شغال الآن</th><th>خلصت</th><th>نقاط اليوم</th></tr></thead><tbody>'+trows+'</tbody>';
+/* الفيد */
+document.getElementById('feedBox').innerHTML=eventsAll().slice(0,20).map(function(e){
+var tm=new Date(e.at); return '<div class="fitem"><span class="t">'+f12(p2(tm.getHours())+':'+p2(tm.getMinutes()))+'</span><span>'+e.ic+'</span><span style="flex:1">'+e.tx+'</span></div>';
+}).join('')||'<p class="text-muted">لا نشاط بعد</p>';
+/* الأكثر تفاعلاً */
+var byStu={};
+scT.forEach(function(x){ byStu[x.studentId]=byStu[x.studentId]||{n:0,last:x.at}; byStu[x.studentId].n++; byStu[x.studentId].last=x.at; });
+var top=Object.keys(byStu).map(function(k){return {id:k,n:byStu[k].n,last:byStu[k].last};}).sort(function(a,b){return b.n-a.n;}).slice(0,8);
+document.getElementById('topScanBox').innerHTML=top.length?top.map(function(x,i){
+var gs2=groupsOfStudent(x.id).map(function(g){return g.name;}).join('، ');
+return '<div class="fitem"><span class="chip" style="background:var(--primary-bg);color:var(--primary);">#'+(i+1)+'</span><strong style="flex:1">'+stuName(x.id)+'</strong><span class="mdate">'+(gs2||'-')+'</span><span class="up">🔖 '+x.n+'</span></div>';
+}).join(''):'<p class="text-muted">لسه مفيش مسح باركود النهارده</p>';
+/* 🆕 الشريط المتحرك محدث */
+var ev=eventsAll().slice(0,10).map(function(e){return e.ic+' '+e.tx;}).join('  ·  ');
+document.getElementById('tickerText').textContent=
+'🟢 أونلاين الآن: '+act.length+
+'  ·  🔴 لايف: '+live.length+
+'  ·  ✅ خلصت: '+done.length+
+'  ·  🔖 باركود: '+scT.length+
+'  ·  🚨 دورات متأخرة: '+cyc.overdue+
+'  ·  💰 فواتير مستحقة: '+cyc.due+
+'  ·  ⚠️ إنذار 7: '+cyc.warn+
+'  ·  📦 طلبات متجر معلقة: '+sto.pending+
+'  ·  💵 إيرادات المتجر: '+sto.revenue+' ج.م'+
+'  ·  📉 مخزون منخفض: '+sto.lowStock+
+'  ·  🚫 نفذ من المخزون: '+sto.outOfStock+
+'  ·  نهاية اليوم بعد '+Math.floor(remMin/60)+'س '+(remMin%60)+'د'+
+'  ·  '+ev;
+}catch(e){ console.error('monitor render error',e); }
+}
+function renderBcDetail(){
+try{
+var sel=document.getElementById('bcGroupSel'); var val=sel?sel.value:'all';
+var scT=scansToday();
+var inSel=function(sid){ if(val==='all') return true; return groupsOfStudent(sid).some(function(g){return g.id===val;}); };
+var list=scT.filter(function(x){return inSel(x.studentId);});
+var stu={}; list.forEach(function(x){ stu[x.studentId]=1; });
+var last=list.length?list.reduce(function(a,b){ return new Date(a.at)>new Date(b.at)?a:b; }):null;
+var byStu={}; list.forEach(function(x){ byStu[x.studentId]=(byStu[x.studentId]||0)+1; });
+var topStu=Object.keys(byStu).sort(function(a,b){return byStu[b]-byStu[a];}).slice(0,5);
+document.getElementById('bcDetail').innerHTML=
+'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;margin-bottom:10px;">'+
+'<div class="kpi" style="padding:10px"><div class="v" style="font-size:clamp(18px,1.8vw,32px);">'+list.length+'</div><div class="l">فتحات النهارده</div></div>'+
+'<div class="kpi" style="padding:10px"><div class="v" style="font-size:clamp(18px,1.8vw,32px);">'+Object.keys(stu).length+'</div><div class="l">طالب مختلف</div></div>'+
+'<div class="kpi" style="padding:10px"><div class="v" style="font-size:clamp(18px,1.8vw,32px);">'+(last?f12(last.at.slice(11,16)):'-')+'</div><div class="l">آخر فتح</div></div>'+
+'</div>'+
+(topStu.length?'<div style="font-weight:800;font-size:clamp(11px,1vw,15px);margin-bottom:6px;">🏆 الأكثر مسحاً:</div>'+topStu.map(function(id){ return '<div class="fitem"><strong style="flex:1">'+stuName(id)+'</strong><span class="up">🔖 '+byStu[id]+'</span></div>'; }).join(''):'<p class="text-muted">لا مسحات في الاختيار ده</p>');
+}catch(e){ console.error(e); }
+}
+window.renderBcDetail=renderBcDetail;
+function clock(){
+var n=new Date();
+document.getElementById('mClock').textContent=f12(p2(n.getHours())+':'+p2(n.getMinutes())+':'+p2(n.getSeconds()));
+document.getElementById('mDate').textContent=n.toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+}
+(async function(){
+try{ if(DataService&&DataService.init) await DataService.init(); }catch(e){}
+try{ var b=db().branding||{}; if(b.name) document.getElementById('brandName').textContent='— '+b.name; }catch(e){}
+var saved='dark'; try{ saved=localStorage.getItem('monitorTheme')||'dark'; }catch(e){}
+applyTheme(saved);
+clock(); setInterval(clock,1000);
+render(); setInterval(render,10000);
+})();
+</script>
+</body>
+</html>

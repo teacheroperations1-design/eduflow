@@ -55,7 +55,7 @@ const Ops = {
       },
       {
         id: 'tpl_payment', name: '💰 تذكير بدفع', category: 'payment',
-        content: 'السلام عليكم {{parentName}}،\n\nنذكركم بأن شهرية ابنكم/ابنتكم {{studentName}} عن شهر {{month}} لم تُسدد بعد.\n\n💰 المبلغ المستحق: {{amount}} جنيه\n📚 المجموعات: {{groups}}\n\nيمكنكم الدفع عبر:\n• كاش في السنتر\n• فودافون كاش: {{vodafoneNumber}}\n\nشكراً لتعاونكم.\n{{centerName}}'
+        content: 'السلام عليكم {{parentName}}،\n\nنذكركم بأن شهرية ابنكم/ابنتكم {{studentName}} عن شهر {{month}} لم تُسدد بعد.\n\n🔄 الحصص المحسوبة: {{cycleDone}} من {{cycleRequired}}\n💰 المبلغ المستحق: {{amount}} جنيه\n⏳ آخر موعد للسداد: {{dueDate}}\n📚 المجموعات: {{groups}}\n\nيمكنكم الدفع عبر:\n• كاش في السنتر\n• فودافون كاش: {{vodafoneNumber}}\n\nشكراً لتعاونكم.\n{{centerName}}'
       },
       {
         id: 'tpl_meeting', name: '🤝 طلب مقابلة', category: 'meeting',
@@ -381,32 +381,165 @@ const Ops = {
     });
   },
 
-  buildStudentBilling(studentId, month = null) {
-    const s = DataService.getUserById(studentId);
-    if (!s) return [];
-    const teachers = DataService.getStudentTeachers(studentId);
-    const targetMonth = month || new Date().toISOString().slice(0, 7);
-    return teachers.map(({ group, teacher }) => {
-      const billing = DataService.calculateBilling(group.id, targetMonth);
-      const pay = (DataService._getData().payments || []).find(p =>
-        p.studentId === studentId && p.groupId === group.id && p.month === targetMonth
-      );
-      const manualSessions = (DataService._getData().manualSessions || []).filter(ms =>
-        ms.groupId === group.id && ms.studentId === studentId && ms.month === targetMonth
-      );
-      const manualSessionsCount = manualSessions.reduce((sum, ms) => sum + (ms.sessionsCount || 0), 0);
-      return {
-        group, teacher,
-        billing: { ...billing, manualSessionsCount, totalSessions: (billing.actualSessions || 0) + manualSessionsCount },
-        payment: pay || {
-          month: targetMonth, groupId: group.id,
-          amount: billing.total, paidAmount: 0, status: 'unpaid', history: []
-        }
-      };
-    });
-  },
+buildStudentBilling(studentId, month = null) {
+  const s = DataService.getUserById(studentId);
+  if (!s) return [];
+  const teachers = DataService.getStudentTeachers(studentId);
+  const targetMonth = month || new Date().toISOString().slice(0, 7);
+  return teachers.map(({ group, teacher }) => {
+    const billing = DataService.calculateBilling(group.id, targetMonth);
+    const cycle = DataService.getCycleStateForStudent(studentId, group.id);
+    const pay = (DataService._getData().payments || []).find(p =>
+      p.studentId === studentId && p.groupId === group.id && (p.month === targetMonth || p.cycleStart === cycle?.cycleStartDate)
+    );
+    const manualSessions = (DataService._getData().manualSessions || []).filter(ms =>
+      ms.groupId === group.id && ms.studentId === studentId && ms.month === targetMonth
+    );
+    const manualSessionsCount = manualSessions.reduce((sum, ms) => sum + (ms.sessionsCount || 0), 0);
+    return {
+      group, teacher,
+      billing: { ...billing, manualSessionsCount, totalSessions: (billing.actualSessions || 0) + manualSessionsCount },
+      cycle,
+      payment: pay || {
+        month: targetMonth, groupId: group.id,
+        amount: billing.total, paidAmount: 0, status: 'unpaid', history: [],
+        cycleStart: cycle?.cycleStartDate
+      }
+    };
+  });
+},
 
-  async addManualSessionsForBilling(groupId, studentId, month, sessionsCount, reason, addedBy) {
+  // 🆕 فحص الدورة بعد كل حصة متعملة
+async triggerCycleCheck(studentId, groupId, afterSession) {
+  try {
+    const cycle = DataService.getCycleStateForStudent(studentId, groupId);
+    if (!cycle) return null;
+    
+    const g = DataService.getGroups().find(x => x.id === groupId);
+    const student = DataService.getUserById(studentId);
+    const teacher = DataService.getUserById(g?.teacherId);
+    
+    // إنذار عند الحصة 7 (7 من 8)
+    if (cycle.sessionsDone === cycle.sessionsRequired - 1) {
+      await DataService.addNotification({
+        title: '⚠️ تنبيه: الحصة الجاية الدفع',
+        message: `وصلت للحصة ${cycle.sessionsDone} من ${cycle.sessionsRequired} في مجموعة ${g?.name || ''}. الحصة القادمة هتكون موعد دفع الشهرية (${g?.monthlyFee || 0} جنيه).`,
+        targetUserId: studentId,
+        type: 'cycle_warning',
+        priority: 'high',
+        meta: { groupId, cycleNumber: cycle.sessionsDone }
+      });
+      
+      // إشعار إحصائي للأدمن
+      const admins = (DataService.getUsers ? DataService.getUsers() : []).filter(u => u.role === 'super_admin' || u.role === 'admin');
+      for (const admin of admins) {
+        await DataService.addNotification({
+          title: '📊 إنذار دورة',
+          message: `${student?.name || 'طالب'} وصل للحصة ${cycle.sessionsDone} في ${g?.name || 'مجموعة'} — الحصة الجاية الدفع`,
+          targetUserId: admin.id,
+          type: 'cycle_stats',
+          priority: 'low'
+        });
+      }
+      
+      // إشعار متابعة للمساعد المرتبط
+      const assistants = (DataService.getUsers ? DataService.getUsers() : []).filter(u => u.role === 'assistant');
+      for (const a of assistants) {
+        try {
+          const assignment = this.getAssignment(a.id);
+          if (assignment && assignment.teacherId === g?.teacherId) {
+            await DataService.addNotification({
+              title: '⚠️ متابعة دورة',
+              message: `${student?.name || 'طالب'} في ${g?.name || 'مجموعة'} وصل للحصة ${cycle.sessionsDone} — تابع معه موعد الدفع`,
+              targetUserId: a.id,
+              type: 'cycle_followup',
+              priority: 'medium',
+              meta: { studentId, groupId }
+            });
+          }
+        } catch (e) {}
+      }
+      
+      return { type: 'warning', cycle };
+    }
+    
+    // فاتورة عند الحصة 8
+    if (cycle.sessionsDone >= cycle.sessionsRequired) {
+      const invoiceId = 'inv_' + Date.now();
+      const invoice = {
+        id: invoiceId,
+        studentId,
+        groupId,
+        amount: g?.monthlyFee || 0,
+        paidAmount: 0,
+        status: 'unpaid',
+        cycleStart: cycle.cycleStartDate,
+        cycleEnd: new Date().toISOString(),
+        sessionsDone: cycle.sessionsDone,
+        createdAt: new Date().toISOString(),
+        history: []
+      };
+      
+      const d = DataService._getData();
+      d.payments = d.payments || [];
+      d.payments.push(invoice);
+      DataService._saveData(d);
+      
+      if (window.FirebaseService?.connected) {
+        await FirebaseService.saveDoc('payments', invoiceId, invoice);
+      }
+      
+      // إشعار للطالب
+      await DataService.addNotification({
+        title: '💰 فاتورة مستحقة',
+        message: `اكتملت دورة ${cycle.sessionsRequired} حصة في مجموعة ${g?.name || ''}. المبلغ المستحق: ${invoice.amount} جنيه. فترة السماح لحد أول حصة في الدورة الجديدة.`,
+        targetUserId: studentId,
+        type: 'invoice_due',
+        priority: 'high',
+        meta: { invoiceId, amount: invoice.amount }
+      });
+      
+      // إشعار إحصائي للأدمن
+      const admins = (DataService.getUsers ? DataService.getUsers() : []).filter(u => u.role === 'super_admin' || u.role === 'admin');
+      for (const admin of admins) {
+        await DataService.addNotification({
+          title: '💰 فاتورة جديدة',
+          message: `${student?.name || 'طالب'} في ${g?.name || 'مجموعة'} — فاتورة ${invoice.amount} جنيه مستحقة`,
+          targetUserId: admin.id,
+          type: 'invoice_stats',
+          priority: 'low'
+        });
+      }
+      
+      // إشعار متابعة للمساعد
+      const assistants = (DataService.getUsers ? DataService.getUsers() : []).filter(u => u.role === 'assistant');
+      for (const a of assistants) {
+        try {
+          const assignment = this.getAssignment(a.id);
+          if (assignment && assignment.teacherId === g?.teacherId) {
+            await DataService.addNotification({
+              title: '💰 متابعة فاتورة',
+              message: `فاتورة مستحقة على ${student?.name || 'طالب'} في ${g?.name || 'مجموعة'} — ${invoice.amount} جنيه`,
+              targetUserId: a.id,
+              type: 'invoice_followup',
+              priority: 'high',
+              meta: { invoiceId, studentId, groupId }
+            });
+          }
+        } catch (e) {}
+      }
+      
+      return { type: 'invoice', invoice, cycle };
+    }
+    
+    return null;
+  } catch (e) {
+    console.error('triggerCycleCheck error:', e);
+    return null;
+  }
+},
+
+async addManualSessionsForBilling(groupId, studentId, month, sessionsCount, reason, addedBy) {
     const d = DataService._getData();
     if (!d.manualSessions) d.manualSessions = [];
     const id = 'ms_' + Date.now();
@@ -557,7 +690,88 @@ const Ops = {
       targetUserId: studentId, type: 'points', priority: 'high'
     });
     return item;
-  },
+},
+
+// 🆕 حصة طوارئ إضافية (بتتحسب ضمن الـ 8)
+// 🆕 فحص الطلاب اللي فاتت فترة السماح عليهم
+async runOverdueGraceScan() {
+  try {
+    const d = this._getData();
+    const groups = DataService.getGroups ? DataService.getGroups() : [];
+    const students = DataService.getStudents ? DataService.getStudents() : [];
+    let overdueCount = 0;
+    
+    for (const student of students) {
+      for (const g of groups) {
+        try {
+          const cycle = DataService.getCycleStateForStudent(student.id, g.id);
+          if (!cycle) continue;
+          
+          // لو الحالة overdue ومتعملش متابعة من قبل
+          if (cycle.isOverdue) {
+            const existingFollowUp = (d.followUps || []).find(fu =>
+              fu.studentId === student.id &&
+              fu.groupId === g.id &&
+              fu.type === 'overdue_payment' &&
+              fu.status === 'open'
+            );
+            
+            if (!existingFollowUp) {
+              await this.addFollowUp({
+                studentId: student.id,
+                groupId: g.id,
+                type: 'overdue_payment',
+                priority: 'high',
+                title: '💰 فاتورة متأخرة',
+                description: `فاتورة دورة ${cycle.sessionsRequired} حصة متأخرة — فترة السماح انتهت`,
+                status: 'open',
+                ownerAssistant: null
+              });
+              overdueCount++;
+            }
+          }
+        } catch (e) {}
+      }
+    }
+    
+    return { overdueCount };
+  } catch (e) {
+    console.error('runOverdueGraceScan error:', e);
+    return { overdueCount: 0 };
+  }
+},
+
+async recordEmergencySession(groupId, date, addedBy) {
+  try {
+    const g = DataService.getGroups().find(x => x.id === groupId);
+    if (!g) return { success: false, message: 'المجموعة غير موجودة' };
+    
+    const month = date.slice(0, 7);
+    const students = DataService.getStudentsByGroup(groupId);
+    
+    // إضافة حصة يدوية لكل طالب في المجموعة
+    for (const student of students) {
+      await this.addManualSessionsForBilling(
+        groupId,
+        student.id,
+        month,
+        1,
+        'حصة طوارئ إضافية',
+        addedBy
+      );
+      
+      // فحص الدورة بعد الإضافة
+      await this.triggerCycleCheck(student.id, groupId, { type: 'emergency', date });
+    }
+    
+    await this.log(addedBy, 'حصة طوارئ', `حصة إضافية لمجموعة ${g.name} بتاريخ ${date}`);
+    
+    return { success: true, studentsCount: students.length };
+  } catch (e) {
+    console.error('recordEmergencySession error:', e);
+    return { success: false, message: e.message };
+  }
+},
 
   async deleteManualPoints(id) {
     const d = DataService._getData();
@@ -1025,6 +1239,76 @@ window.Ops = Ops;
 /* ================================================================
    🔥 STREAK ENGINE — محرك السلسلة الحقيقي (حساب + مكافآت + حماية)
    ================================================================ */
+/* ============ 🎰 LOOT BOX (صندوق الحظ) ============ */
+Ops.getLootSettings = function(){
+  const d = DataService._getData();
+  const def = { enabled:true, chancePoints:50, chanceHint:25, chanceBonus:10, minPoints:5, maxPoints:20, fromHour:'08:00', toHour:'22:00', dailyLimit:1 };
+  return Object.assign({}, def, (d.gamification||{}).loot || {});
+};
+Ops.lootEligible = function(studentId){
+  const s = this.getLootSettings();
+  if(!s.enabled) return { ok:false, reason:'disabled' };
+  const now = new Date();
+  const hm = (now.getHours()<10?'0':'')+now.getHours()+':'+(now.getMinutes()<10?'0':'')+now.getMinutes();
+  if(hm < (s.fromHour||'00:00') || hm > (s.toHour||'23:59')) return { ok:false, reason:'time' };
+  const d = DataService._getData();
+  const today = new Date().toISOString().slice(0,10);
+  const hist = (d.lootHistory||[]).filter(h=>h.studentId===studentId && h.day===today);
+  if(hist.length >= (s.dailyLimit||1)) return { ok:false, reason:'limit' };
+  return { ok:true };
+};
+Ops.tryLootBox = async function(studentId){
+  try{
+    const el = this.lootEligible(studentId);
+    if(!el.ok) return { success:false, reason:el.reason };
+    const s = this.getLootSettings();
+    const roll = Math.random()*100;
+    let type='nothing', points=0;
+    if(roll < (s.chancePoints||0)) type='points';
+    else if(roll < (s.chancePoints||0)+(s.chanceHint||0)) type='hint';
+    else if(roll < (s.chancePoints||0)+(s.chanceHint||0)+(s.chanceBonus||0)) type='bonus';
+    if(type==='points') points = Math.floor(Math.random()*(((s.maxPoints||20)-(s.minPoints||5))+1))+(s.minPoints||5);
+    if(type==='bonus') points = (s.maxPoints||20)*2;
+    if(points>0) await this.addManualPoints(studentId, points, type==='bonus'?'🎁 جائزة صندوق الحظ الكبرى':'🎰 مكسب صندوق الحظ', studentId);
+    const d = DataService._getData(); d.lootHistory = d.lootHistory||[];
+    const entry = { id:'loot_'+Date.now(), studentId, day:new Date().toISOString().slice(0,10), at:new Date().toISOString(), type, points };
+    d.lootHistory.push(entry); DataService._saveData(d);
+    if(window.FirebaseService&&FirebaseService.connected){ try{ await FirebaseService.saveDoc('lootHistory', entry.id, entry); }catch(e){} }
+    if(type==='hint'){
+      await DataService.addNotification({ title:'💡 تلميح مجاني', message:'كسبت تلميح من صندوق الحظ — استخدمه في آخر واجب ليك.', targetUserId:studentId, type:'loot', priority:'medium' });
+    }
+    return { success:true, type, points };
+  }catch(e){ console.error('tryLootBox', e); return { success:false, reason:'error' }; }
+};
+/* ============ 💬 تذكير الدفع مربوط بالدورة ============ */
+Ops.buildPaymentReminder = function(studentId, groupId){
+  try{
+    const s = DataService.getUserById(studentId);
+    const g = (DataService.getGroups?DataService.getGroups():[]).find(x=>x.id===groupId);
+    const c = (typeof DataService.getCycleStateForStudent==='function')?DataService.getCycleStateForStudent(studentId,groupId):null;
+    const b = (typeof this.getBranding==='function')?this.getBranding():{};
+    const lines = [];
+    lines.push('السلام عليكم،');
+    lines.push('');
+    lines.push('نذكركم بأن شهرية '+(s?s.name:'الطالب')+' في مجموعة '+(g?g.name:'')+' مستحقة الآن.');
+    if(c){ lines.push('🔄 الحصص المحسوبة: '+c.sessionsDone+' من '+c.sessionsRequired); }
+    lines.push('💰 المبلغ المستحق: '+((g&&g.monthlyFee)||0)+' جنيه');
+    if(c&&c.graceEndDate){ lines.push('⏳ آخر موعد للسداد: '+new Date(c.graceEndDate).toLocaleDateString('ar-EG')); }
+    lines.push('');
+    lines.push('يمكنكم الدفع كاش في السنتر أو فودافون كاش: '+((b&&b.supportPhone)||''));
+    lines.push('شكراً لتعاونكم 🌹');
+    return lines.join('\n');
+  }catch(e){ return 'تذكير بدفع الشهرية'; }
+};
+Ops.openPaymentReminderWa = function(studentId, groupId){
+  try{
+    const s = DataService.getUserById(studentId);
+    const phone = String((s&&(s.parentPhone||s.phone))||'').replace(/\D/g,'');
+    if(!phone){ if(window.safeToast) window.safeToast('لا يوجد رقم ولي أمر','error'); return; }
+    const msg = this.buildPaymentReminder(studentId, groupId);
+    window.open('https://wa.me/2'+phone+'?text='+encodeURIComponent(msg),'_blank');
+  }catch(e){ console.error(e); }
+};
 Ops.getStreakSettings = function(){
   const d = DataService._getData();
   const def = window.DEFAULT_GAMIFICATION?.streak || {enabled:true, freezeCost:20, milestoneEvery:7, milestoneBonus:50};
