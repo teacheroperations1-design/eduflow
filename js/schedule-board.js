@@ -313,6 +313,8 @@ if(ev.target.closest('.sb-card')||ev.target.closest('.sbm-item')||ev.target.clos
 SB.addAt(cell.dataset.day, null);
 });
 });
+/* 🆕 تفعيل التبديل + تعليم الإخوة على كل الكروت */
+SB.enhanceCards(container,opts);
 };
 
 /* 🩹 PATCH: ربط صفحة جدول المدرسين */
@@ -334,6 +336,7 @@ window.loadScheduleBoardAdmin();
 
 /* 🆕 إضافة مجموعة من خانة فاضية: اليوم والوقت متعبئين + فلاتر الأستاذ/السنتر */
 SB.addAt=function(day,time){
+if(time) time=SB.hm(SB.snapHour(SB.min(time)));
 if(typeof window.openGroupModal!=='function'){ if(window.safeToast) window.safeToast('افتح مودال المجموعة يدوياً','info'); return; }
 window.openGroupModal(null);
 setTimeout(function(){
@@ -369,7 +372,7 @@ ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">🗓�
 '<div class="filter-info">📅 الموعد الحالي: '+SB.DAY_AR(newDay)+' '+SB.fmt12(newTime)+' · ⏱️ '+dur+' د · 🏢 '+(g.center||'-')+' · 👨‍🏫 '+SB.teacherName(g.teacherId)+'</div>'+
 '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">'+
 '<div class="form-group"><label>اليوم</label><select id="mvDay" class="form-select">'+SB.DAYS.map(function(d){return '<option value="'+d.en+'" '+(d.en===newDay?'selected':'')+'>'+d.ar+'</option>';}).join('')+'</select></div>'+
-'<div class="form-group"><label>الساعة</label><input type="time" id="mvTime" class="form-input" value="'+newTime+'"></div>'+
+'<div class="form-group"><label>الساعة</label><input type="time" id="mvTime" step="3600" class="form-input" value="'+SB.hm(SB.snapHour(SB.min(newTime)))+'"></div>'+
 '<div class="form-group"><label>المدة (دقيقة)</label><input type="number" id="mvDur" class="form-input" value="'+dur+'"></div>'+
 '</div>'+
 '<div id="mvConflicts"></div>'+
@@ -438,7 +441,7 @@ if(window.loadGroups) window.loadGroups();
 };
 SB.confirmMove=function(gid,si){
 var day=document.getElementById('mvDay').value;
-var time=document.getElementById('mvTime').value;
+var time=SB.hm(SB.snapHour(SB.min(document.getElementById('mvTime').value)));
 var dur=parseInt(document.getElementById('mvDur').value)||60;
 if(!day||!time){ if(window.safeToast) window.safeToast('اختار اليوم والساعة','error'); return; }
 var c=SB.findConflicts(gid,day,time,dur);
@@ -791,7 +794,9 @@ SB.renderStats('sbStatsT',opts); SB.renderConflicts('sbConflictsT',opts); SB.ren
 (function(){ if(document.getElementById('sbCss2')) return; var st=document.createElement('style'); st.id='sbCss2'; st.textContent=
 '.sb-ovchip{position:absolute;left:4px;right:4px;z-index:5;background:rgba(239,68,68,.92);color:#fff;border-radius:8px;font-size:9px;font-weight:800;text-align:center;padding:3px 4px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.25);}'+
 '.sb-ovchip:hover{background:#dc2626;}'+
-'.sb-dayhead{cursor:pointer;}';
+'.sb-dayhead{cursor:pointer;}'+
+'.sb-swapover::after{content:"🔄 تبديل";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(16,185,129,.9);color:#fff;font-weight:800;font-size:12px;border-radius:8px;z-index:9;pointer-events:none;}'+
+'.sb-sib{box-shadow:0 0 0 3px var(--primary),0 6px 16px rgba(99,102,241,.45)!important;z-index:8;}';
 document.head.appendChild(st); })();
 
 /* ============ 🧮 تجميع الحصص المتداخلة في عناقيد + مسارات جانبية ============ */
@@ -806,6 +811,77 @@ it.lane=lane; cur.items.push(it);
 });
 clusters.forEach(function(cl){ cl.items.forEach(function(it){ it.lanes=cl.items.length; }); });
 return clusters;
+};
+
+/* ============ 🕐 ضبط الساعة دائماً ============ */
+SB.snapHour=function(min){ return Math.max(0,Math.min(1439,Math.round(min/60)*60)); };
+
+/* ============ ✨ تعليم باقي مواعيد نفس المجموعة ============ */
+SB.highlightSiblings=function(container,gid,on,excludeEl){
+try{
+container.querySelectorAll('.sb-card[data-gid="'+gid+'"]').forEach(function(c){
+if(excludeEl&&c===excludeEl) return;
+c.classList.toggle('sb-sib',!!on);
+});
+}catch(e){}
+};
+
+/* ============ 🔄 تبديل مواعيد بين مجموعتين ============ */
+SB.applySwap=async function(gidA,siA,gidB,siB){
+try{
+var gs=(window.DataService&&DataService.getGroups)?DataService.getGroups():[];
+var A=gs.find(function(x){return x.id===gidA;}); var B=gs.find(function(x){return x.id===gidB;});
+if(!A||!B) return;
+var schA=SB.schedulesOf(A).slice(); var schB=SB.schedulesOf(B).slice();
+var a=schA[siA]||schA[0]; var b=schB[siB]||schB[0];
+if(!a||!b) return;
+var oldA={day:a.day,time:a.time}; var oldB={day:b.day,time:b.time};
+schA[siA]={day:oldB.day,time:oldB.time};
+schB[siB]={day:oldA.day,time:oldA.time};
+var sortFn=function(x,y){return (SB.DAY_IDX(x.day)*1440+SB.min(x.time))-(SB.DAY_IDX(y.day)*1440+SB.min(y.time));};
+schA.sort(sortFn); schB.sort(sortFn);
+await DataService.updateGroup(gidA,{schedules:schA,day:schA[0].day,time:schA[0].time});
+await DataService.updateGroup(gidB,{schedules:schB,day:schB[0].day,time:schB[0].time});
+SB.logChange({groupId:gidA,groupName:A.name+' ⇆ '+B.name,teacherId:A.teacherId,oldDay:oldA.day,oldTime:oldA.time,newDay:oldB.day,newTime:oldB.time,swapWith:gidB});
+if(window.safeToast) window.safeToast('🔄 تم تبديل المواعيد: '+A.name+' ⇆ '+B.name,'success');
+SB.refresh();
+if(window.loadGroups) window.loadGroups();
+}catch(e){ console.error(e); if(window.safeToast) window.safeToast('خطأ في التبديل','error'); }
+};
+
+/* ============ 🧩 تعزيز الكروت: تبديل + تعليم الإخوة ============ */
+SB.enhanceCards=function(container,opts){
+try{
+container.querySelectorAll('.sb-card').forEach(function(card){
+if(card.dataset.sbEnh) return; card.dataset.sbEnh='1';
+var gid=card.dataset.gid;
+card.addEventListener('mouseenter',function(){ SB.highlightSiblings(container,gid,true,card); });
+card.addEventListener('mouseleave',function(){ SB.highlightSiblings(container,gid,false,card); card.classList.remove('sb-swapover'); });
+card.addEventListener('click',function(){ SB.highlightSiblings(container,gid,true,card); setTimeout(function(){ SB.highlightSiblings(container,gid,false,card); },2500); });
+if(!opts||!opts.editable) return;
+card.addEventListener('dragover',function(ev){
+var drag=window._sbDrag; if(!drag||drag.gid===gid) return;
+ev.preventDefault(); ev.stopPropagation();
+card.classList.add('sb-swapover');
+});
+card.addEventListener('dragleave',function(){ card.classList.remove('sb-swapover'); });
+card.addEventListener('drop',function(ev){
+var drag=window._sbDrag; if(!drag||drag.gid===gid) return;
+ev.preventDefault(); ev.stopPropagation();
+card.classList.remove('sb-swapover');
+var siT=+(card.dataset.si||0);
+var gs=(window.DataService&&DataService.getGroups)?DataService.getGroups():[];
+var A=gs.find(function(x){return x.id===drag.gid;}); var B=gs.find(function(x){return x.id===gid;});
+if(A&&B){
+var sa=SB.schedulesOf(A)[drag.si]||{}; var sb=SB.schedulesOf(B)[siT]||{};
+if(confirm('🔄 تبديل المواعيد؟\n\n'+A.name+': '+SB.DAY_AR(sa.day||'')+' '+SB.fmt12(sa.time||'')+'\n⇆\n'+B.name+': '+SB.DAY_AR(sb.day||'')+' '+SB.fmt12(sb.time||'')+'\n\nOK = تنفيذ التبديل')){
+SB.applySwap(drag.gid,drag.si,gid,siT);
+}
+}
+window._sbDrag=null;
+});
+});
+}catch(e){ console.error(e); }
 };
 
 /* ============ ⏰ تفاصيل فترة معينة (الساعة بالضبط) ============ */
@@ -884,4 +960,94 @@ if(id==='mySchedule'&&window.loadMyScheduleBoard) window.loadMyScheduleBoard();
 return r;
 };
 }
+})();
+/* ============ 🔄 تبديل + تعليم الإخوة بتفويض عام (ما يتأثر بأي Override) ============ */
+(function(){
+if(window.__sbEnhDelegated) return; window.__sbEnhDelegated=true;
+if(!document.getElementById('sbEnhCss')){
+var st=document.createElement('style'); st.id='sbEnhCss'; st.textContent=
+'.sb-swapover::after{content:"🔄 تبديل";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(16,185,129,.9);color:#fff;font-weight:800;font-size:12px;border-radius:8px;z-index:9;pointer-events:none;}'+
+'.sb-sib{box-shadow:0 0 0 3px var(--primary),0 6px 16px rgba(99,102,241,.45)!important;z-index:8;}';
+document.head.appendChild(st);
+}
+function boardOf(el){ return el.closest('.section')||el.closest('.card')||document; }
+function siblings(card){ var gid=card.getAttribute('data-gid'); return Array.prototype.slice.call(boardOf(card).querySelectorAll('.sb-card[data-gid="'+gid+'"]')); }
+function highlight(card,on){ siblings(card).forEach(function(c){ if(c!==card) c.classList.toggle('sb-sib',!!on); }); }
+var lastSwap=null;
+
+/* 🖱️ hover = تعليم باقي مواعيد نفس المجموعة */
+document.addEventListener('mouseover',function(ev){
+var card=ev.target&&ev.target.closest?ev.target.closest('.sb-card'):null;
+if(!card||!card.getAttribute('data-gid')||card.__sbHover) return;
+card.__sbHover=true; highlight(card,true);
+});
+document.addEventListener('mouseout',function(ev){
+var card=ev.target&&ev.target.closest?ev.target.closest('.sb-card'):null;
+if(!card) return;
+if(ev.relatedTarget&&card.contains(ev.relatedTarget)) return;
+card.__sbHover=false; highlight(card,false);
+});
+
+/* 🖱️ ضغط = تثبيت التعليم ثانيتين */
+document.addEventListener('click',function(ev){
+var card=ev.target&&ev.target.closest?ev.target.closest('.sb-card'):null;
+if(!card||!card.getAttribute('data-gid')) return;
+highlight(card,true); setTimeout(function(){ highlight(card,false); },2500);
+},true);
+
+/* 🎯 سحب فوق كارت مجموعة تانية = ظهور كلمة "تبديل" */
+document.addEventListener('dragover',function(ev){
+var drag=window._sbDrag; if(!drag) return;
+var card=ev.target&&ev.target.closest?ev.target.closest('.sb-card'):null;
+if(card&&card.getAttribute('data-gid')&&card.getAttribute('data-gid')!==drag.gid){
+ev.preventDefault();
+if(lastSwap&&lastSwap!==card) lastSwap.classList.remove('sb-swapover');
+card.classList.add('sb-swapover'); lastSwap=card;
+}else if(lastSwap){ lastSwap.classList.remove('sb-swapover'); lastSwap=null; }
+});
+
+/* 🎯 إفلات فوق الكارت = تنفيذ التبديل */
+document.addEventListener('drop',function(ev){
+var drag=window._sbDrag; if(!drag) return;
+var card=ev.target&&ev.target.closest?ev.target.closest('.sb-card'):null;
+if(!card||!card.getAttribute('data-gid')) return;
+var gidB=card.getAttribute('data-gid');
+if(gidB===drag.gid) return;
+ev.preventDefault(); ev.stopPropagation();
+card.classList.remove('sb-swapover'); lastSwap=null;
+sbSwap(drag.gid,drag.si,gidB,+(card.getAttribute('data-si')||0));
+window._sbDrag=null;
+},true);
+
+document.addEventListener('dragend',function(){ if(lastSwap){ lastSwap.classList.remove('sb-swapover'); lastSwap=null; } });
+
+/* 🔄 تنفيذ تبديل المواعيد بين مجموعتين */
+function sbSwap(gidA,siA,gidB,siB){
+try{
+var gs=(window.DataService&&DataService.getGroups)?DataService.getGroups():[];
+var A=null,B=null; gs.forEach(function(g){ if(g.id===gidA)A=g; if(g.id===gidB)B=g; });
+if(!A||!B) return;
+var schA=(A.schedules&&A.schedules.length)?A.schedules.slice():[{day:A.day,time:A.time}];
+var schB=(B.schedules&&B.schedules.length)?B.schedules.slice():[{day:B.day,time:B.time}];
+var a=schA[siA]||schA[0], b=schB[siB]||schB[0];
+if(!a||!b) return;
+var oldA={day:a.day,time:a.time}, oldB={day:b.day,time:b.time};
+var f=function(d,t){ return (SB.DAY_AR?SB.DAY_AR(d):d)+' '+(SB.fmt12?SB.fmt12(t):t); };
+if(!confirm('🔄 تبديل المواعيد؟\n\n'+A.name+': '+f(oldA.day,oldA.time)+'\n⇆\n'+B.name+': '+f(oldB.day,oldB.time)+'\n\nOK = تنفيذ التبديل')) return;
+schA[siA]={day:oldB.day,time:oldB.time};
+schB[siB]={day:oldA.day,time:oldA.time};
+var sortFn=function(x,y){ var di=(SB.DAY_IDX?SB.DAY_IDX(x.day):0)-(SB.DAY_IDX?SB.DAY_IDX(y.day):0); return di!==0?di:((SB.min?SB.min(x.time):0)-(SB.min?SB.min(y.time):0)); };
+schA.sort(sortFn); schB.sort(sortFn);
+Promise.all([
+DataService.updateGroup(gidA,{schedules:schA,day:schA[0].day,time:schA[0].time}),
+DataService.updateGroup(gidB,{schedules:schB,day:schB[0].day,time:schB[0].time})
+]).then(function(){
+try{ if(SB.logChange) SB.logChange({groupId:gidA,groupName:A.name+' ⇆ '+B.name,teacherId:A.teacherId,oldDay:oldA.day,oldTime:oldA.time,newDay:oldB.day,newTime:oldB.time,swapWith:gidB}); }catch(e){}
+if(window.safeToast) window.safeToast('🔄 تم التبديل: '+A.name+' ⇆ '+B.name,'success');
+if(SB.refresh) SB.refresh(); else { if(window.loadScheduleBoardAdmin) window.loadScheduleBoardAdmin(); if(window.loadMyScheduleBoard) window.loadMyScheduleBoard(); }
+if(window.loadGroups) window.loadGroups();
+});
+}catch(e){ console.error(e); if(window.safeToast) window.safeToast('خطأ في التبديل','error'); }
+}
+window.sbSwapSchedules=sbSwap;
 })();

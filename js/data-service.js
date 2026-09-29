@@ -29,6 +29,8 @@ const newCollections = [
         FirebaseService.startListeners();
       }
     }
+    // 🧹 تنظيف البيانات اليتيمة عند الفتح
+    this.purgeOrphanedData();
   },
 
   _getData() {
@@ -43,6 +45,72 @@ const newCollections = [
     try { localStorage.setItem('eduflow_db', JSON.stringify(d)); } catch (e) { console.warn('save failed', e); }
   },
   invalidateCache() { this._cache = null; },
+
+  // 🧹 تنظيف البيانات اليتيمة (مرتبطة بعناصر محذوفة)
+  purgeOrphanedData() {
+    try {
+      const d = this._getData();
+      let changed = false;
+      const validStudentIds = new Set((d.users || []).filter(u => u.role === 'student').map(u => u.id));
+      const validTeacherIds = new Set((d.users || []).filter(u => u.role === 'teacher').map(u => u.id));
+      const validGroupIds = new Set((d.groups || []).map(g => g.id));
+      const validExamIds = new Set((d.exams || []).map(e => e.id));
+      const validHomeworkIds = new Set((d.homework || []).map(h => h.id));
+      const validChallengeIds = new Set((d.challenges || []).map(c => c.id));
+
+      // تنظيف الحضور
+      (d.attendance || []).forEach(att => {
+        if (!validGroupIds.has(att.groupId)) { att.records = []; changed = true; }
+        else {
+          const before = (att.records || []).length;
+          att.records = (att.records || []).filter(r => validStudentIds.has(r.studentId));
+          if (att.records.length !== before) changed = true;
+        }
+      });
+
+      // تنظيف محاولات الامتحانات
+      const beforeAtt = (d.examAttempts || []).length;
+      d.examAttempts = (d.examAttempts || []).filter(a => validExamIds.has(a.examId) && validStudentIds.has(a.studentId));
+      if (d.examAttempts.length !== beforeAtt) changed = true;
+
+      // تنظيف تسليمات الواجبات
+      const beforeSub = (d.submissions || []).length;
+      d.submissions = (d.submissions || []).filter(s => validHomeworkIds.has(s.homeworkId) && validStudentIds.has(s.studentId));
+      if (d.submissions.length !== beforeSub) changed = true;
+
+      // تنظيف النقاط اليدوية والتفاعل
+      const beforeMP = (d.manualPoints || []).length;
+      d.manualPoints = (d.manualPoints || []).filter(m => validStudentIds.has(m.studentId));
+      if (d.manualPoints.length !== beforeMP) changed = true;
+
+      const beforeIP = (d.interactionPoints || []).length;
+      d.interactionPoints = (d.interactionPoints || []).filter(i => validStudentIds.has(i.studentId));
+      if (d.interactionPoints.length !== beforeIP) changed = true;
+
+      // تنظيف الاشتراكات
+      const beforeEnr = (d.enrollments || []).length;
+      d.enrollments = (d.enrollments || []).filter(e => validStudentIds.has(e.studentId) && validGroupIds.has(e.groupId));
+      if (d.enrollments.length !== beforeEnr) changed = true;
+
+      // تنظيف المدفوعات
+      const beforePay = (d.payments || []).length;
+      d.payments = (d.payments || []).filter(p => validStudentIds.has(p.studentId));
+      if (d.payments.length !== beforePay) changed = true;
+
+      // تنظيف التقييمات
+      const beforeEval = (d.teacherEvaluations || []).length;
+      d.teacherEvaluations = (d.teacherEvaluations || []).filter(e => validStudentIds.has(e.studentId));
+      if (d.teacherEvaluations.length !== beforeEval) changed = true;
+
+      // تنظيف محاولات المسابقات
+      const beforeCA = (d.challengeAttempts || []).length;
+      d.challengeAttempts = (d.challengeAttempts || []).filter(a => validChallengeIds.has(a.challengeId) && validStudentIds.has(a.studentId));
+      if (d.challengeAttempts.length !== beforeCA) changed = true;
+
+      if (changed) { this._saveData(d); console.log('🧹 تم تنظيف البيانات اليتيمة'); }
+      return changed;
+    } catch (e) { console.error('purgeOrphanedData error:', e); return false; }
+  },
 
   // ===== الوقت =====
   formatTime12(t) {
@@ -127,6 +195,7 @@ const newCollections = [
     d.enrollments = (d.enrollments || []).filter(e => e.studentId !== id);
     this._saveData(d);
     if (window.FirebaseService?.connected) await FirebaseService.deleteDoc('users', id);
+    this.purgeOrphanedData();
   },
 
   async addStudentByAdmin(data) {
@@ -441,6 +510,7 @@ const newCollections = [
     d.submissions = (d.submissions || []).filter(s => s.homeworkId !== id);
     this._saveData(d);
     if (window.FirebaseService?.connected) await FirebaseService.deleteDoc('homework', id);
+    this.purgeOrphanedData();
   },
   async gradeSubmission(id, score, by, notes) {
     const d = this._getData();
@@ -521,6 +591,7 @@ const newCollections = [
     d.examAttempts = (d.examAttempts || []).filter(a => a.examId !== id);
     this._saveData(d);
     if (window.FirebaseService?.connected) await FirebaseService.deleteDoc('exams', id);
+    this.purgeOrphanedData();
   },
 
   // ===== TASKS =====

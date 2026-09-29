@@ -1833,6 +1833,63 @@ window.saveStudent=async function(e,editId){
   }catch(err){ console.error('saveStudent error',err); window.safeToast('خطأ: '+err.message,'error'); return false; }
 };
 
+/* ============ 🔢 ضبط عداد المجموعة للأدمن ============ */
+if(!window.applyGroupSessionCounter){
+window.applyGroupSessionCounter=async function(gid){
+try{
+if(!gid){ window.safeToast('احفظ المجموعة الأول وبعدين اضغط تطبيق','info'); return; }
+const now=parseInt(document.getElementById('gSessionNow')?.value)||0;
+const total=parseInt(document.getElementById('gSessionTotal')?.value)||8;
+const g=(DataService.getGroups?DataService.getGroups():[]).find(x=>x.id===gid);
+if(!g){ window.safeToast('المجموعة مش موجودة','error'); return; }
+if(!confirm(`ضبط عداد مجموعة ${g.name} على الحصة ${now} من ${total} لكل طلابها؟`)) return;
+const month=new Date().toISOString().slice(0,7);
+await DataService.updateGroup(gid,{sessionsPerMonth:total,sessionNow:now});
+const students=DataService.getStudentsByGroup?DataService.getStudentsByGroup(gid):[];
+for(const s of students){
+const bl=(typeof Ops?.buildStudentBilling==='function')?Ops.buildStudentBilling(s.id,month).find(b=>b.group.id===gid):null;
+const cur=bl?(bl.billing.totalSessions||0):0;
+const delta=now-cur;
+if(delta>0){ await Ops.addManualSessionsForBilling(gid,s.id,month,delta,'ضبط يدوي: الوصول للحصة '+now,currentUser?.id||'admin'); }
+else if(delta<0){
+const d=DataService._getData();
+let need=-delta;
+const list=(d.manualSessions||[]).filter(ms=>ms.groupId===gid&&ms.studentId===s.id&&ms.month===month&&(!ms.type||ms.type==='counter'));
+list.sort((a,b)=>String(b.addedAt||'').localeCompare(String(a.addedAt||'')));
+const rm=new Set();
+for(const ms of list){ if(need<=0) break; rm.add(ms.id); need-=(ms.sessionsCount||0); }
+d.manualSessions=(d.manualSessions||[]).filter(ms=>!rm.has(ms.id));
+DataService._saveData(d);
+}
+}
+window.safeToast('✅ تم ضبط العداد: الحصة '+now+' من '+total,'success');
+if(window.loadStudentCycles) window.loadStudentCycles();
+}catch(e){ window.safeToast('خطأ: '+e.message,'error'); }
+};
+}
+
+/* ============ 👨🏫 إصلاح صفحة المدرسين (تقرأ من كل المصادر) ============ */
+window.loadTeachers=function(){
+try{
+var ts=(DataService.getTeachers?DataService.getTeachers():[])||[];
+if(!ts.length){ ts=(DataService.getUsers?DataService.getUsers():[]).filter(function(u){return u.role==='teacher';}); }
+console.log('👨‍ teachers count:', ts.length);
+var el=document.getElementById('teachersList')||document.getElementById('teachersGrid')||document.getElementById('teachersCards')||document.getElementById('teachersView');
+if(!el){ var sec=document.getElementById('section-teachers'); if(sec){ el=sec.querySelector('.user-cards')||sec.querySelector('[class*="grid"]')||sec.querySelector('.card'); } }
+if(!el){ console.error('teachers container not found'); return; }
+if(!ts.length){ el.innerHTML='<div class="card" style="text-align:center;padding:30px;"><div style="font-size:44px;">👨‍🏫</div><strong>مفيش مدرسين لسه</strong><p class="text-muted" style="margin-top:6px;">ضيف أول أستاذ من زرار "+ مدرس" فوق</p></div>'; return; }
+el.innerHTML=ts.map(function(t){
+var gs=(DataService.getGroupsByTeacher?DataService.getGroupsByTeacher(t.id):[]);
+var stu=0; gs.forEach(function(g){ stu+=(DataService.getStudentsByGroup?DataService.getStudentsByGroup(g.id).length:0); });
+return '<div class="user-card"><div class="user-card-header"><div class="user-avatar">'+(t.name||'؟').charAt(0)+'</div><div><div class="user-name">'+(t.name||'-')+'</div><div class="user-meta"><span>📚 '+(t.subject||'-')+'</span><span>👥 '+gs.length+' مجموعة</span><span>🎓 '+stu+' طالب</span></div></div></div>'+(typeof window.openTeacherModal==='function'?'<div class="user-actions" style="margin-top:10px;"><button class="btn btn-ghost btn-sm" onclick="window.openTeacherModal(\''+t.id+'\')">✏️ تعديل</button></div>':'')+'</div>';
+}).join('');
+}catch(e){ console.error('loadTeachers error',e); }
+};
+document.addEventListener('click',function(e){
+var t=e.target.closest?e.target.closest('[data-section="teachers"]'):null;
+if(t) setTimeout(window.loadTeachers,80);
+});
+
 window.renderStudentTeachersGrid=function(selectedIds){
 try{
 const grid=document.getElementById('teacherSelectionGrid'); if(!grid) return;
@@ -2464,11 +2521,11 @@ row.innerHTML = '<div class="form-group" style="margin:0;"><select class="form-s
 cont.appendChild(row);
 };
 window.__gAddRow = function(){ addRow('', ''); };
-ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${g?'✏️ تعديل مجموعة':'👥 إضافة مجموعة'}</h3><button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return window.saveGroup(event,'${editId||''}')"><div class="form-group"><label>اسم المجموعة *</label><input type="text" id="gName" class="form-input" value="${esc(g?.name)}" required></div><div class="form-group"><label>👨‍🏫 الأستاذ *</label><select id="gTeacher" class="form-select" required><option value="">-- اختر أستاذ --</option>${teachers.map(t=>`<option value="${t.id}" ${g&&g.teacherId===t.id?'selected':''}>${t.name}</option>`).join('')}</select></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المرحلة</label><select id="gStage" class="form-select" onchange="if(window.updGroupGrades)window.updGroupGrades(this.value);"><option value="">--</option>${stageOpts}</select></div><div class="form-group"><label>الصف</label><select id="gGrade" class="form-select">${(g&&g.grade)?`<option selected>${esc(g.grade)}</option>`:'<option value="">--</option>'}</select></div></div><div class="form-group"><label>📅 مواعيد الحصة (أسبوعياً)</label><div id="schedulesContainer"></div><button type="button" class="btn btn-secondary btn-sm" onclick="window.__gAddRow()">➕ إضافة موعد</button></div><div class="form-group"><label>🏢 السنتر *</label><select id="gCenter" class="form-select" required>${centers.length?centers.map(c=>`<option ${g&&g.center===c?'selected':''}>${esc(c)}</option>`).join(''):'<option value="">⚠️ لا توجد سناتر مسجلة</option>'}</select></div><div class="form-group"><label>📱 رابط واتساب المجموعة</label><input type="url" id="gWhatsapp" class="form-input" value="${esc(g?.whatsappLink)}" placeholder="https://chat.whatsapp.com/..."></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>مدة الحصة (دقيقة) *</label><input type="number" id="gDuration" class="form-input" value="${g?.duration||60}" required></div><div class="form-group"><label>حصص/شهر *</label><input type="number" id="gSessions" class="form-input" value="${g?.sessionsPerMonth||8}" oninput="if(window.calcSP)window.calcSP()" required></div></div><div class="form-group"><label>سعر الشهر *</label><input type="number" id="gMonthly" class="form-input" value="${g?.monthlyFee||0}" oninput="if(window.calcSP)window.calcSP()" required></div><div class="card" style="background:var(--info-bg);border-color:var(--info-border);padding:12px;margin-bottom:12px;">سعر الحصة: <strong id="autoSessionPrice">0</strong> ج.م</div><button class="btn btn-primary w-full">💾 حفظ</button></form></div>`,'modal-lg');
+ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${g?'✏️ تعديل مجموعة':'👥 إضافة مجموعة'}</h3><button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return window.saveGroup(event,'${editId||''}')"><div class="form-group"><label>اسم المجموعة *</label><input type="text" id="gName" class="form-input" value="${esc(g?.name)}" required></div><div class="form-group"><label>👨‍🏫 الأستاذ *</label><select id="gTeacher" class="form-select" required><option value="">-- اختر أستاذ --</option>${teachers.map(t=>`<option value="${t.id}" ${g&&g.teacherId===t.id?'selected':''}>${t.name}</option>`).join('')}</select></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المرحلة</label><select id="gStage" class="form-select" onchange="if(window.updGroupGrades)window.updGroupGrades(this.value);"><option value="">--</option>${stageOpts}</select></div><div class="form-group"><label>الصف</label><select id="gGrade" class="form-select">${(g&&g.grade)?`<option selected>${esc(g.grade)}</option>`:'<option value="">--</option>'}</select></div></div><div id="gDupWarn" class="filter-info" style="display:none;background:var(--danger-bg);border-color:var(--danger);color:var(--danger);margin-bottom:10px;"></div><div class="filter-info" style="margin-bottom:10px;">🔢 <strong>المجموعة في الحصة الكام الشهر ده:</strong> رقم <input type="number" id="gSessionNow" class="form-input" style="width:80px;display:inline-block;margin:0 4px;" min="0" value="${g?.sessionNow||0}"> من <input type="number" id="gSessionTotal" class="form-input" style="width:80px;display:inline-block;margin:0 4px;" min="1" value="${g?.sessionsPerMonth||8}"> ${editId?`<button type="button" class="btn btn-primary btn-sm" onclick="window.applyGroupSessionCounter('${editId}')">💾 تطبيق على كل الطلاب</button>`:''}<div class="text-xs text-muted" style="margin-top:4px;">تعديل يدوي للعداد — التطبيق بيظبط كل طلاب المجموعة.</div></div><div class="form-group"><label>📅 مواعيد الحصة (أسبوعياً)</label><div id="schedulesContainer"></div><button type="button" class="btn btn-secondary btn-sm" onclick="window.__gAddRow()">➕ إضافة موعد</button></div><div class="form-group"><label>🏢 السنتر *</label><select id="gCenter" class="form-select" required>${centers.length?centers.map(c=>`<option ${g&&g.center===c?'selected':''}>${esc(c)}</option>`).join(''):'<option value="">⚠️ لا توجد سناتر مسجلة</option>'}</select></div><div class="form-group"><label>📱 رابط واتساب المجموعة</label><input type="url" id="gWhatsapp" class="form-input" value="${esc(g?.whatsappLink)}" placeholder="https://chat.whatsapp.com/..."></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>مدة الحصة (دقيقة) *</label><input type="number" id="gDuration" class="form-input" value="${g?.duration||60}" required></div><div class="form-group"><label>حصص/شهر *</label><input type="number" id="gSessions" class="form-input" value="${g?.sessionsPerMonth||8}" oninput="if(window.calcSP)window.calcSP()" required></div></div><div class="form-group"><label>سعر الشهر *</label><input type="number" id="gMonthly" class="form-input" value="${g?.monthlyFee||0}" oninput="if(window.calcSP)window.calcSP()" required></div><div class="card" style="background:var(--info-bg);border-color:var(--info-border);padding:12px;margin-bottom:12px;">سعر الحصة: <strong id="autoSessionPrice">0</strong> ج.م</div><button class="btn btn-primary w-full">💾 حفظ</button></form></div>`,'modal-lg');
 const existing = (g && g.schedules && g.schedules.length) ? g.schedules : ((g && g.day) ? [{day:g.day, time:g.time}] : []);
 if (existing.length) { existing.forEach(s=>addRow(s.day, s.time)); }
 else { addRow(defaultDay||'', defaultTime||'10:00'); }
-if (window.updGroupGrades) { try { window.updGroupGrades(g ? g.stage : undefined); } catch(e){} }
+if (window.updGroupGrades) { try { window.updGroupGrades(g ? g.grade : undefined); } catch(e){} }
 if (window.calcSP) { try { window.calcSP(); } catch(e){} }
 }catch(e){ console.error('openGroupModal error', e); }
 };
@@ -2493,7 +2550,7 @@ window.addScheduleRow=function(day='', time='', index=null){
       </div>
       <div class="form-group" style="margin:0;">
         <label style="font-size:11px;">الوقت</label>
-        <input type="time" class="form-input schedule-time" value="${time||'13:00'}" required>
+        <input type="time" step="3600" class="form-input schedule-time" value="${time||'13:00'}" required>
       </div>
       <button type="button" class="btn btn-danger btn-sm" onclick="document.getElementById('${rowId}').remove()" style="margin-bottom:0;">✕</button>
     `;
@@ -6303,7 +6360,7 @@ function minsAt(ev){
 var rect=col.getBoundingClientRect(), y=ev.clientY-rect.top;
 var H=56, minH=+(col.dataset.minh||8);
 var total=(y/H)*60;
-return minH*60+Math.max(0,Math.round(total/5)*5);
+return minH*60+Math.max(0,Math.round(total/60)*60);
 }
 col.addEventListener('drop',function(ev){
 ev.preventDefault(); col.classList.remove('droppable');
@@ -6493,6 +6550,240 @@ document.head.appendChild(st);
 }
 }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',ready); else ready();
+/* 🆕 لف bindDnD بعد أي Override عشان التبديل + تعليم الإخوة يشتغلوا */
+(function(){
+function wrap(){
+if(window.SB&&typeof SB.bindDnD==='function'&&!SB.__enhWrapped){
+SB.__enhWrapped=true;
+var _o=SB.bindDnD;
+SB.bindDnD=function(c,o){ var r=_o.apply(this,arguments); try{ if(SB.enhanceCards) SB.enhanceCards(c,o); }catch(e){} return r; };
+}
+}
+wrap();
+document.addEventListener('DOMContentLoaded',wrap);
+setTimeout(wrap,500);
+})();
+})();
+</script>
+<script>
+/* ============ 📋 الإضافة المجمعة v2 + مودال الطالب العادي بنفس الديزاين ============ */
+(function(){
+/* ---------- فلاتر مساعدة ---------- */
+function allGroupsX(){ return DataService.getGroups?DataService.getGroups():[]; }
+function tNameX(id){ var t=DataService.getUserById?DataService.getUserById(id):null; return (t&&t.name)||'-'; }
+/* ================================================================
+   📋 مودال الإضافة المجمعة — بحث أساتذة + شرائح مجموعات + فلتر أوتوماتيكي
+================================================================ */
+window.openBulkAddStudentModal=function(){
+try{
+window._bulkRows=[];
+var ts=DataService.getTeachers?DataService.getTeachers():[];
+var stageOptions=Object.entries((window.EduFlowConfig&&EduFlowConfig.educationLevels)||{}).map(function(en){ return '<option value="'+en[0]+'">'+en[1].nameAr+'</option>'; }).join('');
+ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">📋 إضافة طلاب بالجملة</h3><button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">'+
+'<div class="filter-info">💡 اختار المرحلة والصف والمجموعات هتتفلتر تلقائياً — علّم على الأساتذة ومجموعاتهم، وضيف الطلاب للقائمة وعدّلها براحتك قبل الحفظ.</div>'+
+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group" style="margin:0;"><label>🎯 المرحلة</label><select id="bulkStage" class="form-select" onchange="window.bulkStageCascade2()"><option value="">الكل</option>'+stageOptions+'</select></div><div class="form-group" style="margin:0;"><label>🎓 الصف</label><select id="bulkGrade" class="form-select" onchange="window.bulkTeachersChanged()"><option value="">الكل</option></select></div></div>'+
+'<div class="form-group" style="margin-top:12px;"><label>👨‍🏫 الأساتذة</label><input type="text" id="bulkTeacherSearch" class="form-input" placeholder="🔍 ابحث عن أستاذ..." oninput="window.bulkFilterTeachers()" style="margin-bottom:8px;"><div id="bulkTeacherChips" style="display:flex;flex-wrap:wrap;gap:8px;max-height:150px;overflow-y:auto;padding:8px;background:var(--surface-hover);border-radius:10px;">'+ts.map(function(t){ return '<label class="bulk-t-chip" data-tname="'+(t.name||'').toLowerCase()+'" style="display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:6px 12px;cursor:pointer;font-size:12px;font-weight:700;"><input type="checkbox" value="'+t.id+'" onchange="window.bulkTeachersChanged()" style="width:16px;height:16px;">'+t.name+'</label>'; }).join('')+'</div></div>'+
+'<div id="bulkGroupsArea" style="margin-bottom:12px;"></div>'+
+'<div style="border-top:1px dashed var(--border);padding-top:12px;"><div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;">'+
+'<input type="text" id="bulkName" class="form-input" placeholder="اسم الطالب *">'+
+'<input type="tel" id="bulkPhone" class="form-input" placeholder="هاتف الطالب">'+
+'<input type="tel" id="bulkParent" class="form-input" placeholder="هاتف ولي الأمر">'+
+'<button type="button" class="btn btn-primary" onclick="window.bulkPushRow()">➕ للقائمة</button>'+
+'</div></div>'+
+'<div id="bulkRowsList" style="margin-top:12px;"></div>'+
+'<button type="button" class="btn btn-success w-full" style="margin-top:12px;padding:14px;font-size:15px;" onclick="window.bulkSaveAll()">💾 حفظ الكل (<span id="bulkCount">0</span> طالب)</button>'+
+'</div>','modal-lg');
+window.bulkRenderRows();
+window.bulkTeachersChanged();
+}catch(e){ console.error(e); window.safeToast('خطأ في فتح المودال','error'); }
+};
+window.bulkFilterTeachers=function(){
+try{
+var q=((document.getElementById('bulkTeacherSearch')||{}).value||'').toLowerCase();
+document.querySelectorAll('.bulk-t-chip').forEach(function(l){ l.style.display=(l.getAttribute('data-tname').indexOf(q)>=0)?'inline-flex':'none'; });
+}catch(e){}
+};
+window.bulkStageCascade2=function(){
+try{
+var st=(document.getElementById('bulkStage')||{}).value||'';
+var el=document.getElementById('bulkGrade');
+if(el){
+var grades=(window.EduFlowConfig&&EduFlowConfig.educationLevels&&EduFlowConfig.educationLevels[st])?EduFlowConfig.educationLevels[st].grades||[]:[];
+el.innerHTML='<option value="">الكل</option>'+grades.map(function(g){ return '<option value="'+g+'">'+g+'</option>'; }).join('');
+}
+window.bulkTeachersChanged();
+}catch(e){}
+};
+window.bulkTeachersChanged=function(){
+try{
+var wrap=document.getElementById('bulkGroupsArea'); if(!wrap) return;
+var ids=[]; document.querySelectorAll('#bulkTeacherChips input:checked').forEach(function(cb){ ids.push(cb.value); });
+var st=(document.getElementById('bulkStage')||{}).value||'';
+var gr=(document.getElementById('bulkGrade')||{}).value||'';
+if(!ids.length){ wrap.innerHTML='<p class="text-muted" style="text-align:center;padding:8px;">علّم على أستاذ لعرض مجموعاته</p>'; return; }
+wrap.innerHTML=ids.map(function(tid){
+var gs=allGroupsX().filter(function(g){ return g.teacherId===tid; });
+if(st) gs=gs.filter(function(g){ return (g.stage||'')===st; });
+if(gr) gs=gs.filter(function(g){ return (g.grade||'')===gr; });
+var chips=gs.length?gs.map(function(g){
+return '<label style="display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px 10px;cursor:pointer;font-size:11px;font-weight:700;"><input type="checkbox" class="bulkGroupCb" value="'+g.id+'" data-teacher="'+tid+'" style="width:14px;height:14px;">'+g.name+'<span style="color:var(--text-muted);font-weight:500;">'+(g.day||'')+' '+(g.time||'')+'</span></label>';
+}).join(''):'<span class="text-muted" style="font-size:11px;">مفيش مجموعات'+((st||gr)?' مطابقة للفلتر':'')+'</span>';
+return '<div class="card" style="padding:10px;margin-bottom:8px;border-right:3px solid var(--primary);"><div style="font-weight:800;font-size:12px;margin-bottom:6px;">👨‍🏫 '+tNameX(tid)+' <span class="text-muted" style="font-weight:500;">('+gs.length+' مجموعة)</span></div><div style="display:flex;flex-wrap:wrap;gap:6px;">'+chips+'</div></div>';
+}).join('');
+}catch(e){ console.error(e); }
+};
+window.bulkPushRow=function(){
+try{
+var name=((document.getElementById('bulkName')||{}).value||'').trim();
+if(!name){ window.safeToast('اكتب اسم الطالب','error'); return; }
+var ids=[]; document.querySelectorAll('#bulkTeacherChips input:checked').forEach(function(cb){ ids.push(cb.value); });
+if(!ids.length){ window.safeToast('علّم على أستاذ واحد على الأقل','error'); return; }
+var enroll=[];
+ids.forEach(function(tid){
+var list=[];
+var cbs=document.querySelectorAll('.bulkGroupCb[data-teacher="'+tid+'"]:checked');
+if(cbs.length){ cbs.forEach(function(cb){ list.push(cb.value); }); }
+else{ document.querySelectorAll('.bulkGroupCb[data-teacher="'+tid+'"]').forEach(function(cb){ list.push(cb.value); }); }
+list.forEach(function(gid){
+var g=allGroupsX().find(function(x){ return x.id===gid; });
+if(g) enroll.push({teacherId:tid, groupId:gid, teacherName:tNameX(tid), groupName:g.name});
+});
+});
+if(!enroll.length){ window.safeToast('مفيش مجموعات متاحة للأساتذة المختارين','error'); return; }
+window._bulkRows.push({name:name, phone:((document.getElementById('bulkPhone')||{}).value||'').trim(), parentPhone:((document.getElementById('bulkParent')||{}).value||'').trim(), enroll:enroll});
+document.getElementById('bulkName').value=''; document.getElementById('bulkPhone').value=''; document.getElementById('bulkParent').value='';
+window.bulkRenderRows();
+window.safeToast('✅ اتضاف للقائمة','success');
+}catch(e){ console.error(e); }
+};
+window.bulkRenderRows=function(){
+try{
+var el=document.getElementById('bulkRowsList'); if(!el) return;
+var cnt=document.getElementById('bulkCount'); if(cnt) cnt.textContent=window._bulkRows.length;
+if(!window._bulkRows.length){ el.innerHTML='<p class="text-muted" style="text-align:center;padding:10px;">القائمة فاضية — ضيف أول طالب من الخانات فوق</p>'; return; }
+el.innerHTML=window._bulkRows.map(function(r,i){
+var chips=r.enroll.map(function(en,idx){
+return '<span style="display:inline-flex;align-items:center;gap:6px;background:var(--primary-bg);color:var(--primary);border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;margin:2px;">👨‍🏫 '+en.teacherName+' · 👥 '+en.groupName+'<button type="button" style="background:none;border:none;color:var(--danger);cursor:pointer;font-weight:900;" onclick="window.bulkRemoveEnroll('+i+','+idx+')">✕</button></span>';
+}).join('');
+var taken={}; r.enroll.forEach(function(en){ taken[en.groupId]=1; });
+var opts=allGroupsX().filter(function(g){ return !taken[g.id]; }).map(function(g){ return '<option value="'+g.id+'">'+g.name+' — '+tNameX(g.teacherId)+'</option>'; }).join('');
+return '<div class="card" style="padding:10px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;"><div><strong>'+(i+1)+'. '+r.name+'</strong><div class="text-xs text-muted">'+(r.phone?'📱 '+r.phone:'')+(r.parentPhone?' · 👨‍👩‍👦 '+r.parentPhone:'')+'</div></div><button type="button" class="btn btn-danger btn-sm" onclick="window.bulkRemoveRow('+i+')">🗑️</button></div><div style="margin-top:6px;">'+chips+'<select class="form-select" style="width:auto;padding:4px 8px;font-size:11px;display:inline-block;" onchange="window.bulkAddGroup('+i+',this.value);this.value=\'\';"><option value="">+ مجموعة</option>'+opts+'</select></div></div>';
+}).join('');
+}catch(e){ console.error(e); }
+};
+window.bulkRemoveEnroll=function(rowIdx,enIdx){
+try{
+var r=window._bulkRows[rowIdx]; if(!r) return;
+r.enroll.splice(enIdx,1);
+if(!r.enroll.length){ window._bulkRows.splice(rowIdx,1); window.safeToast('اتشال الطالب لأنه مبقاش ليه مجموعات','info'); }
+window.bulkRenderRows();
+}catch(e){}
+};
+window.bulkAddGroup=function(rowIdx,gid){
+try{
+if(!gid) return;
+var r=window._bulkRows[rowIdx]; if(!r) return;
+if(r.enroll.some(function(x){ return x.groupId===gid; })) return;
+var g=allGroupsX().find(function(x){ return x.id===gid; }); if(!g) return;
+r.enroll.push({teacherId:g.teacherId, groupId:g.id, teacherName:tNameX(g.teacherId), groupName:g.name});
+window.bulkRenderRows();
+}catch(e){}
+};
+window.bulkRemoveRow=function(idx){ window._bulkRows.splice(idx,1); window.bulkRenderRows(); };
+window.bulkSaveAll=async function(){
+try{
+if(!window._bulkRows.length){ window.safeToast('القائمة فاضية','error'); return; }
+var stage=(document.getElementById('bulkStage')||{}).value||'';
+var grade=(document.getElementById('bulkGrade')||{}).value||'';
+var ok=0, linked=0, fail=0;
+for(var i=0;i<window._bulkRows.length;i++){
+var r=window._bulkRows[i];
+try{
+var existing=(DataService.getUsers?DataService.getUsers():[]).find(function(u){ return u.role==='student'&&String(u.name||'').trim()===String(r.name).trim(); });
+if(existing){
+for(var k=0;k<r.enroll.length;k++){
+var en=r.enroll[k];
+var has=(DataService.getStudentTeachers?DataService.getStudentTeachers(existing.id):[]).some(function(t){ return t.group&&t.group.id===en.groupId; });
+if(!has){ await DataService.addEnrollment({studentId:existing.id, groupId:en.groupId, teacherId:en.teacherId, status:'active'}); }
+}
+linked++;
+}else{
+await DataService.addStudentByAdmin({name:r.name, phone:r.phone, parentPhone:r.parentPhone, stage:stage, grade:grade, password:'1234', enrollments:r.enroll.map(function(en){ return {groupId:en.groupId, teacherId:en.teacherId}; })});
+ok++;
+}
+}catch(e2){ console.error(e2); fail++; }
+}
+ThemeManager.closeModal();
+window.safeToast('✅ تم إضافة '+ok+' طالب'+(linked?' · 🔗 تم ربط '+linked+' موجودين':'')+(fail?' · فشل '+fail:''),'success');
+window._bulkRows=[];
+if(window.loadStudents) window.loadStudents();
+}catch(e){ console.error(e); window.safeToast('خطأ في الحفظ','error'); }
+};
+/* ================================================================
+   🎓 مودال الطالب العادي — نفس الديزاين (شرائح أساتذة + كروت مجموعات)
+================================================================ */
+window.renderStudentTeachersGrid=function(){
+try{
+var grid=document.getElementById('teacherSelectionGrid'); if(!grid) return;
+var teachers=DataService.getTeachers?DataService.getTeachers():[];
+var sel=window._selectedTeachers||[];
+var sv=((document.getElementById('stgTeacherSearch'))?document.getElementById('stgTeacherSearch').value:'');
+grid.innerHTML='<input type="text" id="stgTeacherSearch" class="form-input" placeholder="🔍 ابحث عن أستاذ..." oninput="window.stgFilterTeachers()" style="margin-bottom:8px;">'+
+'<div id="stgChips" style="display:flex;flex-wrap:wrap;gap:8px;max-height:170px;overflow-y:auto;">'+
+teachers.map(function(t){
+var on=sel.indexOf(t.id)>=0;
+return '<label class="stg-chip" data-tname="'+(t.name||'').toLowerCase()+'" style="display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:700;border:1px solid '+(on?'var(--primary)':'var(--border)')+';background:'+(on?'var(--primary-bg)':'var(--surface)')+';color:'+(on?'var(--primary)':'var(--text)')+';"><input type="checkbox" value="'+t.id+'" '+(on?'checked':'')+' onchange="window.stgToggleTeacher(this)" style="width:15px;height:15px;">'+t.name+'</label>';
+}).join('')+'</div>';
+if(sv){ var inp=document.getElementById('stgTeacherSearch'); if(inp){ inp.value=sv; window.stgFilterTeachers(); } }
+}catch(e){ console.error(e); }
+};
+window.stgFilterTeachers=function(){
+try{
+var q=((document.getElementById('stgTeacherSearch')||{}).value||'').toLowerCase();
+document.querySelectorAll('.stg-chip').forEach(function(l){ l.style.display=(l.getAttribute('data-tname').indexOf(q)>=0)?'inline-flex':'none'; });
+}catch(e){}
+};
+window.stgToggleTeacher=function(cb){
+try{
+window._selectedTeachers=window._selectedTeachers||[];
+var i=window._selectedTeachers.indexOf(cb.value);
+if(cb.checked&&i<0) window._selectedTeachers.push(cb.value);
+if(!cb.checked&&i>=0) window._selectedTeachers.splice(i,1);
+window.renderStudentTeachersGrid();
+window.renderStudentGroups();
+}catch(e){}
+};
+window.renderStudentGroups=function(){
+try{
+var host=null;
+['studentGroupsContainer','studentGroupsArea','groupsArea','sGroupsArea','studentGroupsList'].forEach(function(id){ if(!host){ var e=document.getElementById(id); if(e) host=e; } });
+if(!host){
+host=document.createElement('div'); host.id='studentGroupsContainer';
+var anchor=document.getElementById('teacherSelectionGrid');
+if(anchor&&anchor.parentNode) anchor.parentNode.insertBefore(host,anchor.nextSibling);
+else return;
+}
+var sel=window._selectedTeachers||[];
+if(!sel.length){ host.innerHTML='<p class="text-muted" style="text-align:center;padding:8px;">علّم على أستاذ لعرض مجموعاته</p>'; return; }
+var st=(document.getElementById('sStage')||{}).value||'';
+var gr=(document.getElementById('sGrade')||{}).value||'';
+var ce=(document.getElementById('sCenter')||{}).value||'';
+var states={};
+document.querySelectorAll('#'+host.id+' input[type="checkbox"]').forEach(function(cb){ states[cb.value]=cb.checked; });
+var isOn=function(gid){ if(states[gid]!==undefined) return states[gid]; return (window._preChecked||[]).indexOf(gid)>=0; };
+host.innerHTML=sel.map(function(tid){
+var gs=allGroupsX().filter(function(g){ return g.teacherId===tid; });
+if(st) gs=gs.filter(function(g){ return (g.stage||'')===st; });
+if(gr) gs=gs.filter(function(g){ return (g.grade||'')===gr; });
+if(ce) gs=gs.filter(function(g){ return (g.center||'')===ce; });
+var chips=gs.length?gs.map(function(g){
+var on=isOn(g.id);
+return '<label style="display:inline-flex;align-items:center;gap:6px;background:'+(on?'var(--primary-bg)':'var(--surface)')+';border:1px solid '+(on?'var(--primary)':'var(--border)')+';border-radius:10px;padding:6px 10px;cursor:pointer;font-size:11px;font-weight:700;color:'+(on?'var(--primary)':'var(--text)')+';"><input type="checkbox" value="'+g.id+'" data-teacher="'+tid+'" '+(on?'checked':'')+' onchange="window.renderStudentGroups()" style="width:14px;height:14px;">'+g.name+'<span style="color:var(--text-muted);font-weight:500;">'+(g.day||'')+' '+(g.time||'')+' · '+(g.center||'-')+'</span></label>';
+}).join(''):'<span class="text-muted" style="font-size:11px;">مفيش مجموعات'+((st||gr||ce)?' مطابقة للفلاتر':'')+'</span>';
+return '<div class="card" style="padding:10px;margin-bottom:8px;border-right:3px solid var(--primary);"><div style="font-weight:800;font-size:12px;margin-bottom:6px;">👨‍🏫 '+tNameX(tid)+' <span class="text-muted" style="font-weight:500;">('+gs.length+' مجموعة)</span></div><div style="display:flex;flex-wrap:wrap;gap:6px;">'+chips+'</div></div>';
+}).join('');
+}catch(e){ console.error(e); }
+};
 })();
 </script>
 </body>

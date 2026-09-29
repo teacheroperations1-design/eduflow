@@ -151,30 +151,41 @@ const Ops = {
     if (u.role === 'super_admin') return null;
     const d = DataService._getData();
     const assignment = d.assignments?.[userId];
+    let raw;
     if (assignment) {
-      return {
+      raw = {
         teacherIds: assignment.teacherId ? [assignment.teacherId] : (assignment.teacherIds || []),
         groupIds: assignment.groupIds || [],
         centerIds: assignment.centerIds || []
       };
+    } else if (u.assistant && u.assistant.scope) {
+      raw = u.assistant.scope;
+    } else {
+      raw = { teacherIds: u.assignedTeacherIds || [], groupIds: [], centerIds: [] };
     }
-    if (u.assistant?.scope) return u.assistant.scope;
-    return { teacherIds: u.assignedTeacherIds || [], groupIds: [], centerIds: [] };
+    /* ✅ تطبيع: نضمن إن المصفوفات التلاتة موجودة دايماً مهما كان شكل البيانات المخزنة */
+    return {
+      teacherIds: Array.isArray(raw.teacherIds) ? raw.teacherIds : (raw.teacherIds ? [raw.teacherIds] : []),
+      groupIds: Array.isArray(raw.groupIds) ? raw.groupIds : [],
+      centerIds: Array.isArray(raw.centerIds) ? raw.centerIds : []
+    };
   },
 
   teachersInScope(userId) {
     const scope = this.getScope(userId);
     if (!scope) return DataService.getTeachers();
-    return DataService.getTeachers().filter(t => scope.teacherIds.includes(t.id));
+    const tids = scope.teacherIds || [];
+    return DataService.getTeachers().filter(t => tids.includes(t.id));
   },
 
   groupsInScope(userId) {
     const scope = this.getScope(userId);
     if (!scope) return DataService.getGroups();
+    const gids = scope.groupIds || [], tids = scope.teacherIds || [], cids = scope.centerIds || [];
     return DataService.getGroups().filter(g =>
-      scope.groupIds.includes(g.id) ||
-      scope.teacherIds.includes(g.teacherId) ||
-      (g.center && scope.centerIds.includes(g.center))
+      gids.includes(g.id) ||
+      tids.includes(g.teacherId) ||
+      (g.center && cids.includes(g.center))
     );
   },
 
@@ -381,6 +392,10 @@ const Ops = {
     });
   },
 
+
+
+
+  
 buildStudentBilling(studentId, month = null) {
   const s = DataService.getUserById(studentId);
   if (!s) return [];
@@ -392,13 +407,24 @@ buildStudentBilling(studentId, month = null) {
     const pay = (DataService._getData().payments || []).find(p =>
       p.studentId === studentId && p.groupId === group.id && (p.month === targetMonth || p.cycleStart === cycle?.cycleStartDate)
     );
-    const manualSessions = (DataService._getData().manualSessions || []).filter(ms =>
-      ms.groupId === group.id && ms.studentId === studentId && ms.month === targetMonth
-    );
-    const manualSessionsCount = manualSessions.reduce((sum, ms) => sum + (ms.sessionsCount || 0), 0);
-    return {
-      group, teacher,
-      billing: { ...billing, manualSessionsCount, totalSessions: (billing.actualSessions || 0) + manualSessionsCount },
+    const allManualSessions = (DataService._getData().manualSessions || []).filter(ms =>
+  ms.groupId === group.id && ms.studentId === studentId && ms.month === targetMonth
+);
+// 🆕 حصص إضافية بتتحسب ضمن الـ counter (الـ 8)
+// 🆕 كل الحصص اليدوية تزيد العداد: الإضافية (6→7) والتعويضية (تعوض ملغية مش محتسبة)
+const counterSessions = allManualSessions.reduce((sum, ms) => sum + (ms.sessionsCount || 0), 0);
+const makeupSessions = allManualSessions.filter(ms => ms.type === 'makeup').reduce((sum, ms) => sum + (ms.sessionsCount || 0), 0);
+// الحصة الكام = actualSessions + counterSessions (بدون makeupSessions)
+const counterTotal = (billing.actualSessions || 0) + counterSessions;
+return {
+  group, teacher,
+  billing: { 
+    ...billing, 
+    manualSessionsCount: counterSessions,
+    makeupSessionsCount: makeupSessions,
+    totalSessions: counterTotal,
+    sessionsRequired: billing.sessionsRequired || 8
+  },
       cycle,
       payment: pay || {
         month: targetMonth, groupId: group.id,
@@ -417,10 +443,22 @@ async triggerCycleCheck(studentId, groupId, afterSession) {
     
     const g = DataService.getGroups().find(x => x.id === groupId);
     const student = DataService.getUserById(studentId);
-    const teacher = DataService.getUserById(g?.teacherId);
     
-    // إنذار عند الحصة 7 (7 من 8)
-    if (cycle.sessionsDone === cycle.sessionsRequired - 1) {
+    // 🆕 استخدم counterTotal من buildStudentBilling
+    const billingList = this.buildStudentBilling(studentId);
+    const billing = billingList.find(b => b.group.id === groupId);
+    const sessionsDone = billing ? (billing.billing.totalSessions || 0) : (cycle.sessionsDone || 0);
+    const sessionsRequired = cycle.sessionsRequired || 8;
+    
+    // 🆕 منع الإنشاء المتكرر للفاتورة
+    const d = DataService._getData();
+    const existingInvoice = (d.payments || []).find(p =>
+      p.studentId === studentId && p.groupId === groupId && 
+      p.cycleStart === cycle.cycleStartDate && p.status !== 'paid'
+    );
+    
+    // إنذار عند الحصة قبل الأخيرة
+    if (sessionsDone === sessionsRequired - 1) {
       await DataService.addNotification({
         title: '⚠️ تنبيه: الحصة الجاية الدفع',
         message: `وصلت للحصة ${cycle.sessionsDone} من ${cycle.sessionsRequired} في مجموعة ${g?.name || ''}. الحصة القادمة هتكون موعد دفع الشهرية (${g?.monthlyFee || 0} جنيه).`,
@@ -464,8 +502,9 @@ async triggerCycleCheck(studentId, groupId, afterSession) {
     }
     
     // فاتورة عند الحصة 8
-    if (cycle.sessionsDone >= cycle.sessionsRequired) {
-      const invoiceId = 'inv_' + Date.now();
+    // فاتورة عند الوصول لـ sessionsRequired (مع منع التكرار)
+if (sessionsDone >= sessionsRequired && !existingInvoice) {
+  const invoiceId = 'inv_' + Date.now();
       const invoice = {
         id: invoiceId,
         studentId,
@@ -536,6 +575,55 @@ async triggerCycleCheck(studentId, groupId, afterSession) {
   } catch (e) {
     console.error('triggerCycleCheck error:', e);
     return null;
+  }
+},
+// 🆕 إضافة حصص لكل طلاب المجموعة دفعة واحدة
+async addSessionsToGroup(groupId, count, reason, addedBy, type = 'counter') {
+  try {
+    const d = DataService._getData();
+    if (!d.manualSessions) d.manualSessions = [];
+    const g = DataService.getGroups().find(x => x.id === groupId);
+    if (!g) return { success: false, message: 'المجموعة غير موجودة' };
+    
+    const month = new Date().toISOString().slice(0, 7);
+    const students = DataService.getStudentsByGroup(groupId);
+    const added = [];
+    
+    for (const student of students) {
+      const id = 'ms_' + Date.now() + '_' + student.id;
+      const item = {
+        id, groupId, studentId: student.id, month,
+        sessionsCount: parseInt(count) || 0,
+        reason: reason || (type === 'makeup' ? 'حصة تعويضية' : 'حصة إضافية'),
+        type: type,
+        addedBy: addedBy || 'system',
+        addedAt: new Date().toISOString()
+      };
+      d.manualSessions.push(item);
+      added.push(item);
+      
+      if (type === 'counter') {
+        try { await this.triggerCycleCheck(student.id, groupId, { type: 'manual', count }); } catch (e) {}
+      }
+    }
+    
+    DataService._saveData(d);
+    if (window.FirebaseService && window.FirebaseService._db) {
+      for (const item of added) {
+        try { await FirebaseService.saveDoc('manualSessions', item.id, item); } catch (e) {}
+      }
+    }
+    
+    await this.log(addedBy, type === 'makeup' ? 'حصة تعويضية للمجموعة' : 'حصص إضافية للمجموعة', 
+      `${count} حصة لكل طلاب ${g.name}`);
+    
+    if (window.safeToast) window.safeToast(`✅ تمت إضافة ${count} حصة لـ ${students.length} طالب`, 'success');
+    
+    return { success: true, studentsCount: students.length, items: added };
+  } catch (e) {
+    console.error('addSessionsToGroup error:', e);
+    if (window.safeToast) window.safeToast('خطأ: ' + e.message, 'error');
+    return { success: false, message: e.message };
   }
 },
 
