@@ -29,16 +29,14 @@ body { overflow-x: hidden; }
 .tab:hover { color: var(--primary); }
 .tab.active { background: var(--surface); color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,.1); }
 .info-box { background: var(--info-bg); border: 1px solid var(--info-border); border-radius: 12px; padding: 12px; font-size: 12px; color: var(--info); margin-bottom: 16px; text-align: center; line-height: 1.6; display: flex; align-items: center; gap: 8px; justify-content: center; animation: fadeInUp .4s ease both; }
-.form-group { animation: fadeInUp .5s ease both; }
+.form-group { animation: fadeInUp .5s ease both; margin-bottom: 14px; }
 .form-group:nth-child(1) { animation-delay: .1s; }
 .form-group:nth-child(2) { animation-delay: .2s; }
 .login-links { display: flex; gap: 16px; justify-content: center; margin-top: 18px; flex-wrap: wrap; position: relative; z-index: 1; animation: fadeInUp .5s ease .3s both; }
 .login-links a { font-size: 13px; font-weight: 700; text-decoration: none; transition: all .2s; display: inline-flex; align-items: center; gap: 4px; }
 .login-links a:hover { transform: translateY(-1px); }
 .hesetak-banner { margin-top: 24px; padding: 16px; border-radius: 14px; background: linear-gradient(135deg, rgba(56,189,248,.12), rgba(99,102,241,.12)); border: 1px solid rgba(99,102,241,.25); display: flex; align-items: center; gap: 14px; text-decoration: none; transition: all .3s cubic-bezier(.4,0,.2,1); position: relative; z-index: 1; overflow: hidden; animation: fadeInUp .6s ease .4s both; }
-.hesetak-banner::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(56,189,248,.1), rgba(99,102,241,.1)); opacity: 0; transition: opacity .3s; }
 .hesetak-banner:hover { transform: translateY(-3px); border-color: var(--primary); box-shadow: 0 10px 30px rgba(99,102,241,.2); }
-.hesetak-banner:hover::before { opacity: 1; }
 .hesetak-banner-icon { width: 46px; height: 46px; border-radius: 12px; background: linear-gradient(135deg, #38bdf8, #6366f1); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 22px; flex-shrink: 0; position: relative; z-index: 1; }
 .hesetak-banner-content { flex: 1; position: relative; z-index: 1; }
 .hesetak-banner-content strong { display: block; font-size: 14px; margin-bottom: 2px; color: var(--text); }
@@ -47,49 +45,6 @@ body { overflow-x: hidden; }
 .hesetak-banner:hover .hesetak-banner-arrow { transform: translateX(-4px); color: var(--primary); }
 .theme-float { position: fixed; top: 20px; left: 20px; z-index: 100; animation: fadeIn .6s ease .8s both; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-.about-float-btn { position: fixed; top: 20px; right: 20px; z-index: 100; background: var(--surface); border: 1px solid var(--border); border-radius: 9999px; padding: 10px 18px; font-size: 13px; font-weight: 700; color: var(--text); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all .3s cubic-bezier(.4,0,.2,1); box-shadow: 0 4px 20px rgba(0,0,0,.15); animation: slideInRight .6s cubic-bezier(.4,0,.2,1) .5s both; }
-@keyframes slideInRight { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
-.about-float-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(99,102,241,.3); }
-.about-float-btn .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); animation: pulse 2s infinite; }
-@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .5; transform: scale(1.2); } }
-.about-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px; opacity: 0; transition: opacity .4s ease; }
-.about-modal-overlay.active { display: flex; opacity: 1; }
-.about-modal { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; max-width: 560px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative; transform: translateY(40px) scale(.9); opacity: 0; transition: all .5s cubic-bezier(.4,0,.2,1); box-shadow: 0 40px 100px rgba(0,0,0,.4); }
-.about-modal-overlay.active .about-modal { transform: translateY(0) scale(1); opacity: 1; }
-.about-modal-header { background: var(--grad); padding: 32px 28px; border-radius: 24px 24px 0 0; position: relative; overflow: hidden; }
-.about-modal-header::before { content: ''; position: absolute; top: -50%; right: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,.1) 0%, transparent 50%); animation: rotate 20s linear infinite; }
-.about-modal-header .close-btn { position: absolute; top: 16px; left: 16px; background: rgba(255,255,255,.2); border: none; width: 36px; height: 36px; border-radius: 50%; color: #fff; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; z-index: 2; }
-.about-modal-header .close-btn:hover { background: rgba(255,255,255,.3); transform: rotate(90deg); }
-.about-logo-wrap { display: flex; align-items: center; gap: 16px; position: relative; z-index: 1; }
-.about-logo { width: 64px; height: 64px; border-radius: 18px; background: rgba(255,255,255,.2); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; font-size: 32px; color: #fff; overflow: hidden; flex-shrink: 0; border: 2px solid rgba(255,255,255,.3); }
-.about-logo img { width: 100%; height: 100%; object-fit: cover; }
-.about-title-wrap h2 { color: #fff; font-size: 24px; font-weight: 900; margin: 0 0 4px; }
-.about-title-wrap p { color: rgba(255,255,255,.8); font-size: 13px; margin: 0; }
-.about-modal-body { padding: 28px; }
-.about-section { margin-bottom: 24px; opacity: 0; transform: translateY(20px); transition: all .5s cubic-bezier(.4,0,.2,1); }
-.about-modal-overlay.active .about-section:nth-child(1) { animation: sectionReveal .5s ease .2s forwards; }
-.about-modal-overlay.active .about-section:nth-child(2) { animation: sectionReveal .5s ease .35s forwards; }
-.about-modal-overlay.active .about-section:nth-child(3) { animation: sectionReveal .5s ease .5s forwards; }
-.about-modal-overlay.active .about-section:nth-child(4) { animation: sectionReveal .5s ease .65s forwards; }
-.about-modal-overlay.active .about-section:nth-child(5) { animation: sectionReveal .5s ease .8s forwards; }
-@keyframes sectionReveal { to { opacity: 1; transform: translateY(0); } }
-.about-section-title { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 800; color: var(--primary); margin-bottom: 12px; }
-.about-section-title .icon { width: 32px; height: 32px; border-radius: 10px; background: var(--primary-bg); display: flex; align-items: center; justify-content: center; font-size: 16px; }
-.about-section p { font-size: 13px; line-height: 1.8; color: var(--text-secondary); margin: 0; }
-.features-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
-.feature-item { background: var(--surface-hover); border: 1px solid var(--border); border-radius: 12px; padding: 14px; text-align: center; transition: all .3s; }
-.feature-item:hover { border-color: var(--primary-border); transform: translateY(-2px); background: var(--primary-bg); }
-.feature-item .icon { font-size: 24px; margin-bottom: 6px; }
-.feature-item .label { font-size: 11px; font-weight: 700; color: var(--text); }
-.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
-.stat-item { background: linear-gradient(135deg, var(--primary-bg), rgba(99,102,241,.05)); border: 1px solid var(--primary-border); border-radius: 12px; padding: 14px 8px; text-align: center; }
-.stat-item .value { font-size: 20px; font-weight: 900; color: var(--primary); font-family: var(--font-en); display: block; }
-.stat-item .label { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
-.contact-row { display: flex; gap: 10px; margin-top: 12px; }
-.contact-btn { flex: 1; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-hover); color: var(--text); font-size: 12px; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all .2s; }
-.contact-btn:hover { border-color: var(--primary); background: var(--primary-bg); color: var(--primary); transform: translateY(-2px); }
-.contact-btn.whatsapp { background: linear-gradient(135deg, #25d366, #128c7e); border-color: transparent; color: #fff; }
-.contact-btn.whatsapp:hover { background: linear-gradient(135deg, #128c7e, #075e54); color: #fff; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(37,211,102,.3); }
 .qr-login-banner { margin-top: 16px; padding: 14px; border-radius: 14px; background: linear-gradient(135deg, rgba(139,92,246,.1), rgba(236,72,153,.1)); border: 1px solid rgba(139,92,246,.25); display: flex; align-items: center; gap: 14px; text-decoration: none; transition: all .3s cubic-bezier(.4,0,.2,1); position: relative; z-index: 1; overflow: hidden; animation: fadeInUp .6s ease .5s both; }
 .qr-login-banner:hover { transform: translateY(-3px); border-color: #8b5cf6; box-shadow: 0 10px 30px rgba(139,92,246,.2); }
 .qr-login-icon { width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #8b5cf6, #ec4899); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px; flex-shrink: 0; }
@@ -113,10 +68,6 @@ body { overflow-x: hidden; }
   .tab { padding: 10px 12px; font-size: 12px; }
   .hesetak-banner { padding: 14px; }
   .hesetak-banner-icon { width: 40px; height: 40px; font-size: 18px; }
-  .features-grid { grid-template-columns: 1fr; }
-  .about-modal-header { padding: 24px 20px; }
-  .about-modal-body { padding: 20px; }
-  .about-float-btn { padding: 8px 14px; font-size: 12px; }
 }
 </style>
 </head>
@@ -129,12 +80,6 @@ body { overflow-x: hidden; }
 <div class="particles" id="particles"></div>
 
 <button class="icon-btn theme-float" id="themeToggle" title="تغيير المظهر">🌙</button>
-
-<button class="about-float-btn" onclick="window.openAboutModal()">
-  <span class="pulse-dot"></span>
-  <span>من نحن</span>
-  <span>ℹ️</span>
-</button>
 
 <div class="auth-wrap">
 <div class="auth-card">
@@ -220,75 +165,6 @@ body { overflow-x: hidden; }
 </div>
 </div>
 
-<div class="about-modal-overlay" id="aboutModalOverlay" onclick="if(event.target===this)window.closeAboutModal()">
-<div class="about-modal">
-<div class="about-modal-header">
-  <button class="close-btn" onclick="window.closeAboutModal()">✕</button>
-  <div class="about-logo-wrap">
-    <div class="about-logo" id="aboutLogo">
-      <span id="aboutLogoFallback">🎓</span>
-      <img id="aboutLogoImg" src="" alt="" style="display:none;">
-    </div>
-    <div class="about-title-wrap">
-      <h2 id="aboutBrandName">EduFlow</h2>
-      <p>by Habbash Group</p>
-    </div>
-  </div>
-</div>
-<div class="about-modal-body">
-  <div class="about-section">
-    <div class="about-section-title">
-      <span class="icon">🎯</span>
-      <span>من نحن</span>
-    </div>
-    <p>
-      <strong>EduFlow</strong> هي منصة متكاملة مدير أعمالك ومنسقك الخاص    
-      لتقديم حلول ذكية تربط بين الإدارة و السناتر والمدرسين والطلاب وأولياء الأمور في مكان واحد.
-      نهدف لتسهيل العملية التعليمية وتوفير الوقت والجهد من خلال الأتمتة والتقارير الفورية.
-    </p>
-  </div>
-  <div class="about-section">
-    <div class="about-section-title">
-      <span class="icon">⚡</span>
-      <span>ماذا نقدم؟</span>
-    </div>
-    <div class="features-grid">
-      <div class="feature-item"><div class="icon">📋</div><div class="label">إدارة الحضور</div></div>
-      <div class="feature-item"><div class="icon">💰</div><div class="label">المحاسبة الذكية</div></div>
-      <div class="feature-item"><div class="icon">📝</div><div class="label">واجبات تفاعلية</div></div>
-      <div class="feature-item"><div class="icon">🏆</div><div class="label">نظام تحفيز</div></div>
-      <div class="feature-item"><div class="icon">📊</div><div class="label">تقارير فورية</div></div>
-      <div class="feature-item"><div class="icon">📱</div><div class="label">تواصل هاتفي وواتساب</div></div>
-    </div>
-  </div>
-  <div class="about-section">
-    <div class="about-section-title">
-      <span class="icon">📊</span>
-      <span>إحصائيات المنصة</span>
-    </div>
-    <div class="stats-row">
-      <div class="stat-item"><span class="value" id="statStudents">+500</span><span class="label">طالب</span></div>
-      <div class="stat-item"><span class="value" id="statTeachers">+50</span><span class="label">مدرس</span></div>
-      <div class="stat-item"><span class="value" id="statCenters">+10</span><span class="label">سنتر</span></div>
-    </div>
-  </div>
-  <div class="about-section">
-    <div class="about-section-title">
-      <span class="icon">📞</span>
-      <span>تواصل معنا</span>
-    </div>
-    <div class="contact-row">
-      <a href="#" class="contact-btn whatsapp" id="aboutWhatsapp" target="_blank"><span>💬</span><span>واتساب</span></a>
-      <a href="#" class="contact-btn" id="aboutPhone"><span>📞</span><span>اتصل بنا</span></a>
-    </div>
-    <p style="margin-top:12px;font-size:11px;color:var(--text-muted);text-align:center;">
-      النسخة <span style="font-family:var(--font-en);font-weight:700;">2.0</span> · جميع الحقوق محفوظة © <span id="aboutYear">2026</span> Habbash Group
-    </p>
-  </div>
-</div>
-</div>
-</div>
-
 <div class="login-footer">
   <div>
     <span class="footer-brand">EduFlow</span> by <strong>Habbash Group</strong> · © <span id="footerYear">2026</span>
@@ -313,10 +189,9 @@ body { overflow-x: hidden; }
 <script src="js/auth-service.js"></script>
 
 <script>
-  // 🌐 جلب البراندنج من السحابة عند فتح الصفحة
+// 🌐 جلب البراندنج من السحابة عند فتح الصفحة
 (async function loadBrandingFromCloud(){
   try {
-    // محاولة جلب من السحابة أولاً
     if (window.FirebaseService && FirebaseService._db) {
       try {
         console.log('📥 جاري جلب البراندنج من السحابة...');
@@ -324,21 +199,15 @@ body { overflow-x: hidden; }
         if (doc.exists) {
           const branding = doc.data();
           console.log('✅ تم جلب البراندنج من السحابة:', branding);
-          
-          // حفظ محلياً
           localStorage.setItem('eduflow_branding', JSON.stringify(branding));
           const d = db();
           d.branding = branding;
           save(d);
-          
-          // تطبيق البراندنج
           if (typeof window.applyBranding === 'function') window.applyBranding(branding);
           if (typeof DataService?.applyBrandingColors === 'function') DataService.applyBrandingColors(branding);
-        } else {
-          console.log('ℹ️ لا يوجد براندنج في السحابة');
         }
       } catch (e) {
-        console.warn('⚠️ فشل جلب البراندنج من السحابة، استخدام المحلي:', e.message);
+        console.warn('⚠️ فشل جلب البراندنج من السحابة:', e.message);
       }
     }
   } catch(e) {
@@ -392,66 +261,6 @@ function createParticles() {
   }
 }
 
-window.openAboutModal = function() {
-  const overlay = document.getElementById('aboutModalOverlay');
-  if (overlay) {
-    overlay.classList.add('active');
-    document.body.style.overflow = 'hidden';
-    updateAboutModal();
-  }
-};
-
-window.closeAboutModal = function() {
-  const overlay = document.getElementById('aboutModalOverlay');
-  if (overlay) {
-    overlay.classList.remove('active');
-    document.body.style.overflow = '';
-  }
-};
-
-function updateAboutModal() {
-  try {
-    const org = typeof DataService?.getOrganization === 'function' ? DataService.getOrganization() : {};
-    const branding = typeof DataService?.getBranding === 'function' ? DataService.getBranding() : {};
-    const brandName = org.name || branding.name || 'EduFlow';
-    const nameEl = document.getElementById('aboutBrandName');
-    if (nameEl) nameEl.textContent = brandName;
-    
-    const logoUrl = branding.logo || branding.logoUrl || org.logo || '';
-    const logoImg = document.getElementById('aboutLogoImg');
-    const logoFallback = document.getElementById('aboutLogoFallback');
-    if (logoUrl && logoImg) {
-      logoImg.src = window.driveThumb(logoUrl);
-      logoImg.onload = function() {
-        logoImg.style.display = 'block';
-        if (logoFallback) logoFallback.style.display = 'none';
-      };
-    }
-    
-    const phone = branding.supportPhone || branding.whatsappSupport || branding.phone || org.phone || '';
-    const waEl = document.getElementById('aboutWhatsapp');
-    const phoneEl = document.getElementById('aboutPhone');
-    if (phone) {
-      const cleanPhone = String(phone).replace(/\D/g, '');
-      if (waEl) waEl.href = 'https://wa.me/2' + cleanPhone;
-      if (phoneEl) phoneEl.href = 'tel:' + cleanPhone;
-    }
-    
-    const users = typeof DataService?.getUsers === 'function' ? DataService.getUsers() : [];
-    const students = users.filter(u => u.role === 'student').length;
-    const teachers = users.filter(u => u.role === 'teacher').length;
-    const groups = typeof DataService?.getGroups === 'function' ? DataService.getGroups() : [];
-    const centers = [...new Set(groups.map(g => g.center).filter(Boolean))].length;
-    
-    const statStudents = document.getElementById('statStudents');
-    const statTeachers = document.getElementById('statTeachers');
-    const statCenters = document.getElementById('statCenters');
-    if (statStudents) statStudents.textContent = students > 0 ? students + '+' : '+500';
-    if (statTeachers) statTeachers.textContent = teachers > 0 ? teachers + '+' : '+50';
-    if (statCenters) statCenters.textContent = centers > 0 ? centers + '+' : '+10';
-  } catch (e) { console.error('About modal update error:', e); }
-}
-
 async function loadBranding() {
   try {
     if (typeof DataService?.init === 'function') await DataService.init();
@@ -486,9 +295,7 @@ async function loadBranding() {
     
     const year = new Date().getFullYear();
     const yearEl = document.getElementById('footerYear');
-    const aboutYearEl = document.getElementById('aboutYear');
     if (yearEl) yearEl.textContent = year;
-    if (aboutYearEl) aboutYearEl.textContent = year;
     
     const u = AuthService?.getCurrentUser ? AuthService.getCurrentUser() : null;
     if (u && typeof AuthService?.redirectToDashboard === 'function') AuthService.redirectToDashboard(u.role);
@@ -497,10 +304,6 @@ async function loadBranding() {
 
 createParticles();
 loadBranding();
-
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') window.closeAboutModal();
-});
 
 window.tab = function(t, btn) {
   try {
@@ -525,96 +328,127 @@ function enter(u) {
   } catch (e) { console.error('enter', e); }
 }
 
-// ✅ دالة تسجيل الدخول المصححة نهائياً
+// ✅ دالة تسجيل الدخول المحسّنة - تعمل مع كل الأدوار
 window.doMainLogin = async function(e) {
   e.preventDefault();
   const btn = e.target.querySelector('button[type="submit"]');
   const originalText = btn?.textContent || '🚀 دخول';
   
   try {
-    const id = document.getElementById('mainId')?.value.trim() || '';
+    const id = (document.getElementById('mainId')?.value || '').trim();
     const pass = document.getElementById('mainPass')?.value || '';
     if (!id || !pass) { safeToast('أكمل البيانات', 'error'); return false; }
 
     if (btn) { btn.disabled = true; btn.textContent = '⏳ جاري التحقق...'; }
 
-    // 1. تأكد من تهيئة Firebase أولاً
-    if (!window.FirebaseService?._db && typeof DataService?.init === 'function') {
-      await DataService.init();
+    console.log('🔐 محاولة تسجيل دخول:', id);
+
+    // 1. تأكد من تهيئة البيانات
+    if (typeof DataService?.init === 'function') {
+      try { await DataService.init(); } catch(e) { console.warn('Init warning:', e); }
     }
 
-    // 2. تهيئة Firebase إذا لم تكن مهيأة
-    if (window.firebase && window.EduFlowConfig?.firebaseConfig && firebase.apps.length === 0) {
-      try {
-        firebase.initializeApp(window.EduFlowConfig.firebaseConfig);
-      } catch (e) {
-        console.warn('Firebase already initialized:', e);
+    // 2. جلب كل المستخدمين من الذاكرة المحلية
+    let allUsers = [];
+    try {
+      if (typeof DataService?.getUsers === 'function') {
+        allUsers = DataService.getUsers() || [];
+        console.log('📊 عدد المستخدمين في الذاكرة:', allUsers.length);
       }
+    } catch(e) { console.warn('getUsers error:', e); }
+
+    // 3. بحث ذكي متعدد الاستراتيجيات
+    let foundUser = null;
+    const idLower = id.toLowerCase();
+    const idClean = id.replace(/\D/g, '');
+    const idUpper = id.toUpperCase();
+
+    // الاستراتيجية 1: بحث بالإيميل (حساس للحالة)
+    foundUser = allUsers.find(u => 
+      (u.email || '').toLowerCase() === idLower ||
+      (u.email || '') === id
+    );
+
+    // الاستراتيجية 2: بحث بكود الطالب
+    if (!foundUser) {
+      foundUser = allUsers.find(u => 
+        (u.code || '').toUpperCase() === idUpper ||
+        (u.code || '') === id
+      );
     }
 
-    // 3. محاولة الدخول عبر Firebase
-    if (window.firebase && firebase.apps.length) {
+    // الاستراتيجية 3: بحث برقم الهاتف
+    if (!foundUser && idClean.length >= 7) {
+      foundUser = allUsers.find(u => {
+        const userPhone = (u.phone || '').replace(/\D/g, '');
+        const userParentPhone = (u.parentPhone || '').replace(/\D/g, '');
+        return userPhone === idClean || userParentPhone === idClean ||
+               userPhone.endsWith(idClean.slice(-10)) || 
+               idClean.endsWith(userPhone.slice(-10));
+      });
+    }
+
+    // الاستراتيجية 4: بحث بالاسم (للمدرسين والمساعدين)
+    if (!foundUser) {
+      foundUser = allUsers.find(u => 
+        (u.name || '').toLowerCase() === idLower &&
+        (u.role === 'teacher' || u.role === 'assistant' || u.role === 'admin' || u.role === 'super_admin')
+      );
+    }
+
+    // 4. محاولة Firebase إذا لم نجد محلياً
+    if (!foundUser && window.firebase && firebase.apps.length > 0) {
       try {
-        console.log('🔥 محاولة الدخول عبر Firebase...');
-        let doc = null;
+        console.log('🔥 محاولة البحث في Firebase...');
         const strategies = [
-          { field: 'email', value: id.toLowerCase() },
-          { field: 'code', value: id.toUpperCase() },
-          { field: 'phone', value: id.replace(/\D/g, '') }
+          { field: 'email', value: idLower },
+          { field: 'email', value: id },
+          { field: 'code', value: idUpper },
+          { field: 'code', value: id },
+          { field: 'phone', value: idClean },
+          { field: 'parentPhone', value: idClean }
         ];
         
         for (const s of strategies) {
-          if (!s.value) continue;
+          if (!s.value || s.value.length < 3) continue;
           try {
             const snap = await firebase.firestore().collection('users')
               .where(s.field, '==', s.value).limit(1).get();
-            if (!snap.empty) { doc = snap.docs[0]; break; }
-          } catch (e) { /* تجاهل أخطاء الاستعلام الفردي واستمر */ }
-        }
-        
-        if (doc) {
-          const u = { id: doc.id, ...doc.data() };
-          if (String(u.password || '') === String(pass)) {
-            console.log('✅ كلمة المرور صحيحة (Firebase)');
-            enter(u);
-            return false;
-          } else {
-            safeToast('كلمة المرور غير صحيحة', 'error');
-            if (btn) { btn.disabled = false; btn.textContent = originalText; }
-            return false;
-          }
-        } else {
-          console.warn('⚠️ المستخدم غير موجود في Firebase');
+            if (!snap.empty) {
+              const doc = snap.docs[0];
+              foundUser = { id: doc.id, ...doc.data() };
+              console.log('✅ وجد في Firebase:', foundUser.name, foundUser.role);
+              break;
+            }
+          } catch (e) { /* تجاهل واستمر */ }
         }
       } catch (fe) {
-        console.error('❌ خطأ في Firebase:', fe.code, fe.message);
-        if (fe.code === 'permission-denied') {
-          safeToast('⚠️ لا توجد صلاحيات للقراءة - تحقق من Firestore Rules', 'error');
-        } else {
-          safeToast('⚠️ خطأ في الاتصال: ' + fe.message, 'error');
-        }
+        console.warn('Firebase search error:', fe.message);
       }
-    } else {
-      console.warn('⚠️ Firebase غير مهيأ');
     }
 
-    // 4. Fallback: البيانات المحلية
-    console.log('💾 محاولة الدخول من البيانات المحلية...');
-    if (typeof DataService?.authenticateSmart === 'function') {
-      const u = await DataService.authenticateSmart(id, pass);
-      if (u) { enter(u); return false; }
+    // 5. التحقق من كلمة المرور
+    if (foundUser) {
+      console.log('✅ تم العثور على المستخدم:', foundUser.name, '| الدور:', foundUser.role);
+      
+      const storedPass = String(foundUser.password || '');
+      const inputPass = String(pass);
+      
+      if (storedPass === inputPass || storedPass === '1234' && inputPass === '1234') {
+        console.log('✅ كلمة المرور صحيحة');
+        enter(foundUser);
+        return false;
+      } else {
+        console.error('❌ كلمة المرور غير صحيحة');
+        safeToast('كلمة المرور غير صحيحة', 'error');
+        if (btn) { btn.disabled = false; btn.textContent = originalText; }
+        return false;
+      }
     }
-    if (id.toUpperCase().startsWith('EDU-') && typeof DataService?.findStudentByCode === 'function') {
-      const s = await DataService.findStudentByCode(id);
-      if (s && String(s.password) === String(pass)) { enter(s); return false; }
-    }
-    if (typeof DataService?.authenticate === 'function') {
-      const u = await DataService.authenticate(id, pass);
-      if (u) { enter(u); return false; }
-    }
-    
-    console.error('❌ فشل جميع محاولات الدخول');
-    safeToast('بيانات الدخول غير صحيحة أو المستخدم غير موجود', 'error');
+
+    // 6. فشل كل المحاولات
+    console.error('❌ المستخدم غير موجود في أي مصدر');
+    safeToast('المستخدم غير موجود - تأكد من البريد أو الكود أو الرقم', 'error');
     
   } catch (err) {
     console.error('❌ خطأ عام:', err);
@@ -628,15 +462,29 @@ window.doMainLogin = async function(e) {
 window.doParentLogin = async function(e) {
   e.preventDefault();
   try {
-    const code = document.getElementById('parentCode')?.value.trim() || '';
+    const code = (document.getElementById('parentCode')?.value || '').trim();
     const pass = document.getElementById('parentPass')?.value || '';
-    const s = typeof DataService?.findStudentByCode === 'function' ? await DataService.findStudentByCode(code) : null;
-    if (!s) { safeToast('كود الابن غير صحيح', 'error'); return false; }
-    if (String(s.password) !== String(pass)) { safeToast('كلمة المرور غير صحيحة', 'error'); return false; }
+    
+    if (typeof DataService?.init === 'function') {
+      try { await DataService.init(); } catch(e) {}
+    }
+
+    const allUsers = typeof DataService?.getUsers === 'function' ? DataService.getUsers() : [];
+    const student = allUsers.find(u => 
+      u.role === 'student' && 
+      ((u.code || '').toUpperCase() === code.toUpperCase() || (u.code || '') === code)
+    );
+
+    if (!student) { safeToast('كود الابن غير صحيح', 'error'); return false; }
+    if (String(student.password) !== String(pass)) { safeToast('كلمة المرور غير صحيحة', 'error'); return false; }
     
     const parent = {
-      id: 'parent_' + s.id, role: 'parent', name: 'ولي أمر ' + s.name,
-      phone: s.parentPhone, studentIds: [s.id], parentOf: s.name
+      id: 'parent_' + student.id, 
+      role: 'parent', 
+      name: 'ولي أمر ' + student.name,
+      phone: student.parentPhone, 
+      studentIds: [student.id], 
+      parentOf: student.name
     };
     enter(parent);
   } catch (err) {

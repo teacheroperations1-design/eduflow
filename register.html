@@ -8,10 +8,30 @@
 <style>
 body { overflow-x: hidden; }
 .auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; z-index: 1; padding: 24px 16px; padding-bottom: 120px; }
-.auth-card { background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid var(--border-strong); border-radius: 28px; padding: 40px 32px; max-width: 640px; width: 100%; box-shadow: 0 30px 80px rgba(0,0,0,.3); position: relative; overflow: hidden; animation: cardEntry .8s cubic-bezier(.4,0,.2,1) both; max-height: 94vh; overflow-y: auto; }
+.auth-card { 
+  background: color-mix(in srgb, var(--surface) 92%, transparent); 
+  backdrop-filter: blur(24px); 
+  -webkit-backdrop-filter: blur(24px); 
+  border: 1px solid var(--border-strong); 
+  border-radius: 28px; 
+  padding: 40px 32px; 
+  max-width: 640px; 
+  width: 100%; 
+  box-shadow: 0 30px 80px rgba(0,0,0,.3); 
+  position: relative; 
+  overflow: visible;
+  animation: cardEntry .8s cubic-bezier(.4,0,.2,1) both;
+}
+.auth-card-inner {
+  max-height: 80vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px;
+  margin: -4px;
+}
 @keyframes cardEntry { from { opacity: 0; transform: translateY(30px) scale(.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-.auth-card::before { content: ''; position: absolute; top: -50%; right: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(99,102,241,.08) 0%, transparent 50%); animation: rotate 30s linear infinite; pointer-events: none; }
-.auth-card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--grad); border-radius: 28px 28px 0 0; animation: shimmer 3s ease-in-out infinite; }
+.auth-card::before { content: ''; position: absolute; top: -50%; right: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(99,102,241,.08) 0%, transparent 50%); animation: rotate 30s linear infinite; pointer-events: none; z-index: 0; }
+.auth-card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--grad); border-radius: 28px 28px 0 0; animation: shimmer 3s ease-in-out infinite; z-index: 0; }
 @keyframes shimmer { 0%,100% { opacity: .5; } 50% { opacity: 1; } }
 @keyframes rotate { from { transform: rotate(0); } to { transform: rotate(360deg); } }
 .brand-logo { width: 92px; height: 92px; border-radius: 26px; background: var(--grad); display: flex; align-items: center; justify-content: center; color: #fff; margin: 0 auto 20px; font-size: 42px; box-shadow: 0 20px 50px rgba(99,102,241,.35); overflow: hidden; position: relative; z-index: 1; animation: float 4s ease-in-out infinite, logoEntry 1s cubic-bezier(.4,0,.2,1) .2s both; }
@@ -23,16 +43,16 @@ body { overflow-x: hidden; }
 .brand-tagline { font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 8px; position: relative; z-index: 1; animation: fadeInUp .6s cubic-bezier(.4,0,.2,1) .4s both; }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 .parent-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; border-radius: 9999px; background: linear-gradient(135deg, rgba(251,191,36,.15), rgba(245,158,11,.15)); border: 1px solid rgba(251,191,36,.3); color: var(--text-secondary); font-size: 11px; font-weight: 700; margin: 8px auto 0; position: relative; z-index: 1; animation: fadeInUp .6s cubic-bezier(.4,0,.2,1) .5s both; }
-.brand-center { text-align: center; margin-bottom: 28px; }
-.step-chip { display: inline-flex; padding: 6px 14px; border-radius: 9999px; font-size: 12px; font-weight: 700; background: var(--surface-hover); color: var(--text-muted); margin-inline-end: 6px; transition: all .2s; }
-.step-chip.active { background: var(--grad); color: #fff; }
+.brand-center { text-align: center; margin-bottom: 28px; position: relative; z-index: 1; }
+.step-chip { display: inline-flex; padding: 6px 14px; border-radius: 9999px; font-size: 12px; font-weight: 700; background: var(--surface-hover); color: var(--text-muted); margin-inline-end: 6px; transition: all .3s ease; position: relative; z-index: 1; }
+.step-chip.active { background: var(--grad); color: #fff; transform: scale(1.05); }
 .grp-chk { display: flex; gap: 8px; align-items: center; padding: 10px; background: var(--surface); border-radius: 8px; margin-bottom: 6px; cursor: pointer; border: 1px solid var(--border); transition: all .2s; }
 .grp-chk:hover { border-color: var(--primary); background: var(--primary-bg); }
 .grp-chk input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); flex-shrink: 0; }
 .grp-chk .info { flex: 1; min-width: 0; }
 .grp-chk .name { font-weight: 700; font-size: 14px; }
 .grp-chk .meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-.info-banner { background: linear-gradient(135deg, var(--warning-bg), var(--info-bg)); border: 1px solid var(--warning); border-radius: var(--radius); padding: 16px; margin-bottom: 20px; display: flex; gap: 12px; align-items: flex-start; }
+.info-banner { background: linear-gradient(135deg, var(--warning-bg), var(--info-bg)); border: 1px solid var(--warning); border-radius: var(--radius); padding: 16px; margin-bottom: 20px; display: flex; gap: 12px; align-items: flex-start; position: relative; z-index: 1; }
 .pending-hero { background: var(--grad); color: #fff; border-radius: var(--radius); padding: 32px 24px; text-align: center; margin: 16px 0; }
 .temp-code { display: inline-block; background: rgba(255,255,255,.2); padding: 10px 20px; border-radius: 10px; font-family: var(--font-en); font-size: 20px; font-weight: 800; letter-spacing: 3px; margin-top: 10px; }
 .stage-grade-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -62,6 +82,8 @@ body { overflow-x: hidden; }
 .particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
 .particle { position: absolute; width: 4px; height: 4px; background: var(--primary); border-radius: 50%; opacity: .3; animation: particleFloat linear infinite; }
 @keyframes particleFloat { 0% { transform: translateY(100vh) rotate(0deg); opacity: 0; } 10% { opacity: .3; } 90% { opacity: .3; } 100% { transform: translateY(-100px) rotate(720deg); opacity: 0; } }
+.step-content { animation: stepFadeIn .4s ease both; }
+@keyframes stepFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @media(max-width: 640px) {
   .stage-grade-row { grid-template-columns: 1fr; }
   .auth-card { padding: 24px 16px; border-radius: 24px; }
@@ -89,6 +111,7 @@ body { overflow-x: hidden; }
 
 <div class="auth-wrap">
 <div class="auth-card">
+  <div class="auth-card-inner">
   
   <div class="brand-center">
     <div class="brand-logo" id="brandLogo">
@@ -120,7 +143,7 @@ body { overflow-x: hidden; }
   </div>
 
   <!-- الخطوة 1: البيانات -->
-  <div id="step1" style="position:relative;z-index:1;">
+  <div id="step1" class="step-content" style="position:relative;z-index:1;">
     <div class="form-group"><label>الاسم الكامل *</label><input type="text" id="rName" class="form-input" placeholder="مثال: أحمد محمد" required></div>
     <div class="stage-grade-row">
       <div class="form-group"><label>رقم هاتف الطالب</label><input type="tel" id="rPhone" class="form-input" placeholder="01xxxxxxxxx"></div>
@@ -136,7 +159,7 @@ body { overflow-x: hidden; }
   </div>
 
   <!-- الخطوة 2: الأساتذة والمجموعات -->
-  <div id="step2" style="display:none;position:relative;z-index:1;">
+  <div id="step2" class="step-content" style="display:none;position:relative;z-index:1;">
     <div class="filter-info">🎯 <strong>خطوة 1:</strong> اختر الأستاذ أو الأساتذة الذين ترغب في التسجيل معهم.<br>🎯 <strong>خطوة 2:</strong> اختر المجموعة المناسبة لكل أستاذ من القائمة التي ستظهر أدناه.</div>
     
     <h4 class="text-sm" style="margin-bottom:10px;">👨‍🏫 اختر الأساتذة:</h4>
@@ -152,7 +175,7 @@ body { overflow-x: hidden; }
   </div>
 
   <!-- الخطوة 3: الحساب والمراجعة -->
-  <div id="step3" style="display:none;position:relative;z-index:1;">
+  <div id="step3" class="step-content" style="display:none;position:relative;z-index:1;">
     <div class="card" style="background:var(--info-bg);border-color:var(--info-border);margin-bottom:20px;padding:16px;">
       <strong style="display:block;margin-bottom:8px;font-size:15px;">📋 ملخص الطلب:</strong>
       <div id="summary" class="text-sm" style="line-height:1.8;"></div>
@@ -170,8 +193,9 @@ body { overflow-x: hidden; }
   </div>
 
   <!-- خطوة النجاح -->
-  <div id="stepDone" style="display:none;position:relative;z-index:1;"></div>
+  <div id="stepDone" class="step-content" style="display:none;position:relative;z-index:1;"></div>
 
+  </div>
 </div>
 </div>
 
@@ -326,7 +350,13 @@ window.show = function(n) {
   try {
     for (let i = 1; i <= 3; i++) {
       const st = document.getElementById('step' + i);
-      if (st) st.style.display = (i === n) ? 'block' : 'none';
+      if (st) {
+        st.style.display = (i === n) ? 'block' : 'none';
+        if (i === n) {
+          st.style.animation = 'none';
+          setTimeout(() => { st.style.animation = 'stepFadeIn .4s ease both'; }, 10);
+        }
+      }
       const ch = document.getElementById('c' + i);
       if (ch) ch.classList.toggle('active', i <= n);
     }
@@ -334,6 +364,10 @@ window.show = function(n) {
     if (bn) bn.style.display = (n === 1) ? 'flex' : 'none';
     if (n === 2) { window.buildTeachersPick(); window.renderGroupsPick(); }
     if (n === 3) window.buildSummary();
+    
+    // Scroll to top of card
+    const cardInner = document.querySelector('.auth-card-inner');
+    if (cardInner) cardInner.scrollTop = 0;
   } catch (e) { console.error(e); }
 };
 
@@ -508,6 +542,7 @@ window.submitReg = async function() {
     const done = document.getElementById('stepDone');
     if (done) {
       done.style.display = 'block';
+      done.style.animation = 'stepFadeIn .4s ease both';
       done.innerHTML = `
         <div class="pending-hero">
           <div style="font-size:56px;margin-bottom:12px;">✅</div>
