@@ -102,7 +102,8 @@ var all=(window.DataService&&DataService.getGroups)?DataService.getGroups():[];
 if(opts.teacherId) all=all.filter(function(g){return g.teacherId===opts.teacherId;});
 else if(opts.teacherFilter&&opts.teacherFilter!=='all') all=all.filter(function(g){return g.teacherId===opts.teacherFilter;});
 if(opts.groupFilter&&opts.groupFilter!=='all') all=all.filter(function(g){return g.id===opts.groupFilter;});
-if(opts.center) all=all.filter(function(g){ return (g.center||'')===opts.center; });
+if(opts.center&&opts.center!=='all') all=all.filter(function(g){ return (g.center||'')===opts.center; });
+if(opts.grade&&opts.grade!=='all') all=all.filter(function(g){ return (g.grade||'')===opts.grade; });
 if(opts.search){ var q=String(opts.search).trim().toLowerCase(); if(q) all=all.filter(function(g){ return (g.name||'').toLowerCase().indexOf(q)>=0||(SB.teacherName(g.teacherId)||'').toLowerCase().indexOf(q)>=0||(g.center||'').toLowerCase().indexOf(q)>=0; }); }
 var sortBy=opts.sortBy||'time';
 if(sortBy==='teacher') all.sort(function(a,b){ return SB.teacherName(a.teacherId).localeCompare(SB.teacherName(b.teacherId),'ar')||SB.min(a.time)-SB.min(b.time); });
@@ -722,11 +723,19 @@ cSel.innerHTML='<option value="">كل السناتر</option>'+centers.map(funct
 }
 var sh=document.getElementById('sbStartHour');
 var te=document.getElementById('sbTimelineEnd');
+/* 🆕 تعبئة فلتر الصف */
+var grSel=document.getElementById('sbGradeFilter');
+if(grSel&&grSel.options.length<=1){
+var gradesA=(typeof EduFlowConfig!=='undefined'&&EduFlowConfig.educationLevels)?Object.values(EduFlowConfig.educationLevels).flatMap(function(l){return l.grades||[]}):[];
+grSel.innerHTML='<option value="">كل الصفوف</option>'+gradesA.map(function(g){return '<option value="'+g+'">'+g+'</option>';}).join('');
+}
 var opts={
 container:'sbBoard',editable:true,showTeacher:true,notifyAdmin:false,role:'admin',
 teacherFilter:(tSel?tSel.value:'all'),
 groupFilter:(gSel?gSel.value:'all'),
-center:(cSel?cSel.value:''),
+center:(cSel&&cSel.value!=='all'?cSel.value:''),
+grade:(grSel?grSel.value:''),
+search:((document.getElementById('sbSearchAdmin')||{}).value||''),
 sortBy:(document.getElementById('sbSortBy')||{}).value||'time',
 startHour:sh?+sh.value:8,
 timelineEnd:te?+te.value:23
@@ -763,7 +772,21 @@ if(assignment&&assignment.teacherId){ targetTeacherId=assignment.teacherId; }
 }catch(e){}
 }
 
-var opts={container:'sbBoardT',editable:true,showTeacher:false,notifyAdmin:true,role:isAssistant?'assistant':'teacher',teacherId:targetTeacherId,sortBy:'time',startHour:8,timelineEnd:23};
+/* 🆕 تعبئة + قراءة فلاتر صفحة الجدول (صف / سنتر / بحث بالاسم) */
+var gSelT=document.getElementById('sbGradeT');
+if(gSelT&&gSelT.options.length<=1){
+var gradesT=(typeof EduFlowConfig!=='undefined'&&EduFlowConfig.educationLevels)?Object.values(EduFlowConfig.educationLevels).flatMap(function(l){return l.grades||[]}):[];
+gSelT.innerHTML='<option value="">كل الصفوف</option>'+gradesT.map(function(g){return '<option value="'+g+'">'+g+'</option>';}).join('');
+}
+var cSelT=document.getElementById('sbCenterT');
+if(cSelT&&cSelT.options.length<=1){
+var centersT={}; (DataService.getGroups?DataService.getGroups():[]).forEach(function(g){ if(g.center) centersT[g.center]=1; });
+cSelT.innerHTML='<option value="">كل السناتر</option>'+Object.keys(centersT).map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('');
+}
+var opts={container:'sbBoardT',editable:true,showTeacher:false,notifyAdmin:true,role:isAssistant?'assistant':'teacher',teacherId:targetTeacherId,sortBy:'time',startHour:8,timelineEnd:23,
+grade:(gSelT?gSelT.value:''),
+center:(cSelT&&cSelT.value!=='all'?cSelT.value:''),
+search:((document.getElementById('sbSearchT')||{}).value||'')};
 SB.opts=opts;
 
 /* 🆕 لو مساعد، نعرض اسم الأستاذ اللي بيشوف جدوله */

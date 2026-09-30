@@ -174,10 +174,10 @@
 <!-- 🗓️ جدولي الأسبوعي (Schedule Board) -->
 <section class="section" id="section-mySchedule">
 <div class="section-header"><div><h2 class="section-title">🗓️ جدولي الأسبوعي</h2><p class="text-sm text-muted">اسحب مجموعاتك وعدّل مواعيدك — أي تعديل بيتسجل وبيتبلغ بيه الأدمن</p></div>
-<button class="btn btn-secondary btn-sm" onclick="window.loadMyScheduleBoard&&loadMyScheduleBoard()">🔄 تحديث</button></div>
+<button class="btn btn-secondary btn-sm" onclick="window.loadMyScheduleBoard&&loadMyScheduleBoard()">🔄 تحديث</button><button class="btn btn-primary btn-sm" onclick="window.SB&&SB.downloadBoardImage&&SB.downloadBoardImage()">🖼️ تحميل صورة (عرضي)</button></div>
 <div class="card" style="margin-bottom:12px"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
 <div class="form-group" style="margin:0"><label>👁️ طريقة العرض</label><select id="sbViewModeT" class="form-select" onchange="window.loadMyScheduleBoard&&loadMyScheduleBoard()"><option value="week">📆 أسبوعي</option><option value="month">📅 شهري</option><option value="timeline">⏱️ خط زمني</option><option value="cards">🃏 بطاقات</option></select></div>
-<div class="form-group" style="margin:0"><label>🔍 بحث (مجموعة/سنتر)</label><input type="text" id="sbSearchT" class="form-input" placeholder="اكتب للفلترة..." oninput="window.loadMyScheduleBoard&&window.loadMyScheduleBoard()"></div>
+<div class="form-group" style="margin:0"><label>🎓 الصف</label><select id="sbGradeT" class="form-select" onchange="window.loadMyScheduleBoard&&window.loadMyScheduleBoard()"><option value="">كل الصفوف</option></select></div><div class="form-group" style="margin:0"><label>🏢 السنتر</label><select id="sbCenterT" class="form-select" onchange="window.loadMyScheduleBoard&&window.loadMyScheduleBoard()"><option value="">كل السناتر</option></select></div><div class="form-group" style="margin:0"><label>🔍 بحث بالاسم</label><input type="text" id="sbSearchT" class="form-input" placeholder="اسم المجموعة..." oninput="window.loadMyScheduleBoard&&window.loadMyScheduleBoard()"></div>
 </div></div>
 <div id="sbStatsT" style="margin-bottom:12px"></div>
 <div id="sbConflictsT" style="margin-bottom:12px"></div>
@@ -1412,6 +1412,7 @@ var blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}); var a=docume
 }
 window.exportGradesCSV=exportGradesCSV;
 
+
 /* ===================== QUICK EVAL ===================== */
 function liveGroupId(){
 var groups=myGroups(); var todayEn=EN7[new Date().getDay()]; var nowMin=new Date().getHours()*60+new Date().getMinutes();
@@ -1419,6 +1420,9 @@ var best=null;
 groups.forEach(function(g){ var schs=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}]; schs.forEach(function(s){ if(s.day!==todayEn) return; var st=minOf(s.time); var en=st+(parseInt(g.duration)||60); if(nowMin>=st&&nowMin<en) best=g.id; }); });
 return best;
 }
+
+
+
 window.liveGroupId=liveGroupId;
 function qeFilteredGroups(){
 var q=((document.getElementById('qeGroupSearch')||{}).value||'').trim().toLowerCase();
@@ -2226,6 +2230,213 @@ document.head.appendChild(st);
 }
 }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',ready); else ready();
+})();
+</script>
+<script>
+/* ============ 📱 لمس + 🖼️ لوجو + 🌫️ أوفرلاي + 🖼️ صورة عرضية ============ */
+(function(){
+"use strict";
+/* 1) أوفرلاي + زرار القائمة (تابلت/موبايل) */
+function wireMenu(){
+var mt=document.getElementById('menuToggle'), sb=document.getElementById('sidebar');
+if(!mt||!sb||mt.__wired) return; mt.__wired=1;
+var ov=document.getElementById('sidebarOverlay');
+if(!ov){ ov=document.createElement('div'); ov.id='sidebarOverlay'; document.body.appendChild(ov); }
+ov.addEventListener('click',function(){ sb.classList.remove('open'); ov.classList.remove('show'); });
+mt.addEventListener('click',function(){ var open=sb.classList.toggle('open'); ov.classList.toggle('show',open); });
+}
+/* 2) إصلاح اللوجو (Drive thumbnail + بديل تلقائي) */
+window.fixSidebarLogo=function(){
+try{
+var box=document.querySelector('[data-logo]'); if(!box) return;
+var b=(window.DataService&&DataService.getBranding)?DataService.getBranding():{};
+var url=b.logoUrl||b.logo||'';
+if(!url){ if(!box.querySelector('img')) box.innerHTML='<span style="font-size:26px;">🎓</span>'; return; }
+var src=(window.driveThumb?window.driveThumb(url):url);
+box.innerHTML='<img src="'+src+'" alt="logo" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.outerHTML=\'<span style=&quot;font-size:26px;&quot;>🎓</span>\'">';
+}catch(e){}
+};
+/* 3) سحب باللمس + إفلات بضبط الساعة */
+(function(){
+if(window.__sbTouchWired) return; window.__sbTouchWired=true;
+var drag=null;
+document.addEventListener('pointerdown',function(ev){
+if(ev.pointerType==='mouse') return;
+var card=ev.target.closest?ev.target.closest('.sb-card'):null;
+if(!card||!card.dataset||!card.dataset.gid) return;
+drag={card:card,gid:card.dataset.gid,si:+(card.dataset.si||0),x0:ev.clientX,y0:ev.clientY,moved:false,col:null};
+},true);
+document.addEventListener('pointermove',function(ev){
+if(!drag) return;
+if(!drag.moved&&Math.abs(ev.clientX-drag.x0)+Math.abs(ev.clientY-drag.y0)>12){ drag.moved=true; drag.card.classList.add('dragging'); }
+if(!drag.moved) return;
+ev.preventDefault();
+var el=document.elementFromPoint(ev.clientX,ev.clientY);
+var col=el&&el.closest?el.closest('.sb-col'):null;
+document.querySelectorAll('.sb-col.droppable').forEach(function(c){ c.classList.remove('droppable'); });
+if(col) col.classList.add('droppable');
+drag.col=col;
+},{passive:false});
+document.addEventListener('pointerup',function(ev){
+if(!drag) return;
+var d=drag; drag=null;
+d.card.classList.remove('dragging');
+document.querySelectorAll('.sb-col.droppable').forEach(function(c){ c.classList.remove('droppable'); });
+if(!d.moved) return; /*.tap = يفتح مودال النقل كالعادة*/
+if(d.col&&window.SB&&SB.openMoveModal){
+var rect=d.col.getBoundingClientRect();
+var y=ev.clientY-rect.top;
+var H=56, minH=+(d.col.dataset.minh||8);
+var mins=minH*60+Math.round((y/H*60)/60)*60; /*قفل على الساعة الكاملة*/
+SB.openMoveModal(d.gid,d.si,d.col.dataset.day,SB.hm(mins));
+}
+},true);
+document.addEventListener('pointercancel',function(){ if(drag){ try{drag.card.classList.remove('dragging');}catch(e){} drag=null; } });
+})();
+/* 4) تحميل الجدول صورة PNG عرضية 1920×1080 */
+window.SB=window.SB||{};
+SB.downloadBoardImage=function(){
+try{
+var groups=(SB.groupsInView)?SB.groupsInView(SB.opts||{}):((DataService.getGroups)?DataService.getGroups():[]);
+var DAYS=SB.DAYS||[{en:'Saturday',ar:'السبت'},{en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},{en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'}];
+var starts=[],ends=[];
+groups.forEach(function(g){ SB.schedulesOf(g).forEach(function(s){ var m=SB.min(s.time); var d=parseInt(g.duration)||60; starts.push(m); ends.push(m+d); }); });
+var minH=starts.length?Math.max(0,Math.floor(Math.min.apply(null,starts)/60)):8;
+var maxH=ends.length?Math.min(24,Math.ceil(Math.max.apply(null,ends)/60)):22;
+if(maxH<=minH) maxH=minH+2;
+var W=1920,H=1080,headH=150,padB=50,leftCol=120,rightPad=40;
+var cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+var ctx=cv.getContext('2d');
+function rr(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath(); }
+ctx.fillStyle='#0f1222'; ctx.fillRect(0,0,W,H);
+var b=(window.DataService&&DataService.getBranding)?DataService.getBranding():{};
+ctx.fillStyle=b.primaryColor||'#6366f1'; ctx.fillRect(0,0,W,10);
+ctx.textBaseline='top'; ctx.textAlign='right';
+ctx.fillStyle='#fff'; ctx.font='bold 44px Tahoma, Arial';
+var tLabel=(SB.opts&&SB.opts.teacherId)?SB.teacherName(SB.opts.teacherId):'كل الأساتذة';
+ctx.fillText('🗓️ جدول الحصص الأسبوعي — '+tLabel, W-rightPad, 40);
+ctx.font='24px Tahoma, Arial'; ctx.fillStyle='rgba(255,255,255,.75)';
+ctx.fillText((b.name||'EduFlow')+' · '+new Date().toLocaleDateString('ar-EG'), W-rightPad, 98);
+var colsW=(W-leftCol-rightPad)/7, gridTop=headH+40, rowsH=(H-gridTop-padB)/(maxH-minH);
+ctx.textAlign='center';
+DAYS.forEach(function(d,i){ var x=W-rightPad-colsW*(i+1)+colsW/2; var today=(SB.todayEn&&d.en===SB.todayEn()); ctx.fillStyle=today?'#818cf8':'rgba(255,255,255,.92)'; ctx.font='bold 26px Tahoma, Arial'; ctx.fillText(d.ar+(today?' •':''), x, headH+4); });
+ctx.font='20px Tahoma, Arial';
+for(var h=minH;h<maxH;h++){ var y=gridTop+(h-minH)*rowsH; ctx.fillStyle='rgba(255,255,255,.55)'; ctx.fillText(SB.fmt12(h+':00'), leftCol/2, y+4); ctx.strokeStyle='rgba(255,255,255,.14)'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(leftCol,y); ctx.lineTo(W-rightPad,y); ctx.stroke(); }
+for(var i2=0;i2<=7;i2++){ var x2=W-rightPad-colsW*i2; ctx.strokeStyle='rgba(255,255,255,.14)'; ctx.beginPath(); ctx.moveTo(x2,gridTop); ctx.lineTo(x2,H-padB); ctx.stroke(); }
+groups.forEach(function(g){
+var color=SB.groupColor?SB.groupColor(g.id):'#6366f1';
+SB.schedulesOf(g).forEach(function(s){
+var di=-1; DAYS.forEach(function(d,idx){ if(d.en===s.day) di=idx; }); if(di<0) return;
+var m=SB.min(s.time), dur=parseInt(g.duration)||60;
+var y=gridTop+((m-minH*60)/60)*rowsH;
+var hh=Math.max(40,(dur/60)*rowsH-6);
+var x=W-rightPad-colsW*(di+1)+6, w=colsW-12;
+ctx.fillStyle=color; rr(ctx,x,y+2,w,hh,10); ctx.fill();
+ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.font='bold 22px Tahoma, Arial';
+ctx.fillText(g.name, x+w/2, y+8);
+ctx.font='18px Tahoma, Arial'; ctx.fillStyle='rgba(255,255,255,.95)';
+ctx.fillText(SB.fmt12(s.time)+' - '+SB.fmt12(SB.hm(m+dur)), x+w/2, y+36);
+});
+});
+var a=document.createElement('a');
+a.download='جدول-'+tLabel+'-'+new Date().toISOString().slice(0,10)+'.png';
+a.href=cv.toDataURL('image/png');
+a.click();
+if(window.safeToast) window.safeToast('🖼️ تم تحميل الجدول كصورة عرضية','success');
+}catch(e){ console.error(e); if(window.safeToast) window.safeToast('خطأ: '+e.message,'error'); }
+};
+/* تشغيل */
+function init(){ wireMenu(); window.fixSidebarLogo(); }
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+setTimeout(window.fixSidebarLogo,800); setTimeout(window.fixSidebarLogo,2000);
+})();
+</script>
+<style>
+/* ========== باتش القائمة الجانبية: درج موبايل + طي ديسكتوب ========== */
+:root{--sbw:280px}
+html,body{overflow-x:hidden}
+.sidebar{transition:transform .28s ease,width .28s ease,margin .28s ease;will-change:transform}
+.sidebar-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:1150!important;
+  opacity:0;pointer-events:none;transition:opacity .25s ease;display:block!important}
+.sidebar-overlay.show{opacity:1;pointer-events:auto}
+
+/* ---------- موبايل ---------- */
+@media (max-width:991.98px){
+  .sidebar{position:fixed!important;top:0;bottom:0;inset-inline-start:0;inset-inline-end:auto;
+    width:min(86vw,320px);transform:translateX(100%);z-index:1200!important;
+    overflow-y:auto;overflow-x:hidden;margin:0!important;box-shadow:-12px 0 30px rgba(2,6,23,.25)}
+  .sidebar.open{transform:translateX(0)!important}
+  .main-content{margin-inline-start:0!important;margin-inline-end:0!important;width:100%!important}
+  #menuToggle,.menu-toggle{display:inline-flex!important}
+  #sbCollapseBtn,.sb-collapse-btn{display:none!important}
+}
+
+/* ---------- تابلت / كمبيوتر ---------- */
+@media (min-width:992px){
+  .sidebar{position:fixed!important;top:0;bottom:0;inset-inline-start:0;inset-inline-end:auto;
+    width:var(--sbw);transform:translateX(0);z-index:1000!important;
+    overflow-y:auto;overflow-x:hidden;margin:0!important}
+  body.sb-collapsed .sidebar{transform:translateX(100%)}
+  .main-content{margin-inline-start:var(--sbw)!important;margin-inline-end:0!important;
+    width:auto!important;transition:margin .28s ease}
+  body.sb-collapsed .main-content{margin-inline-start:0!important}
+  #menuToggle,.menu-toggle{display:none!important}
+  #sbCollapseBtn,.sb-collapse-btn{display:inline-flex!important}
+  .sidebar-overlay{display:none!important}
+}
+</style>
+
+<script>
+/* ========== لوجيك الفتح/الطي ========== */
+(function(){
+  var sb=document.querySelector('#sidebar')||document.querySelector('.sidebar');
+  if(!sb)return;
+  var ov=document.querySelector('.sidebar-overlay');
+  if(!ov){ov=document.createElement('div');ov.className='sidebar-overlay';
+    (sb.parentNode||document.body).insertBefore(ov,sb.nextSibling);}
+  var mt=document.querySelector('#menuToggle');
+  var cb=document.querySelector('#sbCollapseBtn');
+  var MQ=window.matchMedia('(min-width:992px)');
+  function isDesk(){return MQ.matches}
+
+  /* حالة الموبايل (قصرية مش toggle عشان نتجاوز أي لوجيك قديم) */
+  var mOpen=sb.classList.contains('open');
+  function applyM(){
+    sb.classList.toggle('open',mOpen);
+    ov.classList.toggle('show',mOpen);
+    document.body.classList.toggle('sb-mobile-open',mOpen);
+  }
+  function closeM(){if(mOpen){mOpen=false;applyM();}}
+
+  /* حالة الديسكتوب */
+  function setCollapsed(v){
+    document.body.classList.toggle('sb-collapsed',v);
+    document.body.classList.toggle('sb-expanded',!v);
+    if(cb)cb.setAttribute('aria-expanded',String(!v));
+    try{localStorage.setItem('sbCollapsed',v?'1':'0');}catch(e){}
+  }
+  function toggleDesk(){setCollapsed(!document.body.classList.contains('sb-collapsed'));}
+
+  function handleClick(e){
+    if(e)e.stopPropagation();
+    if(isDesk()){toggleDesk();}else{mOpen=!mOpen;applyM();}
+  }
+  if(mt)mt.addEventListener('click',handleClick);
+  if(cb)cb.addEventListener('click',handleClick);
+  ov.addEventListener('click',closeM);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeM();});
+  sb.addEventListener('click',function(e){
+    if(!isDesk()&&e.target.closest('a'))closeM();
+  });
+  var onMq=function(){closeM();};
+  if(MQ.addEventListener)MQ.addEventListener('change',onMq);else MQ.addListener(onMq);
+  window.addEventListener('resize',function(){if(isDesk())closeM();});
+
+  /* تهيئة من الذاكرة + إظهار الأزرار */
+  var stored=null;try{stored=localStorage.getItem('sbCollapsed');}catch(e){}
+  setCollapsed(stored==='1');
+  [mt,cb].forEach(function(b){if(b){b.style.display='';b.removeAttribute('hidden');b.classList.remove('d-none');}});
+  applyM();
 })();
 </script>
 </body>
