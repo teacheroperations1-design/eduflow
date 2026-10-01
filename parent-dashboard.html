@@ -6,6 +6,14 @@
 <title>لوحة ولي الأمر - EduFlow</title>
 <link rel="stylesheet" href="css/eduflow-theme.css">
 <style>
+/* 🎨 تحسينات حديثة */
+:root{--glass:rgba(255,255,255,.04);--glass-border:rgba(255,255,255,.08);--grad-modern:linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#ec4899 100%);}
+@keyframes floatIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 0 0 rgba(99,102,241,.3);}50%{box-shadow:0 0 20px 4px rgba(99,102,241,.5);}}
+@keyframes shimmer{0%{background-position:-200% 0;}100%{background-position:200% 0;}}
+.float-in{animation:floatIn .4s ease-out both;}
+.pulse-glow{animation:pulseGlow 2.5s ease-in-out infinite;}
+
 @media(max-width:1024px){
   .app-layout{display:block!important}
   .sidebar{position:fixed!important;top:0;bottom:0;right:0;width:280px;transform:translateX(100%);transition:transform .25s;z-index:1201!important;overflow-y:auto}
@@ -13,151 +21,158 @@
   .main-content{margin-inline-start:0!important;width:100%!important}
 }
 .sidebar.open ~ .main-content::before{content:'';position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1200}
-.stat-mini{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
-.stat-mini-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
-.stat-mini-value{font-size:18px;font-weight:800;color:var(--primary);font-family:var(--font-en)}
-.stat-mini-label{font-size:10px;color:var(--text-muted);margin-top:2px}
-.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:16px;overflow-x:auto}
-.tab-btn{padding:8px 14px;background:none;border:none;color:var(--text-secondary);cursor:pointer;font-weight:700;font-size:13px;border-bottom:2px solid transparent;white-space:nowrap}
-.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary)}
-.tab-content{display:none}.tab-content.active{display:block}
-.sub-row{padding:12px;background:var(--surface-hover);border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.sub-row.graded{border-right:3px solid var(--success)}
-.sub-row.pending{border-right:3px solid var(--warning)}
-.sub-row.missing{border-right:3px solid var(--danger);background:rgba(239,68,68,.05)}
-.sub-row.cancelled{border-right:3px solid var(--warning);background:rgba(251,191,36,.05)}
 
-/* 🆕 Action Items Banner */
-.action-items-banner{background:var(--surface);border:2px solid var(--warning);border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 4px 12px rgba(0,0,0,.05);}
-.action-items-title{font-weight:800;font-size:16px;margin-bottom:12px;color:var(--warning);display:flex;align-items:center;gap:8px;}
-.action-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface-hover);border-radius:8px;margin-bottom:8px;border-right:4px solid var(--warning);transition:all .2s;}
+/* 🆕 Hero حديث بتدرجات */
+.child-hero{background:var(--grad-modern);color:#fff;border-radius:20px;padding:24px;margin-bottom:18px;display:flex;gap:16px;align-items:center;position:relative;overflow:hidden;box-shadow:0 20px 40px rgba(99,102,241,.25);}
+.child-hero::before{content:'';position:absolute;top:-50%;right:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(255,255,255,.15) 0%,transparent 60%);animation:float 20s infinite linear;}
+@keyframes float{0%{transform:rotate(0);}100%{transform:rotate(360deg);}}
+.child-hero-content{flex:1;min-width:0;position:relative;z-index:1;}
+.child-hero-name{font-size:24px;font-weight:900;margin-bottom:6px;letter-spacing:.5px;}
+.child-hero-info{font-size:13px;opacity:.95;display:flex;gap:10px;flex-wrap:wrap;}
+.child-hero-code{display:inline-block;background:rgba(255,255,255,.2);padding:3px 10px;border-radius:8px;font-family:var(--font-en);font-weight:700;backdrop-filter:blur(10px);}
+.child-hero-avatar{width:72px;height:72px;border-radius:20px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900;border:3px solid rgba(255,255,255,.3);flex-shrink:0;backdrop-filter:blur(10px);}
+.child-hero-stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+.child-hero-stat{background:rgba(255,255,255,.15);padding:8px 14px;border-radius:12px;text-align:center;min-width:72px;backdrop-filter:blur(10px);}
+.child-hero-stat-value{font-size:18px;font-weight:900;font-family:var(--font-en);display:block;}
+.child-hero-stat-label{font-size:10px;opacity:.9;}
+
+.child-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9999px;background:var(--surface);border:2px solid var(--border);cursor:pointer;font-weight:700;font-size:13px;margin:0 0 6px 6px;transition:all .2s;}
+.child-chip:hover{border-color:var(--primary);transform:translateY(-1px);}
+.child-chip.active{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 4px 12px rgba(99,102,241,.3);}
+
+/* 🆕 Action Banner محدث */
+.action-banner{background:linear-gradient(135deg,rgba(251,191,36,.1),rgba(239,68,68,.05));border:2px solid var(--warning);border-radius:16px;padding:16px;margin-bottom:16px;backdrop-filter:blur(10px);}
+.action-banner-title{font-weight:800;font-size:15px;margin-bottom:10px;display:flex;align-items:center;gap:8px;color:var(--warning);}
+.action-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface);border-radius:12px;margin-bottom:8px;border-right:4px solid var(--warning);transition:all .2s;cursor:pointer;}
+.action-item:hover{transform:translateX(-4px);box-shadow:0 4px 12px rgba(0,0,0,.08);}
+.action-item.action-danger{border-right-color:var(--danger);}
 .action-item:last-child{margin-bottom:0;}
-.action-item.action-danger{border-right-color:var(--danger);background:rgba(239,68,68,.05);}
-.action-item.action-warning{border-right-color:var(--warning);background:rgba(251,191,36,.05);}
 .action-icon{font-size:24px;}
-.action-text{font-weight:700;font-size:14px;}
-.sub-row.clickable{cursor:pointer;transition:all .2s;}
-.sub-row.clickable:hover{transform:translateX(-4px);box-shadow:0 4px 12px rgba(0,0,0,.08);}
+.action-text{font-weight:700;font-size:13px;flex:1;}
 
-/* Child Hero */
-.child-hero{background:var(--grad);color:#fff;border-radius:var(--radius-xl);padding:20px;margin-bottom:16px;display:flex;gap:14px;align-items:center;position:relative;overflow:hidden}
-.child-hero-content{flex:1;min-width:0}
-.child-hero-name{font-size:22px;font-weight:800;margin-bottom:4px}
-.child-hero-info{font-size:13px;opacity:.95}
-.child-hero-code{display:inline-block;background:rgba(255,255,255,.2);padding:2px 8px;border-radius:6px;font-family:var(--font-en);margin-right:6px}
-.child-hero-stats{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
-.child-hero-stat{background:rgba(255,255,255,.15);padding:6px 12px;border-radius:8px;text-align:center;min-width:70px}
-.child-hero-stat-value{font-size:18px;font-weight:800;font-family:var(--font-en);display:block}
-.child-hero-stat-label{font-size:10px;opacity:.9}
+/* 🆕 بطاقات حديثة */
+.modern-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:16px;transition:all .25s;overflow:hidden;position:relative;}
+.modern-card:hover{border-color:var(--primary-border);box-shadow:0 8px 24px rgba(0,0,0,.08);transform:translateY(-2px);}
+.modern-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:wrap;}
+.modern-card-title{font-size:16px;font-weight:800;display:flex;align-items:center;gap:8px;}
 
-/* Child Picker */
-.child-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9999px;background:var(--surface);border:2px solid var(--border);cursor:pointer;font-weight:700;font-size:13px;margin:0 0 6px 6px;transition:all .2s}
-.child-chip:hover{border-color:var(--primary)}
-.child-chip.active{background:var(--primary);color:#fff;border-color:var(--primary)}
-
-/* Teacher Card */
-.teacher-hero-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px;transition:all .2s;overflow:hidden;position:relative}
-.teacher-hero-card:hover{border-color:var(--primary-border);box-shadow:0 4px 20px rgba(0,0,0,.08)}
-.teacher-hero-card::before{content:'';position:absolute;top:0;right:0;left:0;height:80px;background:linear-gradient(135deg,var(--primary),var(--accent));opacity:.1;pointer-events:none}
-.teacher-hero-header{display:flex;gap:16px;align-items:center;margin-bottom:16px;position:relative}
-.teacher-hero-photo{width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--primary);flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,.15)}
-.teacher-hero-info{flex:1;min-width:0}
-.teacher-hero-name{font-size:18px;font-weight:800;margin-bottom:2px}
-.teacher-hero-subject{font-size:13px;color:var(--text-muted);margin-bottom:4px}
-.teacher-hero-group{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:var(--primary-bg);color:var(--primary);border-radius:9999px;font-size:11px;font-weight:700}
-
-/* 🆕 أيقونات السوشيال ميديا والواتساب */
-.teacher-socials{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
-.teacher-social-link{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;text-decoration:none;font-size:16px;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.15);}
-.teacher-social-link:hover{transform:scale(1.15);box-shadow:0 4px 12px rgba(0,0,0,.25);}
-.social-fb{background:#1877f2;}
-.social-yt{background:#ff0000;}
-.social-tt{background:#000;}
+/* 🆕 Teacher Card */
+.teacher-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px;transition:all .25s;position:relative;overflow:hidden;}
+.teacher-card::before{content:'';position:absolute;top:0;right:0;left:0;height:60px;background:linear-gradient(135deg,var(--primary),var(--accent));opacity:.08;pointer-events:none;}
+.teacher-card:hover{border-color:var(--primary-border);box-shadow:0 8px 24px rgba(0,0,0,.1);}
+.teacher-head{display:flex;gap:14px;align-items:center;margin-bottom:14px;position:relative;}
+.teacher-photo{width:64px;height:64px;border-radius:16px;object-fit:cover;border:3px solid var(--primary);flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,.15);}
+.teacher-info{flex:1;min-width:0;}
+.teacher-name{font-size:16px;font-weight:800;margin-bottom:2px;}
+.teacher-subject{font-size:12px;color:var(--text-muted);margin-bottom:4px;}
+.teacher-group{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;background:var(--primary-bg);color:var(--primary);border-radius:9999px;font-size:11px;font-weight:700;}
+.teacher-socials{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.teacher-social-link{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;text-decoration:none;font-size:15px;transition:all .2s;}
+.teacher-social-link:hover{transform:scale(1.15);}
+.social-fb{background:#1877f2;}.social-yt{background:#ff0000;}.social-tt{background:#000;}
 .social-ig{background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);}
-.social-web{background:var(--primary);}
-.social-wa{background:#25d366;}
+.social-web{background:var(--primary);}.social-wa{background:#25d366;}
 
-.teacher-hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;position:relative}
-.teacher-hero-stat{text-align:center;padding:10px;background:var(--surface-hover);border-radius:10px}
-.teacher-hero-stat-value{font-size:18px;font-weight:800;font-family:var(--font-en);color:var(--primary)}
-.teacher-hero-stat-label{font-size:10px;color:var(--text-muted);margin-top:2px}
-.teacher-hero-actions{display:flex;gap:8px;flex-wrap:wrap;position:relative}
-.teacher-hero-actions .btn{flex:1;min-width:100px}
-.teacher-billing-alert{background:linear-gradient(135deg,#fee2e2,#fecaca);border:2px solid var(--danger);border-radius:10px;padding:12px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;position:relative}
-.teacher-billing-alert .info{flex:1}
-.teacher-billing-alert .title{font-weight:700;color:var(--danger);font-size:12px;margin-bottom:2px}
-.teacher-billing-alert .amount{font-size:16px;font-weight:800;font-family:var(--font-en);color:var(--danger)}
-.teacher-billing-ok{background:linear-gradient(135deg,#dcfce7,#bbf7d0);border:2px solid var(--success);border-radius:10px;padding:12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;position:relative}
-.teacher-billing-ok .icon{font-size:24px}
-.teacher-billing-ok .text{font-weight:700;color:var(--success);font-size:13px}
-.teacher-points-summary{background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(139,92,246,.08));border:1px solid var(--primary-border);border-radius:10px;padding:12px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;position:relative}
-.teacher-points-summary .label{font-size:12px;color:var(--text-secondary)}
-.teacher-points-summary .value{font-size:24px;font-weight:900;font-family:var(--font-en);color:var(--primary)}
-.wa-btn{background:#25d366;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px;text-decoration:none;box-shadow:0 2px 8px rgba(37,211,102,.3);}
-.wa-btn:hover{background:#1ebe5a;transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,211,102,.4);}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0;}
+.stat-box{text-align:center;padding:10px;background:var(--surface-hover);border-radius:10px;}
+.stat-value{font-size:17px;font-weight:900;font-family:var(--font-en);color:var(--primary);}
+.stat-label{font-size:10px;color:var(--text-muted);margin-top:2px;}
 
-/* Leaderboard */
-.leader-row{display:flex;gap:12px;align-items:center;padding:10px 14px;background:var(--surface-hover);border-radius:8px;margin-bottom:6px}
-.rank{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-family:var(--font-en);flex-shrink:0}
-.rank-1{background:linear-gradient(135deg,#ffd700,#ffa500);color:#fff}
-.rank-2{background:linear-gradient(135deg,#c0c0c0,#808080);color:#fff}
-.rank-3{background:linear-gradient(135deg,#cd7f32,#8b4513);color:#fff}
-.rank-other{background:var(--surface);color:var(--text-muted);border:1px solid var(--border)}
-.my-rank-box{background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(139,92,246,.1));border:2px solid var(--primary);border-radius:12px;padding:14px;margin-bottom:12px;text-align:center}
-.my-rank-number{font-size:28px;font-weight:900;font-family:var(--font-en);color:var(--primary);line-height:1}
-.my-rank-label{font-size:12px;color:var(--text-muted);margin-top:4px}
+.teacher-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.teacher-actions .btn{flex:1;min-width:90px;}
 
-/* Team Button */
-.team-btn{display:block;width:100%;padding:16px;border-radius:var(--radius);background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-weight:800;text-align:center;text-decoration:none;margin-bottom:16px;box-shadow:0 4px 12px rgba(37,211,102,.3);transition:all .2s}
-.team-btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(37,211,102,.4)}
-.team-btn .icon{font-size:24px;display:inline-block;vertical-align:middle;margin-left:8px}
+.billing-alert{background:linear-gradient(135deg,#fee2e2,#fecaca);border:2px solid var(--danger);border-radius:12px;padding:12px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.billing-alert .amount{font-size:18px;font-weight:900;font-family:var(--font-en);color:var(--danger);}
+.billing-ok{background:linear-gradient(135deg,#dcfce7,#bbf7d0);border:2px solid var(--success);border-radius:12px;padding:12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;}
+.billing-ok .icon{font-size:22px;}
 
-/* Session Counter */
-.session-counter{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px}
-.session-counter-title{font-weight:700;font-size:14px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
-.session-counter-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.session-counter-item{text-align:center;padding:8px;background:var(--surface-hover);border-radius:8px}
-.session-counter-value{font-size:20px;font-weight:800;font-family:var(--font-en);color:var(--primary)}
-.session-counter-label{font-size:10px;color:var(--text-muted);margin-top:2px}
-.session-counter-item.danger .session-counter-value{color:var(--danger)}
-.session-counter-item.warning .session-counter-value{color:var(--warning)}
-.session-counter-item.success .session-counter-value{color:var(--success)}
+/* 🆕 جدول الأسبوع */
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+.week-day{background:var(--surface-hover);border-radius:10px;padding:8px;text-align:center;min-height:60px;font-size:11px;position:relative;transition:all .2s;}
+.week-day.today{background:var(--primary);color:#fff;font-weight:800;box-shadow:0 4px 12px rgba(99,102,241,.3);}
+.week-day.has-session{border:2px solid var(--primary-border);}
+.week-day-name{font-weight:700;font-size:11px;margin-bottom:4px;}
+.week-day-time{font-family:var(--font-en);font-size:12px;font-weight:800;}
 
-.progress-bar{height:8px;background:var(--surface-hover);border-radius:9999px;overflow:hidden;margin-top:8px}
-.progress-bar-fill{height:100%;background:var(--grad);border-radius:9999px;transition:width .3s}
+/* 🆕 المتجر */
+.store-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;}
+.store-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center;transition:all .2s;cursor:pointer;}
+.store-item:hover{transform:translateY(-4px);box-shadow:0 8px 20px rgba(0,0,0,.1);}
+.store-item-img{width:100%;height:90px;object-fit:cover;border-radius:8px;background:var(--surface-hover);margin-bottom:8px;}
+.store-item-name{font-size:12px;font-weight:700;margin-bottom:4px;}
+.store-item-cost{font-family:var(--font-en);font-weight:900;color:var(--primary);font-size:14px;}
 
-.grade-badge{display:inline-flex;align-items:center;justify-content:center;min-width:50px;padding:6px 10px;border-radius:8px;font-weight:800;font-family:var(--font-en);font-size:13px}
+/* Progress */
+.progress-bar{height:8px;background:var(--surface-hover);border-radius:9999px;overflow:hidden;margin-top:8px;}
+.progress-bar-fill{height:100%;background:var(--grad-modern);border-radius:9999px;transition:width .4s;}
+
+.grade-badge{display:inline-flex;align-items:center;justify-content:center;min-width:46px;padding:5px 10px;border-radius:8px;font-weight:900;font-family:var(--font-en);font-size:13px;}
 .grade-badge.success{background:var(--success);color:#fff}
 .grade-badge.warning{background:var(--warning);color:#fff}
 .grade-badge.danger{background:var(--danger);color:#fff}
 .grade-badge.muted{background:var(--text-muted);color:#fff}
 
-.makeup-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:9999px;font-size:11px;font-weight:700}
-.makeup-badge.done{background:var(--success-bg);color:var(--success)}
-.makeup-badge.scheduled{background:var(--info-bg);color:var(--info)}
-.makeup-badge.outstanding{background:var(--warning-bg);color:var(--warning)}
-.makeup-badge.deducted{background:var(--danger-bg);color:var(--danger)}
+.sub-row{padding:12px;background:var(--surface-hover);border-radius:10px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;transition:all .2s;}
+.sub-row.clickable{cursor:pointer;}
+.sub-row.clickable:hover{transform:translateX(-3px);box-shadow:0 4px 12px rgba(0,0,0,.08);}
+.sub-row.graded{border-right:3px solid var(--success)}
+.sub-row.pending{border-right:3px solid var(--warning)}
+.sub-row.missing{border-right:3px solid var(--danger);background:rgba(239,68,68,.05)}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:14px;overflow-x:auto}
+.tab-btn{padding:8px 14px;background:none;border:none;color:var(--text-secondary);cursor:pointer;font-weight:700;font-size:13px;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s}
+.tab-btn:hover{color:var(--primary)}
+.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+.rank-1{background:linear-gradient(135deg,#ffd700,#ffa500);color:#fff}
+.rank-2{background:linear-gradient(135deg,#c0c0c0,#808080);color:#fff}
+.rank-3{background:linear-gradient(135deg,#cd7f32,#8b4513);color:#fff}
+.leader-row{display:flex;gap:12px;align-items:center;padding:10px 14px;background:var(--surface-hover);border-radius:10px;margin-bottom:6px}
+.rank{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-family:var(--font-en);flex-shrink:0;}
+.rank-other{background:var(--surface);color:var(--text-muted);border:1px solid var(--border)}
+.my-rank-box{background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(139,92,246,.1));border:2px solid var(--primary);border-radius:16px;padding:16px;margin-bottom:12px;text-align:center;}
+.my-rank-number{font-size:32px;font-weight:900;font-family:var(--font-en);color:var(--primary);line-height:1;}
+
+.team-btn{display:block;width:100%;padding:16px;border-radius:14px;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-weight:800;text-align:center;text-decoration:none;margin-bottom:16px;box-shadow:0 4px 12px rgba(37,211,102,.3);transition:all .2s;}
+.team-btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(37,211,102,.4);}
+
+.session-counter{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:16px;}
+.session-counter-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;}
+.session-counter-item{text-align:center;padding:10px;background:var(--surface-hover);border-radius:10px;}
+.session-counter-value{font-size:22px;font-weight:900;font-family:var(--font-en);color:var(--primary);}
+.session-counter-label{font-size:10px;color:var(--text-muted);margin-top:2px;}
+
+.stat-mini{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.stat-mini-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.stat-mini-value{font-size:18px;font-weight:900;color:var(--primary);font-family:var(--font-en)}
+.stat-mini-label{font-size:10px;color:var(--text-muted);margin-top:2px}
 
 .points-breakdown{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px}
-.points-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;display:flex;justify-content:space-between;align-items:center}
-.points-item-icon{font-size:18px}
-.points-item-info{flex:1;margin-right:8px}
+.points-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;justify-content:space-between;align-items:center}
+.points-item-icon{font-size:20px}
+.points-item-info{flex:1;margin-right:10px}
 .points-item-label{font-size:11px;color:var(--text-muted)}
-.points-item-value{font-weight:800;font-family:var(--font-en);font-size:14px;color:var(--primary)}
+.points-item-value{font-weight:900;font-family:var(--font-en);font-size:15px;color:var(--primary)}
 
-/* 🆕 بانر الدخول بدون باسوورد */
 .no-pass-info{background:var(--info-bg);border:1px solid var(--info-border);border-radius:10px;padding:12px;font-size:12px;color:var(--info);margin-bottom:16px;text-align:center;line-height:1.7}
 
+/* 🆕 Ledger (دفتر التحصيل) */
+.ledger-month-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;}
+.ledger-month-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.ledger-sq-strip{display:flex;gap:3px;flex-wrap:wrap;margin-top:8px;}
+.ledger-sq{min-width:24px;height:22px;display:inline-flex;align-items:center;justify-content:center;border-radius:5px;font-size:9px;font-weight:800;font-family:var(--font-en);}
+.ledger-sq.green{background:var(--success);color:#fff;}
+.ledger-sq.red{background:var(--danger);color:#fff;}
+.ledger-sq.gray{background:var(--surface-hover);color:var(--text-muted);}
+
 @media(max-width:640px){
-  .stat-mini{grid-template-columns:1fr 1fr}
-  .session-counter-grid{grid-template-columns:1fr 1fr}
+  .stat-mini,.session-counter-grid,.stats-grid{grid-template-columns:1fr 1fr}
   .points-breakdown{grid-template-columns:1fr}
-  .teacher-hero-stats{grid-template-columns:1fr 1fr}
-  .teacher-hero-header{flex-direction:column;text-align:center}
-  .teacher-hero-photo{width:80px;height:80px}
-  .teacher-socials{justify-content:center;}
   .child-hero{flex-direction:column;text-align:center}
   .child-hero-stats{justify-content:center}
+  .week-grid{grid-template-columns:repeat(2,1fr)}
 }
 </style>
 </head>
@@ -176,76 +191,77 @@
 <main class="main-content" id="mainContent">
 <header class="main-header">
 <div class="main-header-right"><button class="menu-toggle" id="menuToggle"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button><div><h1 class="page-title" id="pageTitle">لوحة ولي الأمر</h1><p class="page-subtitle" id="pageSubtitle">متابعة أداء ابني</p></div></div>
-<div class="main-header-left"><div class="header-actions"><button class="icon-btn" id="themeToggle"></button></div></div>
+<div class="main-header-left"><div class="header-actions"><button class="icon-btn" id="notifyBell" style="border:1px solid var(--border);background:var(--surface-hover);border-radius:12px;width:42px;height:42px;font-size:19px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;position:relative;margin-inline-end:6px;" title="الإشعارات">🔔</button><button class="icon-btn" id="themeToggle"></button></div></div>
 </header>
 <div class="content-area">
 
+<!-- 🏠 نظرة عامة -->
 <section class="section active" id="section-overview">
-<!-- 🆕 فورم احتياطي بالكود فقط (بدون باسوورد) -->
 <div id="loginWrap" style="display:none;">
 <div class="card" style="max-width:420px;margin:40px auto;padding:24px;">
 <h3 style="text-align:center;margin-bottom:12px;">👨‍👩‍ دخول ولي الأمر</h3>
-<div class="no-pass-info">💡 <strong>لا تحتاج كلمة مرور</strong> — أدخل كود الابن المطبوع على كارنيه الطالب فقط<br>أو افتح الرابط المرسل لك من لوحة الطالب مباشرة</div>
+<div class="no-pass-info">💡 <strong>لا تحتاج كلمة مرور</strong> — أدخل كود الابن المطبوع على كارنيه الطالب فقط</div>
 <div class="form-group"><label>كود الابن</label><input type="text" id="plCode" class="form-input" placeholder="EDU-1234"></div>
 <button class="btn btn-primary w-full" onclick="window.parentLogin()">🔓 دخول</button>
 </div>
 </div>
 <div id="dashWrap" style="display:none;">
 <div id="childPicker" style="margin-bottom:12px;"></div>
-
-<!-- 🆕 Action Items Banner -->
 <div id="actionItemsBanner"></div>
+<div class="child-hero float-in" id="childHero"></div>
+<a class="team-btn" id="teamBtn" href="#" target="_blank"><span class="icon">💬</span> تواصل مع تيم الدعم</a>
 
-<div class="child-hero" id="childHero"></div>
-<a class="team-btn" id="teamBtn" href="#" target="_blank">
-  <span class="icon">💬</span>
-  <span>تواصل مع تيم الدعم</span>
-</a>
-
-<!-- أساتذة ابني -->
-<div class="card" style="margin-bottom:16px;">
-  <div class="card-header">
-    <h3 class="card-title">👨‍🏫 أساتذة ابني</h3>
-    <p class="text-sm text-muted">كل تفاصيل الأداء مع كل أستاذ</p>
-  </div>
+<div class="modern-card float-in">
+  <div class="modern-card-header"><div class="modern-card-title">👨‍🏫 أساتذة ابني</div><span class="text-xs text-muted">كل التفاصيل مع كل أستاذ</span></div>
   <div id="teachersCardsList"></div>
 </div>
 
-<!-- عداد الحصص -->
-<div class="session-counter" id="sessionCounter"></div>
+<div class="modern-card float-in">
+  <div class="modern-card-header"><div class="modern-card-title">📅 جدول الأسبوع</div><span class="text-xs text-muted">مواعيد حصص ابني</span></div>
+  <div id="weekSchedule"></div>
+</div>
 
-<!-- النقاط الكلية -->
-<div class="card" style="margin-bottom:16px;">
-  <div class="card-header"><h3 class="card-title">🏆 نقاط ابني الإجمالية</h3></div>
+<div class="modern-card float-in">
+  <div class="modern-card-header"><div class="modern-card-title">🏆 نقاط ابني الإجمالية</div><span class="text-xs text-muted">تفصيل المصادر</span></div>
   <div class="points-breakdown" id="pointsBreakdown"></div>
 </div>
 
-<!-- 🆕 امتحانات وتحديات قادمة -->
-<div class="card" style="margin-bottom:16px;">
-  <div class="card-header"><h3 class="card-title">📅 امتحانات وتحديات قادمة</h3></div>
+<div class="session-counter float-in" id="sessionCounter"></div>
+
+<div class="modern-card float-in">
+  <div class="modern-card-header"><div class="modern-card-title">🛍️ متجر النقاط</div><span class="text-xs text-muted">استبدل نقاط ابنك بهدايا</span></div>
+  <div class="store-grid" id="storePreview"></div>
+</div>
+
+<div class="modern-card float-in">
+  <div class="modern-card-header"><div class="modern-card-title">📅 امتحانات وتحديات قادمة</div></div>
   <div id="upcomingList"></div>
 </div>
 
-<!-- إحصائيات سريعة -->
 <div class="stat-mini" id="ovStats"></div>
 
-<!-- الترتيب -->
-<div class="card">
-  <div class="card-header"><h3 class="card-title">🥇 ترتيب ابني</h3></div>
+<div class="modern-card float-in">
+  <div class="modern-card-header"><div class="modern-card-title">🥇 ترتيب ابني</div></div>
   <div id="rankBox"></div>
 </div>
 </div>
 </section>
 
-<!-- درجات ابني -->
+<!-- 📒 دفتر التحصيل (جديد) -->
+<section class="section" id="section-ledger">
+<div class="section-header"><div><h2 class="section-title">📒 دفتر التحصيل</h2><p class="text-sm text-muted">شهرية كل مجموعة + الشهور المستحقة + سجل الدفعات</p></div></div>
+<div id="ledgerContent"></div>
+</section>
+
+<!-- 📊 درجات ابني -->
 <section class="section" id="section-grades">
 <div class="section-header"><div><h2 class="section-title">📊 درجات ابني</h2><p class="text-sm text-muted">تفاصيل الواجبات والامتحانات</p></div></div>
 <div id="gradesTeacherPicker" style="margin-bottom:12px;"></div>
-<div class="card" style="margin-bottom:16px;">
-  <h3 class="card-title" style="margin-bottom:12px;">📈 متوسط الأداء</h3>
+<div class="modern-card">
+  <div class="modern-card-header"><div class="modern-card-title">📈 متوسط الأداء</div></div>
   <div class="stat-mini" id="gradeStats"></div>
 </div>
-<div class="card">
+<div class="modern-card">
   <div class="tabs">
     <button class="tab-btn active" onclick="window.switchPTab(event,'hw')">📝 واجبات</button>
     <button class="tab-btn" onclick="window.switchPTab(event,'ex')">🎓 امتحانات</button>
@@ -255,20 +271,24 @@
 </div>
 </section>
 
-<!-- حضور ابني -->
+<!-- 📋 حضور ابني -->
 <section class="section" id="section-attendance">
 <div class="section-header"><div><h2 class="section-title">📋 حضور ابني</h2><p class="text-sm text-muted">سجل الحضور والغياب</p></div></div>
 <div id="attTeacherPicker" style="margin-bottom:12px;"></div>
-<div class="card" style="margin-bottom:16px;">
-  <h3 class="card-title" style="margin-bottom:12px;">📊 ملخص الشهر</h3>
+<div class="modern-card">
+  <div class="modern-card-header"><div class="modern-card-title">📊 ملخص الشهر</div></div>
   <div class="stat-mini" id="attStats"></div>
 </div>
-<div class="card">
-  <div id="pAttList"></div>
-</div>
+<div class="modern-card"><div id="pAttList"></div></div>
 </section>
 
-<!-- المدفوعات -->
+<!-- 📜 سجل النشاط (جديد) -->
+<section class="section" id="section-activity">
+<div class="section-header"><div><h2 class="section-title">📜 سجل النشاط</h2><p class="text-sm text-muted">آخر الأحداث والواجبات والدرجات</p></div></div>
+<div id="activityList"></div>
+</section>
+
+<!-- 💰 المدفوعات -->
 <section class="section" id="section-payments">
 <div class="section-header"><div><h2 class="section-title">💰 المدفوعات</h2><p class="text-sm text-muted">حساب الشهرية لكل أستاذ</p></div></div>
 <div id="payTeacherPicker" style="margin-bottom:12px;"></div>
@@ -290,110 +310,68 @@
 <script src="js/ui-helpers.js"></script>
 <script src="js/drive-service.js"></script>
 <script src="js/theme-manager.js"></script>
+<script src="js/pwa-injector.js"></script>
 <script src="js/auth-service.js"></script>
-
+<script src="js/notify-service.js"></script>
 <script>
-  // 🌐 جلب البراندنج من السحابة عند فتح الصفحة
-(async function loadBrandingFromCloud(){
-  try {
-    // محاولة جلب من السحابة أولاً
-    if (window.FirebaseService && FirebaseService._db) {
-      try {
-        console.log('📥 جاري جلب البراندنج من السحابة...');
-        const doc = await FirebaseService._db.collection('meta').doc('branding').get();
-        if (doc.exists) {
-          const branding = doc.data();
-          console.log('✅ تم جلب البراندنج من السحابة:', branding);
-          
-          // حفظ محلياً
-          localStorage.setItem('eduflow_branding', JSON.stringify(branding));
-          const d = db();
-          d.branding = branding;
-          save(d);
-          
-          // تطبيق البراندنج
-          if (typeof window.applyBranding === 'function') window.applyBranding(branding);
-          if (typeof DataService?.applyBrandingColors === 'function') DataService.applyBrandingColors(branding);
-        } else {
-          console.log('ℹ️ لا يوجد براندنج في السحابة');
-        }
-      } catch (e) {
-        console.warn('⚠️ فشل جلب البراندنج من السحابة، استخدام المحلي:', e.message);
+/* 🖼️ تطبيق البراندنج */
+function applyBrandingHere(b){
+  try{
+    if(!b) return;
+    if(b.name) document.querySelectorAll('[data-brand-name]').forEach(function(el){ el.textContent=b.name; });
+    document.querySelectorAll('[data-logo]').forEach(function(el){
+      if(b.logoUrl){
+        var src = window.driveThumb ? window.driveThumb(b.logoUrl) : b.logoUrl;
+        el.innerHTML = '<img src="'+src+'" alt="logo" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" onerror="this.style.display=\'none\';">';
+      } else {
+        el.innerHTML = '<span style="font-size:26px;">🎓</span>';
+      }
+    });
+    try{ if(typeof DataService?.applyBrandingColors === 'function') DataService.applyBrandingColors(b); }catch(e){}
+  }catch(e){}
+}
+(async function(){
+  try{
+    var local = localStorage.getItem('eduflow_branding');
+    if(local) applyBrandingHere(JSON.parse(local));
+    if(window.FirebaseService && FirebaseService._db){
+      var doc = await FirebaseService._db.collection('meta').doc('branding').get();
+      if(doc.exists){
+        var b=doc.data();
+        localStorage.setItem('eduflow_branding', JSON.stringify(b));
+        applyBrandingHere(b);
       }
     }
-  } catch(e) {
-    console.error('loadBrandingFromCloud error:', e);
-  }
+  }catch(e){ console.warn('branding error:', e); }
 })();
+setTimeout(function(){ try{ var b=localStorage.getItem('eduflow_branding'); if(b) applyBrandingHere(JSON.parse(b)); }catch(e){} }, 400);
+setTimeout(function(){ try{ var b=localStorage.getItem('eduflow_branding'); if(b) applyBrandingHere(JSON.parse(b)); }catch(e){} }, 1200);
 
-  /* 🎯 نظام الدخول الفوري بالباركود */
+/* 🎯 Barcode Auto-login */
 (function handleBarcodeAutoLogin() {
   try {
-    // 1. التحقق من parameter في URL
     const params = new URLSearchParams(location.search);
-    const barcodeId = params.get('barcode');
-    const isDirect = params.get('direct') === '1';
-    
-    // 2. التحقق من session في sessionStorage/localStorage
     let barcodeSession = null;
-    try {
-      barcodeSession = JSON.parse(sessionStorage.getItem('eduflow_barcode_session') || 'null');
-    } catch(e) {}
-    
-    if (!barcodeSession) {
-      try {
-        barcodeSession = JSON.parse(localStorage.getItem('eduflow_barcode_session') || 'null');
-      } catch(e) {}
-    }
-    
-    // 3. لو في session صالح
+    try { barcodeSession = JSON.parse(sessionStorage.getItem('eduflow_barcode_session') || 'null'); } catch(e) {}
+    if (!barcodeSession) { try { barcodeSession = JSON.parse(localStorage.getItem('eduflow_barcode_session') || 'null'); } catch(e) {} }
     if (barcodeSession && barcodeSession.barcodeLogin && barcodeSession.expiresAt > Date.now()) {
-      const userId = barcodeSession.id;
-      const user = (DataService?.getUsers ? DataService.getUsers() : []).find(u => u.id === userId);
-      
+      const user = (DataService?.getUsers ? DataService.getUsers() : []).find(u => u.id === barcodeSession.id);
       if (user && user.role === 'student') {
-        // 🎯 تجاوز تسجيل الدخول!
         window.__BARCODE_LOGIN_USER = user;
         window.__VIEWAS_USER = user;
-        
-        // Override AuthService.getCurrentUser
         if (window.AuthService) {
           const originalGetCurrentUser = AuthService.getCurrentUser;
-          AuthService.getCurrentUser = function() { 
-            return window.__BARCODE_LOGIN_USER || originalGetCurrentUser?.call(this); 
-          };
-          
-          // Override requireRole
+          AuthService.getCurrentUser = function() { return window.__BARCODE_LOGIN_USER || originalGetCurrentUser?.call(this); };
           if (typeof AuthService.requireRole === 'function') {
-            AuthService.requireRole = function(roles) {
-              if (!roles || roles.includes('student')) return true;
-              return true; // السماح دائماً للباركود
-            };
+            AuthService.requireRole = function(roles) { if (!roles || roles.includes('student')) return true; return true; };
           }
-          
-          // Override logout
-          const origLogout = AuthService.logout?.bind(AuthService);
-          AuthService.logout = function() {
-            sessionStorage.removeItem('eduflow_barcode_session');
-            sessionStorage.removeItem('eduflow_user');
-            localStorage.removeItem('eduflow_barcode_session');
-            localStorage.removeItem('eduflow_user');
-            window.__BARCODE_LOGIN_USER = null;
-            window.__VIEWAS_USER = null;
-            if (origLogout) origLogout();
-            else location.href = 'login.html';
-          };
         }
-        
-        console.log('✅ Barcode auto-login successful for:', user.name);
       }
     }
-  } catch (e) {
-    console.error('Barcode auto-login error:', e);
-  }
+  } catch (e) { console.error('Barcode auto-login error:', e); }
 })();
 
-  /* 🆕 View-As: لو الرابط فيه ?viewas= خد الهوية دي كالمستخدم الحالي للتبويب ده */
+/* 🆕 View-As */
 (function(){
   try{
     const vid=new URLSearchParams(location.search).get('viewas');
@@ -403,21 +381,10 @@
     window.__VIEWAS_USER=u;
     if(window.AuthService){
       AuthService.getCurrentUser=function(){ return window.__VIEWAS_USER; };
-      if(typeof AuthService.requireRole==='function'){
-        AuthService.requireRole=function(roles){
-          if(!roles||roles.includes(u.role)) return true;
-          location.href='login.html'; return false;
-        };
-      }
-      const origLogout=(typeof AuthService.logout==='function')?AuthService.logout.bind(AuthService):null;
-      AuthService.logout=function(){
-        window.__VIEWAS_USER=null;
-        try{ sessionStorage.removeItem('eduflow_viewas'); }catch(e){}
-        if(origLogout) origLogout(); else location.href='login.html';
-      };
     }
   }catch(e){}
 })();
+
 const DAYS=[{en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},{en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'},{en:'Saturday',ar:'السبت'}];
 const dayAr=en=>(DAYS.find(d=>d.en===en)||{}).ar||en;
 const T=tm=>DataService?.formatTime12?DataService.formatTime12(tm):tm;
@@ -434,7 +401,6 @@ window.driveThumb=function(url){
 
 let currentUser=null, activeChild=null, selectedTeacherId=null;
 
-// ==================== 🆕 BOOT بدون باسوورد ====================
 (async function boot(){
   try{
     if(typeof DataService?.init==='function') await DataService.init();
@@ -442,55 +408,20 @@ let currentUser=null, activeChild=null, selectedTeacherId=null;
     const params=new URLSearchParams(location.search);
     const codeParam=(params.get('studentCode')||'').trim();
     const sidParam=(params.get('studentId')||'').trim();
-
-    if(codeParam){
-      const st = DataService?.findStudentByCode ? DataService.findStudentByCode(codeParam) : null;
-      if(st){ window.enterAsParent(st, currentUser?.role==='student'); return; }
-    }
-
-    if(sidParam){
-      const st = DataService?.getUserById ? DataService.getUserById(sidParam) : null;
-      if(st && (currentUser?.role==='student' || currentUser?.role==='parent')){
-        window.enterAsParent(st, currentUser?.role==='student');
-        return;
-      }
-    }
-
-    if(currentUser && currentUser.role==='parent'){
-      window.setupParentUI();
-      return;
-    }
-
+    if(codeParam){ const st = DataService?.findStudentByCode ? DataService.findStudentByCode(codeParam) : null; if(st){ window.enterAsParent(st, currentUser?.role==='student'); return; } }
+    if(sidParam){ const st = DataService?.getUserById ? DataService.getUserById(sidParam) : null; if(st && (currentUser?.role==='student' || currentUser?.role==='parent')){ window.enterAsParent(st, currentUser?.role==='student'); return; } }
+    if(currentUser && currentUser.role==='parent'){ window.setupParentUI(); return; }
     document.getElementById('loginWrap').style.display='block';
     document.getElementById('dashWrap').style.display='none';
-  }catch(err){
-    console.error('boot',err);
-    document.body.innerHTML='<div class="card" style="margin:40px auto;max-width:400px;">خطأ: '+err.message+'</div>';
-  }
+  }catch(err){ console.error('boot',err); }
 })();
 
 window.enterAsParent=function(st, handoff){
   try{
-    if(handoff && currentUser && currentUser.role==='student'){
-      sessionStorage.setItem('eduflow_handoff_prev', JSON.stringify(currentUser));
-    }
+    if(handoff && currentUser && currentUser.role==='student') sessionStorage.setItem('eduflow_handoff_prev', JSON.stringify(currentUser));
     let parent;
-    if(currentUser && currentUser.role==='parent'){
-      parent = currentUser;
-      const ids = parent.studentIds||[];
-      if(!ids.includes(st.id)) ids.push(st.id);
-      parent.studentIds = ids;
-    } else {
-      parent = {
-        id:'parent_'+st.id,
-        role:'parent',
-        name:'ولي أمر '+st.name,
-        phone:st.parentPhone||'',
-        studentIds:[st.id],
-        parentOf:st.name,
-        viaLink:true
-      };
-    }
+    if(currentUser && currentUser.role==='parent'){ parent = currentUser; const ids = parent.studentIds||[]; if(!ids.includes(st.id)) ids.push(st.id); parent.studentIds = ids; }
+    else { parent = { id:'parent_'+st.id, role:'parent', name:'ولي أمر '+st.name, phone:st.parentPhone||'', studentIds:[st.id], parentOf:st.name, viaLink:true }; }
     sessionStorage.setItem('eduflow_user', JSON.stringify(parent));
     currentUser = parent;
     activeChild = st;
@@ -512,14 +443,8 @@ window.setupParentUI=function(){
 };
 
 window.backToStudent=function(){
-  try{
-    const prev=sessionStorage.getItem('eduflow_handoff_prev');
-    if(prev){
-      sessionStorage.setItem('eduflow_user', prev);
-      sessionStorage.removeItem('eduflow_handoff_prev');
-    }
-    location.href='student-dashboard.html';
-  }catch(e){ location.href='student-dashboard.html'; }
+  try{ const prev=sessionStorage.getItem('eduflow_handoff_prev'); if(prev){ sessionStorage.setItem('eduflow_user', prev); sessionStorage.removeItem('eduflow_handoff_prev'); } location.href='student-dashboard.html'; }
+  catch(e){ location.href='student-dashboard.html'; }
 };
 
 window.parentLogin=async function(){
@@ -529,7 +454,7 @@ window.parentLogin=async function(){
     const st=DataService?.findStudentByCode?DataService.findStudentByCode(code):null;
     if(!st){ if(typeof ThemeManager?.toast==='function')ThemeManager.toast('كود الابن غير صحيح','error'); return; }
     window.enterAsParent(st, false);
-  }catch(e){ if(typeof ThemeManager?.toast==='function')ThemeManager.toast('خطأ','error'); }
+  }catch(e){}
 };
 
 window.buildMenu=function(){
@@ -538,7 +463,9 @@ window.buildMenu=function(){
     {s:'المتابعة',items:[
       {id:'grades',l:'درجات ابني',i:'📊'},
       {id:'attendance',l:'حضور ابني',i:'📋'},
-      {id:'payments',l:'المدفوعات',i:'💰'}
+      {id:'payments',l:'المدفوعات',i:'💰'},
+      {id:'ledger',l:'دفتر التحصيل',i:'📒'},
+      {id:'activity',l:'سجل النشاط',i:'📜'}
     ]}
   ];
   const nav=document.getElementById('sidebarNav');
@@ -554,12 +481,13 @@ window.showSection=function(id){
       overview:window.renderOverview,
       grades:window.loadGrades,
       attendance:window.loadAttendance,
-      payments:window.loadPayments
+      payments:window.loadPayments,
+      ledger:window.renderLedger,
+      activity:window.renderActivity
     };
     if(L[id]) L[id]();
     if(window.innerWidth<=1024){
       document.getElementById('sidebar')?.classList.remove('open');
-      document.getElementById('sidebarOverlay')?.classList.remove('show');
     }
   }catch(e){console.error(e);}
 };
@@ -582,28 +510,18 @@ window.renderAll=function(){
     document.getElementById('loginWrap').style.display='none';
     document.getElementById('dashWrap').style.display='block';
     const children=window.getChildren();
-    if(!children.length){ 
-      document.getElementById('childPicker').innerHTML='<p class="text-muted">لا أبناء — ضيف ابن بكود</p>'; 
-      return; 
-    }
+    if(!children.length){ document.getElementById('childPicker').innerHTML='<p class="text-muted">لا أبناء</p>'; return; }
     if(!activeChild) activeChild=children[0];
-    
-    document.getElementById('childPicker').innerHTML=children.map(c=>
-      `<span class="child-chip ${c.id===activeChild.id?'active':''}" onclick="window.pickChild('${c.id}')">👤 ${c.name}</span>`
-    ).join('')+`<span class="child-chip" onclick="window.openAddChild()">➕ إضافة ابن</span>`;
-    
+    document.getElementById('childPicker').innerHTML=children.map(c=>`<span class="child-chip ${c.id===activeChild.id?'active':''}" onclick="window.pickChild('${c.id}')">👤 ${c.name}</span>`).join('')+`<span class="child-chip" onclick="window.openAddChild()">➕ إضافة ابن</span>`;
     window.renderOverview();
   }catch(e){console.error(e);}
 };
 
-window.pickChild=function(id){
-  const c=window.getChildren().find(x=>x.id===id);
-  if(c){ activeChild=c; selectedTeacherId=null; window.renderAll(); }
-};
+window.pickChild=function(id){ const c=window.getChildren().find(x=>x.id===id); if(c){ activeChild=c; selectedTeacherId=null; window.renderAll(); } };
 
 window.openAddChild=function(){
   if(typeof ThemeManager?.openModal==='function'){
-    ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">➕ إضافة ابن</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="no-pass-info">💡 أدخل كود الابن فقط — بدون كلمة مرور</div><div class="form-group"><label>كود الابن</label><input type="text" id="acCode" class="form-input" placeholder="EDU-1234"></div><button class="btn btn-primary w-full" onclick="window.doAddChild()">💾 إضافة</button></div>`,'modal-sm');
+    ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">➕ إضافة ابن</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="no-pass-info">💡 أدخل كود الابن فقط</div><div class="form-group"><label>كود الابن</label><input type="text" id="acCode" class="form-input" placeholder="EDU-1234"></div><button class="btn btn-primary w-full" onclick="window.doAddChild()">💾 إضافة</button></div>`,'modal-sm');
   }
 };
 
@@ -611,12 +529,8 @@ window.doAddChild=async function(){
   try{
     const code=document.getElementById('acCode')?.value.trim()||'';
     const st=DataService?.findStudentByCode?DataService.findStudentByCode(code):null;
-    if(!st){ 
-      if(typeof ThemeManager?.toast==='function')ThemeManager.toast('كود غير صحيح','error'); 
-      return; 
-    }
-    const ids=currentUser.studentIds||[];
-    if(!ids.includes(st.id)) ids.push(st.id);
+    if(!st){ if(typeof ThemeManager?.toast==='function')ThemeManager.toast('كود غير صحيح','error'); return; }
+    const ids=currentUser.studentIds||[]; if(!ids.includes(st.id)) ids.push(st.id);
     currentUser.studentIds=ids;
     sessionStorage.setItem('eduflow_user',JSON.stringify(currentUser));
     activeChild=st;
@@ -628,22 +542,12 @@ window.doAddChild=async function(){
 window.renderTeacherPicker=function(containerId){
   const el=document.getElementById(containerId); if(!el)return;
   const ts=window.myTeachers();
-  
-  if(ts.length<=1){
-    el.style.display='none';
-    return;
-  }
-  el.style.display='flex';
-  el.style.flexWrap='wrap';
-  el.style.gap='6px';
-  
+  if(ts.length<=1){ el.style.display='none'; return; }
+  el.style.display='flex'; el.style.flexWrap='wrap'; el.style.gap='6px';
   let html=`<span class="child-chip ${!selectedTeacherId?'active':''}" onclick="window.selectTeacher(null)">🌍 الكل</span>`;
   html+=ts.map(t=>{
     const photo=t.teacher?.photoUrl?window.driveThumb(t.teacher.photoUrl):'';
-    return `<span class="child-chip ${selectedTeacherId===t.teacher?.id?'active':''}" onclick="window.selectTeacher('${t.teacher?.id}')">
-      ${photo?`<img src="${photo}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,.3);" onerror="this.style.display='none'">`:''}
-      ${t.teacher?.name||'-'}
-    </span>`;
+    return `<span class="child-chip ${selectedTeacherId===t.teacher?.id?'active':''}" onclick="window.selectTeacher('${t.teacher?.id}')">${photo?`<img src="${photo}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none'">`:''} ${t.teacher?.name||'-'}</span>`;
   }).join('');
   el.innerHTML=html;
 };
@@ -651,39 +555,154 @@ window.renderTeacherPicker=function(containerId){
 window.selectTeacher=function(tid){
   selectedTeacherId=tid;
   const active=document.querySelector('.section.active');
-  if(active){ 
-    const id=active.id.replace('section-',''); 
-    window.showSection(id); 
-  }
+  if(active){ const id=active.id.replace('section-',''); window.showSection(id); }
 };
 
-// 🆕 بطاقات الأساتذة (Overview) مع السوشيال ميديا والواتساب
+/* 🆕 جدول الأسبوع */
+window.renderWeekSchedule=function(){
+  if(!activeChild) return;
+  const el=document.getElementById('weekSchedule'); if(!el) return;
+  const ts=window.myTeachers();
+  if(!ts.length){ el.innerHTML='<p class="text-muted">لا مجموعات</p>'; return; }
+  const todayEn=DAYS[new Date().getDay()].en;
+  let html='<div class="week-grid">';
+  DAYS.forEach(day=>{
+    const sessions=ts.filter(t=>t.group?.day===day.en);
+    const isToday=day.en===todayEn;
+    const hasSession=sessions.length>0;
+    html+=`<div class="week-day ${isToday?'today':''} ${hasSession?'has-session':''}">
+      <div class="week-day-name">${day.ar}</div>
+      ${sessions.map(s=>`<div class="week-day-time">${T(s.group.time)||''}</div><div class="text-xs" style="opacity:.85;">${s.group.name}</div>`).join('') || '<div class="text-xs" style="opacity:.6;">—</div>'}
+    </div>`;
+  });
+  html+='</div>';
+  el.innerHTML=html;
+};
+
+/* 🆕 متجر النقاط */
+window.renderStorePreview=function(){
+  if(!activeChild) return;
+  const el=document.getElementById('storePreview'); if(!el) return;
+  const items=(DataService?.getStoreItems?DataService.getStoreItems():[]).filter(i=>i.available!==false).slice(0,6);
+  if(!items.length){ el.innerHTML='<p class="text-muted" style="text-align:center;padding:20px;">لا منتجات في المتجر حالياً</p>'; return; }
+  el.innerHTML=items.map(item=>`
+    <div class="store-item" onclick="window.showSection('overview');if(typeof ThemeManager?.toast==='function')ThemeManager.toast('يرجى الدخول من حساب الطالب للشراء','info');">
+      ${item.imageUrl?`<img src="${window.driveThumb(item.imageUrl)}" class="store-item-img" onerror="this.style.background='var(--grad-modern)';this.src='';">`:'<div class="store-item-img" style="display:flex;align-items:center;justify-content:center;font-size:32px;">🎁</div>'}
+      <div class="store-item-name">${item.name}</div>
+      <div class="store-item-cost">${item.points||0} 🏆</div>
+    </div>
+  `).join('');
+};
+
+/* 🆕 دفتر التحصيل */
+window.renderLedger=function(){
+  if(!activeChild) return;
+  const el=document.getElementById('ledgerContent'); if(!el) return;
+  const ts=window.myTeachers();
+  if(!ts.length){ el.innerHTML='<p class="text-muted" style="text-align:center;padding:20px;">لا مجموعات</p>'; return; }
+
+  const months=[];
+  const curMonth=new Date().toISOString().slice(0,7);
+  for(let i=0;i<4;i++){
+    const d=new Date(); d.setMonth(d.getMonth()-i);
+    months.push(d.toISOString().slice(0,7));
+  }
+
+  let html='';
+  ts.forEach(({group, teacher})=>{
+    const fee=group.monthlyFee||0;
+    html+=`<div class="modern-card"><div class="modern-card-header"><div class="modern-card-title">👥 ${group.name}</div><span class="text-xs text-muted">👨‍🏫 ${teacher?.name||'-'} · 💰 ${fee} ج.م</span></div>`;
+
+    months.forEach(month=>{
+      const monthAtt=(DataService?.getAttendance?DataService.getAttendance():[]).filter(a=>a.groupId===group.id && a.status==='approved' && (a.date||'').startsWith(month));
+      const done=monthAtt.length;
+      const sessionsRequired=window.EduFlowConfig?.billing?.sessionsBeforePayment||8;
+      const payment=(DataService?.getPayments?DataService.getPayments().filter(p=>p.studentId===activeChild.id&&p.groupId===group.id&&(p.month||'')===month):[])[0];
+      const paid=payment?.paidAmount||0;
+      const remaining=Math.max(0,fee-paid);
+      const monthName=new Date(month+'-01').toLocaleDateString('ar-EG',{month:'long',year:'numeric'});
+
+      html+=`<div class="ledger-month-card">
+        <div class="ledger-month-head">
+          <strong>${monthName}</strong>
+          <span class="text-xs">${done}/${sessionsRequired} حصة · ${paid}/${fee} ج.م</span>
+        </div>
+        <div class="progress-bar"><div class="progress-bar-fill" style="width:${Math.min(100,Math.round((paid/fee)*100)||0)}%"></div></div>
+        <div class="ledger-sq-strip">
+          ${Array.from({length:Math.min(done,sessionsRequired)}).map((_,i)=>`<span class="ledger-sq green" title="حصة ${i+1}">✓</span>`).join('')}
+          ${Array.from({length:Math.max(0,sessionsRequired-done)}).map(()=>`<span class="ledger-sq gray"></span>`).join('')}
+        </div>
+        ${remaining>0&&done>=sessionsRequired?`<div class="text-xs" style="color:var(--danger);margin-top:6px;">💰 متبقي: ${remaining} ج.م</div>`:''}
+        ${paid>=fee&&done>=sessionsRequired?`<div class="text-xs" style="color:var(--success);margin-top:6px;">✓ مسدد بالكامل</div>`:''}
+      </div>`;
+    });
+    html+='</div>';
+  });
+  el.innerHTML=html;
+};
+
+/* 🆕 سجل النشاط */
+window.renderActivity=function(){
+  if(!activeChild) return;
+  const el=document.getElementById('activityList'); if(!el) return;
+  const ts=window.myTeachers();
+  const gids=ts.map(t=>t.group.id);
+  const events=[];
+
+  // الواجبات
+  (DataService?.getSubmissions?DataService.getSubmissions({studentId:activeChild.id}):[]).forEach(s=>{
+    const h=DataService?.getHomeworkById?DataService.getHomeworkById(s.homeworkId):null;
+    if(h&&gids.includes(h.groupId)){
+      events.push({type:'hw',icon:'📝',title:h.title,sub:'واجب — '+(s.status==='graded'?'مُصحّح':'مسلّم'),date:s.submittedAt||s.createdAt,score:s.score,max:h.totalPoints,teacherName:ts.find(t=>t.group.id===h.groupId)?.teacher?.name});
+    }
+  });
+
+  // الامتحانات
+  (DataService?.getExamAttempts?DataService.getExamAttempts({studentId:activeChild.id}):[]).forEach(a=>{
+    const e=DataService?.getExamById?DataService.getExamById(a.examId):null;
+    if(e&&gids.includes(e.groupId)){
+      events.push({type:'exam',icon:'🎓',title:e.title,sub:'امتحان',date:a.submittedAt||a.createdAt,score:a.score,max:a.maxScore,teacherName:ts.find(t=>t.group.id===e.groupId)?.teacher?.name});
+    }
+  });
+
+  // الحضور
+  (DataService?.getAttendance?DataService.getAttendance():[]).forEach(a=>{
+    if(!gids.includes(a.groupId)) return;
+    const r=a.records?.find(r=>r.studentId===activeChild.id);
+    if(!r) return;
+    events.push({type:'att',icon:r.status==='present'?'✓':r.status==='late'?'⏰':'✗',title:'حصة '+a.groupName,sub:r.status==='present'?'حاضر':r.status==='late'?'متأخر':'غائب',date:a.date,teacherName:ts.find(t=>t.group.id===a.groupId)?.teacher?.name});
+  });
+
+  events.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+
+  if(!events.length){ el.innerHTML='<p class="text-muted" style="text-align:center;padding:20px;">لا نشاط مسجل بعد</p>'; return; }
+
+  el.innerHTML='<div class="modern-card">'+events.slice(0,30).map(ev=>`
+    <div class="sub-row">
+      <div style="flex:1;">
+        <strong>${ev.icon} ${ev.title}</strong>
+        <div class="text-xs text-muted" style="margin-top:4px;">${ev.sub} · ${ev.teacherName||''} · 📅 ${ev.date||''}</div>
+      </div>
+      ${ev.score!==undefined&&ev.score!==null?`<span class="grade-badge ${Math.round((ev.score/ev.max)*100)>=75?'success':Math.round((ev.score/ev.max)*100)>=50?'warning':'danger'}">${Math.round((ev.score/ev.max)*100)}%</span>`:''}
+    </div>
+  `).join('')+'</div>';
+};
+
 window.renderTeachersCards=function(){
   const el=document.getElementById('teachersCardsList');
   if(!el) return;
-  
   const ts=window.myTeachers();
-  if(!ts.length){
-    el.innerHTML='<p class="text-muted" style="text-align:center;padding:20px;">لا يوجد أساتذة مسجلين بعد</p>';
-    return;
-  }
-  
-  const statsByTeacher=(typeof Ops?.getStudentStatsByTeacher==='function')
-    ? Ops.getStudentStatsByTeacher(activeChild.id)
-    : [];
-  
+  if(!ts.length){ el.innerHTML='<p class="text-muted" style="text-align:center;padding:20px;">لا يوجد أساتذة مسجلين بعد</p>'; return; }
+  const statsByTeacher=(typeof Ops?.getStudentStatsByTeacher==='function')?Ops.getStudentStatsByTeacher(activeChild.id):[];
   el.innerHTML=statsByTeacher.map(st=>{
     const photo=st.teacher?.photoUrl?window.driveThumb(st.teacher.photoUrl):'';
     const attRate=st.stats.attendance.total?Math.round((st.stats.attendance.present/st.stats.attendance.total)*100):0;
-    
-    // 🆕 استخراج روابط السوشيال ميديا
     const fb = st.teacher?.socials?.facebook || st.teacher?.facebook;
     const yt = st.teacher?.socials?.youtube || st.teacher?.youtube;
     const tt = st.teacher?.socials?.tiktok || st.teacher?.tiktok;
     const ig = st.teacher?.socials?.instagram || st.teacher?.instagram;
     const web = st.teacher?.socials?.website || st.teacher?.website;
     const waGroup = st.group?.whatsappLink;
-    
     let socialsHtml = '<div class="teacher-socials">';
     let hasSocials = false;
     if(fb){ socialsHtml += `<a href="${fb}" target="_blank" class="teacher-social-link social-fb" title="فيسبوك">📘</a>`; hasSocials=true; }
@@ -694,181 +713,81 @@ window.renderTeachersCards=function(){
     if(waGroup){ socialsHtml += `<a href="${waGroup}" target="_blank" class="teacher-social-link social-wa" title="جروب الواتساب">💬</a>`; hasSocials=true; }
     socialsHtml += '</div>';
     if(!hasSocials) socialsHtml = '';
-
     let billingHtml='';
     if(st.billing){
-      if(st.billing.remaining>0){
-        billingHtml=`<div class="teacher-billing-alert">
-          <div class="info">
-            <div class="title">💰 مستحقات متأخرة</div>
-            <div>متبقي: <span class="amount">${st.billing.remaining} ${EduFlowConfig?.billing?.currency||'ج.م'}</span></div>
-          </div>
-        </div>`;
-      }else if(st.billing.total>0){
-        billingHtml=`<div class="teacher-billing-ok">
-          <div class="icon">✅</div>
-          <div class="text">كل المستحقات مسددة</div>
-        </div>`;
-      }
+      if(st.billing.remaining>0){ billingHtml=`<div class="billing-alert"><div><div class="title" style="font-weight:700;color:var(--danger);font-size:12px;">💰 مستحقات متأخرة</div><div>متبقي: <span class="amount">${st.billing.remaining} ${EduFlowConfig?.billing?.currency||'ج.م'}</span></div></div></div>`; }
+      else if(st.billing.total>0){ billingHtml=`<div class="billing-ok"><div class="icon">✅</div><div style="font-weight:700;color:var(--success);font-size:13px;">كل المستحقات مسددة</div></div>`; }
     }
-    
-    return `<div class="teacher-hero-card">
-      <div class="teacher-hero-header">
-        ${photo?`<img src="${photo}" class="teacher-hero-photo" onerror="this.outerHTML='<div class=\\'user-avatar\\' style=\\'width:72px;height:72px;font-size:24px;\\'>${st.teacher?.name?.charAt(0)||'?'}</div>'">`:`<div class="user-avatar" style="width:72px;height:72px;font-size:24px;">${st.teacher?.name?.charAt(0)||'?'}</div>`}
-        <div class="teacher-hero-info">
-          <div class="teacher-hero-name">${st.teacher?.name||'-'}</div>
-          <div class="teacher-hero-subject">📚 ${st.teacher?.subject||'-'}</div>
-          <div class="teacher-hero-group">
-            👥 ${st.group?.name||'-'} · ${dayAr(st.group?.day)||''} ${T(st.group?.time)||''}
-          </div>
+    return `<div class="teacher-card float-in">
+      <div class="teacher-head">
+        ${photo?`<img src="${photo}" class="teacher-photo" onerror="this.outerHTML='<div class=\\'user-avatar\\' style=\\'width:64px;height:64px;border-radius:16px;font-size:22px;\\'>${st.teacher?.name?.charAt(0)||'?'}</div>'">`:`<div class="user-avatar" style="width:64px;height:64px;border-radius:16px;font-size:22px;">${st.teacher?.name?.charAt(0)||'?'}</div>`}
+        <div class="teacher-info">
+          <div class="teacher-name">${st.teacher?.name||'-'}</div>
+          <div class="teacher-subject">📚 ${st.teacher?.subject||'-'}</div>
+          <div class="teacher-group">👥 ${st.group?.name||'-'} · ${dayAr(st.group?.day)||''} ${T(st.group?.time)||''}</div>
           ${socialsHtml}
         </div>
       </div>
-      
       ${billingHtml}
-      
-      <div class="teacher-points-summary">
-        <div class="label">🏆 نقاط ابنك مع ${st.teacher?.name||'الأستاذ'}</div>
-        <div class="value">${st.stats.points}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(139,92,246,.08));border-radius:10px;margin-bottom:12px;">
+        <div style="font-size:12px;color:var(--text-secondary);">🏆 نقاط ابنك مع ${st.teacher?.name||'الأستاذ'}</div>
+        <div style="font-size:24px;font-weight:900;font-family:var(--font-en);color:var(--primary);">${st.stats.points}</div>
       </div>
-      
-      <div class="teacher-hero-stats">
-        <div class="teacher-hero-stat">
-          <div class="teacher-hero-stat-value">${attRate}%</div>
-          <div class="teacher-hero-stat-label">📋 الحضور</div>
-        </div>
-        <div class="teacher-hero-stat">
-          <div class="teacher-hero-stat-value">${st.stats.homework.avg}%</div>
-          <div class="teacher-hero-stat-label">📝 الواجبات</div>
-        </div>
-        <div class="teacher-hero-stat">
-          <div class="teacher-hero-stat-value">${st.stats.exams.avg}%</div>
-          <div class="teacher-hero-stat-label">🎓 الامتحانات</div>
-        </div>
-        <div class="teacher-hero-stat">
-          <div class="teacher-hero-stat-value">${st.billing?.remaining||0}</div>
-          <div class="teacher-hero-stat-label">💰 متبقي</div>
-        </div>
+      <div class="stats-grid">
+        <div class="stat-box"><div class="stat-value">${attRate}%</div><div class="stat-label">📋 الحضور</div></div>
+        <div class="stat-box"><div class="stat-value">${st.stats.homework.avg}%</div><div class="stat-label">📝 الواجبات</div></div>
+        <div class="stat-box"><div class="stat-value">${st.stats.exams.avg}%</div><div class="stat-label">🎓 الامتحانات</div></div>
+        <div class="stat-box"><div class="stat-value">${st.billing?.remaining||0}</div><div class="stat-label">💰 متبقي</div></div>
       </div>
-      
-      <div class="teacher-hero-actions">
+      <div class="teacher-actions">
         <button class="btn btn-primary btn-sm" onclick="window.selectTeacher('${st.teacher.id}');window.showSection('grades');">📝 الدرجات</button>
         <button class="btn btn-primary btn-sm" onclick="window.selectTeacher('${st.teacher.id}');window.showSection('attendance');">📋 الحضور</button>
         <button class="btn btn-secondary btn-sm" onclick="window.selectTeacher('${st.teacher.id}');window.showSection('payments');">💰 الدفعات</button>
-        ${waGroup ? `<a href="${waGroup}" target="_blank" class="wa-btn">💬 جروب الواتساب</a>` : ''}
+        ${waGroup ? `<a href="${waGroup}" target="_blank" class="wa-btn" style="background:#25d366;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;text-decoration:none;">💬 الواتساب</a>` : ''}
       </div>
     </div>`;
   }).join('');
 };
 
-// 🆕 Action Items (يحتاج انتباهك)
 window.renderActionItems=function(){
   if(!activeChild) return;
-  const el = document.getElementById('actionItemsBanner');
-  if(!el) return;
-
+  const el = document.getElementById('actionItemsBanner'); if(!el) return;
   const ts = window.myTeachers();
   const gids = ts.map(t => t.group.id);
   const alerts = [];
-
-  // 1. غياب أمس
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
   const yStr = yesterday.toISOString().split('T')[0];
   const allAtt = DataService?.getAttendance ? DataService.getAttendance() : [];
   const yesterdayAtt = allAtt.filter(a => a.date === yStr && gids.includes(a.groupId) && a.status === 'approved');
-  const absentYesterday = yesterdayAtt.filter(a => a.records.some(r => r.studentId === (activeChild?.id) && r.status === 'absent'));  if(absentYesterday.length > 0){
-    alerts.push({icon: '⚠️', text: `ابنك غاب ${absentYesterday.length} حصة أمس`, type: 'danger'});
-  }
-
-  // 2. واجبات لم تسلم
+  const absentYesterday = yesterdayAtt.filter(a => a.records.some(r => r.studentId === (activeChild?.id) && r.status === 'absent'));
+  if(absentYesterday.length > 0) alerts.push({icon: '⚠️', text: `ابنك غاب ${absentYesterday.length} حصة أمس`, type: 'danger'});
   const allHw = DataService?.getHomework ? DataService.getHomework() : [];
   const allSubs = DataService?.getSubmissions ? DataService.getSubmissions({studentId: activeChild.id}) : [];
   const activeHw = allHw.filter(h => gids.includes(h.groupId) && !h.paper);
   const missingHw = activeHw.filter(h => !allSubs.some(s => s.homeworkId === h.id));
-  if(missingHw.length > 0){
-    alerts.push({icon: '📝', text: `لديه ${missingHw.length} واجب لم يتم تسليمهما`, type: 'warning'});
-  }
-
-  // 3. دفعات متأخرة
+  if(missingHw.length > 0) alerts.push({icon: '📝', text: `لديه ${missingHw.length} واجب لم يتم تسليمهما`, type: 'warning'});
   const billing = (typeof Ops?.buildStudentBilling === 'function') ? Ops.buildStudentBilling(activeChild.id) : [];
   const currentMonth = new Date().toISOString().slice(0, 7);
-  const overdue = billing.filter(b => {
-    const rem = Math.max(0, (b.billing?.total || 0) - (b.payment?.paidAmount || 0));
-    return rem > 0 && b.billing?.month < currentMonth;
-  });
-  if(overdue.length > 0){
-    const totalOverdue = overdue.reduce((sum, b) => sum + Math.max(0, (b.billing?.total || 0) - (b.payment?.paidAmount || 0)), 0);
-    alerts.push({icon: '💰', text: `دفعات متأخرة بقيمة ${totalOverdue} ${EduFlowConfig?.billing?.currency || 'ج.م'}`, type: 'danger'});
-  }
-
-  if(alerts.length === 0){
-    el.innerHTML = `<div class="teacher-billing-ok" style="margin-bottom:0;"><div class="icon">✅</div><div class="text">كل شيء على ما يرام، لا توجد تنبيهات عاجلة</div></div>`;
-  } else {
-    el.innerHTML = `<div class="action-items-banner">
-      <div class="action-items-title">🔔 يحتاج انتباهك</div>
-      ${alerts.map(a => `<div class="action-item action-${a.type}">
-        <span class="action-icon">${a.icon}</span>
-        <span class="action-text">${a.text}</span>
-      </div>`).join('')}
-    </div>`;
-  }
+  const overdue = billing.filter(b => { const rem = Math.max(0, (b.billing?.total || 0) - (b.payment?.paidAmount || 0)); return rem > 0 && b.billing?.month < currentMonth; });
+  if(overdue.length > 0){ const totalOverdue = overdue.reduce((sum, b) => sum + Math.max(0, (b.billing?.total || 0) - (b.payment?.paidAmount || 0)), 0); alerts.push({icon: '💰', text: `دفعات متأخرة بقيمة ${totalOverdue} ${EduFlowConfig?.billing?.currency || 'ج.م'}`, type: 'danger'}); }
+  if(alerts.length === 0){ el.innerHTML = `<div class="billing-ok" style="margin-bottom:0;"><div class="icon">✅</div><div style="font-weight:700;color:var(--success);font-size:13px;">كل شيء على ما يرام، لا توجد تنبيهات عاجلة</div></div>`; }
+  else { el.innerHTML = `<div class="action-banner"><div class="action-banner-title">🔔 يحتاج انتباهك</div>${alerts.map(a => `<div class="action-item action-${a.type}"><span class="action-icon">${a.icon}</span><span class="action-text">${a.text}</span></div>`).join('')}</div>`; }
 };
 
-// 🆕 امتحانات وتحديات قادمة
 window.renderUpcoming=function(){
   if(!activeChild) return;
-  const el = document.getElementById('upcomingList');
-  if(!el) return;
-
-  const ts = window.myTeachers();
-  const gids = ts.map(t => t.group.id);
+  const el = document.getElementById('upcomingList'); if(!el) return;
+  const ts = window.myTeachers(); const gids = ts.map(t => t.group.id);
   const items = [];
-
-  // التحديات النشطة
   const allChallenges = DataService?.getChallenges ? DataService.getChallenges({}) : [];
-  const activeChallenges = allChallenges.filter(c => {
-    if(c.status !== 'active') return false;
-    if(!c.targetType || c.targetType === 'all') return true;
-    if(c.targetType === 'group' && gids.includes(c.targetValue)) return true;
-    if(c.targetType === 'grade' && activeChild.grade === c.targetValue) return true;
-    return false;
-  });
-  activeChallenges.forEach(c => {
-    items.push({icon: '🏆', title: c.title, sub: `تحدي نشط - ${c.basePoints} نقطة`, type: 'challenge', id: c.id});
-  });
-
-  // الامتحانات المتاحة (التي لم يحاول حلها بعد)
+  const activeChallenges = allChallenges.filter(c => { if(c.status !== 'active') return false; if(!c.targetType || c.targetType === 'all') return true; if(c.targetType === 'group' && gids.includes(c.targetValue)) return true; if(c.targetType === 'grade' && activeChild.grade === c.targetValue) return true; return false; });
+  activeChallenges.forEach(c => items.push({icon: '🏆', title: c.title, sub: `تحدي نشط - ${c.basePoints} نقطة`}));
   const allExams = DataService?.getExams ? DataService.getExams() : [];
   const allAttempts = DataService?.getExamAttempts ? DataService.getExamAttempts({studentId: activeChild.id}) : [];
-  const availableExams = allExams.filter(e => {
-    if(!gids.includes(e.groupId)) return false;
-    if(e.mode === 'offline') return false;
-    return !allAttempts.some(a => a.examId === e.id);
-  });
-  availableExams.forEach(e => {
-    items.push({icon: '🎓', title: e.title, sub: `امتحان متاح - ${e.totalPoints} درجة`, type: 'exam', id: e.id});
-  });
-
-  if(items.length === 0){
-    el.innerHTML = '<p class="text-muted" style="text-align:center;padding:10px;">لا توجد امتحانات أو تحديات قادمة حالياً</p>';
-  } else {
-    el.innerHTML = items.map(i => `
-      <div class="sub-row clickable graded" onclick="window.handleUpcomingClick('${i.type}', '${i.id}')">
-        <div style="flex:1;">
-          <strong>${i.icon} ${i.title}</strong>
-          <div class="text-xs text-muted">${i.sub}</div>
-        </div>
-        <span class="badge badge-primary">عرض</span>
-      </div>
-    `).join('');
-  }
-};
-
-window.handleUpcomingClick=function(type, id){
-  if(typeof ThemeManager?.toast === 'function'){
-    ThemeManager.toast('يرجى الدخول من حساب الطالب لأداء الامتحان/التحدي', 'info');
-  }
+  const availableExams = allExams.filter(e => { if(!gids.includes(e.groupId)) return false; if(e.mode === 'offline') return false; return !allAttempts.some(a => a.examId === e.id); });
+  availableExams.forEach(e => items.push({icon: '🎓', title: e.title, sub: `امتحان متاح - ${e.totalPoints} درجة`}));
+  if(items.length === 0) el.innerHTML = '<p class="text-muted" style="text-align:center;padding:10px;">لا توجد امتحانات أو تحديات قادمة حالياً</p>';
+  else el.innerHTML = items.map(i => `<div class="sub-row clickable graded"><div style="flex:1;"><strong>${i.icon} ${i.title}</strong><div class="text-xs text-muted">${i.sub}</div></div><span class="badge badge-primary">عرض</span></div>`).join('');
 };
 
 window.renderOverview=function(){
@@ -876,25 +795,13 @@ window.renderOverview=function(){
     if(!activeChild) return;
     const ts=window.myTeachers();
     const month=new Date().toISOString().slice(0,7);
-    
-    // 🆕 Render Action Items
     window.renderActionItems();
-    
     const allAtt=DataService?.getAttendance?DataService.getAttendance():[];
     const groupIds=ts.map(t=>t.group.id);
-    const monthAtt=allAtt.filter(a=>
-      a.status==='approved'&&
-      groupIds.includes(a.groupId)&&
-      (a.date||'').startsWith(month)&&
-      a.records.some(r=>r.studentId===activeChild.id)
-    );
+    const monthAtt=allAtt.filter(a=>a.status==='approved'&&groupIds.includes(a.groupId)&&(a.date||'').startsWith(month)&&a.records.some(r=>r.studentId===activeChild.id));
     const attended=monthAtt.filter(a=>a.records.find(r=>r.studentId===activeChild.id)?.status==='present').length;
     const attRate=monthAtt.length?Math.round((attended/monthAtt.length)*100):0;
-    
-    const totalPoints=(typeof Ops?.getStudentPoints==='function')
-      ? Ops.getStudentPoints(activeChild.id, null, 'all')
-      : 0;
-    
+    const totalPoints=(typeof Ops?.getStudentPoints==='function')?Ops.getStudentPoints(activeChild.id, null, 'all'):0;
     let heroHtml=`
       <div class="child-hero-content">
         <div class="child-hero-name">${activeChild.name}</div>
@@ -903,138 +810,56 @@ window.renderOverview=function(){
           ${EduFlowConfig?.educationLevels?.[activeChild.stage]?.nameAr||'-'} - ${activeChild.grade||''}
         </div>
         <div class="child-hero-stats">
-          <div class="child-hero-stat">
-            <span class="child-hero-stat-value">${ts.length}</span>
-            <span class="child-hero-stat-label">أستاذ</span>
-          </div>
-          <div class="child-hero-stat">
-            <span class="child-hero-stat-value">${attRate}%</span>
-            <span class="child-hero-stat-label">حضور</span>
-          </div>
-          <div class="child-hero-stat">
-            <span class="child-hero-stat-value">${totalPoints}</span>
-            <span class="child-hero-stat-label">نقطة 🏆</span>
-          </div>
+          <div class="child-hero-stat"><span class="child-hero-stat-value">${ts.length}</span><span class="child-hero-stat-label">أستاذ</span></div>
+          <div class="child-hero-stat"><span class="child-hero-stat-value">${attRate}%</span><span class="child-hero-stat-label">حضور</span></div>
+          <div class="child-hero-stat"><span class="child-hero-stat-value">${totalPoints}</span><span class="child-hero-stat-label">نقطة 🏆</span></div>
         </div>
       </div>
-      <div class="user-avatar" style="width:60px;height:60px;font-size:24px;background:rgba(255,255,255,.2);flex-shrink:0;">${(activeChild.name||'؟').charAt(0)}</div>
+      <div class="child-hero-avatar">${(activeChild.name||'؟').charAt(0)}</div>
     `;
-    
     document.getElementById('childHero').innerHTML=heroHtml;
-    
     const b=DataService?.getBranding?DataService.getBranding():{};
     const teamNum=(b.whatsappSupport||b.supportPhone||'').replace(/\D/g,'');
     const tb=document.getElementById('teamBtn');
     if(tb) tb.href = teamNum?`https://wa.me/2${teamNum}`:'#';
-    
     window.renderTeachersCards();
-    
+    window.renderWeekSchedule();
+    window.renderStorePreview();
     const sessionsRequired=window.EduFlowConfig?.billing?.sessionsBeforePayment||8;
     const absent=monthAtt.filter(a=>a.records.find(r=>r.studentId===activeChild.id)?.status==='absent').length;
     const late=monthAtt.filter(a=>a.records.find(r=>r.studentId===activeChild.id)?.status==='late').length;
-    
-    const cancelled=(DataService?.getCancelledSessions?DataService.getCancelledSessions():[])
-      .filter(c=>groupIds.includes(c.groupId)&&(c.date||'').startsWith(month));
-    const makeupDone=cancelled.filter(c=>c.makeupStatus==='done').length;
-    const makeupScheduled=cancelled.filter(c=>c.makeupStatus==='scheduled').length;
-    const makeupOutstanding=cancelled.filter(c=>c.makeupStatus==='outstanding').length;
-    
+    const cancelled=(DataService?.getCancelledSessions?DataService.getCancelledSessions():[]).filter(c=>groupIds.includes(c.groupId)&&(c.date||'').startsWith(month));
     const scEl=document.getElementById('sessionCounter');
     if(scEl){
       const progress=Math.min(100,Math.round((attended/sessionsRequired)*100));
       scEl.innerHTML=`
-        <div class="session-counter-title">📊 حصص الشهر (${attended} من ${sessionsRequired} مطلوبة للشهرية)</div>
+        <div style="font-weight:700;font-size:14px;margin-bottom:8px;">📊 حصص الشهر (${attended} من ${sessionsRequired} مطلوبة للشهرية)</div>
         <div class="progress-bar"><div class="progress-bar-fill" style="width:${progress}%"></div></div>
-        <div class="session-counter-grid" style="margin-top:12px;">
-          <div class="session-counter-item success">
-            <div class="session-counter-value">${attended}</div>
-            <div class="session-counter-label">✓ حضر</div>
-          </div>
-          <div class="session-counter-item danger">
-            <div class="session-counter-value">${absent}</div>
-            <div class="session-counter-label">✗ غاب</div>
-          </div>
-          <div class="session-counter-item warning">
-            <div class="session-counter-value">${late}</div>
-            <div class="session-counter-label">⏰ متأخر</div>
-          </div>
-          <div class="session-counter-item">
-            <div class="session-counter-value">${cancelled.length}</div>
-            <div class="session-counter-label">🚫 ملغية</div>
-          </div>
-        </div>
-        ${makeupDone>0||makeupScheduled>0||makeupOutstanding>0?`
-        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
-          ${makeupDone>0?`<span class="makeup-badge done">✅ ${makeupDone} اتعوضت</span>`:''}
-          ${makeupScheduled>0?`<span class="makeup-badge scheduled">📅 ${makeupScheduled} مجدولة</span>`:''}
-          ${makeupOutstanding>0?`<span class="makeup-badge outstanding">⏳ ${makeupOutstanding} مستحقة</span>`:''}
-        </div>
-        `:''}
-      `;
+        <div class="session-counter-grid">
+          <div class="session-counter-item"><div class="session-counter-value" style="color:var(--success)">${attended}</div><div class="session-counter-label">✓ حضر</div></div>
+          <div class="session-counter-item"><div class="session-counter-value" style="color:var(--danger)">${absent}</div><div class="session-counter-label">✗ غاب</div></div>
+          <div class="session-counter-item"><div class="session-counter-value" style="color:var(--warning)">${late}</div><div class="session-counter-label">⏰ متأخر</div></div>
+          <div class="session-counter-item"><div class="session-counter-value">${cancelled.length}</div><div class="session-counter-label">🚫 ملغية</div></div>
+        </div>`;
     }
-    
-    const breakdown=(typeof Ops?.getStudentPointsBreakdown==='function')
-      ? Ops.getStudentPointsBreakdown(activeChild.id, undefined, 'month')
-      : {attendance:{count:0,points:0},homework:{count:0,points:0},exams:{count:0,points:0},evaluations:{count:0,points:0},interactions:{count:0,points:0},manual:{count:0,points:0},total:0};
-    
+    const breakdown=(typeof Ops?.getStudentPointsBreakdown==='function')?Ops.getStudentPointsBreakdown(activeChild.id, undefined, 'month'):{attendance:{count:0,points:0},homework:{count:0,points:0},exams:{count:0,points:0},evaluations:{count:0,points:0},interactions:{count:0,points:0},manual:{count:0,points:0},total:0};
     const pbEl=document.getElementById('pointsBreakdown');
     if(pbEl){
       pbEl.innerHTML=`
-        <div class="points-item">
-          <span class="points-item-icon">📋</span>
-          <div class="points-item-info">
-            <div class="points-item-label">حضور (${breakdown.attendance.count})</div>
-          </div>
-          <div class="points-item-value">+${breakdown.attendance.points}</div>
-        </div>
-        <div class="points-item">
-          <span class="points-item-icon">📝</span>
-          <div class="points-item-info">
-            <div class="points-item-label">واجبات (${breakdown.homework.count})</div>
-          </div>
-          <div class="points-item-value">+${breakdown.homework.points}</div>
-        </div>
-        <div class="points-item">
-          <span class="points-item-icon">🎓</span>
-          <div class="points-item-info">
-            <div class="points-item-label">امتحانات (${breakdown.exams.count})</div>
-          </div>
-          <div class="points-item-value">+${breakdown.exams.points}</div>
-        </div>
-        <div class="points-item">
-          <span class="points-item-icon">⭐</span>
-          <div class="points-item-info">
-            <div class="points-item-label">تقييمات (${breakdown.evaluations.count})</div>
-          </div>
-          <div class="points-item-value">+${breakdown.evaluations.points}</div>
-        </div>
-        <div class="points-item" style="grid-column:1/-1;background:var(--primary-bg);border-color:var(--primary);">
-          <span class="points-item-icon" style="font-size:24px;">🏆</span>
-          <div class="points-item-info">
-            <div class="points-item-label" style="font-weight:700;color:var(--primary);">إجمالي النقاط</div>
-          </div>
-          <div class="points-item-value" style="font-size:20px;">${breakdown.total}</div>
-        </div>
+        <div class="points-item"><span class="points-item-icon">📋</span><div class="points-item-info"><div class="points-item-label">حضور (${breakdown.attendance.count})</div></div><div class="points-item-value">+${breakdown.attendance.points}</div></div>
+        <div class="points-item"><span class="points-item-icon">📝</span><div class="points-item-info"><div class="points-item-label">واجبات (${breakdown.homework.count})</div></div><div class="points-item-value">+${breakdown.homework.points}</div></div>
+        <div class="points-item"><span class="points-item-icon">🎓</span><div class="points-item-info"><div class="points-item-label">امتحانات (${breakdown.exams.count})</div></div><div class="points-item-value">+${breakdown.exams.points}</div></div>
+        <div class="points-item"><span class="points-item-icon">⭐</span><div class="points-item-info"><div class="points-item-label">تقييمات (${breakdown.evaluations.count})</div></div><div class="points-item-value">+${breakdown.evaluations.points}</div></div>
+        <div class="points-item" style="grid-column:1/-1;background:var(--primary-bg);border-color:var(--primary);"><span class="points-item-icon" style="font-size:24px;">🏆</span><div class="points-item-info"><div class="points-item-label" style="font-weight:700;color:var(--primary);">إجمالي النقاط</div></div><div class="points-item-value" style="font-size:20px;">${breakdown.total}</div></div>
       `;
     }
-    
-    // 🆕 Render Upcoming
     window.renderUpcoming();
-    
-    const subs=(DataService?.getSubmissions?DataService.getSubmissions({studentId:activeChild.id}):[]).filter(s=>{
-      const h=DataService.getHomeworkById(s.homeworkId);
-      return h&&groupIds.includes(h.groupId);
-    });
+    const subs=(DataService?.getSubmissions?DataService.getSubmissions({studentId:activeChild.id}):[]).filter(s=>{const h=DataService.getHomeworkById(s.homeworkId);return h&&groupIds.includes(h.groupId);});
     const gh=subs.filter(s=>s.status==='graded');
     const avgHw=gh.length?Math.round(gh.reduce((a,x)=>a+(x.score||0),0)/gh.length):0;
-    
-    const atts=(DataService?.getExamAttempts?DataService.getExamAttempts({studentId:activeChild.id}):[]).filter(a=>{
-      const e=DataService.getExamById(a.examId);
-      return e&&groupIds.includes(e.groupId);
-    });
+    const atts=(DataService?.getExamAttempts?DataService.getExamAttempts({studentId:activeChild.id}):[]).filter(a=>{const e=DataService.getExamById(a.examId);return e&&groupIds.includes(e.groupId);});
     const ge=atts.filter(a=>a.status==='approved'||a.status==='graded');
     const avgEx=ge.length?Math.round(ge.reduce((a,x)=>a+(x.score||0),0)/ge.length):0;
-    
     const ovEl=document.getElementById('ovStats');
     if(ovEl){
       ovEl.innerHTML=`
@@ -1044,64 +869,20 @@ window.renderOverview=function(){
         <div class="stat-mini-box"><div class="stat-mini-value">${totalPoints}</div><div class="stat-mini-label">نقاط 🏆</div></div>
       `;
     }
-    
     const rb=document.getElementById('rankBox');
     if(rb){
       let html='';
-      const ranking=(typeof Ops?.getStudentRanking==='function')
-        ? Ops.getStudentRanking(activeChild.id, 'month')
-        : {};
-      
+      const ranking=(typeof Ops?.getStudentRanking==='function')?Ops.getStudentRanking(activeChild.id, 'month'):{};
       const groupEntries=Object.entries(ranking).filter(([k])=>k!=='_grade');
       const gradeEntry=ranking._grade;
-      
-      if(!groupEntries.length && !gradeEntry){
-        html='<p class="text-muted" style="text-align:center;padding:20px;">لا ترتيب بعد — ابنك محتاج يحضر حصص ويحل واجبات</p>';
-      }else{
+      if(!groupEntries.length && !gradeEntry) html='<p class="text-muted" style="text-align:center;padding:20px;">لا ترتيب بعد</p>';
+      else {
         if(gradeEntry){
-          html+=`<div style="margin-bottom:16px;">
-            <h4 style="margin-bottom:10px;font-size:14px;">🎓 ترتيب ابنك في الصف (${gradeEntry.grade||''})</h4>
-            <div class="my-rank-box">
-              <div class="my-rank-number">#${gradeEntry.rank}</div>
-              <div class="my-rank-label">من ${gradeEntry.total} طالب</div>
-              <div style="margin-top:8px;font-family:var(--font-en);font-weight:900;color:var(--primary);font-size:18px;">${gradeEntry.points} نقطة</div>
-            </div>
-            ${gradeEntry.top3&&gradeEntry.top3.length?`<div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">🏆 أول 3 في الصف:</div>${gradeEntry.top3.map(r=>`
-              <div class="leader-row">
-                <div class="rank ${r.rank===1?'rank-1':r.rank===2?'rank-2':r.rank===3?'rank-3':'rank-other'}">${r.rank}</div>
-                <div style="flex:1;">
-                  <strong>${r.name}${r.studentId===activeChild.id?' (ابنك)':''}</strong>
-                  <div class="text-xs text-muted">${r.code||''}</div>
-                </div>
-                <div style="font-family:var(--font-en);font-weight:900;color:var(--primary);">${r.points}</div>
-              </div>
-            `).join('')}`:''}
-          </div>`;
+          html+=`<div style="margin-bottom:16px;"><h4 style="margin-bottom:10px;font-size:14px;">🎓 ترتيب ابنك في الصف (${gradeEntry.grade||''})</h4><div class="my-rank-box"><div class="my-rank-number">#${gradeEntry.rank}</div><div style="font-size:12px;color:var(--text-muted);margin-top:4px;">من ${gradeEntry.total} طالب</div><div style="margin-top:8px;font-family:var(--font-en);font-weight:900;color:var(--primary);font-size:18px;">${gradeEntry.points} نقطة</div></div>${gradeEntry.top3&&gradeEntry.top3.length?`<div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">🏆 أول 3 في الصف:</div>${gradeEntry.top3.map(r=>`<div class="leader-row"><div class="rank ${r.rank===1?'rank-1':r.rank===2?'rank-2':r.rank===3?'rank-3':'rank-other'}">${r.rank}</div><div style="flex:1;"><strong>${r.name}${r.studentId===activeChild.id?' (ابنك)':''}</strong><div class="text-xs text-muted">${r.code||''}</div></div><div style="font-family:var(--font-en);font-weight:900;color:var(--primary);">${r.points}</div></div>`).join('')}`:''}</div>`;
         }
-        
         groupEntries.forEach(([groupId, data])=>{
           const photo=data.teacherPhoto?window.driveThumb(data.teacherPhoto):'';
-          html+=`<div style="margin-bottom:16px;padding-top:16px;border-top:1px solid var(--border);">
-            <h4 style="margin-bottom:10px;font-size:14px;">
-              ${photo?`<img src="${photo}" style="width:24px;height:24px;border-radius:50%;vertical-align:middle;margin-left:6px;" onerror="this.style.display='none'">`:''}
-              ${data.groupName}
-            </h4>
-            <div class="my-rank-box">
-              <div class="my-rank-number">#${data.rank}</div>
-              <div class="my-rank-label">من ${data.total} طالب</div>
-              <div style="margin-top:8px;font-family:var(--font-en);font-weight:900;color:var(--primary);font-size:18px;">${data.points} نقطة</div>
-            </div>
-            ${data.top3&&data.top3.length?`<div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">🏆 أول 3 في المجموعة:</div>${data.top3.map(r=>`
-              <div class="leader-row">
-                <div class="rank ${r.rank===1?'rank-1':r.rank===2?'rank-2':r.rank===3?'rank-3':'rank-other'}">${r.rank}</div>
-                <div style="flex:1;">
-                  <strong>${r.name}${r.studentId===activeChild.id?' (ابنك)':''}</strong>
-                  <div class="text-xs text-muted">${r.code||''}</div>
-                </div>
-                <div style="font-family:var(--font-en);font-weight:900;color:var(--primary);">${r.points}</div>
-              </div>
-            `).join('')}`:''}
-          </div>`;
+          html+=`<div style="margin-bottom:16px;padding-top:16px;border-top:1px solid var(--border);"><h4 style="margin-bottom:10px;font-size:14px;">${photo?`<img src="${photo}" style="width:24px;height:24px;border-radius:50%;vertical-align:middle;margin-left:6px;" onerror="this.style.display='none'">`:''} ${data.groupName}</h4><div class="my-rank-box"><div class="my-rank-number">#${data.rank}</div><div style="font-size:12px;color:var(--text-muted);margin-top:4px;">من ${data.total} طالب</div><div style="margin-top:8px;font-family:var(--font-en);font-weight:900;color:var(--primary);font-size:18px;">${data.points} نقطة</div></div>${data.top3&&data.top3.length?`<div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">🏆 أول 3 في المجموعة:</div>${data.top3.map(r=>`<div class="leader-row"><div class="rank ${r.rank===1?'rank-1':r.rank===2?'rank-2':r.rank===3?'rank-3':'rank-other'}">${r.rank}</div><div style="flex:1;"><strong>${r.name}${r.studentId===activeChild.id?' (ابنك)':''}</strong><div class="text-xs text-muted">${r.code||''}</div></div><div style="font-family:var(--font-en);font-weight:900;color:var(--primary);">${r.points}</div></div>`).join('')}`:''}</div>`;
         });
       }
       rb.innerHTML=html;
@@ -1116,187 +897,80 @@ window.switchPTab=function(ev,id){
   document.getElementById('ptab-'+id)?.classList.add('active');
 };
 
-// 🆕 Modal تفاصيل الدرجة
 window.openGradeDetails=function(type, id){
   let sub=null, hw=null, att=null, ex=null;
   let title='', score=0, max=0, questions=[], answers=[], feedback='';
-
   if(type === 'hw'){
     sub = (DataService?.getSubmissions ? DataService.getSubmissions({studentId: activeChild.id}) : []).find(s => s.id === id);
     if(!sub) return;
     hw = DataService?.getHomeworkById ? DataService.getHomeworkById(sub.homeworkId) : null;
     if(!hw) return;
-    title = hw.title;
-    score = sub.score || 0;
-    max = hw.totalPoints || 100;
-    questions = hw.questions || [];
-    answers = sub.answers || [];
-    feedback = sub.feedback || sub.teacherComment || '';
+    title = hw.title; score = sub.score || 0; max = hw.totalPoints || 100;
+    questions = hw.questions || []; answers = sub.answers || []; feedback = sub.feedback || sub.teacherComment || '';
   } else {
     att = (DataService?.getExamAttempts ? DataService.getExamAttempts({studentId: activeChild.id}) : []).find(a => a.id === id);
     if(!att) return;
     ex = DataService?.getExamById ? DataService.getExamById(att.examId) : null;
     if(!ex) return;
-    title = ex.title;
-    score = att.score || 0;
-    max = att.maxScore || ex.totalPoints || 100;
-    questions = ex.questions || [];
-    answers = att.answers || [];
-    feedback = att.feedback || att.teacherComment || '';
+    title = ex.title; score = att.score || 0; max = att.maxScore || ex.totalPoints || 100;
+    questions = ex.questions || []; answers = att.answers || []; feedback = att.feedback || att.teacherComment || '';
   }
-
   const pct = max > 0 ? Math.round((score / max) * 100) : 0;
   const gradeClass = pct >= 75 ? 'success' : pct >= 50 ? 'warning' : 'danger';
-
   let answersHtml = '';
   if(questions.length > 0){
     answersHtml = '<h4 style="margin:16px 0 8px;">📝 تفاصيل الإجابات</h4>';
     answersHtml += questions.map((q, i) => {
       const ans = answers.find(a => a.questionId === q.id);
       const userAns = ans ? (ans.answer !== undefined ? ans.answer : 'لا توجد إجابة') : 'لم يجيب';
-const isCorrect = ans && (String(ans.answer ?? '').trim().toLowerCase() === String(q.correctAnswer ?? '').trim().toLowerCase());
+      const isCorrect = ans && (String(ans.answer ?? '').trim().toLowerCase() === String(q.correctAnswer ?? '').trim().toLowerCase());
       let optHtml = '';
-      
-      if(q.type === 'mcq' && q.options){
-        optHtml = `<div class="text-xs" style="margin-top:4px;">
-          <span style="color:${isCorrect ? 'var(--success)' : 'var(--danger)'}">إجابته: ${q.options[userAns] || userAns}</span><br>
-          <span style="color:var(--success)">الصحيحة: ${q.options[q.correctAnswer] || q.correctAnswer}</span>
-        </div>`;
-      } else if(q.type === 'truefalse'){
-        optHtml = `<div class="text-xs" style="margin-top:4px;">
-          <span style="color:${isCorrect ? 'var(--success)' : 'var(--danger)'}">إجابته: ${userAns}</span><br>
-          <span style="color:var(--success)">الصحيحة: ${q.correctAnswer}</span>
-        </div>`;
-      } else if(q.type === 'essay'){
-         optHtml = `<div class="text-xs" style="margin-top:4px;padding:8px;background:var(--surface-hover);border-radius:6px;">
-          <strong>إجابته:</strong> ${ans?.text || userAns}<br>
-          ${ans?.score !== undefined ? `<strong>الدرجة:</strong> ${ans.score}/${q.points}` : ''}
-        </div>`;
-      }
-
-      return `<div class="sub-row ${isCorrect ? 'graded' : 'missing'}" style="margin-bottom:8px;">
-        <div style="flex:1;">
-          <strong>س${i + 1}: ${q.text || ''}</strong>
-          ${optHtml}
-        </div>
-        <span class="badge ${isCorrect ? 'badge-success' : 'badge-danger'}">${isCorrect ? '✓' : '✗'}</span>
-      </div>`;
+      if(q.type === 'mcq' && q.options) optHtml = `<div class="text-xs" style="margin-top:4px;"><span style="color:${isCorrect ? 'var(--success)' : 'var(--danger)'}">إجابته: ${q.options[userAns] || userAns}</span><br><span style="color:var(--success)">الصحيحة: ${q.options[q.correctAnswer] || q.correctAnswer}</span></div>`;
+      else if(q.type === 'truefalse') optHtml = `<div class="text-xs" style="margin-top:4px;"><span style="color:${isCorrect ? 'var(--success)' : 'var(--danger)'}">إجابته: ${userAns}</span><br><span style="color:var(--success)">الصحيحة: ${q.correctAnswer}</span></div>`;
+      else if(q.type === 'essay') optHtml = `<div class="text-xs" style="margin-top:4px;padding:8px;background:var(--surface-hover);border-radius:6px;"><strong>إجابته:</strong> ${ans?.text || userAns}<br>${ans?.score !== undefined ? `<strong>الدرجة:</strong> ${ans.score}/${q.points}` : ''}</div>`;
+      return `<div class="sub-row ${isCorrect ? 'graded' : 'missing'}"><div style="flex:1;"><strong>س${i + 1}: ${q.text || ''}</strong>${optHtml}</div><span class="badge ${isCorrect ? 'badge-success' : 'badge-danger'}">${isCorrect ? '✓' : '✗'}</span></div>`;
     }).join('');
-  } else if(hw?.paper || ex?.mode === 'offline'){
-       answersHtml = '<p class="text-muted" style="text-align:center;padding:10px;">هذا الواجب/الامتحان ورقي، تم رصد الدرجة يدوياً بواسطة الأستاذ.</p>';
   }
-
   let feedbackHtml = '';
-  if(feedback){
-    feedbackHtml = `<div style="margin-top:16px;padding:12px;background:var(--info-bg);border:1px solid var(--info-border);border-radius:8px;">
-      <strong style="color:var(--info);">💬 تعليق الأستاذ:</strong>
-      <p style="margin:6px 0 0;">${feedback}</p>
-    </div>`;
-  }
-
-  const body = `
-    <div class="modal-header">
-      <h3 class="modal-title">${type === 'hw' ? '📝' : '🎓'} ${title}</h3>
-      <button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <div style="text-align:center;margin-bottom:16px;">
-        <div class="grade-badge ${gradeClass}" style="font-size:24px;padding:12px 24px;">${pct}%</div>
-        <div class="text-muted" style="margin-top:8px;">الدرجة: ${score} من ${max}</div>
-      </div>
-      ${answersHtml}
-      ${feedbackHtml}
-    </div>
-  `;
-  if(typeof ThemeManager?.openModal === 'function'){
-    ThemeManager.openModal(body, 'modal-lg');
-  }
+  if(feedback) feedbackHtml = `<div style="margin-top:16px;padding:12px;background:var(--info-bg);border:1px solid var(--info-border);border-radius:8px;"><strong style="color:var(--info);">💬 تعليق الأستاذ:</strong><p style="margin:6px 0 0;">${feedback}</p></div>`;
+  const body = `<div class="modal-header"><h3 class="modal-title">${type === 'hw' ? '📝' : '🎓'} ${title}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div style="text-align:center;margin-bottom:16px;"><div class="grade-badge ${gradeClass}" style="font-size:24px;padding:12px 24px;">${pct}%</div><div class="text-muted" style="margin-top:8px;">الدرجة: ${score} من ${max}</div></div>${answersHtml}${feedbackHtml}</div>`;
+  if(typeof ThemeManager?.openModal === 'function') ThemeManager.openModal(body, 'modal-lg');
 };
 
 window.loadGrades=function(){
   try{
     if(!activeChild) return;
     window.renderTeacherPicker('gradesTeacherPicker');
-    
     const ts=window.myTeachers();
     let filteredTs=selectedTeacherId?ts.filter(t=>t.teacher?.id===selectedTeacherId):ts;
     const gids=filteredTs.map(t=>t.group.id);
-    
-    const subs=(DataService?.getSubmissions?DataService.getSubmissions({studentId:activeChild.id}):[]).filter(s=>{
-      const h=DataService.getHomeworkById(s.homeworkId);
-      return h&&gids.includes(h.groupId);
-    });
+    const subs=(DataService?.getSubmissions?DataService.getSubmissions({studentId:activeChild.id}):[]).filter(s=>{const h=DataService.getHomeworkById(s.homeworkId);return h&&gids.includes(h.groupId);});
     const gh=subs.filter(s=>s.status==='graded');
     const avgHw=gh.length?Math.round(gh.reduce((a,x)=>a+(x.score||0),0)/gh.length):0;
-    
-    const atts=(DataService?.getExamAttempts?DataService.getExamAttempts({studentId:activeChild.id}):[]).filter(a=>{
-      const e=DataService.getExamById(a.examId);
-      return e&&gids.includes(e.groupId);
-    });
+    const atts=(DataService?.getExamAttempts?DataService.getExamAttempts({studentId:activeChild.id}):[]).filter(a=>{const e=DataService.getExamById(a.examId);return e&&gids.includes(e.groupId);});
     const ge=atts.filter(a=>a.status==='approved'||a.status==='graded');
     const avgEx=ge.length?Math.round(ge.reduce((a,x)=>a+(x.score||0),0)/ge.length):0;
-    
     const gsEl=document.getElementById('gradeStats');
-    if(gsEl){
-      gsEl.innerHTML=`
-        <div class="stat-mini-box"><div class="stat-mini-value">${gh.length}</div><div class="stat-mini-label">واجب مُصحّح</div></div>
-        <div class="stat-mini-box"><div class="stat-mini-value">${avgHw}%</div><div class="stat-mini-label">متوسط الواجبات</div></div>
-        <div class="stat-mini-box"><div class="stat-mini-value">${ge.length}</div><div class="stat-mini-label">امتحان مُسلّم</div></div>
-        <div class="stat-mini-box"><div class="stat-mini-value">${avgEx}%</div><div class="stat-mini-label">متوسط الامتحانات</div></div>
-      `;
-    }
-    
+    if(gsEl) gsEl.innerHTML=`<div class="stat-mini-box"><div class="stat-mini-value">${gh.length}</div><div class="stat-mini-label">واجب مُصحّح</div></div><div class="stat-mini-box"><div class="stat-mini-value">${avgHw}%</div><div class="stat-mini-label">متوسط الواجبات</div></div><div class="stat-mini-box"><div class="stat-mini-value">${ge.length}</div><div class="stat-mini-label">امتحان مُسلّم</div></div><div class="stat-mini-box"><div class="stat-mini-value">${avgEx}%</div><div class="stat-mini-label">متوسط الامتحانات</div></div>`;
     const hwEl=document.getElementById('pHwGrades');
-    if(hwEl){
-      hwEl.innerHTML=subs.length?subs.map(s=>{
-        const h=DataService.getHomeworkById(s.homeworkId);
-        if(!h) return '';
-        const teacherForHw=ts.find(t=>t.group.id===h.groupId);
-        const photo=teacherForHw?.teacher?.photoUrl?window.driveThumb(teacherForHw.teacher.photoUrl):'';
-        const pct=h&&h.totalPoints?Math.round(s.score/h.totalPoints*100):(s.score||0);
-        const gradeClass=pct>=75?'success':pct>=50?'warning':s.status==='graded'?'danger':'muted';
-        // 🆕 Added clickable class and onclick
-        return `<div class="sub-row clickable ${s.status==='graded'?'graded':'pending'}" onclick="window.openGradeDetails('hw', '${s.id}')">
-          <div style="flex:1;">
-            <strong>${h.title} ${h.paper?'<span class="badge badge-info">📄 ورقي</span>':''}</strong>
-            <div class="text-xs text-muted" style="margin-top:4px;">
-              ${photo?`<img src="${photo}" style="width:16px;height:16px;border-radius:50%;vertical-align:middle;" onerror="this.style.display='none'">`:''}
-              ${teacherForHw?.teacher?.name||'-'} · 📅 ${h.deadline||'-'}
-            </div>
-          </div>
-          <div style="text-align:left;">
-            ${s.status==='graded'?`<span class="grade-badge ${gradeClass}">${pct}%</span><div class="text-xs text-muted" style="margin-top:4px;">${s.score||0}/${h.totalPoints||100}</div>`:'<span class="grade-badge muted">⏳</span>'}
-          </div>
-        </div>`;
-      }).join(''):'<p class="text-muted" style="text-align:center;padding:20px;">لا واجبات</p>';
-    }
-    
+    if(hwEl) hwEl.innerHTML=subs.length?subs.map(s=>{
+      const h=DataService.getHomeworkById(s.homeworkId); if(!h) return '';
+      const teacherForHw=ts.find(t=>t.group.id===h.groupId);
+      const photo=teacherForHw?.teacher?.photoUrl?window.driveThumb(teacherForHw.teacher.photoUrl):'';
+      const pct=h&&h.totalPoints?Math.round(s.score/h.totalPoints*100):(s.score||0);
+      const gradeClass=pct>=75?'success':pct>=50?'warning':s.status==='graded'?'danger':'muted';
+      return `<div class="sub-row clickable ${s.status==='graded'?'graded':'pending'}" onclick="window.openGradeDetails('hw', '${s.id}')"><div style="flex:1;"><strong>${h.title} ${h.paper?'<span class="badge badge-info">📄 ورقي</span>':''}</strong><div class="text-xs text-muted" style="margin-top:4px;">${photo?`<img src="${photo}" style="width:16px;height:16px;border-radius:50%;" onerror="this.style.display='none'">`:''} ${teacherForHw?.teacher?.name||'-'} · 📅 ${h.deadline||'-'}</div></div><div style="text-align:left;">${s.status==='graded'?`<span class="grade-badge ${gradeClass}">${pct}%</span><div class="text-xs text-muted" style="margin-top:4px;">${s.score||0}/${h.totalPoints||100}</div>`:'<span class="grade-badge muted">⏳</span>'}</div></div>`;
+    }).join(''):'<p class="text-muted" style="text-align:center;padding:20px;">لا واجبات</p>';
     const exEl=document.getElementById('pExGrades');
-    if(exEl){
-      exEl.innerHTML=atts.length?atts.map(a=>{
-        const e=DataService.getExamById(a.examId);
-        if(!e) return '';
-        const teacherForEx=ts.find(t=>t.group.id===e.groupId);
-        const photo=teacherForEx?.teacher?.photoUrl?window.driveThumb(teacherForEx.teacher.photoUrl):'';
-        const mx=a.maxScore||e?.totalPoints||100;
-        const pct=mx?Math.round(a.score/mx*100):0;
-        const gradeClass=pct>=75?'success':pct>=50?'warning':(a.status==='approved'||a.status==='graded')?'danger':'muted';
-        const modeLabel=e?.mode==='home'?'🏠 منزلي':e?.mode==='class'?'🏫 حصة (بكود)':'📝 ورقي';
-        // 🆕 Added clickable class and onclick
-        return `<div class="sub-row clickable ${(a.status==='approved'||a.status==='graded')?'graded':'pending'}" onclick="window.openGradeDetails('ex', '${a.id}')">
-          <div style="flex:1;">
-            <strong>${e?.title||'-'}</strong>
-            <div class="text-xs text-muted" style="margin-top:4px;">
-              ${photo?`<img src="${photo}" style="width:16px;height:16px;border-radius:50%;vertical-align:middle;" onerror="this.style.display='none'">`:''}
-              ${teacherForEx?.teacher?.name||'-'} · ${modeLabel}
-            </div>
-          </div>
-          <div style="text-align:left;">
-            ${(a.status==='approved'||a.status==='graded')?`<span class="grade-badge ${gradeClass}">${pct}%</span><div class="text-xs text-muted" style="margin-top:4px;">${a.score||0}/${mx}</div>`:'<span class="grade-badge muted">⏳</span>'}
-          </div>
-        </div>`;
-      }).join(''):'<p class="text-muted" style="text-align:center;padding:20px;">لا امتحانات</p>';
-    }
+    if(exEl) exEl.innerHTML=atts.length?atts.map(a=>{
+      const e=DataService.getExamById(a.examId); if(!e) return '';
+      const teacherForEx=ts.find(t=>t.group.id===e.groupId);
+      const photo=teacherForEx?.teacher?.photoUrl?window.driveThumb(teacherForEx.teacher.photoUrl):'';
+      const mx=a.maxScore||e?.totalPoints||100; const pct=mx?Math.round(a.score/mx*100):0;
+      const gradeClass=pct>=75?'success':pct>=50?'warning':(a.status==='approved'||a.status==='graded')?'danger':'muted';
+      const modeLabel=e?.mode==='home'?'🏠 منزلي':e?.mode==='class'?'🏫 حصة (بكود)':'📝 ورقي';
+      return `<div class="sub-row clickable ${(a.status==='approved'||a.status==='graded')?'graded':'pending'}" onclick="window.openGradeDetails('ex', '${a.id}')"><div style="flex:1;"><strong>${e?.title||'-'}</strong><div class="text-xs text-muted" style="margin-top:4px;">${photo?`<img src="${photo}" style="width:16px;height:16px;border-radius:50%;" onerror="this.style.display='none'">`:''} ${teacherForEx?.teacher?.name||'-'} · ${modeLabel}</div></div><div style="text-align:left;">${(a.status==='approved'||a.status==='graded')?`<span class="grade-badge ${gradeClass}">${pct}%</span><div class="text-xs text-muted" style="margin-top:4px;">${a.score||0}/${mx}</div>`:'<span class="grade-badge muted">⏳</span>'}</div></div>`;
+    }).join(''):'<p class="text-muted" style="text-align:center;padding:20px;">لا امتحانات</p>';
   }catch(e){console.error('loadGrades error',e);}
 };
 
@@ -1304,55 +978,26 @@ window.loadAttendance=function(){
   try{
     if(!activeChild) return;
     window.renderTeacherPicker('attTeacherPicker');
-    
     const ts=window.myTeachers();
     let filteredTs=selectedTeacherId?ts.filter(t=>t.teacher?.id===selectedTeacherId):ts;
     const gids=filteredTs.map(t=>t.group.id);
     const month=new Date().toISOString().slice(0,7);
-    
-    const att=(DataService?.getAttendance?DataService.getAttendance():[]).filter(a=>
-      a.status==='approved'&&
-      gids.includes(a.groupId)&&
-      a.records.some(r=>r.studentId===activeChild.id)
-    );
-    
+    const att=(DataService?.getAttendance?DataService.getAttendance():[]).filter(a=>a.status==='approved'&&gids.includes(a.groupId)&&a.records.some(r=>r.studentId===activeChild.id));
     const monthAtt=att.filter(a=>(a.date||'').startsWith(month));
     const present=monthAtt.filter(a=>a.records.find(r=>r.studentId===activeChild.id)?.status==='present').length;
     const absent=monthAtt.filter(a=>a.records.find(r=>r.studentId===activeChild.id)?.status==='absent').length;
     const late=monthAtt.filter(a=>a.records.find(r=>r.studentId===activeChild.id)?.status==='late').length;
     const rate=monthAtt.length?Math.round((present/monthAtt.length)*100):0;
-    
     const asEl=document.getElementById('attStats');
-    if(asEl){
-      asEl.innerHTML=`
-        <div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--success)">${present}</div><div class="stat-mini-label">✓ حاضر</div></div>
-        <div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--danger)">${absent}</div><div class="stat-mini-label">✗ غائب</div></div>
-        <div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--warning)">${late}</div><div class="stat-mini-label">⏰ متأخر</div></div>
-        <div class="stat-mini-box"><div class="stat-mini-value">${rate}%</div><div class="stat-mini-label">نسبة الحضور</div></div>
-      `;
-    }
-    
+    if(asEl) asEl.innerHTML=`<div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--success)">${present}</div><div class="stat-mini-label">✓ حاضر</div></div><div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--danger)">${absent}</div><div class="stat-mini-label">✗ غائب</div></div><div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--warning)">${late}</div><div class="stat-mini-label">⏰ متأخر</div></div><div class="stat-mini-box"><div class="stat-mini-value">${rate}%</div><div class="stat-mini-label">نسبة الحضور</div></div>`;
     const el=document.getElementById('pAttList');
-    if(el){
-      el.innerHTML=att.length?att.slice().reverse().map(a=>{
-        const r=a.records.find(r=>r.studentId===activeChild.id);
-        const teacherForAtt=ts.find(t=>t.group.id===a.groupId);
-        const photo=teacherForAtt?.teacher?.photoUrl?window.driveThumb(teacherForAtt.teacher.photoUrl):'';
-        const statusClass=r?.status==='present'?'graded':r?.status==='late'?'pending':'missing';
-        return `<div class="sub-row ${statusClass}">
-          <div>
-            <strong>${a.groupName}</strong>
-            <div class="text-xs text-muted" style="margin-top:4px;">
-              ${photo?`<img src="${photo}" style="width:16px;height:16px;border-radius:50%;vertical-align:middle;" onerror="this.style.display='none'">`:''}
-              ${teacherForAtt?.teacher?.name||'-'} · 📅 ${a.date}
-            </div>
-          </div>
-          <span class="badge ${r?.status==='present'?'badge-success':r?.status==='late'?'badge-warning':'badge-danger'}">
-            ${r?.status==='present'?'✓ حاضر':r?.status==='late'?'⏰ متأخر':'✗ غائب'}
-          </span>
-        </div>`;
-      }).join(''):'<p class="text-muted" style="text-align:center;padding:20px;">لا سجلات حضور</p>';
-    }
+    if(el) el.innerHTML=att.length?att.slice().reverse().map(a=>{
+      const r=a.records.find(r=>r.studentId===activeChild.id);
+      const teacherForAtt=ts.find(t=>t.group.id===a.groupId);
+      const photo=teacherForAtt?.teacher?.photoUrl?window.driveThumb(teacherForAtt.teacher.photoUrl):'';
+      const statusClass=r?.status==='present'?'graded':r?.status==='late'?'pending':'missing';
+      return `<div class="sub-row ${statusClass}"><div><strong>${a.groupName}</strong><div class="text-xs text-muted" style="margin-top:4px;">${photo?`<img src="${photo}" style="width:16px;height:16px;border-radius:50%;" onerror="this.style.display='none'">`:''} ${teacherForAtt?.teacher?.name||'-'} · 📅 ${a.date}</div></div><span class="badge ${r?.status==='present'?'badge-success':r?.status==='late'?'badge-warning':'badge-danger'}">${r?.status==='present'?'✓ حاضر':r?.status==='late'?'⏰ متأخر':'✗ غائب'}</span></div>`;
+    }).join(''):'<p class="text-muted" style="text-align:center;padding:20px;">لا سجلات حضور</p>';
   }catch(e){console.error('loadAttendance error',e);}
 };
 
@@ -1360,73 +1005,64 @@ window.loadPayments=function(){
   try{
     if(!activeChild) return;
     window.renderTeacherPicker('payTeacherPicker');
-    
     const ts=window.myTeachers();
     const currentMonth=new Date().toISOString().slice(0,7);
-    
-    const billing=(typeof Ops?.buildStudentBilling==='function')
-      ? Ops.buildStudentBilling(activeChild.id)
-      : [];
-    
+    const billing=(typeof Ops?.buildStudentBilling==='function')?Ops.buildStudentBilling(activeChild.id):[];
     let filteredBilling=billing;
-    if(selectedTeacherId){
-      filteredBilling=billing.filter(b=>b.teacher?.id===selectedTeacherId);
-    }
-    
+    if(selectedTeacherId) filteredBilling=billing.filter(b=>b.teacher?.id===selectedTeacherId);
     const el=document.getElementById('pPayList');
     if(el){
-      if(!filteredBilling.length){
-        el.innerHTML='<p class="text-muted" style="text-align:center;padding:20px;">لا مستحقات</p>';
-        return;
-      }
-      
+      if(!filteredBilling.length){ el.innerHTML='<p class="text-muted" style="text-align:center;padding:20px;">لا مستحقات</p>'; return; }
       el.innerHTML=filteredBilling.map(({group, teacher, billing:b, payment:p})=>{
         const photo=teacher?.photoUrl?window.driveThumb(teacher.photoUrl):'';
         const rem=Math.max(0,(b?.total||0)-(p?.paidAmount||0));
         const sessionsRequired=window.EduFlowConfig?.billing?.sessionsBeforePayment||8;
-        
-        return `<div class="sub-row ${rem>0?'pending':'graded'}">
-          <div style="flex:1;">
-            <strong>${group?.name||'-'}</strong>
-            <div class="text-xs text-muted" style="margin-top:4px;">
-              ${photo?`<img src="${photo}" style="width:16px;height:16px;border-radius:50%;vertical-align:middle;" onerror="this.style.display='none'">`:''}
-              ${teacher?.name||'-'} · شهر ${b?.month||currentMonth}
-            </div>
-            <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;font-size:11px;">
-              <span class="badge badge-info">✓ ${b?.actualSessions||0} حصة فعلية</span>
-              ${b?.cancelledSessions>0?`<span class="badge badge-warning">🚫 ${b.cancelledSessions} ملغية</span>`:''}
-              ${b?.makeupDone>0?`<span class="badge badge-success">✅ ${b.makeupDone} معوّضة</span>`:''}
-              <span class="badge ${b?.shouldCharge?'badge-success':'badge-muted'}">${b?.shouldCharge?'مطلوب الدفع':'لم يكمل '+sessionsRequired+' حصة'}</span>
-            </div>
-          </div>
-          <div style="text-align:left;min-width:100px;">
-            <div style="font-family:var(--font-en);font-weight:800;font-size:16px;">
-              ${p?.paidAmount||0}/${b?.total||0}
-            </div>
-            <div class="text-xs text-muted">${EduFlowConfig?.billing?.currency||'ج.م'}</div>
-            ${rem>0?`
-              <div class="progress-bar" style="margin-top:6px;">
-                <div class="progress-bar-fill" style="width:${Math.round(((p?.paidAmount||0)/(b?.total||1))*100)}%"></div>
-              </div>
-              <div class="text-xs" style="color:var(--danger);margin-top:4px;">متبقي ${rem}</div>
-            `:`<span class="badge badge-success" style="margin-top:6px;">✓ مسدد</span>`}
-          </div>
-        </div>`;
+        return `<div class="modern-card"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;"><div style="flex:1;"><strong>${group?.name||'-'}</strong><div class="text-xs text-muted" style="margin-top:4px;">${photo?`<img src="${photo}" style="width:16px;height:16px;border-radius:50%;" onerror="this.style.display='none'">`:''} ${teacher?.name||'-'} · شهر ${b?.month||currentMonth}</div><div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;font-size:11px;"><span class="badge badge-info">✓ ${b?.actualSessions||0} حصة فعلية</span>${b?.cancelledSessions>0?`<span class="badge badge-warning">🚫 ${b.cancelledSessions} ملغية</span>`:''}<span class="badge ${b?.shouldCharge?'badge-success':'badge-muted'}">${b?.shouldCharge?'مطلوب الدفع':'لم يكمل '+sessionsRequired+' حصة'}</span></div></div><div style="text-align:left;min-width:100px;"><div style="font-family:var(--font-en);font-weight:900;font-size:18px;">${p?.paidAmount||0}/${b?.total||0}</div><div class="text-xs text-muted">${EduFlowConfig?.billing?.currency||'ج.م'}</div>${rem>0?`<div class="progress-bar" style="margin-top:6px;"><div class="progress-bar-fill" style="width:${Math.round(((p?.paidAmount||0)/(b?.total||1))*100)}%"></div></div><div class="text-xs" style="color:var(--danger);margin-top:4px;">متبقي ${rem}</div>`:`<span class="badge badge-success" style="margin-top:6px;">✓ مسدد</span>`}</div></div></div>`;
       }).join('');
     }
   }catch(e){console.error('loadPayments error',e);}
 };
 
-window.handleLogout=function(){ 
-  try{ 
-    if(confirm('خروج؟')){ 
-      sessionStorage.removeItem('eduflow_handoff_prev');
-      if(typeof AuthService?.logout==='function') AuthService.logout(); 
-    } 
-  }catch(e){} 
-};
+window.handleLogout=function(){ try{ if(confirm('خروج؟')){ sessionStorage.removeItem('eduflow_handoff_prev'); if(typeof AuthService?.logout==='function') AuthService.logout(); } }catch(e){} };
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}</script>
 <script src="js/footer-injector.js"></script>
+<script src="js/month-cycle.js"></script>
+<script>
+/* ============ 📒 دفتر التحصيل (ولي الأمر) — نسخة موحدة مع الطالب والمساعد ============ */
+(function(){
+function cur(){ try{ return (window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null; }catch(e){ return null; } }
+function sid(){ var u=cur(); if(!u) return null; if(window.activeChild&&window.activeChild.id) return window.activeChild.id; if(u.studentIds&&u.studentIds.length) return u.studentIds[0]; return u.id; }
+window.renderLedger=function(){
+try{
+var el=document.getElementById('ledgerContent'); if(!el) return;
+var id=sid(); if(!id){ el.innerHTML='<p class="text-muted">اختار ابنك الأول</p>'; return; }
+if(!window.MC){ el.innerHTML='<p class="text-muted">⚠️ حمّل js/month-cycle.js</p>'; return; }
+var ts=(DataService.getStudentTeachers?DataService.getStudentTeachers(id):[]);
+if(!ts.length){ el.innerHTML='<div class="card" style="text-align:center;padding:24px;"><div style="font-size:40px;">📒</div><strong>لا مجموعات</strong></div>'; return; }
+var html='';
+ts.forEach(function(t){
+var g=t.group; if(!g) return;
+var agg=MC.aggregate(id,g);
+var months=agg.months.slice().reverse();
+html+='<div class="card" style="margin-bottom:14px;"><div class="card-header"><h3 class="card-title">👥 '+g.name+'</h3><span class="text-xs text-muted">👨‍ '+(t.teacher?t.teacher.name:'-')+' · شهرية الشهر: '+MC.feeOf(g)+' ج.م</span></div><div style="padding:12px;">';
+html+='<div class="stat-mini" style="margin-bottom:10px;"><div class="stat-mini-box"><div class="stat-mini-value">'+agg.cur.done+'/'+agg.cur.req+'</div><div class="stat-mini-label">حصص الشهر الحالي</div></div><div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--success);">'+agg.paidTotal+'</div><div class="stat-mini-label">إجمالي المدفوع</div></div><div class="stat-mini-box"><div class="stat-mini-value" style="color:'+(agg.rem>0?'var(--danger)':'var(--success)')+';">'+agg.rem+'</div><div class="stat-mini-label">المتبقي (شهور مكتملة)</div></div></div>';
+months.forEach(function(r){
+var badge;
+if(r.completed){ badge=r.rem===0?'<span class="badge badge-success">✓ مسدد</span>':(r.paid>0?'<span class="badge badge-warning">جزئي — متبقي '+r.rem+'</span>':'<span class="badge badge-danger">💰 مستحقة '+r.fee+' ج.م</span>'); }
+else if(r.month<MC.localMonth()){ badge=r.paid>0?'<span class="badge badge-info">💵 مقدم '+r.paid+' ج.م</span>':'<span class="badge badge-muted">📴 انتهى — مش مستحق</span>'; }
+else { badge=r.paid>0?'<span class="badge badge-info">مقدم '+r.paid+' ج.م</span>':'<span class="badge badge-info">🔄 جاري '+r.done+'/'+r.req+'</span>'; }
+html+='<div class="sub-row"><div><strong>📅 '+MC.monthName(r.month)+'</strong><div class="text-xs text-muted">الحصص: '+r.done+'/'+r.req+' · المدفوع: '+r.paid+'/'+r.fee+'</div></div><div>'+badge+'</div></div>';
+});
+if(agg.pastDebt>0) html+='<div class="filter-info" style="background:var(--danger-bg);border-color:var(--danger);color:var(--danger);">🚨 متأخرات مرحّلة من شهور سابقة: '+agg.pastDebt+' ج.م — بتفضل ظاهرة لحد ما تتسد</div>';
+html+='</div></div>';
+});
+el.innerHTML=html;
+}catch(e){ console.error(e); }
+};
+/* تحديث تلقائي للدفتر وهو مفتوح */
+setInterval(function(){ try{ var act=document.querySelector('.section.active'); if(act&&act.id==='section-ledger') window.renderLedger(); }catch(e){} },15000);
+})();
+</script>
 </body>
 </html>

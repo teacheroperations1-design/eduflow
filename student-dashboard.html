@@ -300,7 +300,6 @@ box-shadow:0 4px 12px rgba(220,38,38,.4);
 <main class="main-content" id="mainContent">
 <header class="main-header">
 <div class="main-header-right">
-<button class="menu-toggle" id="sbCollapseBtn" title="طي/فرد القائمة" style="display:none;">☰</button>
 <button class="menu-toggle" id="menuToggle"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
 <div>
 <h1 class="page-title" id="pageTitle">لوحة الطالب</h1>
@@ -308,9 +307,7 @@ box-shadow:0 4px 12px rgba(220,38,38,.4);
 </div>
 </div>
 <div class="main-header-left">
-<div class="header-actions">
-<button class="icon-btn" id="themeToggle"></button>
-</div>
+<div class="header-actions"><button class="icon-btn" id="notifyBell" title="الإشعارات" style="position:relative;border:1px solid var(--border);background:var(--surface-hover);border-radius:12px;width:42px;height:42px;font-size:19px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;margin-inline-end:6px;">🔔</button><button class="icon-btn" id="themeToggle"></button></div>
 </div>
 </header>
 <div class="content-area">
@@ -330,7 +327,7 @@ box-shadow:0 4px 12px rgba(220,38,38,.4);
 <button class="quick-action" onclick="window.showSection('store')"><div class="quick-action-icon">🛒</div><div class="quick-action-label">المتجر</div></button>
 <button class="quick-action" onclick="window.showSection('teachers')"><div class="quick-action-icon">👨🏫</div><div class="quick-action-label">أساتذتي</div></button>
 <button class="quick-action" onclick="window.showSection('barcodeRequests')"><div class="quick-action-icon">🎟️</div><div class="quick-action-label">طلب باركود</div></button>
-<button class="quick-action" onclick="window.showSection('attendance')"><div class="quick-action-icon">📋</div><div class="quick-action-label">تسجيل حضور</div></button>
+<button class="quick-action" onclick="window.showSection('attendance')"><div class="quick-action-icon">📋</div><div class="quick-action-label">تسجيل حضور</div></button><button class="quick-action" onclick="window.openParentPortal()"><div class="quick-action-icon">👨‍👩‍👦</div><div class="quick-action-label">دخول ولي الأمر</div></button>
 </div>
 <h3 style="margin:16px 0 12px;">🔔 ما الجديد؟</h3>
 <div id="whatsNewList" style="margin-bottom:20px;"></div>
@@ -523,7 +520,10 @@ box-shadow:0 4px 12px rgba(220,38,38,.4);
 <script src="js/ui-helpers.js"></script>
 <script src="js/drive-service.js"></script>
 <script src="js/theme-manager.js"></script>
+<script src="js/pwa-injector.js"></script>
 <script src="js/auth-service.js"></script>
+<script src="js/notify-service.js"></script>
+<script src="js/month-cycle.js"></script>
 <script src="js/footer-injector.js"></script>
 <script>
 /* 🎯 نظام الدخول الفوري بالباركود */
@@ -2619,5 +2619,157 @@ return r;
 }
 try{ var act=document.querySelector('.section.active'); if(act&&act.id==='section-realStore') window.loadRealStore(); }catch(e){}
 </script>
+
+<script>
+window.openParentPortal=function(){
+  try{
+    var u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null;
+    if(!u||!u.code){ if(window.safeToast) window.safeToast('مفيش كود طالب — كلم الإدارة','error'); return; }
+    window.open('parent-dashboard.html?studentCode='+encodeURIComponent(u.code),'_blank');
+    if(window.safeToast) window.safeToast('👨‍👩‍👦 فتحنا لوحة ولي الأمر بكود ابنك — من غير باسوورد','success');
+  }catch(e){}
+};
+</script>
+<script>
+/* ============ 👨‍👩‍ كارت ولي الأمر الكبير — إصلاح ذاتي ============ */
+(function(){
+"use strict";
+function css(){
+if(document.getElementById('pacCss')) return;
+var st=document.createElement('style'); st.id='pacCss';
+st.textContent=
+'.parent-info-card{background:linear-gradient(135deg,rgba(56,189,248,.12),rgba(99,102,241,.14));border:2px solid var(--primary-border,#6366f1);border-radius:16px;padding:18px;margin:14px 0;display:flex;gap:14px;align-items:center;flex-wrap:wrap;}'+
+'.parent-info-card .pi-icon{font-size:34px;}'+
+'.parent-info-card .pi-body{flex:1;min-width:180px;}'+
+'.parent-info-card .pi-title{font-weight:800;font-size:15px;margin-bottom:2px;}'+
+'.parent-info-card .pi-sub{font-size:12px;color:var(--text-muted);}'+
+'.parent-info-card .pi-btn{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;text-decoration:none;padding:10px 18px;border-radius:12px;font-weight:800;font-size:13px;box-shadow:0 6px 18px rgba(99,102,241,.35);transition:all .2s;border:none;cursor:pointer;}'+
+'.parent-info-card .pi-btn:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(99,102,241,.45);}';
+document.head.appendChild(st);
+}
+function cardHtml(code){
+var link='parent-dashboard.html?studentCode='+encodeURIComponent(code||'');
+return '<div class="parent-info-card"><div class="pi-icon">👨‍👩‍</div><div class="pi-body"><div class="pi-title">متابعة ولي الأمر</div><div class="pi-sub">حضور ودرجات ونقاط وفواتير ابنك لحظة بلحظة — من غير باسوورد، بكود الطالب بس</div></div><a href="'+link+'" target="_blank" class="pi-btn">🚀 دخول لوحة ولي الأمر</a><button type="button" class="pi-btn" style="background:var(--surface);color:var(--text);border:1px solid var(--border);box-shadow:none;" onclick="window.copyParentLink()">📋 نسخ الرابط</button></div>';
+}
+window.copyParentLink=function(){
+try{
+var u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null;
+if(!u||!u.code) return;
+var link=location.origin+location.pathname.replace(/[^/]*$/,'')+'parent-dashboard.html?studentCode='+encodeURIComponent(u.code);
+if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(link).then(function(){ if(window.safeToast) window.safeToast('📋 تم نسخ رابط ولي الأمر','success'); }); }
+else{ var ta=document.createElement('textarea'); ta.value=link; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); if(window.safeToast) window.safeToast('📋 تم نسخ رابط ولي الأمر','success'); }
+}catch(e){}
+};
+if(typeof window.openParentPortal!=='function'){
+window.openParentPortal=function(){
+try{
+var u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null;
+if(!u||!u.code){ if(window.safeToast) window.safeToast('مفيش كود طالب','error'); return; }
+window.open('parent-dashboard.html?studentCode='+encodeURIComponent(u.code),'_blank');
+}catch(e){}
+};
+}
+function render(){
+try{
+css();
+var u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null;
+if(!u||u.role!=='student'||!u.code) return;
+var host=document.getElementById('parentAccessCard');
+if(!host){
+var sec=document.getElementById('section-overview')||document.querySelector('.content-area');
+if(!sec) return;
+host=document.createElement('div'); host.id='parentAccessCard';
+var anchor=sec.querySelector('.quick-actions')||sec.querySelector('#whatsNewList')||sec.querySelector('.card');
+if(anchor&&anchor.parentNode) anchor.parentNode.insertBefore(host,anchor); else sec.appendChild(host);
+}
+if(!host.innerHTML.trim()) host.innerHTML=cardHtml(u.code);
+}catch(e){ console.error('parentAccessCard render',e); }
+}
+render();
+setTimeout(render,600); setTimeout(render,1500); setTimeout(render,3000);
+setInterval(render,8000); /* لو أي كود تاني مسحه، يرجع لوحده */
+document.addEventListener('click',function(e){
+var t=e.target.closest?e.target.closest('[data-section="overview"]'):null;
+if(t) setTimeout(render,120);
+});
+})();
+</script>
+<script>
+/* ============ 💰 صفحة مدفوعات الطالب — تفصيل كامل لكل شهر ============ */
+(function(){
+"use strict";
+function pad(n){return String(n).padStart(2,'0');}
+function localMonth(){var d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1);}
+function startMonth(){try{return localStorage.getItem('ldgStartMonth')||'2026-08';}catch(e){return '2026-08';}}
+function monthsList(){var out=[],m=startMonth(),cur=localMonth(),g=0;while(m<=cur&&g<36){out.push(m);var d=new Date(m+'-01T12:00:00');d.setMonth(d.getMonth()+1);m=d.getFullYear()+'-'+pad(d.getMonth()+1);g++;}if(out.indexOf(cur)<0)out.push(cur);return out;}
+function monthName(m){try{return new Date(m+'-01T12:00:00').toLocaleDateString('ar-EG',{month:'long',year:'numeric'});}catch(e){return m;}}
+function dbx(){return (window.DataService&&DataService._getData)?DataService._getData():{};}
+function sessionsOf(gid,month){
+var d=dbx();
+var att=(DataService.getAttendance?DataService.getAttendance():[]).filter(function(a){return a.groupId===gid&&a.status==='approved'&&(a.date||'').startsWith(month);});
+var canc=(DataService.getCancelledSessions?DataService.getCancelledSessions():[]).filter(function(c){return c.groupId===gid&&(c.date||'').startsWith(month);});
+var madeup={};canc.forEach(function(c){if(c.makeupStatus==='done'&&c.makeupDate)madeup[c.makeupDate]=1;});
+var greens={};
+att.forEach(function(a){var c=canc.find(function(x){return x.date===a.date;});if(c&&c.makeupStatus!=='done')return;greens[a.date]=madeup[a.date]?'madeup':'done';});
+var M=0;(d.manualSessions||[]).forEach(function(ms){if(ms.groupId===gid&&(ms.month||'')===month&&(!ms.type||ms.type==='counter'))M=Math.max(M,ms.sessionsCount||0);});
+var g=(DataService.getGroups?DataService.getGroups():[]).find(function(x){return x.id===gid;});
+if(g&&g.sessionNow>0&&(g.sessionNowMonth||'')===month&&+g.sessionNow>M)M=+g.sessionNow;
+var ev=[];Object.keys(greens).sort().forEach(function(dt){ev.push({t:greens[dt],d:dt});});
+while(ev.length<M)ev.unshift({t:'manual',d:''});
+canc.forEach(function(c){if(c.makeupStatus!=='done')ev.push({t:'cancelled',d:c.date});});
+ev.sort(function(a,b){return String(a.d||'0').localeCompare(String(b.d||'0'));});
+var done=ev.filter(function(e){return e.t!=='cancelled';}).length;
+var req=(g&&g.sessionsPerMonth)||((window.EduFlowConfig&&EduFlowConfig.billing&&EduFlowConfig.billing.sessionsBeforePayment)||8);
+return {ev:ev,done:done,req:req,complete:done>=req};
+}
+function sqHtml(s){
+var h=s.ev.map(function(e){
+if(e.t==='manual')return '<span class="psq" style="background:var(--success);" title="حصة مرحّلة">📥</span>';
+var day=String(e.d).slice(8,10);
+if(e.t==='cancelled')return '<span class="psq" style="background:var(--danger);" title="'+e.d+' — ملغاة مش محسوبة">✗</span>';
+if(e.t==='madeup')return '<span class="psq" style="background:var(--success);box-shadow:0 0 0 2px var(--info);" title="'+e.d+' — حصة تعويض">↺</span>';
+return '<span class="psq" style="background:var(--success);" title="'+e.d+' — حصة محسوبة">'+day+'</span>';
+}).join('');
+for(var i=0;i<Math.max(0,s.req-s.done);i++)h+='<span class="psq" style="background:var(--surface-hover);color:var(--text-muted);"></span>';
+return '<div style="display:flex;gap:3px;flex-wrap:wrap;align-items:center;">'+h+'<b style="font-family:var(--font-en);font-size:11px;margin-inline-start:6px;">'+s.done+'/'+s.req+'</b></div>';
+}
+window.loadPayments=function(){
+try{
+var u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null;
+var sid=u?u.id:null;
+var el=document.getElementById('paymentsList');if(!el||!sid)return;
+var ts=(DataService.getStudentTeachers?DataService.getStudentTeachers(sid):[]);
+if(!ts.length){el.innerHTML='<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">💰</div><strong>لا توجد مستحقات</strong></div>';return;}
+if(!document.getElementById('payCss')){var st=document.createElement('style');st.id='payCss';st.textContent='.psq{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:20px;border-radius:5px;font-size:9px;font-weight:800;font-family:var(--font-en);color:#fff;border:1px solid var(--border);}.pmonth{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;}.pmonth-head{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;font-weight:800;font-size:13px;}';document.head.appendChild(st);}
+var d=dbx();var months=monthsList();var grandPaid=0,grandDue=0;
+var html='';
+ts.forEach(function(t){
+var g=t.group,teacher=t.teacher;var fee=g.monthlyFee||0;
+html+='<div class="card" style="margin-bottom:16px;"><div class="card-header"><h3 class="card-title">👥 '+g.name+'</h3><span class="text-xs text-muted">👨‍🏫 '+(teacher?teacher.name:'-')+' · 💰 شهرية '+fee+' ج.م · '+(g.sessionsPerMonth||8)+' حصص/شهر</span></div><div style="padding:12px;">';
+months.slice().reverse().forEach(function(m){
+var s=sessionsOf(g.id,m);
+var p=null;(d.payments||[]).forEach(function(x){if(x.studentId===sid&&x.groupId===g.id&&(x.month||'')===m)p=x;});
+var paid=p?(p.paidAmount||0):0;
+var rem=s.complete?Math.max(0,fee-paid):0;
+grandPaid+=paid; if(rem>0)grandDue+=rem;
+var status='';
+if(fee&&paid>=fee)status='<span class="badge badge-success">✓ مسدد بالكامل</span>';
+else if(paid>0&&s.complete)status='<span class="badge badge-warning">جزئي — متبقي '+rem+'</span>';
+else if(s.complete)status='<span class="badge badge-danger">💰 مستحقة — '+fee+' ج.م</span>';
+else if(paid>0)status='<span class="badge badge-info">مقدم '+paid+' ج.م</span>';
+else status='<span class="text-xs text-muted">جاري — '+s.done+'/'+s.req+'</span>';
+var hist=(p&&p.history&&p.history.length)?p.history.map(function(h){return '<span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface-hover);border:1px solid var(--border);border-radius:9999px;padding:2px 8px;font-size:10px;margin:2px;">💵 '+String(h.date||'').slice(5,10)+' : '+h.amount+' ج.م</span>';}).join(''):'';
+html+='<div class="pmonth"><div class="pmonth-head"><div>📅 '+monthName(m)+'</div><div>'+status+'</div></div>'+sqHtml(s)+(hist?'<div style="margin-top:8px;">'+hist+'</div>':'')+(rem>0?'<div class="text-xs" style="color:var(--danger);margin-top:6px;font-weight:800;">متبقي الشهر ده: '+rem+' ج.م</div>':'')+'</div>';
+});
+html+='</div></div>';
+});
+var summary='<div class="card" style="margin-bottom:16px;border-color:var(--primary-border);"><div style="padding:14px;display:flex;gap:14px;flex-wrap:wrap;justify-content:space-between;align-items:center;"><div><div class="text-xs text-muted">إجمالي المدفوع (كل الشهور)</div><div style="font-size:22px;font-weight:900;font-family:var(--font-en);color:var(--success);">'+grandPaid+' ج.م</div></div><div><div class="text-xs text-muted">مستحقات عليه (شهور مكتملة)</div><div style="font-size:22px;font-weight:900;font-family:var(--font-en);color:'+(grandDue>0?'var(--danger)':'var(--success)')+';">'+grandDue+' ج.م</div></div><div class="text-xs text-muted" style="max-width:240px;">💡 الشهرية بتستحق لما مربعات مجموعتك تكمل ('+( (window.EduFlowConfig&&EduFlowConfig.billing&&EduFlowConfig.billing.sessionsBeforePayment)||8 )+'/8) في الشهر — وأي متأخرات بتترحلك للشهر اللي بعده.</div></div></div>';
+el.innerHTML=summary+html;
+}catch(e){console.error('loadPayments v2',e);}
+};
+setTimeout(function(){try{var act=document.querySelector('.section.active');if(act&&act.id==='section-payments')window.loadPayments();}catch(e){}},600);
+})();
+</script>
+<script src="js/month-cycle.js"></script>
 </body>
 </html>

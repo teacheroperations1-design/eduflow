@@ -1503,3 +1503,59 @@ Ops.getStreakLeaderboard = function(limit){
 };
 
 console.log('✅ Ops Service loaded with all methods');
+/* ============ 🏢 مزامنة السناتر: تسجيل رسمي لأي سنتر ناقص + توحيد الأسماء ============ */
+(function(){
+  try{
+    if(!window.DataService) return;
+    var norm=function(s){ return String(s||'').replace(/\s+/g,' ').trim(); };
+
+    window.syncCentersFromGroups=async function(){
+      try{
+        var d=DataService._getData();
+        d.centers=d.centers||[];
+        var byNorm={};
+        d.centers.forEach(function(c){ if(c&&c.name) byNorm[norm(c.name).toLowerCase()]=c; });
+        var groups=(DataService.getGroups?DataService.getGroups():[]);
+        var changed=false;
+        for(var i=0;i<groups.length;i++){
+          var g=groups[i];
+          var cn=norm(g.center);
+          if(!cn) continue;
+          var key=cn.toLowerCase();
+          if(byNorm[key]){
+            /* موجود بالفعل → وحّد اسم المجموعة على الاسم المسجل رسمياً (يمنع التكرار) */
+            if(g.center!==byNorm[key].name){ g.center=byNorm[key].name; changed=true; }
+            continue;
+          }
+          /* سنتر جديد مش مسجل → سجّله رسمياً دلوقتي */
+          var rec={id:'center_'+Date.now()+'_'+i,name:cn,isActive:true,auto:true,createdAt:new Date().toISOString()};
+          d.centers.push(rec); byNorm[key]=rec; changed=true;
+          if(g.center!==cn) g.center=cn;
+          try{ if(window.FirebaseService&&FirebaseService._db) FirebaseService.saveDoc('centers',rec.id,rec); }catch(e){}
+        }
+        if(changed){ DataService._saveData(d); }
+        return {changed:changed};
+      }catch(e){ console.warn('syncCenters error',e); return {changed:false}; }
+    };
+
+    /* تشغيل تلقائي مرة عند فتح أي صفحة */
+    function boot(){ setTimeout(function(){ window.syncCentersFromGroups(); },800); }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
+
+    /* وبعد أي حفظ مجموعة جديدة/تعديل مجموعة */
+    ['addGroup','updateGroup'].forEach(function(fn){
+      if(typeof DataService[fn]==='function'&&!DataService['__synced_'+fn]){
+        DataService['__synced_'+fn]=true;
+        var orig=DataService[fn].bind(DataService);
+        DataService[fn]=function(){
+          var r=orig.apply(this,arguments);
+          try{
+            if(r&&typeof r.then==='function') r.then(function(){ window.syncCentersFromGroups(); });
+            else window.syncCentersFromGroups();
+          }catch(e){}
+          return r;
+        };
+      }
+    });
+  }catch(e){ console.warn('centers sync init error',e); }
+})();

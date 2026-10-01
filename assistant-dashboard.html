@@ -408,9 +408,7 @@
 <button class="btn btn-primary w-full" id="pgSave" onclick="window.savePaperGrades()" style="display:none;margin-top:8px;">💾 حفظ كل الدرجات</button>
 </div>
 </section>
-<section class="section" id="section-monthly">
-<div class="section-header"><div><h2 class="section-title">💰 تحصيل الشهرية</h2></div></div>
-<div class="card">
+<section class="section" id="section-monthly"><div class="section-header"><div><h2 class="section-title">📒 دفتر التحصيل</h2><p class="text-sm text-muted">مجموعات أستاذي بالترقيم + المربعات + الدفعات + المتأخرات المرحّلة</p></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><button class="btn btn-ghost btn-sm" onclick="LedgerUI.refreshBtn()">🔄 تحديث</button></div></div><div id="monthlyLedgerHost"></div><div class="card" style="display:none;"></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
 <div class="form-group"><label>الشهر</label><input type="month" id="moMonth" class="form-input" onchange="window.renderMonthly()"></div>
 <div class="form-group"><label>المجموعة (فلتر)</label><select id="moGroup" class="form-select" onchange="window.renderMonthly()"><option value="">كل المجموعات</option></select></div>
@@ -662,16 +660,52 @@
 <script src="js/firebase-service.js"></script>
 <script src="js/data-service.js"></script>
 <script src="js/operations-service.js"></script>
+<script src="js/ledger-ui.js"></script>
 <script src="js/ui-helpers.js"></script>
 <script src="js/drive-service.js"></script>
 <script src="js/theme-manager.js"></script>
+<script src="js/pwa-injector.js"></script>
 <script src="js/auth-service.js"></script>
+<script src="js/notify-service.js"></script>
+<script src="js/month-cycle.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="js/footer-injector.js"></script>
 <script src="js/camera-helper.js"></script>
 <script src="js/smart-student.js"></script>
 <script src="js/schedule-board.js"></script>
 <script>
+/* 🖼️ تطبيق البراندنج في صفحة المساعد */
+function applyAsstBranding(b){
+  try{
+    if(!b) return;
+    if(b.name) document.querySelectorAll('[data-brand-name]').forEach(function(el){ el.textContent=b.name; });
+    document.querySelectorAll('[data-logo]').forEach(function(el){
+      if(b.logoUrl){
+        var src = window.driveThumb ? window.driveThumb(b.logoUrl) : b.logoUrl;
+        el.innerHTML = '<img src="'+src+'" alt="logo" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" onerror="this.style.display=\'none\';">';
+      } else {
+        el.innerHTML = '<span style="font-size:26px;">🎓</span>';
+      }
+    });
+  }catch(e){}
+}
+(async function(){
+  try{
+    var local = localStorage.getItem('eduflow_branding');
+    if(local) applyAsstBranding(JSON.parse(local));
+    if(window.FirebaseService && FirebaseService._db){
+      var doc = await FirebaseService._db.collection('meta').doc('branding').get();
+      if(doc.exists){
+        var b=doc.data();
+        localStorage.setItem('eduflow_branding', JSON.stringify(b));
+        applyAsstBranding(b);
+      }
+    }
+  }catch(e){ console.warn('branding error:', e); }
+  setTimeout(function(){ try{ var b=localStorage.getItem('eduflow_branding'); if(b) applyAsstBranding(JSON.parse(b)); }catch(e){} }, 400);
+  setTimeout(function(){ try{ var b=localStorage.getItem('eduflow_branding'); if(b) applyAsstBranding(JSON.parse(b)); }catch(e){} }, 1200);
+})();
+
 (async function loadBrandingFromCloud(){
 try {
 if (window.FirebaseService && FirebaseService._db) {
@@ -815,35 +849,45 @@ return null;
 };
 
 window.getMyTeacher=function(){ const tid=window.getMyTeacherId(); return (tid&&DataService?.getUserById)?DataService.getUserById(tid):null; };
-/* 🆕 قاعدة الشهرية: الحصة المتعملة (مش الملغية) بتتحسب على الطالب حتى لو غاب */
+/* 🆕 قاعدة الشهرية النهائية: مفيش فلوس إلا لما يكمل آخر حصة في الشهر (8/8) — والمحاسبة من أكتوبر 2026 */
 (function(){
 try{
 if(typeof Ops==='undefined'||!Ops) return;
-const origBuild=Ops.buildStudentBilling;
+var OCT='2026-10';
+try{ var v=localStorage.getItem('ldgStartMonth'); if(!v||v<OCT) localStorage.setItem('ldgStartMonth',OCT); }catch(e){}
+var origBuild=Ops.buildStudentBilling;
 if(typeof origBuild!=='function') return;
 Ops.buildStudentBilling=function(studentId,month){
-const rows=origBuild.call(Ops,studentId,month);
+var rows=origBuild.call(Ops,studentId,month);
 try{
-const d=(DataService&&DataService._getData)?DataService._getData():{};
-const mo=month||new Date().toISOString().slice(0,7);
-const todayStr=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0')+'-'+String(new Date().getDate()).padStart(2,'0');
-(rows||[]).forEach(row=>{
-const g=row.group; if(!g||!row.billing) return;
-const sched=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}];
-const daysInMonth=new Date(parseInt(mu(mo,0)),mu(mo,1),0).getDate();
-function mu(m,i){ const p=m.split('-'); return i===0?parseInt(p[0]):parseInt(p[1]); }
-const cancelled=new Set((d.cancelledSessions||[]).filter(c=>c.groupId===g.id&&(c.date||'').startsWith(mo)).map(c=>c.date));
-let held=0;
-for(let dd=1;dd<=daysInMonth;dd++){
-const ds=mo+'-'+String(dd).padStart(2,'0');
-if(ds>todayStr) break;
-const dw=new Date(parseInt(mo.slice(0,4)),parseInt(mo.slice(5,7))-1,dd).getDay();
-const dayEn=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dw];
-if(sched.some(s=>s.day===dayEn)&&!cancelled.has(ds)) held++;
+var mo=month||new Date().toISOString().slice(0,7);
+(rows||[]).forEach(function(row){
+var g=row.group; if(!g||!row.billing) return;
+row.payment=row.payment||{};
+/* 🚫 أي شهر قبل أكتوبر = صفر تماماً */
+if(mo<OCT){ row.billing.total=0; row.billing.shouldCharge=false; row.billing.remaining=0; row.billing.actualSessions=0; return; }
+if(window.MC){
+var agg=MC.aggregate(studentId,g,mo);
+row.billing.actualSessions=agg.cur.done;
+row.billing.sessionsRequired=agg.cur.req;
+row.billing.total=agg.dueTotal;               /* مجموع شهور مكتملة بس */
+row.billing.shouldCharge=agg.rem>0;
+row.payment.paidAmount=agg.paidTotal;
+row.billing.remaining=agg.rem;                /* متبقي شهور مكتملة + مرحّل */
+row.billing.carriedDebt=agg.pastDebt;
+}else{
+var d=(DataService&&DataService._getData)?DataService._getData():{};
+var req=g.sessionsPerMonth||8, fee=g.monthlyFee||0;
+var done=(DataService.getAttendance?DataService.getAttendance():[]).filter(function(a){ return a.groupId===g.id&&a.status==='approved'&&(a.date||'').startsWith(mo); }).length;
+var completed=done>=req;
+var p=null; (d.payments||[]).forEach(function(x){ if(x.studentId===studentId&&x.groupId===g.id&&(x.month||'')===mo) p=x; });
+var paid=p?(p.paidAmount||0):0;
+row.billing.actualSessions=done; row.billing.sessionsRequired=req;
+row.billing.total=completed?fee:0;
+row.billing.shouldCharge=completed&&paid<fee;
+row.payment.paidAmount=paid;
+row.billing.remaining=completed?Math.max(0,fee-paid):0;
 }
-const req=row.billing.sessionsRequired||g.sessionsPerMonth||8;
-row.billing.actualSessions=Math.min(held,req);
-row.billing.shouldCharge=held>=req;
 });
 }catch(e){}
 return rows;
@@ -941,7 +985,7 @@ const menu=[
 {s:'التشغيل',items:[{id:'teachers',l:'إدارة المجموعات',i:'👨🏫'},{id:'students',l:'الطلاب',i:'🎓'},{id:'attendance',l:'الحضور',i:'📋'},{id:'makeups',l:'الحصص التعويضية',i:'📅'},{id:'paperGrades',l:'الواجبات الورقية',i:'📝'},{id:'grades',l:'الدرجات أونلاين',i:'🎯'},{id:'homework',l:'الواجبات الأونلاين',i:'📝'},{id:'exams',l:'الامتحانات الأونلاين',i:'🎓'}]},
 {s:'🚀 التحفيز والذكاء',items:[{id:'quickEval',l:'⚡ التقييم السريع',i:'🎙️'},{id:'battles',l:'⚔️ التحديات والتصفيات',i:'🏆'},{id:'aiTools',l:'🤖 أدوات الذكاء الاصطناعي',i:'🧠'}]},{s:'💰 الدورات والمتجر',items:[{id:'cycles',l:'دورات الطلاب',i:'🔄'},{id:'storeAs',l:'المتجر والجرد',i:'🏪'}]},
 {s:'🏢 البنية',items:[{id:'mySchedule',l:'جدولي',i:'🗓️'}]},
-{s:'المالية',items:[{id:'monthly',l:'تحصيل الشهرية',i:'💰'},{id:'accounting',l:'المحاسبة',i:'🧮'},{id:'expenses',l:'المصروفات',i:'💸'},{id:'payments',l:'المدفوعات',i:'💵'}]},
+{s:'المالية',items:[{id:'monthly',l:'دفتر التحصيل',i:'💰'},{id:'accounting',l:'المحاسبة',i:'🧮'},{id:'expenses',l:'المصروفات',i:'💸'},{id:'payments',l:'المدفوعات',i:'💵'}]},
 {s:'المحتوى',items:[{id:'interactive',l:'المواد التفاعلية',i:'🧩'},{id:'videos',l:'الفيديوهات',i:'🎬'},{id:'classPosts',l:'بوستات الحصة',i:'📰'},{id:'challenges',l:'المسابقات',i:'🏆'},{id:'paperExams',l:'الامتحانات الورقية',i:'📝'}]},
 {s:'التواصل',items:[{id:'templates',l:'قوالب واتساب',i:'📱'},{id:'whatsappGroups',l:'مجموعات واتساب',i:'💬'}]},
 {s:'المتابعة',items:[{id:'followups',l:'المتابعات',i:'📌'},{id:'churn',l:'خطر التسرب',i:'🚨'},{id:'tasks',l:'مهامي',i:'✅'},{id:'calendar',l:'التقويم',i:'📅'}]},
@@ -1324,11 +1368,11 @@ const g=(DataService.getGroups?DataService.getGroups():[]).find(x=>x.id===gid);
 if(!g){ window.safeToast('المجموعة مش موجودة','error'); return; }
 if(!confirm(`ضبط عداد مجموعة ${g.name} على الحصة ${now} من ${total} لكل طلابها؟`)) return;
 const month=new Date().toISOString().slice(0,7);
-await DataService.updateGroup(gid,{sessionsPerMonth:total,sessionNow:now});
+await DataService.updateGroup(gid,{sessionsPerMonth:total,sessionNow:now,sessionNowMonth:month});
 const students=DataService.getStudentsByGroup?DataService.getStudentsByGroup(gid):[];
 for(const s of students){
 const bl=(typeof Ops?.buildStudentBilling==='function')?Ops.buildStudentBilling(s.id,month).find(b=>b.group.id===gid):null;
-const cur=bl?(bl.billing.totalSessions||0):0;
+const cur=bl?((bl.billing.actualSessions!=null?bl.billing.actualSessions:(bl.billing.totalSessions||0))):0;
 const delta=now-cur;
 if(delta>0){ await Ops.addManualSessionsForBilling(gid,s.id,month,delta,'ضبط يدوي: الوصول للحصة '+now,currentUser?.id||''); }
 else if(delta<0){
@@ -1411,10 +1455,11 @@ bar.innerHTML='<div class="card-header" style="padding-bottom:6px;"><h3 class="c
 '<button class="btn btn-secondary btn-sm" onclick="window.openBulkBackfillModal&&window.openBulkBackfillModal()">📥 ترحيل حصص</button>'+
 '<button class="btn btn-success btn-sm" onclick="window.openQuickCollectModal&&window.openQuickCollectModal()">💵 تحصيل سريع</button>'+
 '<button class="btn btn-secondary btn-sm" onclick="window.openAsClassPostModal&&window.openAsClassPostModal()">📢 بوست حصة</button>'+
-'<button class="btn btn-secondary btn-sm" onclick="window.showSection(\'quickEval\')">⚡ تقييم سريع</button>'+
+'<button class="btn btn-primary btn-sm" onclick="window.showSection(\'monthly\')">📒 دفتر التحصيل</button><button class="btn btn-secondary btn-sm" onclick="window.showSection(\'quickEval\')">⚡ تقييم سريع</button>'+
 '<button class="btn btn-secondary btn-sm" onclick="window.showSection(\'cycles\')">🔄 دورات</button>'+
 '<button class="btn btn-secondary btn-sm" onclick="window.showSection(\'accounting\')">💰 محاسبة</button>'+
 '<button class="btn btn-secondary btn-sm" onclick="window.showSection(\'attendance\')">📋 حضور</button>'+
+
 '</div>';
 const first=sec.querySelector('.card');
 if(first) first.parentNode.insertBefore(bar,first); else sec.appendChild(bar);
@@ -2514,10 +2559,11 @@ let groups=(DataService?.getStudentTeachers?DataService.getStudentTeachers(s.id)
 if(gFilter) groups=groups.filter(g=>g.id===gFilter);
 groups.forEach(g=>{
 const billing=(typeof Ops?.buildStudentBilling==='function')?Ops.buildStudentBilling(s.id, month).find(b=>b.group?.id===g.id):null;
-const due=billing?.billing?.total||g.monthlyFee||0;
+const due=billing?.billing?.total||0; 
+/* الشهرية مش بتظهر إلا لما الشهر يكمل */
 const pay=(d.payments||[]).find(p=>p.studentId===s.id&&p.groupId===g.id&&p.month===month);
 const paid=pay?.paidAmount||0;
-const status=paid>=due?'paid':paid>0?'partial':'unpaid';
+const status=due===0?(paid>0?'prepaid':'notdue'):(paid>=due?'paid':paid>0?'partial':'unpaid');
 totalDue+=due; totalPaid+=paid;
 const actualSessions=billing?.billing?.actualSessions||0;
 const requiredSessions=billing?.billing?.sessionsRequired||8;
@@ -2526,7 +2572,7 @@ rows.push({s,g,due,paid,remaining:Math.max(0,due-paid),status, studentId:s.id, g
 });
 });
 const sum=document.getElementById('moSummary');
-if(sum) sum.innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;"><div class="settle-card"><div class="settle-value" style="color:var(--primary)">${totalDue}</div><div class="text-xs text-muted">المطلوب</div></div><div class="settle-card"><div class="settle-value" style="color:var(--success)">${totalPaid}</div><div class="text-xs text-muted">المحصل</div></div><div class="settle-card"><div class="settle-value" style="color:var(--danger)">${totalDue-totalPaid}</div><div class="text-xs text-muted">المتبقي</div></div></div><div class="text-sm text-muted">📅 ${monthName}</div>`;
+if(sum) sum.innerHTML=`<div class="filter-info" style="margin-bottom:10px;">💡 <strong>قاعدة التحصيل:</strong> الشهرية مش بتستحق إلا لما الطالب يكمل <strong>آخر حصة في الشهر (8/8)</strong> أو عدد حصص مجموعته — والمحاسبة شغالة من <strong>أكتوبر 2026</strong> فصاعداً. مفيش مبالغ على طالب شهره لسه مكمّلش، والمتبقي الحقيقي بس اللي بيترحّل من شهر فات.</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;"><div class="settle-card"><div class="settle-value" style="color:var(--primary)">${totalDue}</div><div class="text-xs text-muted">المطلوب</div></div><div class="settle-card"><div class="settle-value" style="color:var(--success)">${totalPaid}</div><div class="text-xs text-muted">المحصل</div></div><div class="settle-card"><div class="settle-value" style="color:var(--danger)">${totalDue-totalPaid}</div><div class="text-xs text-muted">المتبقي</div></div></div><div class="text-sm text-muted">📅 ${monthName}</div>`;
 let filtered=rows;
 if(moFilter==='paid')filtered=rows.filter(r=>r.status==='paid');
 else if(moFilter==='unpaid')filtered=rows.filter(r=>r.status!=='paid');
@@ -2544,8 +2590,8 @@ ${r.sessionCounter}
 </div>
 <div style="display:flex;gap:8px;align-items:center;">
 <span class="text-sm" style="font-family:var(--font-en);font-weight:700;">${r.paid}/${r.due}</span>
-<span class="badge ${r.status==='paid'?'badge-success':r.status==='partial'?'badge-warning':'badge-danger'}">${r.status==='paid'?'✅':r.status==='partial'?'🟡':'❌'}</span>
-${r.status!=='paid'?`<button class="btn btn-success btn-sm" onclick="window.quickPay('${r.studentId}','${r.groupId}','${r.month}',${r.remaining})">💵</button>`:''}
+<span class="badge ${r.status==='paid'?'badge-success':r.status==='partial'?'badge-warning':r.status==='notdue'?'badge-muted':r.status==='prepaid'?'badge-info':'badge-danger'}">${r.status==='paid'?'✅ مسدد':r.status==='partial'?'🟡 جزئي':r.status==='notdue'?'⏳ لم تستحق':r.status==='prepaid'?'💵 مقدم':'❌ مستحق'}</span>
+${(r.status==='unpaid'||r.status==='partial')?`<button class="btn btn-success btn-sm" onclick="window.quickPay('${r.studentId}','${r.groupId}','${r.month}',${r.remaining})">💵</button>`:''}
 <button class="btn btn-secondary btn-sm" style="font-size:11px;padding:4px 8px;" onclick="window.addManualSessionPrompt('${r.studentId}','${r.groupId}','${r.month}')">➕ حصة</button>
 </div>
 </div>`;
@@ -4511,17 +4557,23 @@ function renderCommand(){
  +'<div class="stat-mini-box"><div class="stat-mini-value">'+pendGrade+'</div><div class="stat-mini-label">بانتظار التصحيح</div></div>'
  +'<div class="stat-mini-box"><div class="stat-mini-value">'+(pendReg+pendBar)+'</div><div class="stat-mini-label">طلبات معلقة</div></div>'
  +'</div>';
- html+='<div id="cmdNextClass" style="margin-bottom:12px"></div>';
- html+='<div class="card" style="margin-bottom:12px"><h3 class="card-title" style="margin-bottom:10px">⚡ اختصارات سريعة</h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px">'
- +cmdTile('🗓️','جدولي',"window.showSection('mySchedule')")
- +cmdTile('📸','كاميرا الباركود',"window.openAsBarcodeCamera()")
- +cmdTile('📋','الحضور',"window.showSection('attendance')")
- +cmdTile('🎓','الطلاب',"window.showSection('students')")
- +cmdTile('⚡','تقييم سريع',"window.showSection('quickEval')")
- +cmdTile('📝','واجبات ورقية',"window.showSection('paperGrades')")
- +cmdTile('🎯','الدرجات',"window.showSection('grades')")
- +cmdTile('🎟️','باركود',"window.showSection('barcode')")
- +'</div></div>';
+html+='<div id="cmdNextClass" style="margin-bottom:12px"></div>';
+if(typeof window.cmdTileSafe!=='function'){
+window.cmdTileSafe=function(icon,label,act){
+return '<button type="button" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;background:var(--surface);border:1px solid var(--border);border-radius:12px;cursor:pointer;font-family:inherit;color:var(--text);transition:all .2s;" onmouseover="this.style.borderColor=\'var(--primary)\'" onmouseout="this.style.borderColor=\'var(--border)\'" onclick="'+act+'"><span style="font-size:22px;">'+icon+'</span><span style="font-size:11px;font-weight:700;">'+label+'</span></button>';
+};
+}
+html+='<div class="card" style="margin-bottom:12px"><h3 class="card-title" style="margin-bottom:10px">⚡ اختصارات سريعة</h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px">'
++window.cmdTileSafe('📒','دفتر التحصيل',"window.showSection('monthly')")
++window.cmdTileSafe('🗓️','جدولي',"window.showSection('mySchedule')")
++window.cmdTileSafe('📸','كاميرا الباركود',"window.openAsBarcodeCamera()")
++window.cmdTileSafe('📋','الحضور',"window.showSection('attendance')")
++window.cmdTileSafe('🎓','الطلاب',"window.showSection('students')")
++window.cmdTileSafe('⚡','تقييم سريع',"window.showSection('quickEval')")
++window.cmdTileSafe('📝','واجبات ورقية',"window.showSection('paperGrades')")
++window.cmdTileSafe('🎯','الدرجات',"window.showSection('grades')")
++window.cmdTileSafe('🎟️','باركود',"window.showSection('barcode')")
++'</div></div>';
 var m2t=function(m){ return Math.floor(m/60)+':'+((m%60)<10?'0':'')+(m%60); };
 var liveCount=today.filter(function(g){ var schs2=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}]; var s2=schs2.find(function(x){return x.day===todayEn;}); if(!s2) return false; var st2=minOf(s2.time); return nowMin>=st2&&nowMin<st2+(parseInt(g.duration)||60); }).length;
 var todaySorted=today.slice().sort(function(a,b){ var sa=((a.schedules&&a.schedules.length)?a.schedules:[{day:a.day,time:a.time}]).find(function(x){return x.day===todayEn;}); var sb=((b.schedules&&b.schedules.length)?b.schedules:[{day:b.day,time:b.time}]).find(function(x){return x.day===todayEn;}); return minOf(sa?sa.time:'0:00')-minOf(sb?sb.time:'0:00'); });
@@ -4652,20 +4704,38 @@ return '<div class="sub-row" style="border-right:4px solid '+colors[r.c.status]+
 };
 window.recordAsPayment=async function(studentId,groupId){
 try{
-var d=dbx(); var c=DataService.getCycleStateForStudent?DataService.getCycleStateForStudent(studentId,groupId):null; if(!c) return;
+var d=dbx();
 var g=(DataService.getGroups?DataService.getGroups():[]).find(function(x){return x.id===groupId;});
-var amount=(g&&g.monthlyFee)||0;
+if(!g){ window.safeToast('المجموعة مش موجودة','error'); return; }
+var fee=g.monthlyFee||0;
+/* 🎯 الشهر المستهدف: أقدم شهر مكتمل عليه متبقي (من أكتوبر فصاعداً) */
+var month=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
+if(window.MC){
+var ms=MC.monthsUpTo(MC.localMonth());
+for(var i=0;i<ms.length;i++){ var r=MC.monthRow(studentId,g,ms[i]); if(r.completed&&r.rem>0){ month=ms[i]; break; } }
+}
+var prevPaid=0; var pp=(d.payments||[]).find(function(p){return p.studentId===studentId&&p.groupId===groupId&&p.month===month;});
+if(pp) prevPaid=pp.paidAmount||0;
+var amtStr=prompt('💵 المبلغ المحصّل عن شهر '+month+' — المتبقي: '+Math.max(0,fee-prevPaid)+' ج.م', String(Math.max(0,fee-prevPaid)));
+if(amtStr===null) return;
+var amt=parseFloat(amtStr)||0;
+if(amt<=0){ window.safeToast('مبلغ غير صحيح','error'); return; }
 d.payments=d.payments||[];
-var inv=null; for(var i=0;i<d.payments.length;i++){ var p=d.payments[i]; if(p.studentId===studentId&&p.groupId===groupId&&p.cycleStart===c.cycleStartDate&&p.status!=='paid'){ inv=p; break; } }
-if(!inv){ inv={id:'inv_'+Date.now(),studentId:studentId,groupId:groupId,amount:amount,paidAmount:0,status:'unpaid',cycleStart:c.cycleStartDate,createdAt:new Date().toISOString(),history:[]}; d.payments.push(inv); }
-inv.paidAmount=inv.amount; inv.status='paid'; inv.paidAt=new Date().toISOString(); inv.paidBy=(cur()||{}).id||'assistant';
-inv.history=inv.history||[]; inv.history.push({date:new Date().toISOString(),amount:inv.amount,method:'cash',by:(cur()||{}).name||'مساعد'});
+var inv=null; for(var k=0;k<d.payments.length;k++){ var p=d.payments[k]; if(p.studentId===studentId&&p.groupId===groupId&&p.month===month){ inv=p; break; } }
+if(!inv){ inv={id:'inv_'+Date.now(),studentId:studentId,groupId:groupId,teacherId:g.teacherId,month:month,amount:fee,paidAmount:0,status:'unpaid',createdAt:new Date().toISOString(),history:[]}; d.payments.push(inv); }
+inv.paidAmount=(inv.paidAmount||0)+amt;
+inv.status=inv.paidAmount>=fee?'paid':'partial';
+inv.paidAt=new Date().toISOString(); inv.paidBy=(cur()||{}).id||'assistant';
+inv.history=inv.history||[]; inv.history.push({date:new Date().toISOString(),amount:amt,method:'cash',by:(cur()||{}).name||'مساعد'});
 DataService._saveData(d);
 if(window.FirebaseService&&FirebaseService.connected){ try{ FirebaseService.saveDoc('payments',inv.id,inv); }catch(e){} }
-window.safeToast('✅ تم تسجيل الدفع كاش — الدورة بدأت من جديد','success');
-window.loadAsCycles();
+window.safeToast('✅ تم تحصيل '+amt+' ج.م عن شهر '+month+(inv.status==='paid'?' — الشهرية اكتملت 🎉':' — باقي '+Math.max(0,fee-inv.paidAmount)+' ج.م'),'success');
+if(window.loadAsCycles) window.loadAsCycles();
+if(window.LedgerUI&&LedgerUI.refresh) LedgerUI.refresh();
+if(window.loadMonthly) window.loadMonthly();
 }catch(e){ window.safeToast('خطأ: '+e.message,'error'); }
 };
+
 window.openEmergencySessionModalAs=function(){
 try{
 var gs=groups();
@@ -5234,14 +5304,6 @@ return null;
 }catch(e){}
 })();
 
-/* ============ 2) إخفاء الشريط الجانبي في مركز العمليات ============ */
-(function(){
-if(document.getElementById('sbHideCss')) return;
-var st=document.createElement('style');
-st.id='sbHideCss';
-st.textContent='@media(min-width:1025px){body.sb-hide-desktop .sidebar{display:none!important}body.sb-hide-desktop .main-content{margin-inline-start:0!important;width:100%!important;max-width:100%!important}body.sb-hide-desktop .main-header{padding-inline-start:24px}}';
-document.head.appendChild(st);
-})();
 
 /* ============ 3) بوستات الحصة — فلتر موحد + إيه اللي اتاخد + كاميرا ============ */
 window.openAsClassPostModal=function(){
@@ -5463,11 +5525,11 @@ const g=(DataService.getGroups?DataService.getGroups():[]).find(x=>x.id===gid);
 if(!g){ window.safeToast('المجموعة مش موجودة','error'); return; }
 if(!confirm(`ضبط عداد مجموعة ${g.name} على الحصة ${now} من ${total} لكل طلابها؟`)) return;
 const month=new Date().toISOString().slice(0,7);
-await DataService.updateGroup(gid,{sessionsPerMonth:total,sessionNow:now});
+await DataService.updateGroup(gid,{sessionsPerMonth:total,sessionNow:now,sessionNowMonth:month});
 const students=DataService.getStudentsByGroup?DataService.getStudentsByGroup(gid):[];
 for(const s of students){
 const bl=(typeof Ops?.buildStudentBilling==='function')?Ops.buildStudentBilling(s.id,month).find(b=>b.group.id===gid):null;
-const cur=bl?(bl.billing.totalSessions||0):0;
+const cur=bl?((bl.billing.actualSessions!=null?bl.billing.actualSessions:(bl.billing.totalSessions||0))):0;
 const delta=now-cur;
 if(delta>0){
 await Ops.addManualSessionsForBilling(gid,s.id,month,delta,'ضبط يدوي: الوصول للحصة '+now,currentUser?.id||'');
@@ -5653,6 +5715,236 @@ b.onclick=function(e){ e.preventDefault(); window.openAsStoreItemModalV2(); };
 })();
 
 console.log('✅ Assistant Dashboard Enhancements Loaded');
+})();
+</script>
+<script>
+/* 📥 ترحيل الحصص + ضبط العداد — بفلاتر سنتر وصف */
+window.openBulkBackfillModal=function(){
+try{
+var gs=(typeof Ops!=='undefined'&&Ops.groupsInScope&&currentUser)?Ops.groupsInScope(currentUser.id):[];
+var tid=window.getMyTeacherId?window.getMyTeacherId():null;
+if(tid){ var f=gs.filter(function(g){return g.teacherId===tid;}); if(f.length) gs=f; }
+window._bfGroups=gs;
+var lm=new Date(); var lmS=lm.getFullYear()+'-'+String(lm.getMonth()+1).padStart(2,'0');
+ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">📥 ترحيل / ضبط عدّاد الحصص</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">'
++'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">'
++'<select id="bfCenter" class="form-select" onchange="window.bfFilter()"><option value="">كل السناتر</option></select>'
++'<select id="bfGrade" class="form-select" onchange="window.bfFilter()"><option value="">كل الصفوف</option></select></div>'
++'<div class="form-group"><label>المجموعة</label><select id="bfGroup" class="form-select"></select></div>'
++'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'
++'<div class="form-group"><label>الشهر</label><input type="month" id="bfMonth" class="form-input" value="'+lmS+'"></div>'
++'<div class="form-group"><label>عدد الحصص</label><input type="number" id="bfCount" class="form-input" value="1" min="1" max="30"></div></div>'
++'<div class="filter-info" style="background:var(--warning-bg);border-color:var(--warning);color:var(--warning);">⚠️ الحصص المرحّلة بتلوّن المربعات 📥 بالأخضر وبتكمّل العداد لكل طلاب المجموعة. الملغاة مش بتتحسب.</div>'
++'<button class="btn btn-primary w-full" onclick="window.runBulkBackfill()">📥 ترحيل الحصص</button></div>','modal-md');
+window.bfFilter();
+}catch(e){ console.error(e); }
+};
+window.bfFilter=function(){
+try{
+var gs=window._bfGroups||[];
+var cSel=document.getElementById('bfCenter'), gSel=document.getElementById('bfGrade'), bSel=document.getElementById('bfGroup');
+if(!cSel||!bSel) return;
+if(cSel.options.length<=1){ var cs={}; gs.forEach(function(g){ if(g.center) cs[g.center]=1; }); cSel.innerHTML='<option value="">كل السناتر</option>'+Object.keys(cs).map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join(''); }
+if(gSel.options.length<=1){ var gr={}; gs.forEach(function(g){ if(g.grade) gr[g.grade]=1; }); gSel.innerHTML='<option value="">كل الصفوف</option>'+Object.keys(gr).map(function(x){return '<option value="'+x+'">'+x+'</option>';}).join(''); }
+var cv=cSel.value, gv=gSel.value;
+var list=gs.filter(function(g){ return (!cv||g.center===cv)&&(!gv||g.grade===gv); });
+bSel.innerHTML=list.map(function(g){return '<option value="'+g.id+'">'+g.name+' — '+(g.center||'-')+' · '+(g.grade||'-')+'</option>';}).join('')||'<option value="">لا مجموعات مطابقة</option>';
+}catch(e){}
+};
+window.runBulkBackfill=async function(){
+try{
+var gid=document.getElementById('bfGroup')?.value;
+var month=document.getElementById('bfMonth')?.value;
+var count=parseInt(document.getElementById('bfCount')?.value)||0;
+if(!gid||!month||count<1){ window.safeToast('أكمل البيانات','error'); return; }
+var students=DataService?.getStudentsByGroup?DataService.getStudentsByGroup(gid):[];
+if(!students.length){ window.safeToast('مفيش طلاب في المجموعة','error'); return; }
+for(var i=0;i<students.length;i++){ await Ops.addManualSessionsForBilling(gid,students[i].id,month,count,'ترحيل حصص بداية الشهر',currentUser?.id||''); }
+ThemeManager.closeModal();
+window.safeToast('✅ تم ترحيل '+count+' حصة لـ '+students.length+' طالب — المربعات اتلونّت 📥','success');
+if(window.LedgerUI) LedgerUI.refresh();
+}catch(e){ window.safeToast('خطأ في الترحيل','error'); }
+};
+</script>
+<script>
+/* ============ 🧹 إضافة إدارة الحصص والتصفير (إضافة/حذف حقيقي + تصفير بالنطاق) ============ */
+(function(){
+"use strict";
+function dbx(){ return (window.DataService&&DataService._getData)?DataService._getData():{}; }
+function savex(d){ if(DataService._saveData) DataService._saveData(d); }
+function pad(n){ return String(n).padStart(2,'0'); }
+function curMonth(){ var d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1); }
+function startM(){ try{ return localStorage.getItem('ldgStartMonth')||'2026-10'; }catch(e){ return '2026-10'; } }
+function nextM(mm){ var d=new Date(mm+'-01T12:00:00'); d.setMonth(d.getMonth()+1); return d.getFullYear()+'-'+pad(d.getMonth()+1); }
+function monthsScope(all){ if(!all) return [curMonth()]; var out=[],m=startM(),c=curMonth(); if(m>c)m=c; while(m<=c){ out.push(m); m=nextM(m); } return out; }
+function fbDel(col,id){ if(window.FirebaseService&&FirebaseService.connected){ try{ FirebaseService.deleteDoc(col,id); }catch(e){} } }
+function fbSave(col,id,o){ if(window.FirebaseService&&FirebaseService.connected){ try{ FirebaseService.saveDoc(col,id,o); }catch(e){} } }
+function studentsOf(gid){ return (DataService.getStudentsByGroup?DataService.getStudentsByGroup(gid):[]); }
+function refreshAll(){ try{ if(window.LedgerUI&&LedgerUI.refresh) LedgerUI.refresh(); }catch(e){} try{ if(window.renderMonthly) window.renderMonthly(); }catch(e){} try{ if(window.loadAsCycles) window.loadAsCycles(); }catch(e){} try{ if(window.loadAccountingDash) window.loadAccountingDash(); }catch(e){} }
+
+/* ---------- ⚙️ مودال إدارة حصص مجموعة (إضافة/حذف بدون أحمر) ---------- */
+window.openSessionsManager=function(gid,month){
+try{
+month=month||curMonth();
+var g=(DataService.getGroups?DataService.getGroups():[]).find(function(x){return x.id===gid;}); if(!g) return;
+var d=dbx();
+var held=(d.attendance||[]).filter(function(a){return a.groupId===gid&&a.status==='approved'&&(a.date||'').startsWith(month);}).sort(function(a,b){return a.date<b.date?-1:1;});
+var canc=(d.cancelledSessions||[]).filter(function(c){return c.groupId===gid&&(c.date||'').startsWith(month);});
+var perStu={}; (d.manualSessions||[]).forEach(function(ms){ if(ms.groupId===gid&&(ms.month||'')===month&&(!ms.type||ms.type==='counter')) perStu[ms.studentId]=(perStu[ms.studentId]||0)+(ms.sessionsCount||0); });
+var man=0; Object.keys(perStu).forEach(function(k){ if(perStu[k]>man) man=perStu[k]; });
+var html='<div class="modal-header"><h3 class="modal-title">⚙️ إدارة الحصص: '+g.name+' — '+month+'</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">';
+html+='<div class="filter-info">العداد دلوقتي: <strong>'+held.length+' حضور فعلي + '+man+' مرحّل/يدوي = '+(held.length+man)+'</strong> من '+(g.sessionsPerMonth||8)+' · الشهرية مش بتستحق إلا لما العدد ده يكمّل النصاب</div>';
+html+='<h4 style="margin:8px 0;">🟢 حصص اتأخذت ('+held.length+')</h4>';
+html+=held.length?held.map(function(a){ return '<div class="sub-row graded"><div><strong>'+a.date+'</strong><div class="text-xs text-muted">'+((a.records||[]).length)+' طالب متسجلين</div></div><button class="btn btn-danger btn-sm" onclick="window.mgrDeleteHeld(\''+gid+'\',\''+a.id+'\',\''+month+'\')">🗑 حذف نهائي (مش هتحمر)</button></div>'; }).join(''):'<p class="text-muted">مفيش</p>';
+html+='<h4 style="margin:12px 0 8px;">📥 حصص مرحّلة/يدوية ('+man+')</h4>';
+html+='<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-success btn-sm" onclick="window.mgrAddManual(\''+gid+'\',\''+month+'\',1)">➕ إضافة حصة</button><button class="btn btn-warning btn-sm" onclick="window.mgrAddManual(\''+gid+'\',\''+month+'\',-1)">➖ حذف حصة</button></div>';
+html+='<h4 style="margin:12px 0 8px;">🚫 حصص ملغية ('+canc.length+')</h4>';
+html+=canc.length?canc.length?canc.map(function(c){ return '<div class="sub-row missing"><div><strong>'+c.date+'</strong><div class="text-xs text-muted">'+(c.reason||'')+' · '+(c.makeupStatus||'outstanding')+'</div></div><button class="btn btn-ghost btn-sm" onclick="window.mgrDeleteCancel(\''+gid+'\',\''+c.id+'\',\''+month+'\')">🗑 شيل الإلغاء (المربع يختفي)</button></div>'; }).join(''):'':'<p class="text-muted">مفيش</p>';
+html+='</div>';
+ThemeManager.openModal(html,'modal-md');
+}catch(e){ console.error(e); }
+};
+window.mgrDeleteHeld=function(gid,attId,month){
+try{
+if(!confirm('حذف الحصة المتأخدة دي نهائياً من المربعات؟ (مش هتتحول أحمر)')) return;
+var d=dbx(); d.attendance=(d.attendance||[]).filter(function(x){return x.id!==attId;});
+savex(d); fbDel('attendance',attId);
+window.safeToast('✅ الحصة اتمسحت من المربعات','success');
+ThemeManager.closeModal(); window.openSessionsManager(gid,month); refreshAll();
+}catch(e){ window.safeToast('خطأ','error'); }
+};
+window.mgrDeleteCancel=function(gid,cid,month){
+try{
+var d=dbx(); d.cancelledSessions=(d.cancelledSessions||[]).filter(function(x){return x.id!==cid;});
+savex(d); fbDel('cancelledSessions',cid);
+window.safeToast('✅ سجل الإلغاء اتشال — المربع الأحمر اختفى','success');
+ThemeManager.closeModal(); window.openSessionsManager(gid,month); refreshAll();
+}catch(e){ window.safeToast('خطأ','error'); }
+};
+window.mgrAddManual=function(gid,month,delta){
+try{
+var sts=studentsOf(gid); if(!sts.length){ window.safeToast('مفيش طلاب في المجموعة','error'); return; }
+var d=dbx(); d.manualSessions=d.manualSessions||[];
+if(delta>0){
+sts.forEach(function(s){ var rec={id:'ms_'+Date.now()+'_'+s.id,groupId:gid,studentId:s.id,month:month,sessionsCount:1,type:'counter',reason:'إضافة يدوية',addedAt:new Date().toISOString()}; d.manualSessions.push(rec); fbSave('manualSessions',rec.id,rec); });
+window.safeToast('✅ اتضافت حصة للعداد','success');
+}else{
+var removed=0;
+sts.forEach(function(s){
+var list=d.manualSessions.filter(function(ms){return ms.groupId===gid&&ms.studentId===s.id&&(ms.month||'')===month&&(!ms.type||ms.type==='counter');}).sort(function(a,b){return String(a.addedAt||'').localeCompare(String(b.addedAt||''));});
+if(!list.length) return;
+var last=list[list.length-1];
+if((last.sessionsCount||0)>1){ last.sessionsCount=last.sessionsCount-1; fbSave('manualSessions',last.id,last); removed++; }
+else { d.manualSessions=d.manualSessions.filter(function(ms){return ms.id!==last.id;}); fbDel('manualSessions',last.id); removed++; }
+});
+if(!removed){ window.safeToast('مفيش حصص يدوية تتخصم','info'); return; }
+window.safeToast('✅ اتخصمت حصة من العداد','success');
+}
+savex(d);
+ThemeManager.closeModal(); window.openSessionsManager(gid,month); refreshAll();
+}catch(e){ window.safeToast('خطأ','error'); }
+};
+
+/* ---------- 🧹 مودال تصفير المجموعات ---------- */
+window.openResetGroupsModal=function(){
+try{
+var gs=(typeof Ops!=='undefined'&&Ops.groupsInScope&&window.currentUser)?Ops.groupsInScope(currentUser.id):(DataService.getGroups?DataService.getGroups():[]);
+window._resetGroups=gs;
+ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">🧹 تصفير عداد المجموعات</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">'+
+'<div class="filter-info">💡 التصفير = العداد يبدأ من صفر في النطاق المختار: بيشيل المرحّل/اليدوي، وممكن كمان يشيل الحضور والإلغاءات لو علّمت عليهم.</div>'+
+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">'+
+'<select id="rsCenter" class="form-select" onchange="window.rsFilter()"><option value="">كل السناتر</option></select>'+
+'<select id="rsGrade" class="form-select" onchange="window.rsFilter()"><option value="">كل الصفوف</option></select></div>'+
+'<input type="text" id="rsSearch" class="form-input" placeholder="🔍 ابحث عن مجموعة..." oninput="window.rsFilter()" style="margin-bottom:8px;">'+
+'<div style="display:flex;gap:8px;margin-bottom:8px;"><button type="button" class="btn btn-ghost btn-sm" onclick="window.rsCheckAll(true)">تحديد الكل</button><button type="button" class="btn btn-ghost btn-sm" onclick="window.rsCheckAll(false)">إلغاء الكل</button></div>'+
+'<div id="rsList" style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:6px;margin-bottom:10px;"></div>'+
+'<div class="form-group"><label>نطاق التصفير</label><select id="rsScope" class="form-select"><option value="current">الشهر الحالي فقط ('+curMonth()+')</option><option value="all">كل الشهور من '+startM()+' لحد دلوقتي</option></select></div>'+
+'<label style="display:flex;gap:8px;align-items:center;margin-bottom:6px;cursor:pointer;"><input type="checkbox" id="rsManual" checked style="width:18px;height:18px;"> تصفير الحصص المرحّلة/اليدوية (📥)</label>'+
+'<label style="display:flex;gap:8px;align-items:center;margin-bottom:6px;cursor:pointer;"><input type="checkbox" id="rsNow" checked style="width:18px;height:18px;"> تصفير عداد المجموعة المخزن (sessionNow)</label>'+
+'<label style="display:flex;gap:8px;align-items:center;margin-bottom:6px;cursor:pointer;"><input type="checkbox" id="rsCanc" style="width:18px;height:18px;"> حذف سجلات الإلغاء (المربعات الحمراء 🚫)</label>'+
+'<label style="display:flex;gap:8px;align-items:center;margin-bottom:10px;cursor:pointer;color:var(--danger);font-weight:700;"><input type="checkbox" id="rsAtt" style="width:18px;height:18px;"> ⚠️ حذف سجلات الحضور في النطاق (نهائي)</label>'+
+'<button type="button" class="btn btn-danger w-full" onclick="window.runResetGroups()">🧹 تنفيذ التصفير</button>'+
+'</div>','modal-md');
+window.rsFilter();
+}catch(e){ console.error(e); }
+};
+window.rsFilter=function(){
+try{
+var gs=window._resetGroups||[];
+var cSel=document.getElementById('rsCenter'), gSel=document.getElementById('rsGrade');
+if(cSel&&cSel.options.length<=1){ var cs={}; gs.forEach(function(g){ if(g.center) cs[g.center]=1; }); cSel.innerHTML='<option value="">كل السناتر</option>'+Object.keys(cs).map(function(x){return '<option>'+x+'</option>';}).join(''); }
+if(gSel&&gSel.options.length<=1){ var gr={}; gs.forEach(function(g){ if(g.grade) gr[g.grade]=1; }); gSel.innerHTML='<option value="">كل الصفوف</option>'+Object.keys(gr).map(function(x){return '<option value="'+x+'">'+x+'</option>';}).join(''); }
+var c=(cSel||{}).value||'', gv=(gSel||{}).value||'';
+var q=((document.getElementById('rsSearch')||{}).value||'').toLowerCase();
+var list=gs.filter(function(g){ return (!c||g.center===c)&&(!gv||g.grade===gv)&&(!q||(g.name||'').toLowerCase().indexOf(q)>=0); });
+var el=document.getElementById('rsList'); if(!el) return;
+el.innerHTML=list.length?list.map(function(g){ return '<label style="display:flex;gap:8px;align-items:center;padding:6px;border-radius:6px;cursor:pointer;"><input type="checkbox" class="rsChk" value="'+g.id+'" checked style="width:16px;height:16px;"><span style="font-size:12px;font-weight:700;">'+g.name+'</span><span class="text-xs text-muted">'+(g.center||'')+' · '+(g.grade||'')+'</span></label>'; }).join(''):'<p class="text-muted">مفيش مجموعات</p>';
+}catch(e){}
+};
+window.rsCheckAll=function(on){ document.querySelectorAll('.rsChk').forEach(function(c){ c.checked=on; }); };
+window.runResetGroups=async function(){
+try{
+var ids=[]; document.querySelectorAll('.rsChk:checked').forEach(function(c){ ids.push(c.value); });
+if(!ids.length){ window.safeToast('اختار مجموعة واحدة على الأقل','error'); return; }
+var all=(document.getElementById('rsScope')||{}).value==='all';
+var months=monthsScope(all);
+var doMan=(document.getElementById('rsManual')||{}).checked;
+var doNow=(document.getElementById('rsNow')||{}).checked;
+var doCanc=(document.getElementById('rsCanc')||{}).checked;
+var doAtt=(document.getElementById('rsAtt')||{}).checked;
+if(!confirm('تصفير '+ids.length+' مجموعة على '+months.length+' شهر ('+months.join(', ')+')؟')) return;
+if(doAtt&&!confirm('⚠️ تأكيد تاني: سجلات الحضور في النطاق ده هتتمسح نهائياً — متأكد؟')) return;
+var d=dbx(); var del={manualSessions:[],cancelledSessions:[],attendance:[]};
+if(doMan){ d.manualSessions=(d.manualSessions||[]).filter(function(ms){ if(ids.indexOf(ms.groupId)>=0&&months.indexOf(ms.month||'')>=0&&(!ms.type||ms.type==='counter')){ del.manualSessions.push(ms.id); return false; } return true; }); }
+if(doCanc){ d.cancelledSessions=(d.cancelledSessions||[]).filter(function(c){ if(ids.indexOf(c.groupId)>=0&&months.indexOf((c.date||'').slice(0,7))>=0){ del.cancelledSessions.push(c.id); return false; } return true; }); }
+if(doAtt){ d.attendance=(d.attendance||[]).filter(function(a){ if(ids.indexOf(a.groupId)>=0&&months.indexOf((a.date||'').slice(0,7))>=0){ del.attendance.push(a.id); return false; } return true; }); }
+savex(d);
+del.manualSessions.forEach(function(id){ fbDel('manualSessions',id); });
+del.cancelledSessions.forEach(function(id){ fbDel('cancelledSessions',id); });
+del.attendance.forEach(function(id){ fbDel('attendance',id); });
+if(doNow){ for(var i=0;i<ids.length;i++){ try{ await DataService.updateGroup(ids[i],{sessionNow:0,sessionNowMonth:curMonth()}); }catch(e){} } }
+ThemeManager.closeModal();
+window.safeToast('✅ تم التصفير — العدادات بدأت من صفر','success');
+refreshAll();
+}catch(e){ console.error(e); window.safeToast('خطأ في التصفير: '+e.message,'error'); }
+};
+
+/* ---------- 🔘 حقن الأزرار في صفحة تحصيل الشهرية + الدفتر ---------- */
+function injectButtons(){
+try{
+var sec=document.getElementById('section-monthly'); if(!sec) return;
+if(!document.getElementById('btnResetGroups')){
+var hdr=sec.querySelector('.section-header');
+var b=document.createElement('button'); b.id='btnResetGroups'; b.type='button'; b.className='btn btn-danger btn-sm'; b.textContent='🧹 تصفير جميع المجموعات للصف';
+b.onclick=function(){ window.openResetGroupsModal(); };
+if(hdr) hdr.appendChild(b); else sec.insertBefore(b,sec.firstChild);
+}
+if(!document.getElementById('btnResetGroups2')){
+var host=document.getElementById('monthlyLedgerHost');
+if(host&&host.parentNode){ var b2=document.createElement('button'); b2.id='btnResetGroups2'; b2.type='button'; b2.className='btn btn-danger btn-sm'; b2.style.marginBottom='8px'; b2.textContent='🧹 تصفير العدادات (اختيار مجموعات/شهور)'; b2.onclick=function(){ window.openResetGroupsModal(); }; host.parentNode.insertBefore(b2,host); }
+}
+}catch(e){}
+}
+/* زرار ⚙️ إدارة الحصص في كل صف من صفوف تحصيل الشهرية */
+function augmentRows(){
+try{
+var rows=document.querySelectorAll('#moRows > div');
+Array.prototype.forEach.call(rows,function(r){
+if(r.querySelector('.mgrBtn')) return;
+var addBtn=r.querySelector('button[onclick*="addManualSessionPrompt"]');
+if(!addBtn) return;
+var m=addBtn.getAttribute('onclick').match(/addManualSessionPrompt\('([^']+)','([^']+)','([^']+)'\)/);
+if(!m) return;
+var b=document.createElement('button'); b.type='button'; b.className='btn btn-ghost btn-sm mgrBtn'; b.style.fontSize='11px'; b.style.padding='4px 8px'; b.textContent='⚙️ حصص';
+b.onclick=function(){ window.openSessionsManager(m[2],m[3]); };
+addBtn.parentNode.insertBefore(b,addBtn.nextSibling);
+});
+}catch(e){}
+}
+if(typeof window.renderMonthly==='function'){ var _rm=window.renderMonthly; window.renderMonthly=function(){ var r=_rm.apply(this,arguments); setTimeout(augmentRows,60); return r; }; }
+injectButtons(); setTimeout(injectButtons,800); setTimeout(injectButtons,2000);
+setInterval(augmentRows,4000);
+document.addEventListener('click',function(e){ var t=e.target.closest?e.target.closest('[data-section="monthly"]'):null; if(t) setTimeout(function(){ injectButtons(); augmentRows(); },150); });
 })();
 </script>
 </body>

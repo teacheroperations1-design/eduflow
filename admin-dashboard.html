@@ -599,7 +599,8 @@
 </section>
 
 <!-- 🛒 المتجر (أدمن) --><section class="section" id="section-store"><div class="section-header"><div><h2 class="section-title">🏪 إدارة المتجر</h2><p class="text-sm text-muted">إدارة المذكرات والكتب والهدايا</p></div><button class="btn btn-primary" onclick="window.openStoreItemModal()">➕ إضافة منتج</button></div><div class="card" style="margin-bottom:12px;"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;"><div class="form-group" style="margin:0;"><label>🔍 بحث</label><input type="text" id="storeSearch" class="form-input" placeholder="اسم المنتج..." onkeyup="window.loadStoreCatalog()"></div><div class="form-group" style="margin:0;"><label>📂 الفئة</label><select id="storeCategoryFilter" class="form-select" onchange="window.loadStoreCatalog()"><option value="">كل الفئات</option><option value="مذكرة">مذكرة</option><option value="كتاب">كتاب</option><option value="هدايا">هدايا</option></select></div><div class="form-group" style="margin:0;"><label>🎯 المرحلة</label><select id="storeStageFilter" class="form-select" onchange="window.loadStoreCatalog()"><option value="">كل المراحل</option></select></div><div class="form-group" style="margin:0;"><label>🎓 الصف</label><select id="storeGradeFilter" class="form-select" onchange="window.loadStoreCatalog()"><option value="">كل الصفوف</option></select></div><div class="form-group" style="margin:0;"><label>🏢 السنتر</label><select id="storeCenterFilter" class="form-select" onchange="window.loadStoreCatalog()"><option value="">كل السناتر</option></select></div><div class="form-group" style="margin:0;"><label>📦 التوفر</label><select id="storeAvailFilter" class="form-select" onchange="window.loadStoreCatalog()"><option value="">الكل</option><option value="available">متاح</option><option value="unavailable">غير متاح</option><option value="coming_soon">قادم</option></select></div><div class="form-group" style="margin:0;"><label>👨‍ الأستاذ</label><select id="storeTeacherFilter" class="form-select" onchange="window.loadStoreCatalog()"><option value="">كل الأساتذة</option></select></div></div></div><div id="storeCatalogList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;"></div></section><!-- 📦 طلبات المتجر (أدمن) --><section class="section" id="section-storeOrders"><div class="section-header"><div><h2 class="section-title">📦 طلبات المتجر</h2><p class="text-sm text-muted">موافقة وتسليم الطلبات</p></div><button class="btn btn-ghost btn-sm" onclick="window.loadStoreOrders()">🔄 تحديث</button></div><div class="filter-bar" style="margin-bottom:12px;"><button class="filter-btn active" onclick="window.setStoreOrderFilter('pending',this)">⏳ معلقة</button><button class="filter-btn" onclick="window.setStoreOrderFilter('approved',this)">✅ موافق عليها</button><button class="filter-btn" onclick="window.setStoreOrderFilter('delivered',this)">📬 مسلّمة</button><button class="filter-btn" onclick="window.setStoreOrderFilter('cancelled',this)">❌ ملغية</button><button class="filter-btn" onclick="window.setStoreOrderFilter('all',this)">الكل</button></div><div class="card" style="margin-bottom:12px;"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;"><div class="form-group" style="margin:0;"><label>🔍 بحث (طالب/منتج)</label><input type="text" id="orderSearch" class="form-input" placeholder="اسم الطالب أو المنتج..." onkeyup="window.loadStoreOrders()"></div><div class="form-group" style="margin:0;"><label>🎯 الحالة</label><select id="orderStatusFilter" class="form-select" onchange="window.loadStoreOrders()"><option value="">كل الحالات</option><option value="pending_payment">⏳ بانتظار الدفع</option><option value="pending_reserve">⏳ بانتظار الحجز</option><option value="approved">✅ موافق عليه</option><option value="delivered">📬 مسلّم</option><option value="cancelled">❌ ملغي</option></select></div><div class="form-group" style="margin:0;"><label>👥 المجموعة</label><select id="orderGroupFilter" class="form-select" onchange="window.loadStoreOrders()"><option value="">كل المجموعات</option></select></div><div class="form-group" style="margin:0;"><label>🏢 السنتر</label><select id="orderCenterFilter" class="form-select" onchange="window.loadStoreOrders()"><option value="">كل السناتر</option></select></div><div class="form-group" style="margin:0;"><label>🎓 المرحلة</label><select id="orderStageFilter" class="form-select" onchange="window.loadStoreOrders()"><option value="">كل المراحل</option></select></div><div class="form-group" style="margin:0;"><label>👨‍🏫 الأستاذ</label><select id="orderTeacherFilter" class="form-select" onchange="window.loadStoreOrders()"><option value="">كل الأساتذة</option></select></div></div></div><div id="storeOrdersList"></div></section>
-<!-- 🔄 دورات الطلاب (أدمن) --><section class="section" id="section-cycles"><div class="section-header"><div><h2 class="section-title">🔄 دورات الطلاب</h2><p class="text-sm text-muted">متابعة العدادات والفواتير لكل طالب</p></div><div style="display:flex;gap:8px;"><button class="btn btn-success btn-sm" onclick="window.openEmergencySessionModal()">⚡ حصة طوارئ</button><button class="btn btn-ghost btn-sm" onclick="window.loadStudentCycles()">🔄 تحديث</button></div></div><div class="card" style="margin-bottom:12px;"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;"><div class="form-group" style="margin:0;"><label>🔍 بحث</label><input type="text" id="cycleSearch" class="form-input" placeholder="اسم الطالب..." onkeyup="window.loadStudentCycles()"></div><div class="form-group" style="margin:0;"><label>🎯 الحالة</label><select id="cycleStatusFilter" class="form-select" onchange="window.loadStudentCycles()"><option value="">كل الحالات</option><option value="active">نشط</option><option value="warning">إنذار (7/8)</option><option value="due">مستحق الدفع</option><option value="overdue">متأخر</option></select></div></div></div><div id="studentCyclesList"></div></section>
+<!-- 📒 دفتر التحصيل (أدمن) --><section class="section" id="section-ledger"><div class="section-header"><div><h2 class="section-title">📒 دفتر التحصيل</h2><p class="text-sm text-muted">كشف الشهرية الفعلي: مربعات الحصص + حالة الدفع + المتأخرات — دوس على أي مجموعة تفلترها</p></div><div style="display:flex;gap:8px;align-items:center;"><input type="month" id="ledgerMonth" class="form-input" style="width:170px;" onchange="LedgerUI.setMonth()"></div></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><button class="btn btn-ghost btn-sm" onclick="LedgerUI.refreshBtn()">🔄 تحديث</button></div></div><div id="ledgerBody"></div></section>
+<section class="section" id="section-cycles"><div class="section-header"><div><h2 class="section-title">🔄 دورات الطلاب</h2><p class="text-sm text-muted">متابعة العدادات والفواتير لكل طالب</p></div><div style="display:flex;gap:8px;"><button class="btn btn-success btn-sm" onclick="window.openEmergencySessionModal()">⚡ حصة طوارئ</button><button class="btn btn-ghost btn-sm" onclick="window.loadStudentCycles()">🔄 تحديث</button></div></div><div class="card" style="margin-bottom:12px;"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;"><div class="form-group" style="margin:0;"><label>🔍 بحث</label><input type="text" id="cycleSearch" class="form-input" placeholder="اسم الطالب..." onkeyup="window.loadStudentCycles()"></div><div class="form-group" style="margin:0;"><label>🎯 الحالة</label><select id="cycleStatusFilter" class="form-select" onchange="window.loadStudentCycles()"><option value="">كل الحالات</option><option value="active">نشط</option><option value="warning">إنذار (7/8)</option><option value="due">مستحق الدفع</option><option value="overdue">متأخر</option></select></div></div></div><div id="studentCyclesList"></div></section>
 <!-- ✅ مهامي (أدمن) -->
 <section class="section" id="section-tasks">
 <div class="section-header"><div><h2 class="section-title">✅ مهامي</h2><p class="text-sm text-muted">كل اللي محتاج إجراء منك دلوقتي — متجمع من كل النظام</p></div><button class="btn btn-ghost btn-sm" onclick="window.loadTasks()">🔄 تحديث</button></div>
@@ -961,10 +962,14 @@
 <script src="js/firebase-service.js"></script>
 <script src="js/data-service.js"></script>
 <script src="js/operations-service.js"></script>
+<script src="js/ledger-ui.js"></script>
 <script src="js/ui-helpers.js"></script>
 <script src="js/drive-service.js"></script>
 <script src="js/theme-manager.js"></script>
+<script src="js/pwa-injector.js"></script>
 <script src="js/auth-service.js"></script>
+<script src="js/notify-service.js"></script>
+<script src="js/month-cycle.js"></script>
 <script src="js/footer-injector.js"></script>
 <script src="js/smart-student.js"></script>
 
@@ -1425,7 +1430,7 @@ window.loadTower=function(){
     }).join(''):'<p class="text-muted" style="grid-column:1/-1;text-align:center;">لا توجد نقاط بعد</p>';
     
     const currentMonth=new Date().toISOString().slice(0,7);
-    const monthAtt=(DataService.getAttendance()).filter(a=>a.status==='approved'&&(a.date||'').startsWith(currentMonth));
+    const monthAtt=(DataService.getAttendance()).filter(a=>a.status==='approved'&&(a.date||'').startsWith(currentMonth)&&!(DataService.getCancelledSessions?DataService.getCancelledSessions():[]).some(c=>c.groupId===a.groupId&&c.date===a.date));
     const monthHw=(db().submissions||[]).filter(s=>(s.submittedAt||'').startsWith(currentMonth));
     const monthEx=(db().examAttempts||[]).filter(a=>(a.endTime||'').startsWith(currentMonth));
     const monthPays=(DataService.getPayments()).filter(p=>p.month===currentMonth);
@@ -1844,7 +1849,7 @@ const g=(DataService.getGroups?DataService.getGroups():[]).find(x=>x.id===gid);
 if(!g){ window.safeToast('المجموعة مش موجودة','error'); return; }
 if(!confirm(`ضبط عداد مجموعة ${g.name} على الحصة ${now} من ${total} لكل طلابها؟`)) return;
 const month=new Date().toISOString().slice(0,7);
-await DataService.updateGroup(gid,{sessionsPerMonth:total,sessionNow:now});
+await DataService.updateGroup(gid,{sessionsPerMonth:total,sessionNow:now,sessionNowMonth:month});
 const students=DataService.getStudentsByGroup?DataService.getStudentsByGroup(gid):[];
 for(const s of students){
 const bl=(typeof Ops?.buildStudentBilling==='function')?Ops.buildStudentBilling(s.id,month).find(b=>b.group.id===gid):null;
@@ -2274,76 +2279,6 @@ soc.tiktok?`<a class="btn btn-secondary btn-sm" href="${soc.tiktok}" target="_bl
 return `<div class="user-card"><div class="user-card-header">${photo}<div><div class="user-name">${t.name}</div><div class="user-meta"><span>📚 ${t.subject||'-'}</span><span>📧 ${t.email||'-'}</span>${t.phone?`<span>📱 ${t.phone}</span>`:''}</div></div></div><div class="user-stats"><div class="user-stat"><div class="user-stat-value">${gs.length}</div><div class="user-stat-label">مجموعة</div></div><div class="user-stat"><div class="user-stat-value">${st}</div><div class="user-stat-label">طالب</div></div></div>${socBtns?`<div style="display:flex;gap:6px;flex-wrap:wrap;">${socBtns}</div>`:''}<div class="user-actions"><button class="btn btn-secondary btn-sm" onclick="window.openTeacherEdit('${t.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="window.delUser('${t.id}')">🗑️</button></div></div>`;
 }).join('')||'<p class="text-muted">لا مدرسون</p>';
 }catch(e){console.error(e);}
-};
-
-window.loadOverview=function(){
-  try{
-    const stats=typeof Ops?.getAdminOverviewStats==='function'?Ops.getAdminOverviewStats():{};
-    const students=DataService.getStudents(), teachers=DataService.getTeachers(), groups=DataService.getGroups(), assistants=DataService.getAssistants(), centers=DataService.getCenters?DataService.getCenters():[];
-    document.getElementById('towerTotalStudents').textContent=stats.students||students.length;
-    document.getElementById('towerSubtitle').textContent=`${stats.teachers||teachers.length} أستاذ · ${stats.groups||groups.length} مجموعة · ${stats.centers||centers.length} سنتر`;
-    const kpis=[
-      {icon:'👨‍🏫',value:stats.teachers||teachers.length,label:'المدرسون',trend:''},
-      {icon:'🧑‍🏫',value:stats.assistants||assistants.length,label:'المساعدون',trend:''},
-      {icon:'👥',value:stats.groups||groups.length,label:'المجموعات',trend:''},
-      {icon:'🏢',value:stats.centers||centers.length,label:'السناتر',trend:''},
-      {icon:'📋',value:stats.attendance?.present||0,label:'حضور (الشهر)',trend:`${stats.attendance?.rate||0}%`},
-      {icon:'📝',value:stats.academic?.homework||0,label:'واجبات',trend:`${stats.academic?.gradedHw||0} مُصحّح`},
-      {icon:'🎓',value:stats.academic?.exams||0,label:'امتحانات',trend:`${stats.academic?.gradedEx||0} مُصحّح`},
-      {icon:'💰',value:stats.financial?.paid||0,label:'محصّل (الشهر)',trend:`متبقي: ${stats.financial?.remaining||0}`},
-      {icon:'🎁',value:stats.points?.manual||0,label:'نقاط يدوية',trend:''},
-      {icon:'⭐',value:stats.points?.interaction||0,label:'نقاط تفاعل',trend:''}
-    ];
-    const kpiEl=document.getElementById('towerKpis');
-    if(kpiEl) kpiEl.innerHTML=kpis.map(k=>`<div class="kpi-box"><div class="kpi-icon">${k.icon}</div><div class="kpi-value">${k.value}</div><div class="kpi-label">${k.label}</div>${k.trend?`<div class="kpi-trend up">${k.trend}</div>`:''}</div>`).join('');
-    const topStudents=typeof Ops?.getTopStudents==='function'?Ops.getTopStudents(3,'all'):[];
-    const podiumEl=document.getElementById('towerPodium');
-    if(podiumEl) podiumEl.innerHTML=topStudents.length?topStudents.map((t,i)=>{
-      const studentTeachers=DataService.getStudentTeachers(t.student?.id);
-      const firstTeacher=studentTeachers?.[0];
-      const groupName=firstTeacher?.group?.name||'غير محدد';
-      return `<div class="podium-item rank-${i+1}" onclick="window.openStudentProfile('${t.student?.id}')">
-        <div class="podium-badge">${i===0?'🥇':i===1?'🥈':'🥉'}</div>
-        <div class="user-avatar" style="width:48px;height:48px;font-size:18px;margin:0 auto;">${t.student?.name?.charAt(0)||'?'}</div>
-        <div class="podium-name">${t.student?.name||'-'}</div>
-        <div class="podium-group">📚 ${groupName}</div>
-        <div class="podium-points">${t.points}</div>
-        <div class="podium-points-label">نقطة</div>
-        <button class="podium-view-btn" onclick="event.stopPropagation();window.openStudentProfile('${t.student?.id}')">👁️ عرض البيانات</button>
-      </div>`;
-    }).join(''):'<p class="text-muted" style="grid-column:1/-1;text-align:center;">لا توجد نقاط بعد</p>';
-    const currentMonth=new Date().toISOString().slice(0,7);
-    const monthAtt=(DataService.getAttendance()).filter(a=>a.status==='approved'&&(a.date||'').startsWith(currentMonth));
-    const monthHw=(db().submissions||[]).filter(s=>(s.submittedAt||'').startsWith(currentMonth));
-    const monthEx=(db().examAttempts||[]).filter(a=>(a.endTime||'').startsWith(currentMonth));
-    const monthPays=(DataService.getPayments()).filter(p=>p.month===currentMonth);
-    const sumEl=document.getElementById('towerMonthSummary');
-    if(sumEl) sumEl.innerHTML=`<div class="stat-mini"><div class="stat-mini-box"><div class="stat-mini-value">${monthAtt.length}</div><div class="stat-mini-label">حصص معتمدة</div></div><div class="stat-mini-box"><div class="stat-mini-value">${monthHw.length}</div><div class="stat-mini-label">واجبات مُسلّمة</div></div><div class="stat-mini-box"><div class="stat-mini-value">${monthEx.length}</div><div class="stat-mini-label">امتحانات</div></div><div class="stat-mini-box"><div class="stat-mini-value">${monthPays.reduce((s,p)=>s+(p.paidAmount||0),0)}</div><div class="stat-mini-label">ج.م محصّل</div></div></div>`;
-    const topTeachers=typeof Ops?.getTopTeachers==='function'?Ops.getTopTeachers(10):[];
-    const trEl=document.getElementById('towerTeachersRanking');
-    if(trEl) trEl.innerHTML=topTeachers.length?topTeachers.map((t,i)=>{
-      const photo=t.teacher?.photoUrl?`<img src="${window.driveThumb(t.teacher.photoUrl)}" class="teacher-photo" onerror="this.outerHTML='<div class=\\'user-avatar\\' style=\\'width:56px;height:56px;font-size:20px;\\'>${t.teacher?.name?.charAt(0)||'?'}</div>'">`:`<div class="user-avatar" style="width:56px;height:56px;font-size:20px;">${t.teacher?.name?.charAt(0)||'?'}</div>`;
-      return `<div class="teacher-ranking-card"><div class="teacher-ranking-header">${photo}<div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;gap:8px;"><strong>${i+1}. ${t.teacher?.name||'-'}</strong><span class="badge badge-muted">${t.teacher?.subject||''}</span></div><div class="text-xs text-muted">${t.teacher?.phone||''}</div></div></div><div class="teacher-ranking-stats"><div class="tr-stat"><div class="tr-stat-value">${t.groupsCount||0}</div><div class="tr-stat-label">مجموعة</div></div><div class="tr-stat"><div class="tr-stat-value">${t.studentsCount||0}</div><div class="tr-stat-label">طالب</div></div><div class="tr-stat"><div class="tr-stat-value">-</div><div class="tr-stat-label">حضور%</div></div><div class="tr-stat"><div class="tr-stat-value">-</div><div class="tr-stat-label">أداء</div></div></div></div>`;
-    }).join(''):'<p class="text-muted">لا يوجد أساتذة</p>';
-    const cEl=document.getElementById('towerCentersOverview');
-    if(cEl){
-      if(!centers.length){ cEl.innerHTML='<p class="text-muted">لا توجد سناتر. أضف سنتر من قسم السناتر.</p>'; } 
-      else {
-        cEl.innerHTML=centers.map(c=>{
-          const centerGroups=groups.filter(g=>g.center===c.name);
-          const centerStudents=new Set(); centerGroups.forEach(g=>{ DataService.getStudentsByGroup(g.id).forEach(s=>centerStudents.add(s.id)); });
-          const centerTeachers=new Set(centerGroups.map(g=>g.teacherId));
-          return `<div class="center-card"><div class="center-card-header"><div style="display:flex;gap:10px;align-items:center;"><div class="user-avatar" style="width:48px;height:48px;font-size:18px;">🏢</div><div><strong>${c.name}</strong><div class="text-xs text-muted">${c.address||'-'}</div></div></div><button class="btn btn-ghost btn-sm" onclick="window.showSection('centers')">إدارة ←</button></div><div class="center-metrics"><div class="center-metric"><div class="center-metric-value">${centerGroups.length}</div><div class="center-metric-label">مجموعة</div></div><div class="center-metric"><div class="center-metric-value">${centerStudents.size}</div><div class="center-metric-label">طالب</div></div><div class="center-metric"><div class="center-metric-value">${centerTeachers.size}</div><div class="center-metric-label">أستاذ</div></div></div></div>`;
-        }).join('');
-      }
-    }
-    const wl=typeof Ops?.buildWorkload==='function'?Ops.buildWorkload():[];
-    const wEl=document.getElementById('towerWorkload');
-    if(wEl) wEl.innerHTML=wl.length?`<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:8px;padding:10px;background:var(--surface);font-weight:700;border-radius:8px;margin-bottom:6px;font-size:12px;"><div>المساعد</div><div style="text-align:center;">مدرسين</div><div style="text-align:center;">مجموعات</div><div style="text-align:center;">طلاب</div><div style="text-align:center;">متابعات</div></div>`+wl.map(w=>`<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:8px;padding:10px;background:var(--surface-hover);border-radius:8px;margin-bottom:6px;font-size:13px;"><div><strong>${w.assistant?.name||'-'}</strong><div class="text-xs text-muted">${w.level==='primary'?'أساسي':'احتياطي'}</div></div><div style="text-align:center;font-weight:700;">${w.teachers||0}</div><div style="text-align:center;font-weight:700;">${w.groups||0}</div><div style="text-align:center;font-weight:700;">${w.students||0}</div><div style="text-align:center;font-weight:700;color:${w.followUps>0?'var(--warning)':'var(--success)'}">${w.followUps||0}</div></div>`).join(''):'<p class="text-muted">لا مساعدون</p>';
-    // 🆕 الحصص اللايف + تحديث تلقائي كل دقيقة
-    window.loadLiveSessions();
-    if(!window._liveTimer){ window._liveTimer=setInterval(function(){ try{ if(document.getElementById('section-tower')?.classList.contains('active')) window.loadLiveSessions(); }catch(e){} },60000); }
-  }catch(e){console.error('loadTower error:',e);}
 };
 
 /* ================================================================

@@ -141,7 +141,7 @@
 <button class="icon-btn sb-collapse-btn" id="sbCollapseBtn" title="طي/فتح القائمة">☰</button>
 <div><h1 class="page-title" id="pageTitle">لوحة المدرس</h1><p class="page-subtitle" id="pageSubtitle">إدارة مجموعاتي وطلابي</p></div>
 </div>
-<div class="main-header-left"><div class="header-actions"><button class="icon-btn" id="themeToggle"></button></div></div>
+<div class="main-header-left"><div class="header-actions"><button class="icon-btn" id="notifyBell" title="الإشعارات" style="position:relative;border:1px solid var(--border);background:var(--surface-hover);border-radius:12px;width:42px;height:42px;font-size:19px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;margin-inline-end:6px;">🔔</button><button class="icon-btn" id="themeToggle"></button></div></div>
 </header>
 <div class="content-area">
 
@@ -184,6 +184,7 @@
 <div class="card"><div id="sbBoardT"></div></div>
 <div class="card" style="margin-top:12px"><div class="card-header"><h3 class="card-title">📜 سجل تغييرات المواعيد</h3></div><div id="sbLogT"></div></div>
 </section>
+<!-- 📒 دفتر التحصيل (الأستاذ) --><section class="section" id="section-monthly"><div class="section-header"><div><h2 class="section-title">📒 دفتر التحصيل</h2><p class="text-sm text-muted">مجموعاتك بالترقيم + المربعات + الدفعات + المتأخرات — نفس صلاحيات المساعد</p></div></div><div id="monthlyLedgerHost"></div></section>
 <!-- 🎓 طلابي -->
 <section class="section" id="section-students">
 <div class="section-header">
@@ -322,7 +323,11 @@
 <script src="js/ui-helpers.js"></script>
 <script src="js/drive-service.js"></script>
 <script src="js/theme-manager.js"></script>
+<script src="js/pwa-injector.js"></script>
 <script src="js/auth-service.js"></script>
+<script src="js/notify-service.js"></script>
+<script src="js/month-cycle.js"></script>
+<script src="js/ledger-ui.js"></script>
 <script src="js/footer-injector.js"></script>
 <script src="js/schedule-board.js"></script>
 <script>
