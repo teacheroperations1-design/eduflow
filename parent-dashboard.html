@@ -1027,7 +1027,9 @@ window.handleLogout=function(){ try{ if(confirm('خروج؟')){ sessionStorage.r
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}</script>
 <script src="js/footer-injector.js"></script>
-<script src="js/month-cycle.js"></script>
+<script src="js/billing/core.js"></script>
+<script src="js/billing/notify-rules.js"></script>
+<script src="js/billing/ui-ledger-select.js"></script>
 <script>
 /* ============ 📒 دفتر التحصيل (ولي الأمر) — نسخة موحدة مع الطالب والمساعد ============ */
 (function(){

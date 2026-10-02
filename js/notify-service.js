@@ -1,13 +1,15 @@
 /* ================================================================
-🔔 Notify Service V3 — سياسة إشعارات لكل دور + تفضيلات لكل مستخدم
-• مصفوفة تحكم للأدمن (حدث × دور) بتتحقن تلقائياً في لوحة الأدمن
-• كل مستخدم يقفل اللي مش عاوزه من الأحداث المسموحة لدوره
-• صوت مميز لكل فئة + إشعار متصفح + اهتزاز + عدّاد غير مقروء
-• سكانر أحداث المنصة كل 20 ثانية (واجب/امتحان/فيديو/بوست/مادة/تحدي/موعد/غياب)
+🔔 Notify Service V4 — الجرس يفتح قائمة الإشعارات + الإعدادات في الآخر
+• 🔔 يفتح قائمة فيها كل الإشعارات (الجديد مميز + زر "الكل مقروء")
+• تحت خالص في اللوحة: زرار ⚙️ إعدادات الإشعارات
+• سياسة إشعارات لكل دور + تفضيلات لكل مستخدم
+• صوت مميز + إشعار متصفح + اهتزاز + عدّاد غير مقروء
+• سكانر أحداث المنصة كل 20 ثانية
 ================================================================ */
+window.__notifyServiceLoaded=true;
 (function(){
 "use strict";
-var ROLES=[{k:'student',l:'🎓 طالب'},{k:'parent',l:'👨‍👩‍👦 ولي أمر'},{k:'teacher',l:'👨‍🏫 أستاذ'},{k:'assistant',l:'🧑💼 مساعد'},{k:'admin',l:'🛡️ أدمن'}];
+var ROLES=[{k:'student',l:'🎓 طالب'},{k:'parent',l:'👨‍👩‍👦 ولي أمر'},{k:'teacher',l:'👨‍🏫 أستاذ'},{k:'assistant',l:'🧑‍💼 مساعد'},{k:'admin',l:'🛡️ أدمن'}];
 var EVENTS=[
 {k:'hw_new',c:'grades',i:'📝',l:'واجب جديد',r:['student','parent']},
 {k:'exam_new',c:'grades',i:'🎓',l:'امتحان جديد',r:['student','parent']},
@@ -36,31 +38,17 @@ function saveD(d){ if(DataService._saveData) DataService._saveData(d); }
 /* ========== سياسة الأدوار ========== */
 function defPolicy(){
   var base={};
-  // 1. افتراضي: كل الأحداث مقفولة لكل الأدوار
   ROLES.forEach(function(r){
     base[r.k]={};
     EVENTS.forEach(function(e){ base[r.k][e.k]=false; });
   });
-
-  // 2. تفعيل الأحداث الخاصة بكل دور فقط (القائمة البيضاء)
-  
-  // 🎓 الطالب: كل الأحداث الأكاديمية والمحتوى
   var studentEvents=['hw_new','exam_new','points','praise','absent','late','session_cancel','schedule_change','video_new','post_new','material_new','challenge_new','general'];
   studentEvents.forEach(function(k){ base.student[k]=true; });
-
-  // 👨‍👩‍👦 ولي الأمر: نفس أحداث الطالب + أحداث الدفعات والشهرية
   studentEvents.forEach(function(k){ base.parent[k]=true; });
   ['due_warn','due_now','payment_received'].forEach(function(k){ base.parent[k]=true; });
-
-  // 👨‍🏫 الأستاذ: المواعيد، الإلغاءات، والرسائل العامة
   ['schedule_change','session_cancel','general'].forEach(function(k){ base.teacher[k]=true; });
-
-  // 🧑💼 المساعد: الدفتر، الدفعات، المواعيد، والرسائل العامة
   ['ledger_act','payment_received','schedule_change','general'].forEach(function(k){ base.assistant[k]=true; });
-
-  // 🛡️ الأدمن: الدفتر، الدفعات، المواعيد، والرسائل العامة (ويمكنه تعديل أي شيء من المصفوفة)
   ['ledger_act','payment_received','schedule_change','general'].forEach(function(k){ base.admin[k]=true; });
-
   return base;
 }
 function getPolicy(){
@@ -99,7 +87,7 @@ if(f<=t) return hm>=f&&hm<=t;
 return hm>=f||hm<=t;
 }
 
-/* ========== تصنيف الإشعار لحدث ========== */
+/* ========== تصنيف الإشعار ========== */
 function eventOf(n){
 var k=(n&&n.meta&&n.meta.event)||''; if(k) return k;
 var t=(n&&n.type)||''; var ti=(n&&n.title)||''; var mk=(n&&n.meta&&n.meta.kind)||'';
@@ -150,22 +138,15 @@ function fire(n){
 if(!n) return;
 var u=cur(); if(!u) return;
 var ev=eventOf(n);
-/* 🔄 الأحداث المتكررة: ليها TTL بدل ما تتحظر نهائي */
-var repeatableTTL={
-  'due_warn':24*3600*1000,  /* كل 24 ساعة */
-  'due_now':6*3600*1000,     /* كل 6 ساعات */
-  'absent':12*3600*1000,     /* كل 12 ساعة */
-  'late':12*3600*1000        /* كل 12 ساعة */
-};
+var repeatableTTL={};
 var fid=n.id||('x'+Date.now());
 if(fired[fid]){
   var ttl=repeatableTTL[ev]||0;
-  if(!ttl) return; /* مش متكرر → اخرج */
+  if(!ttl) return;
   var lastFire=+fired[fid];
-  if(Date.now()-lastFire<ttl) return; /* لسه في فترة التهدئة */
+  if(Date.now()-lastFire<ttl) return;
 }
 fired[fid]=Date.now();
-var ev=eventOf(n);
 if(!allowedForRole(ev,u.role)) return;
 var p=getPrefs();
 if(p.events&&p.events[ev]===false) return;
@@ -221,36 +202,30 @@ if(g&&g.teacherId) push(g.teacherId,'schedule_change','🗓️ تعديل موع
 studentsOfGroup(l.groupId).forEach(function(sid){ push(sid,'schedule_change','🗓️ موعد حصة اتغير',(l.groupName||'')+' بقى '+(l.newDay||'')+' '+(l.newTime||''),{kind:'schedule_change'}); }); } });
 (d.cancelledSessions||[]).forEach(function(c){ if(isNew(c)){ mark(c); studentsOfGroup(c.groupId).forEach(function(sid){ push(sid,'session_cancel','🚫 حصة اتلغت',(c.reason||'')+' — '+(gById(c.groupId)||{}).name||'',{type:'general'}); }); } });
 (d.attendance||[]).forEach(function(a){ if(isNew(a)&&a.status==='approved'){ mark(a); (a.records||[]).forEach(function(r){ if(r.status==='absent') push(r.studentId,'absent','❌ تسجيل غياب','حصة '+(a.groupName||'')+' — '+(a.date||''),{type:'attendance'}); else if(r.status==='late') push(r.studentId,'late','⏰ تسجيل تأخر','حصة '+(a.groupName||'')+' — '+(a.date||''),{type:'attendance'}); }); } });
-/* 🔄 إعادة إطلاق due_warn و due_now بشكل دوري (للطالب وولي الأمر) */
 try{
   var groups=(DataService.getGroups?DataService.getGroups():[]);
   var curMonth=new Date().toISOString().slice(0,7);
   groups.forEach(function(g){
     var fee=g.monthlyFee||0; if(!fee) return;
-    var ses=LU?LU.groupSessions: null;
-    if(!ses) return;
-    /* عداد الحصص — نفس منطق دفتر التحصيل */
-    var att=(DataService.getAttendance?DataService.getAttendance():[]).filter(a=>a.groupId===g.id&&a.status==='approved'&&(a.date||'').startsWith(curMonth));
+    var att=(DataService.getAttendance?DataService.getAttendance():[]).filter(function(a){return a.groupId===g.id&&a.status==='approved'&&(a.date||'').startsWith(curMonth);});
     var done=att.length;
-    var req=(g.sessionsPerMonth)||(window.EduFlowConfig?.billing?.sessionsBeforePayment)||8;
+    var req=(g.sessionsPerMonth)||(window.EduFlowConfig&&EduFlowConfig.billing&&EduFlowConfig.billing.sessionsBeforePayment)||8;
     studentsOfGroup(g.id).forEach(function(sid){
-      /* 7/8 متكرر كل 24 ساعة */
       if(done===req-1){
         var lastKey='scan78_'+g.id+'_'+curMonth+'_'+sid;
-        var last=+(d.notifyEmitted[lastKey]||0);
-        if(now-last>24*3600*1000){
+        var last2=+(d.notifyEmitted[lastKey]||0);
+        if(!last2){
           d.notifyEmitted[lastKey]=now;
           emits.push({targetUserId:sid,type:'payment',title:'🔔 الحصة الجايه الدفع',message:'مجموعة '+g.name+' — باقي حصة واحدة ('+done+'/'+req+') على الشهرية ('+fee+' ج.م)',meta:{event:'due_warn'}});
         }
       }
-      /* 8/8 متكرر كل 6 ساعات لو مش مسدد */
       if(done>=req){
         var p=(d.payments||[]).find(function(x){return x.studentId===sid&&x.groupId===g.id&&(x.month||'')===curMonth;});
         var paid=p?((p.paidAmount)||0):0;
         if(paid<fee){
           var lastKey2='scan88_'+g.id+'_'+curMonth+'_'+sid;
-          var last2=+(d.notifyEmitted[lastKey2]||0);
-          if(now-last2>6*3600*1000){
+          var last3=+(d.notifyEmitted[lastKey2]||0);
+          if(!last3){
             d.notifyEmitted[lastKey2]=now;
             emits.push({targetUserId:sid,type:'payment',title:'💰 الشهرية مستحقة الآن',message:'مجموعة '+g.name+' — الشهرية '+fee+' ج.م (متبقي '+(fee-paid)+' ج.م)',meta:{event:'due_now'}});
           }
@@ -315,6 +290,82 @@ st.textContent='.nsrow{display:flex;align-items:center;gap:8px;padding:7px 4px;f
 document.head.appendChild(st);
 }
 
+/* ========== 📋 قائمة الإشعارات (تفتح من الجرس) ========== */
+function openNotifPanel(){
+injectCss();
+var u=cur(); if(!u) return;
+var old=document.getElementById('npOverlay'); if(old) old.remove();
+var ts=targets();
+var readAt=localStorage.getItem('eduNotifyReadAt_'+u.id)||'1970-01-01';
+var raw=(db().notifications||[]);
+var items=raw.filter(function(x){ return x&&x.targetUserId&&ts.indexOf(x.targetUserId)>=0; })
+.sort(function(a,b){ return String(b.createdAt||'').localeCompare(String(a.createdAt||'')); });
+var seen={}; var uniq=[];
+items.forEach(function(x){ var k=x.id||(x.title+(x.createdAt||'')); if(!seen[k]){ seen[k]=1; uniq.push(x); } });
+items=uniq.slice(0,80);
+var unreadN=items.filter(function(n){ return ((n.createdAt||'')>readAt)&&!n.read; }).length;
+var isLight=document.body.getAttribute('data-theme')==='light';
+var solidBg=isLight?'#ffffff':'#161b2e';
+var solidTx=isLight?'#111827':'#f1f5f9';
+var borderC=isLight?'#c9cfdb':'#3a4160';
+/* بناء الصفوف في متغير منفصل — مفيش خلط return مع html+= */
+var rowsHtml='';
+if(items.length){
+items.forEach(function(n){
+var unread=((n.createdAt||'')>readAt)&&!n.read;
+var bg=unread?(isLight?'#eef2ff':'rgba(99,102,241,.12)'):'transparent';
+var border=unread?'border-right:3px solid #6366f1;':'';
+var row='<div style="padding:12px;margin-bottom:6px;border-radius:10px;background:'+bg+';'+border+'">';
+row+='<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">';
+row+='<strong style="font-size:14px;flex:1;line-height:1.5;">'+(n.title||'إشعار')+'</strong>';
+if(unread) row+='<span style="background:#6366f1;color:#fff;border-radius:9999px;padding:2px 8px;font-size:10px;white-space:nowrap;flex-shrink:0;">جديد</span>';
+row+='</div>';
+row+='<div style="font-size:13px;margin-top:4px;opacity:.9;line-height:1.6;">'+(n.message||'')+'</div>';
+row+='<div style="font-size:11px;margin-top:8px;opacity:.6;">🕐 '+new Date(n.createdAt||Date.now()).toLocaleString('ar-EG')+'</div>';
+row+='</div>';
+rowsHtml+=row;
+});
+}else{
+rowsHtml='<div style="text-align:center;padding:60px 20px;"><div style="font-size:64px;margin-bottom:10px;">🔔</div><strong style="display:block;font-size:16px;margin-bottom:6px;">مفيش إشعارات حالياً</strong><div style="font-size:13px;opacity:.7;">أي جديد يخصك هيظهر هنا فوراً</div></div>';
+}
+var html='<div style="font-family:inherit;direction:rtl;text-align:right;max-width:560px;width:100%;background:'+solidBg+';color:'+solidTx+';border:1px solid '+borderC+';border-radius:16px;padding:0;box-shadow:0 24px 70px rgba(0,0,0,.55);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">';
+html+='<div style="padding:14px 18px;border-bottom:1px solid '+borderC+';display:flex;justify-content:space-between;align-items:center;gap:10px;">';
+html+='<h3 style="margin:0;font-size:16px;font-weight:800;">🔔 الإشعارات'+(unreadN?' <span style="background:#6366f1;color:#fff;border-radius:9999px;padding:2px 8px;font-size:11px;margin-inline-start:6px;">'+unreadN+' جديد</span>':'')+'</h3>';
+html+='<div style="display:flex;gap:6px;align-items:center;">';
+if(items.length) html+='<button type="button" class="nsbtn" onclick="window.markAllNotifsRead()" style="padding:6px 10px;font-size:11px;">✓ الكل مقروء</button>';
+html+='<button type="button" class="nsbtn" onclick="window.closeNotifPanel();window.openNotifySettings();" title="إعدادات الإشعارات" style="padding:6px 10px;font-size:13px;">⚙️</button>';
+html+='<button type="button" class="nsbtn" onclick="window.closeNotifPanel()" title="إغلاق" style="padding:6px 10px;font-size:13px;color:'+(isLight?'#ef4444':'#f87171')+';">✕</button>';
+html+='</div></div>';
+html+='<div style="flex:1;overflow-y:auto;padding:10px 14px;min-height:260px;">'+rowsHtml+'</div>';
+html+='</div>';
+var ov=document.createElement('div'); ov.id='npOverlay';
+ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;';
+ov.innerHTML=html;
+ov.addEventListener('click',function(e){ if(e.target===ov) window.closeNotifPanel(); });
+document.body.appendChild(ov);
+}
+
+window.closeNotifPanel=function(){
+var o=document.getElementById('npOverlay'); if(o) o.remove();
+};
+window.markAllNotifsRead=function(){
+try{
+var u=cur(); if(!u) return;
+localStorage.setItem('eduNotifyReadAt_'+u.id,new Date().toISOString());
+var d=db(); var ts=targets(); var changed=[];
+(d.notifications||[]).forEach(function(n){ if(ts.indexOf(n.targetUserId)>=0&&!n.read){ n.read=true; changed.push(n); } });
+if(changed.length&&DataService._saveData){
+DataService._saveData(d);
+changed.slice(0,30).forEach(function(n){ try{ if(window.FirebaseService&&FirebaseService._db) FirebaseService.saveDoc('notifications',n.id,n); }catch(e){} });
+}
+bumpBadge();
+window.closeNotifPanel();
+openNotifPanel();
+if(window.safeToast) window.safeToast('✓ تم تحديد الكل كمقروء','success');
+}catch(e){}
+};
+window.openNotifPanel=openNotifPanel;
+
 /* ========== إعدادات المستخدم (تفصيلية بالأحداث) ========== */
 function openSettings(){
 injectCss();
@@ -334,7 +385,7 @@ html+='<div class="nsgroup">📂 الأحداث اللي توصلني:</div>';
 var lastCat='';
 EVENTS.forEach(function(e){
 var locked=rolePol[e.k]===false;
-if(locked) return; // ✨ إخفاء تام — المستخدم ما يشوفش الحاجات المقفولة لدوره
+if(locked) return;
 if(e.c!==lastCat){ html+='<div class="nsgroup" style="opacity:.8;">'+(CAT_LABEL[e.c]||e.c)+'</div>'; lastCat=e.c; }
 var checked=!(p.events&&p.events[e.k]===false);
 html+='<label class="nsrow"><input type="checkbox" data-ev="'+e.k+'" '+(checked?'checked':'')+'> <span>'+e.i+' '+e.l+'</span></label>';
@@ -362,7 +413,7 @@ savePrefs(np);
 close();
 try{ if(window.safeToast) window.safeToast('✅ تم حفظ إعدادات إشعاراتك','success'); }catch(e){}
 };
-function close(){ var o=document.getElementById('nsOverlay'); if(o) o.remove(); try{ var uu=cur(); if(uu) localStorage.setItem('eduNotifyReadAt_'+uu.id,new Date().toISOString()); }catch(e){} bumpBadge(); }
+function close(){ var o=document.getElementById('nsOverlay'); if(o) o.remove(); bumpBadge(); }
 }
 
 function cleanBell(b){
@@ -384,7 +435,7 @@ function bell(){
   if(existing){
     if(!existing.__wired){
       existing.__wired=1;
-      existing.onclick=function(e){ e&&e.stopPropagation&&e.stopPropagation(); ctx(); openSettings(); };
+      existing.onclick=function(e){ e&&e.stopPropagation&&e.stopPropagation(); ctx(); openNotifPanel(); }; /* 🔔 يفتح قائمة الإشعارات */
       existing.style.position='relative';
     }
     cleanBell(existing);
@@ -392,11 +443,10 @@ function bell(){
     if(!existing.__badgeInt){ existing.__badgeInt=setInterval(bumpBadge,15000); }
     return true;
   }
-  /* مفيش زرار؟ اعمله وركّبه جنب زرار الثيم تلقائياً */
   var b=document.createElement('button'); b.id='notifyBell'; b.type='button'; b.title='الإشعارات';
   b.style.cssText='position:relative;border:1px solid var(--border);background:var(--surface-hover);border-radius:12px;width:42px;height:42px;font-size:19px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;margin-inline-end:6px;';
   b.innerHTML='🔔';
-  b.onclick=function(e){ e&&e.stopPropagation&&e.stopPropagation(); ctx(); openSettings(); };
+  b.onclick=function(e){ e&&e.stopPropagation&&e.stopPropagation(); ctx(); openNotifPanel(); }; /* 🔔 يفتح قائمة الإشعارات */
   var anchor=document.getElementById('themeToggle');
   if(anchor&&anchor.parentNode){ anchor.parentNode.insertBefore(b,anchor); }
   else{
@@ -412,7 +462,7 @@ function bell(){
   return true;
 }
 
-/* ========== 🛡️ صفحة سياسة الأدمن (حقن تلقائي) ========== */
+/* ========== 🛡️ صفحة سياسة الأدمن ========== */
 function injectPolicySection(){
 try{
 var u=cur(); if(!u||(u.role!=='admin'&&u.role!=='super_admin')) return;
@@ -436,6 +486,8 @@ window.showSection=function(id){ var r=os.apply(this,arguments); if(id==='notify
 }
 }catch(e){}
 }
+
+window.openNotifySettings=openSettings;
 window.NotifyPolicy={
 render:function(){
 try{
@@ -477,6 +529,12 @@ window.NotifyPolicy.render();
 function init(){
   injectCss(); hookAdd();
   setTimeout(bell,200); setTimeout(bell,800); setTimeout(bell,2000);
+  var __bellTries=0;
+  var __bellInt=setInterval(function(){
+    __bellTries++;
+    if(document.getElementById('notifyBell')||__bellTries>20){ clearInterval(__bellInt); return; }
+    bell();
+  },1500);
   setTimeout(scanEvents,2500);
   setInterval(scanEvents,20000);
   setInterval(pollFire,15000);

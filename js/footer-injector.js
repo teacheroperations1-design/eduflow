@@ -2,6 +2,18 @@
 (function() {
   'use strict';
   
+/* 🔔 تحميل notify-service تلقائياً لو مش موجود في الصفحة */
+(function(){
+try{
+if(!window.__notifyServiceLoaded){
+var s=document.createElement('script');
+s.src='js/notify-service.js';
+s.onload=function(){ window.__notifyServiceLoaded=true; };
+document.head.appendChild(s);
+}
+}catch(e){}
+})();
+
   window.injectUnifiedFooter = async function() {
     try {
       // جلب بيانات البراندنج من الأدمن

@@ -523,7 +523,6 @@ box-shadow:0 4px 12px rgba(220,38,38,.4);
 <script src="js/pwa-injector.js"></script>
 <script src="js/auth-service.js"></script>
 <script src="js/notify-service.js"></script>
-<script src="js/month-cycle.js"></script>
 <script src="js/footer-injector.js"></script>
 <script>
 /* 🎯 نظام الدخول الفوري بالباركود */
@@ -2397,49 +2396,6 @@ safeToast('✅ تم إلغاء الطلب','success');
 window.loadMyOrders();
 }catch(e){ safeToast('خطأ','error'); }
 };
-/* 🔄 كارت الدورة + الثيم الأحمر */
-window.renderMyCycle=function(){
-try{
-var el=document.getElementById('myCycleCard'); if(!el) return;
-var groups=(typeof DataService.getStudentTeachers==='function')?DataService.getStudentTeachers(activeStudentId):[];
-if(!groups.length){ el.innerHTML=''; return; }
-var anyOverdue=false, anyDue=false;
-var html='';
-groups.forEach(function(t){
-var g=t.group; if(!g) return;
-var c=(typeof DataService.getCycleStateForStudent==='function')?DataService.getCycleStateForStudent(activeStudentId,g.id):null;
-if(!c) return;
-var cls='cycle-card';
-if(c.isOverdue){ cls+=' overdue'; anyOverdue=true; }
-else if(c.isDue){ cls+=' due'; anyDue=true; }
-else if(c.isWarning){ cls+=' warning'; }
-var pct=Math.min(100,Math.round((c.sessionsDone/(c.sessionsRequired||8))*100));
-var statusTxt=c.isOverdue?'🚨 فاتورة متأخرة!':(c.isDue?'💰 موعد الدفع':(c.isWarning?'⚠️ الحصة الجاية الدفع':'✓ نشط'));
-var action='';
-if(c.isDue||c.isOverdue) action='<button class="btn btn-light btn-sm" style="margin-top:8px;" onclick="window.showSection(\'payments\')">💳 عرض الفاتورة</button>';
-html+='<div class="'+cls+'">'+
-'<div class="cycle-header"><div class="cycle-title">📚 '+g.name+'</div><div class="cycle-count">'+c.sessionsDone+'/'+c.sessionsRequired+'</div></div>'+
-'<div class="cycle-progress"><div class="cycle-progress-bar" style="width:'+pct+'%;"></div></div>'+
-'<div class="cycle-meta">'+statusTxt+(c.graceEndDate?' · السماح لحد '+new Date(c.graceEndDate).toLocaleDateString('ar-EG'):'')+'</div>'+
-action+
-'</div>';
-});
-el.innerHTML=html;
-/* 🔴 ثيم أحمر لو فيه تأخر */
-if(anyOverdue) document.body.setAttribute('data-overdue','true');
-else document.body.removeAttribute('data-overdue');
-}catch(e){ console.error(e); }
-};
-/* استدعاء تلقائي عند فتح Dashboard */
-if(typeof window.loadDashboard==='function'&&!window.__cycleDashWrapped){
-window.__cycleDashWrapped=true;
-var __origDash=window.loadDashboard;
-window.loadDashboard=function(){
-var r=__origDash.apply(this,arguments);
-try{ window.renderMyCycle(); }catch(e){}
-return r;
-};
-}
 })();
 </script>
 <script>
@@ -2770,6 +2726,7 @@ el.innerHTML=summary+html;
 setTimeout(function(){try{var act=document.querySelector('.section.active');if(act&&act.id==='section-payments')window.loadPayments();}catch(e){}},600);
 })();
 </script>
-<script src="js/month-cycle.js"></script>
+<script src="js/billing/core.js"></script>
+<script src="js/billing/notify-rules.js"></script>
 </body>
 </html>

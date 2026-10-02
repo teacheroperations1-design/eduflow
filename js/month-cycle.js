@@ -38,7 +38,7 @@ var g=gById(gid);
 var base=heldDates(gid,m).length;
 var man=0;
 (db().manualSessions||[]).forEach(function(ms){if(ms.groupId===gid&&ms.studentId===sid&&(ms.month||'')===m&&(!ms.type||ms.type==='counter'))man+=(ms.sessionsCount||0);});
-var base=held+man;
+base=base+man;
 if(man>base)base=man;
 if(g&&g.sessionNow>0&&(g.sessionNowMonth||'')===m&&+g.sessionNow>base)base=+g.sessionNow;
 return base;

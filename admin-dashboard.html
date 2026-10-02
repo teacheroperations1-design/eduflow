@@ -348,6 +348,42 @@
 .group-check-item{display:flex;gap:8px;align-items:center;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:4px;cursor:pointer;}
 .group-check-item input{width:16px;height:16px;accent-color:var(--primary);}
 </style>
+<style>
+/* 📱 توافق الأدمن مع الموبايل والشاشات الصغيرة */
+@media(max-width:640px){
+.main-header{padding:8px 10px!important;gap:6px}
+.main-header .search-bar{display:none!important}
+.content-area{padding:10px!important}
+.hero-stat{padding:16px!important}
+.hero-stat-value{font-size:30px!important}
+.kpi-grid{grid-template-columns:1fr 1fr!important;gap:8px!important}
+.kpi-box{padding:10px!important}
+.kpi-value{font-size:17px!important}
+.student-podium{grid-template-columns:1fr!important;gap:8px!important}
+.teacher-ranking-stats,.center-metrics,.stat-mini{grid-template-columns:1fr 1fr!important}
+.section-header{flex-direction:column;align-items:stretch!important;gap:8px}
+.section-header>div:last-child{display:flex;gap:6px;flex-wrap:wrap}
+.section-header .btn{flex:1;justify-content:center}
+.filter-bar{flex-wrap:wrap;gap:4px}
+.filter-btn{flex:1 1 45%;justify-content:center;font-size:11px;padding:8px 6px}
+.card,.tower-card,.gam-card,.user-card,.assignment-card,.risk-card{padding:12px!important}
+.modal-body,.modal-header{padding:12px!important}
+.btn{font-size:12px;padding:8px 10px}
+.btn-lg{font-size:14px!important;padding:12px 16px!important}
+.table{font-size:10px}
+.table th,.table td{padding:4px}
+.user-actions,.group-actions{width:100%}
+.user-actions .btn,.group-actions .btn{flex:1}
+.detail-grid{grid-template-columns:1fr!important}
+.rule-row{flex-wrap:wrap;gap:6px}
+#sbBoard,.cal-grid{overflow-x:auto}
+.podium-item{padding:12px!important}
+}
+@media(max-width:400px){
+.kpi-grid,.quick-actions{grid-template-columns:1fr 1fr!important}
+.btn{font-size:11px;padding:7px 8px}
+}
+</style>
 </head>
 <body data-theme="dark">
 <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div>
@@ -969,7 +1005,9 @@
 <script src="js/pwa-injector.js"></script>
 <script src="js/auth-service.js"></script>
 <script src="js/notify-service.js"></script>
-<script src="js/month-cycle.js"></script>
+<script src="js/billing/core.js"></script>
+<script src="js/billing/notify-rules.js"></script>
+<script src="js/billing/ui-ledger-select.js"></script>
 <script src="js/footer-injector.js"></script>
 <script src="js/smart-student.js"></script>
 

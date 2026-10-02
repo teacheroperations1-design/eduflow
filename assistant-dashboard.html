@@ -408,20 +408,9 @@
 <button class="btn btn-primary w-full" id="pgSave" onclick="window.savePaperGrades()" style="display:none;margin-top:8px;">💾 حفظ كل الدرجات</button>
 </div>
 </section>
-<section class="section" id="section-monthly"><div class="section-header"><div><h2 class="section-title">📒 دفتر التحصيل</h2><p class="text-sm text-muted">مجموعات أستاذي بالترقيم + المربعات + الدفعات + المتأخرات المرحّلة</p></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><button class="btn btn-ghost btn-sm" onclick="LedgerUI.refreshBtn()">🔄 تحديث</button></div></div><div id="monthlyLedgerHost"></div><div class="card" style="display:none;"></div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-<div class="form-group"><label>الشهر</label><input type="month" id="moMonth" class="form-input" onchange="window.renderMonthly()"></div>
-<div class="form-group"><label>المجموعة (فلتر)</label><select id="moGroup" class="form-select" onchange="window.renderMonthly()"><option value="">كل المجموعات</option></select></div>
-</div>
-<button class="btn btn-warning btn-sm" style="margin-bottom:12px;" onclick="window.openBulkBackfillModal()">📥 ترحيل حصص بداية الشهر</button>
-<div id="moSummary"></div>
-<div class="filter-bar">
-<button class="filter-btn active" onclick="window.setMoFilter('all',this)">الكل</button>
-<button class="filter-btn" onclick="window.setMoFilter('paid',this)">✅ دفعوا</button>
-<button class="filter-btn" onclick="window.setMoFilter('unpaid',this)">⏳ لم يدفعوا</button>
-</div>
-<div id="moRows"></div>
-</div>
+<section class="section" id="section-monthly">
+<div class="section-header"><div><h2 class="section-title">📒 دفتر التحصيل</h2><p class="text-sm text-muted">مجموعات أستاذي بالترقيم + المربعات + الدفعات + المتأخرات المرحّلة</p></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><button class="btn btn-ghost btn-sm" onclick="LedgerUI.refreshBtn()">🔄 تحديث</button></div></div>
+<div id="monthlyLedgerHost"></div>
 </section>
 <!-- 📱 قوالب واتساب -->
 <section class="section" id="section-templates">
@@ -647,7 +636,6 @@
 <section class="section" id="section-payments"><div class="section-header"><div><h2 class="section-title">💰 المدفوعات</h2></div></div><div class="card"><div id="paymentsList"></div></div></section>
 <section class="section" id="section-calendar"><div class="section-header"><div><h2 class="section-title">📅 تقويم الحصص</h2></div></div><div class="card"><div class="form-group"><label>المجموعة</label><select id="calGroup" class="form-select" onchange="window.loadCalendar()"></select></div><div id="calendarView"></div></div></section>
 <section class="section" id="section-reports"><div class="section-header"><div><h2 class="section-title">📊 التقارير</h2></div></div><div class="card"><div id="reportView"></div></div></section>
-<!-- 🔄 دورات الطلاب (مساعد) --><section class="section" id="section-cycles"><div class="section-header"><div><h2 class="section-title">🔄 دورات الطلاب</h2><p class="text-sm text-muted">عدادات الـ 8 حصص — إنذار واستحقاق وتسجيل دفع كاش</p></div><div style="display:flex;gap:8px;"><button class="btn btn-primary btn-sm" onclick="window.openAsAddSessionsModal()">➕ إضافة حصة للعداد</button><button class="btn btn-success btn-sm" onclick="window.openEmergencySessionModalAs()">⚡ حصة طوارئ</button><button class="btn btn-ghost btn-sm" onclick="window.loadAsCycles()">🔄 تحديث</button></div></div><div id="asCyclesStats" style="margin-bottom:12px;"></div><div class="card" style="margin-bottom:12px;"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div class="form-group" style="margin:0;"><label>🔍 بحث</label><input type="text" id="asCycleSearch" class="form-input" placeholder="اسم الطالب..." onkeyup="window.loadAsCycles()"></div><div class="form-group" style="margin:0;"><label>🎯 الحالة</label><select id="asCycleStatus" class="form-select" onchange="window.loadAsCycles()"><option value="">كل الحالات</option><option value="warning">⚠️ إنذار (7)</option><option value="due">💰 مستحق (8)</option><option value="overdue">🚨 متأخر</option></select></div></div></div><div id="asCyclesList"></div></section><!-- 🏪 المتجر والجرد (مساعد) --><section class="section" id="section-storeAs"><div class="section-header"><div><h2 class="section-title">🏪 المتجر والجرد</h2><p class="text-sm text-muted">جرد المخزون والموافقات والتسليم</p></div><button class="btn btn-primary btn-sm" onclick="window.openAsStoreItem()">➕ منتج</button></div><div class="filter-bar" style="margin-bottom:12px;"><button class="filter-btn active" onclick="window.setAsStoreTab('catalog',this)">📚 المنتجات والجرد</button><button class="filter-btn" onclick="window.setAsStoreTab('orders',this)">📦 الطلبات والموافقات</button></div><div id="asStoreCatalog" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;"></div><div id="asStoreOrders" style="display:none;"></div></section>
 <section class="section" id="section-logs"><div class="section-header"><div><h2 class="section-title">📜 السجل</h2></div></div><div class="card"><div id="logsList"></div></div></section>
 </div>
 </main>
@@ -667,7 +655,9 @@
 <script src="js/pwa-injector.js"></script>
 <script src="js/auth-service.js"></script>
 <script src="js/notify-service.js"></script>
-<script src="js/month-cycle.js"></script>
+<script src="js/billing/core.js"></script>
+<script src="js/billing/core.js"></script>
+<script src="js/billing/notify-rules.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="js/footer-injector.js"></script>
 <script src="js/camera-helper.js"></script>
@@ -1322,7 +1312,7 @@ ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${g?'�
 <div class="form-group"><label>المرحلة</label><select id="gStage" class="form-select" onchange="window.updGroupGrades();"><option value="">-- اختر --</option>${stageOptions}</select></div>
 <div class="form-group"><label>الصف</label><select id="gGrade" class="form-select">${initialGrades.map(gr=>`<option ${g?.grade===gr?'selected':''}>${gr}</option>`).join('')}</select></div>
 </div>
-${editId?`<div class="filter-info" style="margin-bottom:10px;">🔢 <strong>ضبط عداد الشهرية:</strong> المجموعة في الحصة رقم <input type="number" id="gSessionNow" class="form-input" style="width:70px;display:inline-block;margin:0 4px;" min="0" value="${g?.sessionNow||0}"> من <input type="number" id="gSessionTotal" class="form-input" style="width:70px;display:inline-block;margin:0 4px;" min="1" value="${g?.sessionsPerMonth||8}"> <button type="button" class="btn btn-primary btn-sm" onclick="window.applyGroupSessionCounter('${editId}')">💾 تطبيق على كل الطلاب</button></div>`:''}<div id="gDupWarn" class="filter-info" style="display:none;background:var(--danger-bg);border-color:var(--danger);color:var(--danger);margin-bottom:10px;"></div><div class="filter-info" style="margin-bottom:10px;">🔢 <strong>المجموعة في الحصة الكام الشهر ده:</strong> رقم <input type="number" id="gSessionNow" class="form-input" style="width:80px;display:inline-block;margin:0 4px;" min="0" value="${g?.sessionNow||0}"> من <input type="number" id="gSessionTotal" class="form-input" style="width:80px;display:inline-block;margin:0 4px;" min="1" value="${g?.sessionsPerMonth||8}"> ${editId?`<button type="button" class="btn btn-primary btn-sm" onclick="window.applyGroupSessionCounter('${editId}')">💾 تطبيق على كل الطلاب</button>`:''}<div class="text-xs text-muted" style="margin-top:4px;">بتقدر تعدّل الرقم يدوياً لو في غلطة — والتطبيق بيظبط عداد كل طلاب المجموعة.</div></div><div class="form-group"><label>📅 مواعيد الحصة (أسبوعياً)</label><div id="schedulesContainer"></div><button type="button" class="btn btn-secondary btn-sm" onclick="window.addScheduleRow()">➕ إضافة موعد</button></div>
+<div class="form-group"><label>📅 مواعيد الحصة (أسبوعياً)</label><div id="schedulesContainer"></div><button type="button" class="btn btn-secondary btn-sm" onclick="window.addScheduleRow()">➕ إضافة موعد</button></div>
 <div class="form-group"><label>🏢 السنتر *</label><select id="gCenter" class="form-select" required>${centerOptions}</select></div>
 <div class="form-group"><label>📱 رابط واتساب المجموعة</label><input type="url" id="gWhatsapp" class="form-input" value="${g?.whatsappLink||''}" placeholder="https://chat.whatsapp.com/..."></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
@@ -1392,55 +1382,6 @@ if(window.loadAsCycles) window.loadAsCycles();
 };
 }
 
-/* ============ 💰 لوحة المحاسبة المطوّرة (فلاتر + تحصيل + متأخرين) ============ */
-window.loadAccountingDash=function(){
-try{
-const u=(typeof currentUser!=='undefined'&&currentUser)?currentUser:null;
-const students=(typeof Ops?.studentsInScope==='function'&&u)?Ops.studentsInScope(u.id):[];
-const month=new Date().toISOString().slice(0,7);
-const q=(document.getElementById('accSearch')?.value||'').trim().toLowerCase();
-const center=(document.getElementById('accCenter')?.value)||'';
-const status=(document.getElementById('accStatus')?.value)||'';
-const cSel=document.getElementById('accCenter');
-if(cSel&&cSel.options.length<=1){
-const cs={}; (DataService.getGroups?DataService.getGroups():[]).forEach(g=>{ if(g.center) cs[g.center]=1; });
-cSel.innerHTML='<option value="">الكل</option>'+Object.keys(cs).map(c=>`<option>${c}</option>`).join('');
-}
-const rows=[];
-students.forEach(s=>{
-const bill=(typeof Ops?.buildStudentBilling==='function')?Ops.buildStudentBilling(s.id,month):[];
-bill.forEach(b=>{
-const g=b.group||{};
-if(center&&(g.center||'')!==center) return;
-if(q&&!((g.name||'').toLowerCase().includes(q)||(s.name||'').toLowerCase().includes(q))) return;
-const due=b.billing?.total||0, paid=b.payment?.paidAmount||0, rem=Math.max(0,due-paid);
-const late=rem>0&&((b.billing?.shouldCharge)||(b.cycle&&(b.cycle.isDue||b.cycle.isOverdue)));
-rows.push({s:s,g:g,due:due,paid:paid,rem:rem,late:late,month:month,sessions:b.billing?.totalSessions||0,required:b.billing?.sessionsRequired||8});
-});
-});
-let filtered=rows;
-if(status==='due') filtered=rows.filter(r=>r.rem>0);
-if(status==='paid') filtered=rows.filter(r=>r.rem===0&&r.due>0);
-if(status==='late') filtered=rows.filter(r=>r.late);
-const totalDue=rows.reduce((a,r)=>a+r.due,0), totalPaid=rows.reduce((a,r)=>a+r.paid,0);
-const lateRows=rows.filter(r=>r.late);
-const st=document.getElementById('accStats');
-if(st) st.innerHTML=`<div class="stat-mini-box"><div class="stat-mini-value">${totalDue}</div><div class="stat-mini-label">إجمالي المستحق</div></div><div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--success)">${totalPaid}</div><div class="stat-mini-label">المحصّل</div></div><div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--warning)">${totalDue-totalPaid}</div><div class="stat-mini-label">المتبقي</div></div><div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--danger)">${lateRows.length}</div><div class="stat-mini-label">طالب متأخر</div></div>`;
-const byGroup={};
-filtered.filter(r=>r.rem>0).forEach(r=>{ const k=r.g.id||'-'; byGroup[k]=byGroup[k]||{g:r.g,total:0,paid:0,students:[]}; byGroup[k].total+=r.due; byGroup[k].paid+=r.paid; byGroup[k].students.push(r); });
-const gEntries=Object.values(byGroup);
-const gc=document.getElementById('accGroupsCount'); if(gc) gc.textContent=gEntries.length;
-const gl=document.getElementById('accGroupsList');
-if(gl) gl.innerHTML=gEntries.length?gEntries.map(e=>`<div class="sub-row" style="margin-bottom:8px;"><div style="flex:1;"><strong>${e.g.name||'-'}</strong><div class="text-xs text-muted">🏢 ${e.g.center||'-'} · 👥 ${e.students.length} طالب عليهم مستحقات · العداد ${e.students[0]?e.students[0].sessions:0}/${e.students[0]?e.students[0].required:8}</div></div><div style="text-align:left;"><div style="font-weight:800;color:var(--warning);">${e.total-e.paid} ج.م</div><div class="text-xs text-muted">من ${e.total}</div></div></div>`).join(''):'<p class="text-muted">مفيش مجموعات عليها تحصيل 🎉</p>';
-const lc=document.getElementById('accLateCount'); if(lc) lc.textContent=lateRows.length;
-const ll=document.getElementById('accLateList');
-if(ll) ll.innerHTML=lateRows.length?lateRows.map(r=>`<div class="sub-row" style="margin-bottom:8px;border-right:3px solid var(--danger);"><div style="flex:1;"><strong>${r.s.name}</strong><div class="text-xs text-muted">${r.g.name||'-'} · شهر ${r.month} · العداد ${r.sessions}/${r.required}</div></div><div style="display:flex;gap:6px;align-items:center;"><strong style="color:var(--danger);">${r.rem} ج.م</strong><button class="btn btn-success btn-sm" onclick="window.recordAsPayment('${r.s.id}','${r.g.id}')">💵 تحصيل</button><button class="btn btn-ghost btn-sm" onclick="Ops.openPaymentReminderWa&&Ops.openPaymentReminderWa('${r.s.id}','${r.g.id}')">📱 تذكير</button></div></div>`).join(''):'<p class="text-muted">مفيش طلاب متأخرين 🎉</p>';
-}catch(e){ console.error(e); }
-};
-document.addEventListener('click',function(e){
-const t=e.target.closest?e.target.closest('[data-section="accounting"]'):null;
-if(t) setTimeout(window.loadAccountingDash,60);
-});
 
 /* ============ ⚡ اختصارات مركز العمليات ============ */
 window.injectCmdShortcuts=function(){
@@ -1521,11 +1462,7 @@ if(currentUser?.role==='assistant'){
 const myTid=window.getMyTeacherId();
 if(myTid) teacherId=myTid;
 }
-const schedules=[...document.querySelectorAll('#schedulesContainer .sch-day')].map((sel,i)=>{
-const row=sel.closest('div[style]');
-const timeEl=row?row.querySelector('.sch-time'):null;
-return {day:sel.value,time:timeEl?timeEl.value:''};
-}).filter(s=>s.day&&s.time);
+const schedules=[...document.querySelectorAll('#schedulesContainer .sch-day')].map((sel,i)=>{const row=sel.closest('div[style]');const timeEl=row?row.querySelector('.sch-time'):null;return {day:sel.value,time:timeEl?timeEl.value:''};}).filter(s=>s.day&&s.time);
 if(!schedules.length){ window.safeToast('أضف موعد واحد على الأقل','error'); return false; }
 const data={
 name:document.getElementById('gName')?.value||'',
@@ -2546,56 +2483,47 @@ window.setMoFilter=function(f,btn){ moFilter=f; document.querySelectorAll('#sect
 
 window.renderMonthly=function(){
 try{
-const month=document.getElementById('moMonth')?.value||new Date().toISOString().slice(0,7);
-const gFilter=document.getElementById('moGroup')?.value||'';
-const monthName=new Date(month+'-01').toLocaleDateString('ar-EG',{month:'long',year:'numeric'});
+var month=document.getElementById('moMonth')?.value||new Date().toISOString().slice(0,7);
+var gFilter=document.getElementById('moGroup')?.value||'';
+var monthName=new Date(month+'-01').toLocaleDateString('ar-EG',{month:'long',year:'numeric'});
 let students=(typeof Ops?.studentsInScope==='function'&&currentUser)?Ops.studentsInScope(currentUser.id):[];
-if(!students.length) students=(DataService?.getUsers?DataService.getUsers():[]).filter(u=>u.role==='student');
-const d=db();
-let totalDue=0,totalPaid=0;
-const rows=[];
-students.forEach(s=>{
-let groups=(DataService?.getStudentTeachers?DataService.getStudentTeachers(s.id).map(x=>x.group).filter(Boolean):[]);
-if(gFilter) groups=groups.filter(g=>g.id===gFilter);
-groups.forEach(g=>{
-const billing=(typeof Ops?.buildStudentBilling==='function')?Ops.buildStudentBilling(s.id, month).find(b=>b.group?.id===g.id):null;
-const due=billing?.billing?.total||0; 
-/* الشهرية مش بتظهر إلا لما الشهر يكمل */
-const pay=(d.payments||[]).find(p=>p.studentId===s.id&&p.groupId===g.id&&p.month===month);
-const paid=pay?.paidAmount||0;
-const status=due===0?(paid>0?'prepaid':'notdue'):(paid>=due?'paid':paid>0?'partial':'unpaid');
-totalDue+=due; totalPaid+=paid;
-const actualSessions=billing?.billing?.actualSessions||0;
-const requiredSessions=billing?.billing?.sessionsRequired||8;
-const sessionCounter=`<span class="session-counter">الحصة ${actualSessions} من ${requiredSessions}</span>`;
-rows.push({s,g,due,paid,remaining:Math.max(0,due-paid),status, studentId:s.id, groupId:g.id, month, sessionCounter, actualSessions, requiredSessions});
+if(!students.length){ document.getElementById('moRows').innerHTML='<p class="text-muted">لا طلاب</p>'; return; }
+var d=(DataService._getData?DataService._getData():{});
+var rows=[];
+students.forEach(function(s){
+var gs=(DataService.getStudentTeachers?DataService.getStudentTeachers(s.id):[]).map(function(t){return t.group;}).filter(Boolean);
+gs.forEach(function(g){
+if(gFilter&&g.id!==gFilter) return;
+if(!window.BC) return;
+var r=BC.monthRow(s.id,g,month);
+var st=BC.statusOf(s.id,g);
+/* القاعدة: الاسم ميظهرش كمطلوب منه إلا من أول إنذار (7/8) */
+var badge;
+if(st==='overdue') badge='<span class="badge badge-danger">🚨 متأخر مرحّل</span>';
+else if(st==='due') badge='<span class="badge badge-info">💰 مستحق</span>';
+else if(st==='warning') badge='<span class="badge badge-warning">⚠️ إنذار أول</span>';
+else if(st==='paid') badge='<span class="badge badge-success">✅ مسدد</span>';
+else if(r.paid>0) badge='<span class="badge badge-info">💵 مقدم '+r.paid+' ج.م</span>';
+else badge='<span class="badge badge-muted">⏳ مش مستحق</span>';
+rows.push({s:s,g:g,r:r,st:st,badge:badge});
 });
 });
-const sum=document.getElementById('moSummary');
-if(sum) sum.innerHTML=`<div class="filter-info" style="margin-bottom:10px;">💡 <strong>قاعدة التحصيل:</strong> الشهرية مش بتستحق إلا لما الطالب يكمل <strong>آخر حصة في الشهر (8/8)</strong> أو عدد حصص مجموعته — والمحاسبة شغالة من <strong>أكتوبر 2026</strong> فصاعداً. مفيش مبالغ على طالب شهره لسه مكمّلش، والمتبقي الحقيقي بس اللي بيترحّل من شهر فات.</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;"><div class="settle-card"><div class="settle-value" style="color:var(--primary)">${totalDue}</div><div class="text-xs text-muted">المطلوب</div></div><div class="settle-card"><div class="settle-value" style="color:var(--success)">${totalPaid}</div><div class="text-xs text-muted">المحصل</div></div><div class="settle-card"><div class="settle-value" style="color:var(--danger)">${totalDue-totalPaid}</div><div class="text-xs text-muted">المتبقي</div></div></div><div class="text-sm text-muted">📅 ${monthName}</div>`;
-let filtered=rows;
-if(moFilter==='paid')filtered=rows.filter(r=>r.status==='paid');
-else if(moFilter==='unpaid')filtered=rows.filter(r=>r.status!=='paid');
-const rowsEl=document.getElementById('moRows');
-if(rowsEl) rowsEl.innerHTML=filtered.length?filtered.map(r=>{
-const t=DataService.getUserById(r.g.teacherId);
-const photo=t?.photoUrl?`<img src="${window.driveThumb(t.photoUrl)}" class="teacher-photo-sm" onerror="this.style.display='none'">`:'';
-return `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--surface-hover);border-radius:8px;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
-<div style="flex:1;min-width:200px;">
-<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-<strong>${r.s.name}</strong>
-${r.sessionCounter}
-</div>
-<div class="text-xs text-muted">👥 ${r.g.name} ${photo?' '+photo:''}</div>
-</div>
-<div style="display:flex;gap:8px;align-items:center;">
-<span class="text-sm" style="font-family:var(--font-en);font-weight:700;">${r.paid}/${r.due}</span>
-<span class="badge ${r.status==='paid'?'badge-success':r.status==='partial'?'badge-warning':r.status==='notdue'?'badge-muted':r.status==='prepaid'?'badge-info':'badge-danger'}">${r.status==='paid'?'✅ مسدد':r.status==='partial'?'🟡 جزئي':r.status==='notdue'?'⏳ لم تستحق':r.status==='prepaid'?'💵 مقدم':'❌ مستحق'}</span>
-${(r.status==='unpaid'||r.status==='partial')?`<button class="btn btn-success btn-sm" onclick="window.quickPay('${r.studentId}','${r.groupId}','${r.month}',${r.remaining})">💵</button>`:''}
-<button class="btn btn-secondary btn-sm" style="font-size:11px;padding:4px 8px;" onclick="window.addManualSessionPrompt('${r.studentId}','${r.groupId}','${r.month}')">➕ حصة</button>
-</div>
-</div>`;
-}).join(''):'<p class="text-muted">لا بيانات</p>';
+var order={overdue:0,due:1,warning:2,paid:3,active:4};
+rows.sort(function(a,b){return order[a.st]-order[b.st];});
+var moFilter=window.moFilter||'';
+var filtered=rows;
+if(moFilter==='unpaid') filtered=rows.filter(function(r){return r.st==='due'||r.st==='overdue';});
+else if(moFilter==='warning') filtered=rows.filter(function(r){return r.st==='warning';});
+else if(moFilter==='paid') filtered=rows.filter(function(r){return r.st==='paid';});
+else if(moFilter==='unpaid')filtered=rows.filter(function(r){return r.st==='due'||r.st==='overdue';});
+var totalDue=0,totalPaid=0;
+filtered.forEach(function(r){ if(r.st==='due'||r.st==='overdue') totalDue+=r.r.fee; totalPaid+=r.r.paid; });
+var sum=document.getElementById('moSummary');
+if(sum) sum.innerHTML='<div class="filter-info" style="margin-bottom:10px;">💡 <strong>قاعدة التحصيل:</strong> الشهرية مش بتستحق إلا لما الطالب يكمل <strong>آخر حصة في الشهر</strong> — والمحاسبة شغالة من <strong>أكتوبر 2026</strong>. مفيش اسم ظاهر كمطلوب منه إلا من أول إنذار (7/8).</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;"><div class="settle-card"><div class="settle-value" style="color:var(--primary)">'+totalDue+'</div><div class="text-xs text-muted">المطلوب (مكتمل)</div></div><div class="settle-card"><div class="settle-value" style="color:var(--success)">'+totalPaid+'</div><div class="text-xs text-muted">المحصل</div></div><div class="settle-card"><div class="settle-value" style="color:var(--danger)">'+Math.max(0,totalDue-totalPaid)+'</div><div class="text-xs text-muted">المتبقي</div></div></div><div class="text-sm text-muted">📅 '+monthName+'</div>';
+var el=document.getElementById('moRows');
+if(el) el.innerHTML=filtered.length?filtered.map(function(r){
+return '<div class="sub-row" style="border-right:4px solid '+(r.st==='overdue'?'var(--danger)':r.st==='due'?'var(--info)':r.st==='warning'?'var(--warning)':r.st==='paid'?'var(--success)':'var(--border)')+';"><div style="flex:1;"><strong>'+r.s.name+'</strong><div class="text-xs text-muted">📚 '+r.g.name+' · 🔄 '+r.r.done+'/'+r.r.req+'</div>'+(r.st==='due'||r.st==='overdue'?'<div class="text-xs" style="color:var(--danger);font-weight:800;">مطلوب: '+r.r.fee+' ج.م (متبقي '+r.r.rem+' ج.م)</div>':'')+'</div><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">'+r.badge+((r.st==='due'||r.st==='overdue')?'<button class="btn btn-success btn-sm" onclick="window.recordAsPayment(\''+r.s.id+'\',\''+r.g.id+'\')">💰 تسجيل دفع</button>':'')+'</div></div>';
+}).join(''):'<div class="card" style="text-align:center;padding:24px;">لا طلاب مطابقين</div>';
 }catch(e){console.error(e);}
 };
 
@@ -5908,43 +5836,99 @@ window.safeToast('✅ تم التصفير — العدادات بدأت من ص�
 refreshAll();
 }catch(e){ console.error(e); window.safeToast('خطأ في التصفير: '+e.message,'error'); }
 };
-
-/* ---------- 🔘 حقن الأزرار في صفحة تحصيل الشهرية + الدفتر ---------- */
-function injectButtons(){
+})();
+</script>
+<!-- 📒 دفتر التحصيل -->
+<section class="section" id="section-monthly">
+<div class="section-header"><div><h2 class="section-title">📒 دفتر التحصيل</h2><p class="text-sm text-muted">مجموعات أستاذي بالترقيم + المربعات + الدفعات + المتأخرات المرحّلة</p></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><button class="btn btn-ghost btn-sm" onclick="LedgerUI.refreshBtn()">🔄 تحديث</button></div></div>
+<div id="monthlyLedgerHost"></div>
+</section>
+<script>
+/* 📥 مودال ترحيل حصص بسيط — بيكتب عدّادات manualSessions مباشرة */
+window.openBulkBackfillModal=function(){
 try{
-var sec=document.getElementById('section-monthly'); if(!sec) return;
-if(!document.getElementById('btnResetGroups')){
-var hdr=sec.querySelector('.section-header');
-var b=document.createElement('button'); b.id='btnResetGroups'; b.type='button'; b.className='btn btn-danger btn-sm'; b.textContent='🧹 تصفير جميع المجموعات للصف';
-b.onclick=function(){ window.openResetGroupsModal(); };
-if(hdr) hdr.appendChild(b); else sec.insertBefore(b,sec.firstChild);
-}
-if(!document.getElementById('btnResetGroups2')){
-var host=document.getElementById('monthlyLedgerHost');
-if(host&&host.parentNode){ var b2=document.createElement('button'); b2.id='btnResetGroups2'; b2.type='button'; b2.className='btn btn-danger btn-sm'; b2.style.marginBottom='8px'; b2.textContent='🧹 تصفير العدادات (اختيار مجموعات/شهور)'; b2.onclick=function(){ window.openResetGroupsModal(); }; host.parentNode.insertBefore(b2,host); }
-}
-}catch(e){}
-}
-/* زرار ⚙️ إدارة الحصص في كل صف من صفوف تحصيل الشهرية */
-function augmentRows(){
+var gs=(window.myGroups?myGroups():((window.DataService&&DataService.getGroups)?DataService.getGroups():[]));
+var lm=new Date(); var lmS=lm.getFullYear()+'-'+String(lm.getMonth()+1).padStart(2,'0');
+ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">📥 ترحيل / ضبط عدّاد الحصص</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">'
++'<div class="form-group"><label>المجموعة</label><select id="bfGroup2" class="form-select">'+gs.map(function(g){return '<option value="'+g.id+'">'+g.name+'</option>';}).join('')+'</select></div>'
++'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="form-group"><label>الشهر</label><input type="month" id="bfMonth2" class="form-input" value="'+lmS+'"></div><div class="form-group"><label>عدد الحصص</label><input type="number" id="bfCount2" class="form-input" value="1" min="1" max="30"></div></div>'
++'<div class="filter-info" style="background:var(--warning-bg);border-color:var(--warning);color:var(--warning);">⚠️ الحصص المرحّلة بتلوّن المربعات 📥 وبتكمّل العداد لكل طلاب المجموعة.</div>'
++'<button class="btn btn-primary w-full" onclick="window.runBackfill2()">📥 ترحيل الحصص</button></div>','modal-sm');
+}catch(e){ console.error(e); }
+};
+window.runBackfill2=async function(){
 try{
-var rows=document.querySelectorAll('#moRows > div');
-Array.prototype.forEach.call(rows,function(r){
-if(r.querySelector('.mgrBtn')) return;
-var addBtn=r.querySelector('button[onclick*="addManualSessionPrompt"]');
-if(!addBtn) return;
-var m=addBtn.getAttribute('onclick').match(/addManualSessionPrompt\('([^']+)','([^']+)','([^']+)'\)/);
-if(!m) return;
-var b=document.createElement('button'); b.type='button'; b.className='btn btn-ghost btn-sm mgrBtn'; b.style.fontSize='11px'; b.style.padding='4px 8px'; b.textContent='⚙️ حصص';
-b.onclick=function(){ window.openSessionsManager(m[2],m[3]); };
-addBtn.parentNode.insertBefore(b,addBtn.nextSibling);
+var gid=document.getElementById('bfGroup2').value;
+var m=document.getElementById('bfMonth2').value;
+var n=parseInt(document.getElementById('bfCount2').value)||0;
+if(!gid||!m||n<1){ window.safeToast('أكمل البيانات','error'); return; }
+var sts=(DataService.getStudentsByGroup?DataService.getStudentsByGroup(gid):[]);
+if(!sts.length){ window.safeToast('مفيش طلاب في المجموعة','error'); return; }
+var d=DataService._getData(); d.manualSessions=d.manualSessions||[];
+var added=[];
+sts.forEach(function(s){ for(var i=0;i<n;i++){ var rec={id:'ms_'+Date.now()+'_'+s.id+'_'+i,groupId:gid,studentId:s.id,month:m,sessionsCount:1,type:'counter',reason:'ترحيل حصص',addedBy:(window.currentUser||{}).id||'',addedAt:new Date().toISOString()}; d.manualSessions.push(rec); added.push(rec); } });
+DataService._saveData(d);
+if(window.FirebaseService&&FirebaseService._db){ added.slice(0,60).forEach(function(rec){ try{ FirebaseService.saveDoc('manualSessions',rec.id,rec); }catch(e){} }); }
+ThemeManager.closeModal();
+window.safeToast('✅ تم ترحيل '+n+' حصة لـ '+sts.length+' طالب — المربعات اتلونّت 📥','success');
+if(window.LedgerUI) LedgerUI.refresh();
+}catch(e){ window.safeToast('خطأ: '+e.message,'error'); }
+};
+</script>
+<script>
+/* 🔔 فحص الطلبات المعلقة عند فتح المساعد */
+(function(){
+function checkPending(){
+try{
+var d=(DataService._getData)?DataService._getData():{};
+var list=(d.pendingMonthTransitions||[]).filter(function(p){return p.status==='pending';});
+if(list.length && !window.__mtNotified){
+window.__mtNotified=1;
+setTimeout(function(){
+if(window.safeToast) window.safeToast('🔔 عندك '+list.length+' طلب انتقال شهر معلق — دوس على "🔔 X طلب انتقال" في أعلى الدفتر','info');
+},2000);
+}
+/* فحص المجموعات المكتملة اللي مفيش ليها طلب */
+var gs=(DataService.getGroups?DataService.getGroups():[]);
+var cur=new Date().toISOString().slice(0,7);
+gs.forEach(function(g){
+if(window.LedgerUI&&LedgerUI.groupSessions){
+var ses=LedgerUI.groupSessions(g.id,cur);
+if(ses.complete && (g.sessionNow||0)>=ses.required){
+var hasPend=list.some(function(p){return p.groupId===g.id&&p.month===cur;});
+if(!hasPend && !window.__autoTransNotified){
+window.__autoTransNotified=1;
+setTimeout(function(){
+if(window.safeToast) window.safeToast('💡 '+g.name+' كملت — دوس "🔄 طلب انتقال" في كارتها','info');
+},4000);
+}
+}
+}
 });
 }catch(e){}
 }
-if(typeof window.renderMonthly==='function'){ var _rm=window.renderMonthly; window.renderMonthly=function(){ var r=_rm.apply(this,arguments); setTimeout(augmentRows,60); return r; }; }
-injectButtons(); setTimeout(injectButtons,800); setTimeout(injectButtons,2000);
-setInterval(augmentRows,4000);
-document.addEventListener('click',function(e){ var t=e.target.closest?e.target.closest('[data-section="monthly"]'):null; if(t) setTimeout(function(){ injectButtons(); augmentRows(); },150); });
+checkPending(); 
+setTimeout(checkPending,3000); 
+setTimeout(checkPending,8000);
+setInterval(checkPending,60000);
+})();
+</script>
+<script>
+/* 🛠️ ضمان صفوف مواعيد صحيحة دائماً */
+(function(){
+var DAYS=[{en:'Saturday',ar:'السبت'},{en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},{en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'}];
+window.addScheduleRow=function(day,time){
+try{
+var c=document.getElementById('schedulesContainer'); if(!c) return;
+var row=document.createElement('div');
+row.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:8px;';
+row.innerHTML='<select class="form-select sch-day" style="flex:1;">'+DAYS.map(function(d){return '<option value="'+d.en+'" '+(d.en===day?'selected':'')+'>'+d.ar+'</option>';}).join('')+'</select>'
++'<input type="time" class="form-input sch-time" style="flex:1;" value="'+(time||'10:00')+'">'
++'<button type="button" class="btn btn-danger btn-sm" onclick="this.parentNode.remove()">✕</button>';
+c.appendChild(row);
+}catch(e){}
+};
+window.__gAddRow=function(){ window.addScheduleRow('','10:00'); };
 })();
 </script>
 </body>
