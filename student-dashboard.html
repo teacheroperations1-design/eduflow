@@ -519,6 +519,7 @@ box-shadow:0 4px 12px rgba(220,38,38,.4);
 <script src="js/operations-service.js"></script>
 <script src="js/ui-helpers.js"></script>
 <script src="js/drive-service.js"></script>
+<script src="js/ledger-ui.js"></script>
 <script src="js/theme-manager.js"></script>
 <script src="js/pwa-injector.js"></script>
 <script src="js/auth-service.js"></script>
@@ -2304,6 +2305,17 @@ console.log('🛍️ storeCatalog count:', items.length, items);
 var list=items.slice();
 list.sort(function(a,b){ return new Date(b.createdAt||0)-new Date(a.createdAt||0); });
 
+/* فحص الحصص الملغية في المستقبل */
+var pendingCancels=(d.pendingCancelledSessions||[]).filter(function(pc){
+  return pc.groupId===groupId && pc.date>todayStr;
+});
+if(pendingCancels.length){
+  /* اعرضها بشكل مميز في الجدول */
+  pendingCancels.forEach(function(pc){
+    /* ضع علامة "🚫 ملغية" جنب الحصة */
+  });
+}
+
 /* فلاتر البحث */
 if(q) list=list.filter(function(i){ return (i.name||'').toLowerCase().indexOf(q)>=0; });
 if(cat) list=list.filter(function(i){ return i.category===cat; });
@@ -2728,5 +2740,41 @@ setTimeout(function(){try{var act=document.querySelector('.section.active');if(a
 </script>
 <script src="js/billing/core.js"></script>
 <script src="js/billing/notify-rules.js"></script>
+<script src="js/fun-center.js"></script>
+<script>
+/* 🔔 فحص الإشعارات العاجلة عند الدخول */
+(function(){
+function checkUrgentNotifs(){
+try{
+var u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null;
+if(!u||u.role!=='student') return;
+var d=(window.DataService&&DataService._getData)?DataService._getData():{};
+var notifs=(d.notifications||[]).filter(function(n){
+return n.targetUserId===u.id && n.pinned && !n.seen;
+}).sort(function(a,b){return String(b.createdAt).localeCompare(String(a.createdAt));});
+if(!notifs.length) return;
+var n=notifs[0];
+var html='<div class="modal-header" style="background:var(--danger);color:#fff;"><h3 class="modal-title">🚨 '+n.title+'</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal();window.markNotifSeen(\''+n.id+'\')">✕</button></div>';
+html+='<div class="modal-body"><div style="font-size:15px;line-height:1.7;margin-bottom:16px;">'+n.message+'</div>';
+html+='<div class="text-xs text-muted" style="margin-bottom:12px;">📅 '+new Date(n.createdAt).toLocaleString('ar-EG')+(n.createdByName?' · من '+n.createdByName:'')+'</div>';
+html+='<button class="btn btn-primary w-full" onclick="ThemeManager.closeModal();window.markNotifSeen(\''+n.id+'\')">✓ فهمت</button>';
+html+='</div>';
+ThemeManager.openModal(html,'modal-md');
+}catch(e){}
+}
+window.markNotifSeen=function(id){
+try{
+var d=(window.DataService&&DataService._getData)?DataService._getData():{};
+var n=(d.notifications||[]).find(function(x){return x.id===id;});
+if(n){n.seen=true;DataService._saveData(d);
+try{if(window.FirebaseService&&FirebaseService._db)FirebaseService.saveDoc('notifications',n.id,n);}catch(e){}
+}
+}catch(e){}
+};
+checkUrgentNotifs();
+setTimeout(checkUrgentNotifs,2000);
+setTimeout(checkUrgentNotifs,5000);
+})();
+</script>
 </body>
 </html>

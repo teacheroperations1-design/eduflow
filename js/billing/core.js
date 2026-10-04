@@ -111,6 +111,17 @@ return'<span class="bsq" style="background:var(--success);" title="'+e.d+' حص�
 }).join('');
 }
 
+function getMyPendingCancels(){
+  var u=cur(); if(!u) return [];
+  var d=db();
+  var myGroups=(DataService.getStudentTeachers?DataService.getStudentTeachers(u.id):[]).map(function(t){return t.group.id;});
+  return (d.pendingCancelledSessions||[]).filter(function(pc){
+    return myGroups.indexOf(pc.groupId)>=0 && pc.date>new Date().toISOString().slice(0,10);
+  });
+}
+window.BC=window.BC||{};
+window.BC.getMyPendingCancels=getMyPendingCancels;
+
 /* دوال عامة */
 window.BC={
 startMonth:startMonth,monthsUpTo:monthsUpTo,monthName:monthName,localMonth:localMonth,

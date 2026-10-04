@@ -200,7 +200,39 @@ function push(sid,ev,title,msg,extra){ var n={targetUserId:sid,type:extra&&extra
 (d.scheduleChangeLog||[]).forEach(function(l){ if(isNew(l)){ mark(l); var g=gById(l.groupId);
 if(g&&g.teacherId) push(g.teacherId,'schedule_change','🗓️ تعديل موعد مجموعة',(l.groupName||'')+': '+(l.oldDay||'')+' '+(l.oldTime||'')+' → '+(l.newDay||'')+' '+(l.newTime||''),{kind:'schedule_change'});
 studentsOfGroup(l.groupId).forEach(function(sid){ push(sid,'schedule_change','🗓️ موعد حصة اتغير',(l.groupName||'')+' بقى '+(l.newDay||'')+' '+(l.newTime||''),{kind:'schedule_change'}); }); } });
-(d.cancelledSessions||[]).forEach(function(c){ if(isNew(c)){ mark(c); studentsOfGroup(c.groupId).forEach(function(sid){ push(sid,'session_cancel','🚫 حصة اتلغت',(c.reason||'')+' — '+(gById(c.groupId)||{}).name||'',{type:'general'}); }); } });
+(d.cancelledSessions||[]).forEach(function(c){ 
+  if(isNew(c)){ 
+    mark(c); 
+    var tStr=new Date().toISOString().slice(0,10);
+    if((c.date||'')<=tStr){ /* بس لو الحصة النهارده أو فات موعدها */
+      studentsOfGroup(c.groupId).forEach(function(sid){ 
+        push(sid,'session_cancel','🚫 حصة اتلغت',(c.reason||'')+' — '+((gById(c.groupId)||{}).name||''),{type:'general'}); 
+      }); 
+    } else {
+      /* حصة في المستقبل: سجلها في بياناتها بس بدون إشعار مزعج */
+      var pending=d.pendingCancelledSessions=d.pendingCancelledSessions||[];
+      pending.push({id:c.id,date:c.date,groupId:c.groupId,notified:false});
+    }
+  } 
+});
+/* فحص الإشعارات المعلقة: لما يوم الحصة ييجي، نبلغ الطالب */
+var pending=d.pendingCancelledSessions||[];
+var tStr2=new Date().toISOString().slice(0,10);
+var remaining=[];
+pending.forEach(function(pc){
+  if(pc.date<=tStr2 && !pc.notified){
+    var c=(d.cancelledSessions||[]).find(function(x){return x.id===pc.id;});
+    if(c){
+      studentsOfGroup(c.groupId).forEach(function(sid){ 
+        push(sid,'session_cancel','🚫 حصة النهارده اتلغت',(c.reason||'')+' — '+((gById(c.groupId)||{}).name||''),{type:'general'}); 
+      });
+    }
+    pc.notified=true;
+  }
+  if(!pc.notified || pc.date>tStr2) remaining.push(pc);
+});
+d.pendingCancelledSessions=remaining;
+
 (d.attendance||[]).forEach(function(a){ if(isNew(a)&&a.status==='approved'){ mark(a); (a.records||[]).forEach(function(r){ if(r.status==='absent') push(r.studentId,'absent','❌ تسجيل غياب','حصة '+(a.groupName||'')+' — '+(a.date||''),{type:'attendance'}); else if(r.status==='late') push(r.studentId,'late','⏰ تسجيل تأخر','حصة '+(a.groupName||'')+' — '+(a.date||''),{type:'attendance'}); }); } });
 try{
   var groups=(DataService.getGroups?DataService.getGroups():[]);
@@ -321,7 +353,8 @@ row+='<strong style="font-size:14px;flex:1;line-height:1.5;">'+(n.title||'إشع
 if(unread) row+='<span style="background:#6366f1;color:#fff;border-radius:9999px;padding:2px 8px;font-size:10px;white-space:nowrap;flex-shrink:0;">جديد</span>';
 row+='</div>';
 row+='<div style="font-size:13px;margin-top:4px;opacity:.9;line-height:1.6;">'+(n.message||'')+'</div>';
-row+='<div style="font-size:11px;margin-top:8px;opacity:.6;">🕐 '+new Date(n.createdAt||Date.now()).toLocaleString('ar-EG')+'</div>';
+row+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;"><span style="font-size:11px;opacity:.6;">🕐 '+new Date(n.createdAt||Date.now()).toLocaleString('ar-EG')+'</span><button type="button" class="nsbtn" style="padding:2px 8px;font-size:11px;" onclick="event.stopPropagation();window.deleteNotif(\''+n.id+'\')">🗑 حذف</button></div>';
+if(n.meta&&n.meta.event==='absent'&&n.meta.date&&!n.disputed){row+='<button type="button" class="nsbtn" style="margin-top:8px;background:var(--warning-bg);border-color:var(--warning);color:var(--warning);" onclick="window.disputeAbsent&&window.disputeAbsent(\''+n.id+'\',\''+(n.meta.gid||'')+'\',\''+n.meta.date+'\')">✋ أنا كنت حاضر — اعتراض</button>';}
 row+='</div>';
 rowsHtml+=row;
 });
@@ -332,7 +365,7 @@ var html='<div style="font-family:inherit;direction:rtl;text-align:right;max-wid
 html+='<div style="padding:14px 18px;border-bottom:1px solid '+borderC+';display:flex;justify-content:space-between;align-items:center;gap:10px;">';
 html+='<h3 style="margin:0;font-size:16px;font-weight:800;">🔔 الإشعارات'+(unreadN?' <span style="background:#6366f1;color:#fff;border-radius:9999px;padding:2px 8px;font-size:11px;margin-inline-start:6px;">'+unreadN+' جديد</span>':'')+'</h3>';
 html+='<div style="display:flex;gap:6px;align-items:center;">';
-if(items.length) html+='<button type="button" class="nsbtn" onclick="window.markAllNotifsRead()" style="padding:6px 10px;font-size:11px;">✓ الكل مقروء</button>';
+if(items.length) html+='<button type="button" class="nsbtn" onclick="window.markAllNotifsRead()" style="padding:6px 10px;font-size:11px;">✓ الكل مقروء</button><button type="button" class="nsbtn" onclick="window.clearAllNotifs()" style="padding:6px 10px;font-size:11px;color:#f87171;">🗑 مسح الكل</button>';
 html+='<button type="button" class="nsbtn" onclick="window.closeNotifPanel();window.openNotifySettings();" title="إعدادات الإشعارات" style="padding:6px 10px;font-size:13px;">⚙️</button>';
 html+='<button type="button" class="nsbtn" onclick="window.closeNotifPanel()" title="إغلاق" style="padding:6px 10px;font-size:13px;color:'+(isLight?'#ef4444':'#f87171')+';">✕</button>';
 html+='</div></div>';
@@ -364,6 +397,32 @@ openNotifPanel();
 if(window.safeToast) window.safeToast('✓ تم تحديد الكل كمقروء','success');
 }catch(e){}
 };
+
+window.deleteNotif=function(id){
+try{
+var d=db();
+d.notifications=(d.notifications||[]).filter(function(x){return x.id!==id;});
+saveD(d);
+try{if(window.FirebaseService&&FirebaseService._db)FirebaseService.deleteDoc('notifications',id);}catch(e){}
+bumpBadge();
+var o=document.getElementById('npOverlay');if(o)o.remove();
+openNotifPanel();
+}catch(e){}
+};
+window.clearAllNotifs=function(){
+try{
+if(!confirm('مسح كل إشعاراتك القديمة؟ الجديد هيوصل عادي.'))return;
+var ts=targets();var d=db();var keep=[],del=[];
+(d.notifications||[]).forEach(function(x){ if(ts.indexOf(x.targetUserId)>=0){del.push(x);}else keep.push(x); });
+d.notifications=keep;saveD(d);
+del.slice(0,60).forEach(function(x){try{if(window.FirebaseService&&FirebaseService._db)FirebaseService.deleteDoc('notifications',x.id);}catch(e){}});
+bumpBadge();
+var o=document.getElementById('npOverlay');if(o)o.remove();
+openNotifPanel();
+if(window.safeToast)window.safeToast('🗑 اتمسحت الإشعارات القديمة','success');
+}catch(e){}
+};
+
 window.openNotifPanel=openNotifPanel;
 
 /* ========== إعدادات المستخدم (تفصيلية بالأحداث) ========== */
@@ -523,6 +582,98 @@ if(!confirm('رجوع السياسة للافتراضي؟')) return;
 savePolicy(defPolicy());
 window.NotifyPolicy.render();
 }
+};
+
+/* ========== 📢 إشعارات مخصصة (للأدمن/المساعد) ========== */
+window.openCustomNotifyModal=function(){
+try{
+var u=cur(); if(!u||(u.role!=='admin'&&u.role!=='super_admin'&&u.role!=='assistant')) return;
+var d=db();
+var groups=DataService.getGroups?DataService.getGroups():[];
+var html='<div class="modal-header"><h3 class="modal-title">📢 إرسال إشعار مخصص</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">';
+html+='<div class="form-group"><label>🎯 الهدف *</label><select id="cnTarget" class="form-select" onchange="window.cnTargetChange()"><option value="all">كل الطلاب</option><option value="group">مجموعة معينة</option><option value="grade">صف معين</option><option value="student">طالب معين</option></select></div>';
+html+='<div id="cnTargetSelect" style="display:none;"><div class="form-group"><label>اختار *</label><select id="cnTargetValue" class="form-select"></select></div></div>';
+html+='<div class="form-group"><label>📝 العنوان *</label><input type="text" id="cnTitle" class="form-input" placeholder="مثال: امتحان مفاجئ بكرة"></div>';
+html+='<div class="form-group"><label>💬 الرسالة *</label><textarea id="cnMessage" class="form-input" rows="3" placeholder="اكتب تفاصيل الإشعار..."></textarea></div>';
+html+='<div class="form-group"><label>⚡ الأولوية</label><select id="cnPriority" class="form-select"><option value="normal">عادي (في قائمة الإشعارات)</option><option value="important">مهم (يظهر في الهيدر)</option><option value="urgent">عاجل (modal فوري عند الدخول)</option></select></div>';
+html+='<div class="filter-info">💡 الإشعارات العاجلة بتظهر للطالب كـ modal أوتوماتيك أول ما يدخل أو يمسح الباركود</div>';
+html+='<button class="btn btn-primary w-full" onclick="window.sendCustomNotify()">📤 إرسال الإشعار</button>';
+html+='</div>';
+ThemeManager.openModal(html,'modal-md');
+}catch(e){console.error(e);}
+};
+window.cnTargetChange=function(){
+var t=(document.getElementById('cnTarget')||{}).value;
+var sel=document.getElementById('cnTargetSelect');
+var val=document.getElementById('cnTargetValue');
+if(!sel||!val) return;
+if(t==='all'){sel.style.display='none';return;}
+sel.style.display='block';
+var opts='';
+if(t==='group'){
+var groups=DataService.getGroups?DataService.getGroups():[];
+opts=groups.map(function(g){return '<option value="'+g.id+'">'+g.name+'</option>';}).join('');
+}else if(t==='grade'){
+var grades={};
+(DataService.getStudents?DataService.getStudents():[]).forEach(function(s){if(s.grade)grades[s.grade]=1;});
+opts=Object.keys(grades).map(function(g){return '<option value="'+g+'">'+g+'</option>';}).join('');
+}else if(t==='student'){
+opts=(DataService.getStudents?DataService.getStudents():[]).slice(0,100).map(function(s){return '<option value="'+s.id+'">'+s.name+' ('+(s.code||'-')+')</option>';}).join('');
+}
+val.innerHTML=opts;
+};
+window.sendCustomNotify=function(){
+try{
+var u=cur(); if(!u) return;
+var target=(document.getElementById('cnTarget')||{}).value;
+var targetVal=(document.getElementById('cnTargetValue')||{}).value;
+var title=(document.getElementById('cnTitle')||{}).value||'';
+var msg=(document.getElementById('cnMessage')||{}).value||'';
+var priority=(document.getElementById('cnPriority')||{}).value||'normal';
+if(!title||!msg){if(window.safeToast)window.safeToast('اكتب العنوان والرسالة','error');return;}
+var d=db(); d.notifications=d.notifications||[];
+var students=(DataService.getStudents?DataService.getStudents():[]);
+var targets=[];
+if(target==='all'){
+targets=students.map(function(s){return s.id;});
+}else if(target==='group'){
+targets=students.filter(function(s){
+var en=(d.enrollments||[]).find(function(e){return e.studentId===s.id&&e.groupId===targetVal&&e.status==='active';});
+return !!en;
+}).map(function(s){return s.id;});
+}else if(target==='grade'){
+targets=students.filter(function(s){return s.grade===targetVal;}).map(function(s){return s.id;});
+}else if(target==='student'){
+targets=[targetVal];
+}
+if(!targets.length){if(window.safeToast)window.safeToast('مفيش طلاب مطابقين','error');return;}
+var count=0;
+targets.forEach(function(sid){
+var n={
+id:'cn_'+Date.now()+'_'+count,
+targetUserId:sid,
+title:title,
+message:msg,
+type:'custom',
+priority:priority,
+pinned:priority==='urgent',
+createdAt:new Date().toISOString(),
+createdBy:u.id,
+createdByName:u.name
+};
+d.notifications.push(n);
+count++;
+});
+saveD(d);
+targets.slice(0,20).forEach(function(sid){
+try{if(window.FirebaseService&&FirebaseService._db){
+var n={id:'cn_'+Date.now()+'_'+sid,targetUserId:sid,title:title,message:msg,type:'custom',priority:priority,pinned:priority==='urgent',createdAt:new Date().toISOString(),createdBy:u.id};
+FirebaseService.saveDoc('notifications',n.id,n);
+}}catch(e){}
+});
+ThemeManager.closeModal();
+if(window.safeToast)window.safeToast('📤 تم إرسال الإشعار لـ '+count+' طالب','success');
+}catch(e){if(window.safeToast)window.safeToast('خطأ: '+e.message,'error');}
 };
 
 /* ========== تهيئة ========== */

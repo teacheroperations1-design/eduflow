@@ -5,7 +5,7 @@
 ================================================================ */
 (function(){
 "use strict";
-var ALLOW=['due_warn','due_now'];
+var ALLOW=['due_warn','due_now','session_cancel','schedule_change','absence_marked','absence_resolved'];
 var ALL_EVENTS=['hw_new','exam_new','points','praise','absent','late','session_cancel','schedule_change','due_warn','due_now','payment_received','ledger_act','video_new','post_new','material_new','challenge_new','general'];
 function roleOf(uid){try{var u=DataService.getUserById?DataService.getUserById(uid):null;return u?u.role:null;}catch(e){return null;}}
 function force(){

@@ -23,13 +23,141 @@ async function cloudCanc(c,del){ try{ if(window.FirebaseService&&FirebaseService
 function cur(){ try{ return (typeof currentUser!=='undefined'&&currentUser)?currentUser:((window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null); }catch(e){ return null; } }
 function isAdmin(){ var u=cur(); return u&&(u.role==='admin'||u.role==='super_admin'); }
 function localToday(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-function localMonth(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
-function normMonth(m){ return m||localMonth(); }
-function today(){ return localToday(); }
-function monthName(m){ try{ return new Date(normMonth(m)+'-01T12:00:00').toLocaleDateString('ar-EG',{month:'long',year:'numeric'}); }catch(e){ return m; } }
-function monthDays(m){ var y=+m.slice(0,4),mm=+m.slice(5,7),n=new Date(y,mm,0).getDate(),out=[]; for(var i=1;i<=n;i++) out.push(m+'-'+String(i).padStart(2,'0')); return out; }
+function pad2(n){return String(n).padStart(2,'0');}
+function cycKey(n){return 'cycle-'+pad2(n);}
+function nextDay(ds){var d=new Date(ds+'T12:00:00');d.setDate(d.getDate()+1);return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());}
 function startMonth(){ try{ return localStorage.getItem('ldgStartMonth')||'2026-10'; }catch(e){ return '2026-10'; } }
-function monthsList(){ var out=[],curM=localMonth(),m=startMonth(),guard=0; while(m<=curM&&guard<36){ out.push(m); var d=new Date(m+'-01T12:00:00'); d.setMonth(d.getMonth()+1); m=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); guard++; } if(out.indexOf(curM)<0) out.push(curM); return out; }
+function rangesOf(g){
+g=g||{};
+if(g.cycleRanges&&g.cycleRanges.length)return g.cycleRanges;
+return [{n:1,from:(db().platformMeta||{}).countingSince||g.countStart||startMonth()+'-01',to:null}];
+}
+function currentCycleNum(){
+var maxN=1;
+groups().forEach(function(g){(g.cycleRanges||[]).forEach(function(r){if(r.to==null&&r.n>maxN)maxN=r.n;});});
+return maxN;
+}
+function localMonth(){ return cycKey(currentCycleNum()); }
+function normMonth(m){ return m||localMonth(); }
+function rangeOf(gid,cycle){
+var g=gById(gid);var rs=rangesOf(g);
+var n=parseInt(String(cycle).replace('cycle-',''))||1;
+for(var i=0;i<rs.length;i++){if(rs[i].n===n)return rs[i];}
+return rs[rs.length-1]||{n:n,from:startMonth()+'-01',to:null};
+}
+
+function cycleOfDate(gid,ds){
+if(!ds)return null;
+var g=gById(gid);var rs=rangesOf(g);
+for(var i=0;i<rs.length;i++){if(ds>=rs[i].from&&(!rs[i].to||ds<=rs[i].to))return cycKey(rs[i].n);}
+return null;
+}
+function payInMonth(p,gid,month){
+if((p.month||'')===month)return true;
+if(/^\d{4}-\d{2}$/.test(p.month||''))return cycleOfDate(gid,(p.paidAt||p.createdAt||'').slice(0,10))===month;
+var m1=String(p.month||'').match(/^cycle-(\d+)$/);if(m1)return cycKey(parseInt(m1[1]))===month;
+return false;
+}
+function msInMonth(ms,gid,month){
+if((ms.month||'')===month)return true;
+if(/^\d{4}-\d{2}$/.test(ms.month||''))return cycleOfDate(gid,(ms.addedAt||'').slice(0,10))===month;
+var m2=String(ms.month||'').match(/^cycle-(\d+)$/);if(m2)return cycKey(parseInt(m2[1]))===month;
+return false;
+}
+
+function cycleName(c){
+var num=parseInt(String(c).replace('cycle-',''))||1;
+var ord=['الأول','الثاني','الثالث','الرابع','الخامس','السادس','السابع','الثامن','التاسع','العاشر','الحادي عشر','الثاني عشر'];
+return 'الشهر '+(ord[num-1]||num);
+}
+function fmtD(ds){try{return new Date(ds+'T12:00:00').toLocaleDateString('ar-EG',{day:'numeric',month:'long'});}catch(e){return ds;}}
+function cycleRange(gid,cycle){
+var g=gById(gid);if(!g)return '';
+var r=rangeOf(gid,cycle);
+return fmtD(r.from)+' → '+(r.to?fmtD(r.to):'مستمر الآن');
+}
+function monthName(m,gid){
+if(String(m).startsWith('cycle-')){
+var base=cycleName(m);
+if(gid)return base+' ('+cycleRange(gid,m)+')';
+return base;
+}
+return m;
+}
+function today(){ return localToday(); }
+function daysInRange(from,to){
+var out=[];var cur=from;var guard=0;
+while(cur<=to&&guard<500){out.push(cur);cur=nextDay(cur);guard++;}
+return out;
+}
+function monthDays(m,gid){
+if(String(m).startsWith('cycle-')){
+var r=gid?rangeOf(gid,m):null;
+if(!r)return [];
+var to=r.to||localToday();if(to>localToday())to=localToday();
+if(r.from>to)return [];
+return daysInRange(r.from,to);
+}
+var y=+m.slice(0,4),mm=+m.slice(5,7),n=new Date(y,mm,0).getDate(),out=[];
+for(var i=1;i<=n;i++)out.push(m+'-'+pad2(i));
+return out;
+}
+function monthsList(){
+var out=[];var maxN=currentCycleNum();
+for(var i=1;i<=maxN+1;i++)out.push(cycKey(i));
+return out;
+}
+/* ========== 🔁 ترحيل البيانات القديمة (مرة واحدة تلقائياً) ========== */
+function migrateCycles(){
+var d=db();
+if(d.cycleMigrated)return;
+var gs=groups();
+gs.forEach(function(g){
+if(g.cycleRanges&&g.cycleRanges.length)return;
+var dates=[];
+(d.attendance||[]).forEach(function(a){if(a.groupId===g.id&&a.status==='approved'&&a.date)dates.push(a.date);});
+Object.keys(d.sessionFlags||{}).forEach(function(k){if(k.indexOf(g.id+'__')===0){(d.sessionFlags[k].take||[]).forEach(function(t){if(t)dates.push(t);});}});
+dates.sort();
+var req=reqOf(g);var ranges=[];var n=1;
+if(!dates.length){ranges.push({n:1,from:(d.platformMeta||{}).countingSince||g.countStart||startMonth()+'-01',to:null});}
+else{
+for(var i=0;i<dates.length;i+=req){
+var from=dates[i];var to=dates[Math.min(i+req-1,dates.length-1)];
+var closed=(i+req)<=dates.length;
+ranges.push({n:n,from:from,to:closed?to:null});
+n++;
+}
+if(ranges[ranges.length-1].to!=null)ranges.push({n:n,from:nextDay(ranges[ranges.length-1].to),to:null});
+}
+g.cycleRanges=ranges;
+});
+gs.forEach(function(g){try{if(DataService.updateGroup)DataService.updateGroup(g.id,{cycleRanges:g.cycleRanges});}catch(e){}});
+function cycOfDate(gid,ds){
+var g=gById(gid);var rs=(g&&g.cycleRanges)||[];
+for(var i=0;i<rs.length;i++){if(ds>=rs[i].from&&(!rs[i].to||ds<=rs[i].to))return cycKey(rs[i].n);}
+return rs.length?cycKey(rs[rs.length-1].n):cycKey(1);
+}
+function normKey(mm,gid,fb){
+if(/^\d{4}-\d{2}$/.test(mm))return cycOfDate(gid,(fb||mm+'-15').slice(0,10));
+var mN=String(mm).match(/^cycle-(\d+)$/);
+if(mN)return cycKey(parseInt(mN[1]));
+return mm;
+}
+(d.payments||[]).forEach(function(p){p.month=normKey(String(p.month||''),p.groupId,p.paidAt||p.createdAt);});
+(d.manualSessions||[]).forEach(function(ms){ms.month=normKey(String(ms.month||''),ms.groupId,ms.addedAt);});
+var nf={};
+Object.keys(d.sessionFlags||{}).forEach(function(k){
+var parts=k.split('__');var nk=parts[0]+'__'+normKey(parts[1]||'',parts[0]);
+if(nf[nk]){nf[nk].cancel=(nf[nk].cancel||[]).concat(d.sessionFlags[k].cancel||[]);nf[nk].take=(nf[nk].take||[]).concat(d.sessionFlags[k].take||[]);nf[nk].remove=(nf[nk].remove||[]).concat(d.sessionFlags[k].remove||[]);}
+else nf[nk]=d.sessionFlags[k];
+});
+d.sessionFlags=nf;
+var w={};Object.keys(d.warn7||{}).forEach(function(k){var p=k.split('__');w[p[0]+'__'+normKey(p[1]||'',p[0])]=1;});d.warn7=w;
+var d8={};Object.keys(d.due8||{}).forEach(function(k){var p=k.split('__');d8[p[0]+'__'+normKey(p[1]||'',p[0])]=1;});d.due8=d8;
+d.cycleMigrated=1;
+saveD(d);
+}
+
 var WD=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 function groups(){ return (DataService.getGroups?DataService.getGroups():[]); }
 function gById(id){ return groups().find(function(g){return g.id===id;}); }
@@ -47,7 +175,7 @@ return list;
 /* العداد اليدوي = أكبر مجموع لكل طالب (مش مجموع الكل) */
 function manualCount(gid,month){
 var per={};
-(db().manualSessions||[]).forEach(function(ms){ if(ms.groupId===gid&&(ms.month||'')===month&&(!ms.type||ms.type==='counter')){ var k=ms.studentId||'__g__'; per[k]=(per[k]||0)+(ms.sessionsCount||0); } });
+(db().manualSessions||[]).forEach(function(ms){ if(ms.groupId===gid&&msInMonth(ms,gid,month)&&(!ms.type||ms.type==='counter')){ var k=ms.studentId||'__g__'; per[k]=(per[k]||0)+(ms.sessionsCount||0); } });
 var mx=0; Object.keys(per).forEach(function(k){ if(per[k]>mx) mx=per[k]; });
 return mx;
 }
@@ -94,8 +222,10 @@ LU._sesCache=LU._sesCache||{};
 var ck=gid+'|'+month; if(LU._sesCache[ck]) return LU._sesCache[ck];
 var g=gById(gid)||{}; var req=reqOf(g); var tStr=localToday();
 var fl0=getFlags(gid,month); var removed={}; (fl0.remove||[]).forEach(function(d){ removed[d]=1; });
-var att=(DataService.getAttendance?DataService.getAttendance():[]).filter(function(a){return a.groupId===gid&&a.status==='approved'&&(a.date||'').startsWith(month);});
-var canc=(DataService.getCancelledSessions?DataService.getCancelledSessions():[]).filter(function(c){return c.groupId===gid&&(c.date||'').startsWith(month);});
+var rng=rangeOf(gid,month);
+function inR(ds){return !!ds&&ds>=rng.from&&(!rng.to||ds<=rng.to);}
+var att=(DataService.getAttendance?DataService.getAttendance():[]).filter(function(a){return a.groupId===gid&&a.status==='approved'&&inR(a.date||'');});
+var canc=(DataService.getCancelledSessions?DataService.getCancelledSessions():[]).filter(function(c){return c.groupId===gid&&inR(c.date||'');});
 var madeupDates={}; canc.forEach(function(c){ if(c.makeupStatus==='done'&&c.makeupDate) madeupDates[c.makeupDate]=1; });
 function isBad(c){ return c&&c.makeupStatus!=='done'; }
 function findCanc(ds){ for(var i=0;i<canc.length;i++){ if(canc[i].date===ds) return canc[i]; } return null; }
@@ -104,16 +234,19 @@ att.forEach(function(a){ if(removed[a.date]) return; var c=findCanc(a.date); if(
 /* 🟢 أوتوماتيك: موعد الحصة في الجدول عدّى من غير إلغاء ولا حذف → مربع أخضر لوحده */
 var sch=(g.schedules&&g.schedules.length)?g.schedules:(g.day?[{day:g.day}]:[]);
 var nowDt=new Date(); var nowMin=nowDt.getHours()*60+nowDt.getMinutes();
-monthDays(month).forEach(function(ds){
+var meta=(db().platformMeta||{});
+if(meta.countingActive===true){
+monthDays(month,gid).forEach(function(ds){
 if(ds>tStr) return;
 if(removed[ds]) return;
 var wd=WD[new Date(ds+'T12:00:00').getDay()]; var hit=false; var sMin=-1;
 for(var i=0;i<sch.length;i++){ if(sch[i].day===wd){ hit=true; var tt=String(sch[i].time||'00:00').split(':'); sMin=(+tt[0])*60+(+(tt[1]||0)); break; } }
 if(!hit) return;
-if(ds===tStr&&sMin>=0&&nowMin<sMin) return; /* النهارده: ميتلونش إلا بعد معاد الحصة */
+if(ds===tStr&&sMin>=0&&nowMin<sMin) return;
 var c=findCanc(ds); if(isBad(c)) return;
 if(!greens[ds]) greens[ds]=madeupDates[ds]?'madeup':'done';
 });
+}
 var M=manualCount(gid,month);
 var ev=[]; Object.keys(greens).sort().forEach(function(d){ ev.push({t:greens[d],d:d}); });
 var tot=ev.length+M; while(ev.length<tot) ev.unshift({t:'manual',d:''});
@@ -131,7 +264,9 @@ ev.sort(function(a,b){ return String(a.d||'0000-00-00').localeCompare(String(b.d
 var done=0; ev.forEach(function(e){ if(e.t!=='cancelled') done++; });
 if(g.sessionNow>0&&(g.sessionNowMonth||'')===month){ while(done<+g.sessionNow&&ev.length<req+12){ ev.unshift({t:'manual',d:''}); done++; } }
 var warnAt=(g.warnAt!=null&&g.warnAt!=='')?+g.warnAt:(req-1);
-var res={events:ev,done:done,required:req,complete:done>=req,remaining:Math.max(0,req-done),manual:M,isPast:month<localMonth(),warnAt:warnAt};
+var cycleNum=parseInt(String(month).replace('cycle-',''))||1;
+var curCycleNum=parseInt(String(localMonth()).replace('cycle-',''))||1;
+var res={events:ev,done:done,required:req,complete:done>=req,remaining:Math.max(0,req-done),manual:M,isPast:cycleNum<curCycleNum,warnAt:warnAt};
 LU._sesCache[ck]=res;
 return res;
 };
@@ -163,7 +298,7 @@ if(!e.d&&!e.flag) btns='<button class="btn btn-danger btn-sm" onclick="LedgerUI.
 var ic=e.t==='cancelled'?'🟥':(e.t==='madeup'?'🟦':(e.t==='manual'?'📥':''));
 return '<div class="sub-row" style="margin-bottom:6px;padding:8px;"><div>'+ic+' <strong>مربع '+(i+1)+':</strong> '+lbl+(e.flag?' <span class="badge badge-info">يدوي</span>':'')+(e.t==='madeup'?' <span class="badge badge-info">تعويضية</span>':'')+'</div><div style="white-space:nowrap;">'+btns+'</div></div>';
 }).join('');
-ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">✏️ مربعات حصص: '+g.name+' — '+monthName(month)+'</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">'
+ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">✏️ مربعات حصص: '+g.name+' — '+monthName(month, gid)+'</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">'
 +'<div class="filter-info">💡 الحالي: <strong>'+ses.done+'/'+ses.required+'</strong> · المتبقي حصص: <strong>'+ses.remaining+'</strong> · 🔔 الإنذار عند حصة <strong>'+ses.warnAt+'</strong>'+(ses.isPast?' · <span class="badge badge-muted">🔒 شهر منتهي</span>':'')+'</div>'
 +'<div class="card" style="padding:10px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;"><div class="text-sm">🔔 إنذار الدفع عند الحصة رقم <b style="font-family:var(--font-en);">'+ses.warnAt+'</b> من '+ses.required+'</div><div style="display:flex;gap:6px;align-items:center;"><input type="number" id="sqWarnAt" class="form-input" style="width:80px;" min="1" max="'+ses.required+'" value="'+ses.warnAt+'"><button class="btn btn-secondary btn-sm" onclick="LedgerUI.setWarnAt(\''+gid+'\',\''+month+'\')">💾 حفظ</button></div></div>'
 +'<div class="card" style="padding:10px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;"><div class="text-sm">📥 حصص مرحّلة على كل الطلاب: <b style="font-family:var(--font-en);">'+(ses.manual||0)+'</b></div><div style="display:flex;gap:6px;"><button class="btn btn-danger btn-sm" onclick="LedgerUI.carryDec(\''+gid+'\',\''+month+'\')">➖ أنقص</button><button class="btn btn-success btn-sm" onclick="LedgerUI.carryInc(\''+gid+'\',\''+month+'\')">➕ زوّد</button></div></div>'
@@ -239,7 +374,7 @@ LU.carryDec=async function(gid,month){
 try{
 var d=db(); var touched=[]; var any=false;
 studentsOf(gid).forEach(function(s){
-var arr=(d.manualSessions||[]).filter(function(ms){ return ms.groupId===gid&&ms.studentId===s.id&&(ms.month||'')===month&&(!ms.type||ms.type==='counter')&&(ms.sessionsCount||0)>0; });
+var arr=(d.manualSessions||[]).filter(function(ms){ return ms.groupId===gid&&ms.studentId===s.id&&msInMonth(ms,gid,month)&&(!ms.type||ms.type==='counter')&&(ms.sessionsCount||0)>0; });
 if(!arr.length) return;
 arr.sort(function(a,b){ return String(b.addedAt||'').localeCompare(String(a.addedAt||'')); });
 var t=arr[0]; t.sessionsCount-=1; any=true;
@@ -257,7 +392,7 @@ try{
 var d=db(); d.manualSessions=d.manualSessions||[]; var touched=[];
 var sts=studentsOf(gid); if(!sts.length){ if(window.safeToast) window.safeToast('مفيش طلاب في المجموعة','error'); return; }
 sts.forEach(function(s){
-var arr=(d.manualSessions||[]).filter(function(ms){ return ms.groupId===gid&&ms.studentId===s.id&&(ms.month||'')===month&&(!ms.type||ms.type==='counter'); });
+var arr=(d.manualSessions||[]).filter(function(ms){ return ms.groupId===gid&&ms.studentId===s.id&&msInMonth(ms,gid,month)&&(!ms.type||ms.type==='counter'); });
 if(arr.length){ arr.sort(function(a,b){ return String(b.addedAt||'').localeCompare(String(a.addedAt||'')); }); arr[0].sessionsCount=(arr[0].sessionsCount||0)+1; touched.push(arr[0]); }
 else { var ms={id:'ms_'+Date.now()+'_'+s.id,groupId:gid,studentId:s.id,month:month,sessionsCount:1,type:'counter',reason:'إضافة يدوية',addedBy:(cur()||{}).id||'',addedAt:new Date().toISOString()}; d.manualSessions.push(ms); touched.push(ms); }
 });
@@ -270,7 +405,7 @@ finally{ LU.refresh(); try{ LU.editSquares(gid,month); }catch(e){} }
 
 /* ========== 💰 الدفعات ========== */
 function paysFor(sid,gid){ return (db().payments||[]).filter(function(p){return p.studentId===sid&&p.groupId===gid;}).sort(function(a,b){return String(a.month).localeCompare(String(b.month));}); }
-function payFor(sid,gid,month){ return paysFor(sid,gid).find(function(p){return (p.month||'')===month;})||null; }
+function payFor(sid,gid,month){ return paysFor(sid,gid).find(function(p){return payInMonth(p,gid,month);})||null; }
 function paidOf(p){ return p?(p.paidAmount||0):0; }
 function histSum(p){ return ((p&&p.history)||[]).reduce(function(a,h){return a+(h.amount||0);},0); }
 function dueMonths(sid,gid,fee){
@@ -303,11 +438,11 @@ if(!ps.length) return '<span class="text-xs text-muted">لا دفعات</span> '
 return ps.map(function(p){ return (p.history||[]).map(function(h){ return '<span class="ldg-chip" title="دفعة '+h.amount+' ج.م بتاريخ '+h.date+' — دوس للتعديل" onclick="LedgerUI.editHistory(\''+sid+'\',\''+gid+'\')">💵 '+String(h.date||'').slice(5,10)+' : '+h.amount+'</span>'; }).join(''); }).join('')
 +'<button class="btn btn-ghost btn-sm" title="دفعة يدوية" onclick="LedgerUI.payModal(\''+sid+'\',\''+gid+'\')">➕</button>';
 }
-function badgeOf(f,ses,month){
+function badgeOf(f,ses,month,gid){
 var h='';
-if(f.isLate) h+='<span class="badge badge-danger">⚠️ متأخر: '+f.debts.map(monthName).join('، ')+'</span> ';
-if(f.isPaid) h+='<span class="badge badge-success">✓ مسدد '+monthName(month)+'</span>';
-else if(f.isDue) h+= f.paid>0 ? '<span class="badge badge-danger">💰 متبقي من شهرية '+monthName(month)+': '+(f.total-f.paid)+'</span>' : '<span class="badge badge-danger">💰 مطلوب شهرية '+monthName(month)+'</span>';
+if(f.isLate) h+='<span class="badge badge-danger">⚠️ متأخر: '+f.debts.map(function(dm){return monthName(dm, gid);}).join('، ')+'</span> ';
+if(f.isPaid) h+='<span class="badge badge-success">✓ مسدد '+monthName(month, gid)+'</span>';
+else if(f.isDue) h+= f.paid>0 ? '<span class="badge badge-danger">💰 متبقي من شهرية '+monthName(month, gid)+': '+(f.total-f.paid)+'</span>' : '<span class="badge badge-danger">💰 مطلوب شهرية '+monthName(month, gid)+'</span>';
 else if(f.isWarn) h+='<span class="badge badge-warning">🔔 إنذار الدفع ('+ses.done+'/'+ses.required+')</span>';
 else if(f.isPartial) h+='<span class="badge badge-warning">مقدم '+f.paid+'/'+f.total+' (لسه مكملش الحصص)</span>';
 else h+='<span class="text-xs text-muted">لسه — '+ses.done+'/'+ses.required+'</span>';
@@ -340,7 +475,7 @@ return '<div class="card" style="padding:10px;margin-bottom:12px;"><div style="d
 +'<select class="form-select" onchange="LedgerUI.fset(\'grade\',this.value)"><option value="">🎓 كل الصفوف</option>'+gradeList.map(function(g){return '<option value="'+g+'" '+(f.grade===g?'selected':'')+'>'+g+'</option>';}).join('')+'</select>'
 +'<select class="form-select" onchange="LedgerUI.fset(\'gid\',this.value)"><option value="">👥 كل المجموعات المطابقة ('+preGroups.length+')</option>'+preGroups.map(function(g){return '<option value="'+g.id+'" '+(gidVal===g.id?'selected':'')+'>'+g.name+' ('+(g.grade||'-')+')</option>';}).join('')+'</select>'
 +'<select class="form-select" onchange="LedgerUI.fset(\'status\',this.value)"><option value="">💳 كل الحالات</option><option value="paid" '+(f.status==='paid'?'selected':'')+'>✓ دفعوا</option><option value="warn" '+(f.status==='warn'?'selected':'')+'>🔔 إنذار الدفع</option><option value="due" '+(f.status==='due'?'selected':'')+'>💰 مطلوب الآن</option><option value="late" '+(f.status==='late'?'selected':'')+'>⚠️ متأخرين مرحّلين</option></select>'
-+'<select class="form-select" onchange="LedgerUI.fset(\'month\',this.value)">'+months.map(function(m){return '<option value="'+m+'" '+(nm===m?'selected':'')+'>'+monthName(m)+(m<localMonth()?' 🔒':'')+'</option>';}).join('')+'</select>'
++'<select class="form-select" onchange="LedgerUI.fset(\'month\',this.value)">'+months.map(function(m){return '<option value="'+m+'" '+(nm===m?'selected':'')+'>'+monthName(m,f.gid||'')+(parseInt(m.replace('cycle-',''))<parseInt(localMonth().replace('cycle-',''))?' 🔒':'')+'</option>';}).join('')+'</select>'
 +'<input type="text" id="ldgQ_'+LU._ctx+'" class="form-input" placeholder="🔍 بحث طالب..." value="'+(f.q||'')+'" oninput="LedgerUI.fset(\'q\',this.value)">'
 +'</div></div>';
 }
@@ -394,7 +529,9 @@ return '<div style="display:flex;justify-content:space-between;align-items:cente
 +'<div class="ldg-toolbar" style="margin:0;">'
 +'<button class="btn btn-ghost btn-sm" onclick="LedgerUI.refreshBtn()">🔄 تحديث</button>'
 +'<button class="btn btn-warning btn-sm" onclick="window.openBulkBackfillModal&&window.openBulkBackfillModal()">📥 ترحيل حصص</button>'
-+'<button class="btn btn-danger btn-sm" onclick="LedgerUI.resetSquaresModal()">🧹 تصفير المربعات</button>'
++'<button class="btn btn-warning btn-sm" onclick="LedgerUI.openCancelModal()">🚫 إلغاء حصة</button>'
++(isAdmin()?'<button class="btn btn-danger btn-sm" onclick="LedgerUI.resetSquaresModal()">🧹 تصفير المربعات</button>':'')
++(isAdmin()?'<button class="btn btn-'+(LU.countingState().active?'success':'danger')+' btn-sm" onclick="LedgerUI.toggleCounting()">'+(LU.countingState().active?('▶️ العد شغال من '+LU.countingState().since):'🧊 العد موقوف — دوس لبدء العد')+'</button>':'')
 +'</div></div>';
 }
 function tickClock(){
@@ -441,7 +578,7 @@ dueMonths(s.id,g.id,feeOf(g)).forEach(function(x){ if(x.month<m) rows.push({s:s,
 });
 if(!rows.length) return '';
 return '<div class="card" style="border-color:var(--danger);margin-bottom:12px;"><div class="card-header"><h3 class="card-title" style="color:var(--danger);">⚠️ متأخرات مرحّلة ('+rows.length+')</h3><span class="points-badge">'+rows.reduce(function(a,r){return a+r.rem;},0)+' ج.م</span></div><div style="padding:10px;">'
-+rows.map(function(r){ return '<div class="ldg-lrow" style="border-right:3px solid var(--danger);"><div style="flex:1;"><strong>'+(r.s?r.s.name:'-')+'</strong><div class="text-xs text-muted">'+(r.g?r.g.name:'-')+' · شهرية '+monthName(r.month)+' · متبقي '+r.rem+' ج.م</div></div><div style="display:flex;gap:4px;"><button class="btn btn-success btn-sm" onclick="LedgerUI.payModal(\''+r.s.id+'\',\''+r.g.id+'\',\''+r.month+'\')">💰 تحصيل</button><button class="btn btn-ghost btn-sm" onclick="LedgerUI.studentDetails(\''+r.s.id+'\')">👁</button></div></div>'; }).join('')
++rows.map(function(r){ return '<div class="ldg-lrow" style="border-right:3px solid var(--danger);"><div style="flex:1;"><strong>'+(r.s?r.s.name:'-')+'</strong><div class="text-xs text-muted">'+(r.g?r.g.name:'-')+' · شهرية '+monthName(r.month, r.g.id)+' · متبقي '+r.rem+' ج.م</div></div><div style="display:flex;gap:4px;"><button class="btn btn-success btn-sm" onclick="LedgerUI.payModal(\''+r.s.id+'\',\''+r.g.id+'\',\''+r.month+'\')">💰 تحصيل</button><button class="btn btn-ghost btn-sm" onclick="LedgerUI.studentDetails(\''+r.s.id+'\')">👁</button></div></div>'; }).join('')
 +'</div></div>';
 }
 function listsHtml(rows,month){
@@ -457,7 +594,7 @@ return '<div class="ldg-lrow" style="border-right:3px solid var(--success);"><di
 h+='</div></div>';
 h+='<div class="card"><div class="card-header"><h3 class="card-title" style="color:var(--danger);">❌ لسه مدفوعوش '+monthName(month)+' ('+unpaid.length+')</h3><span class="points-badge">'+unSum+' ج.م</span></div><div style="padding:10px;">';
 h+=unpaid.length?unpaid.map(function(r){
-var dueTxt=r.f.dueAll.length?r.f.dueAll.map(function(x){return monthName(x.month)+': '+x.rem;}).join(' + '):'إنذار مبكر — لسه مفيش شهر مكمل';
+var dueTxt=r.f.dueAll.length?r.f.dueAll.map(function(x){return monthName(x.month, r.g.id)+': '+x.rem;}).join(' + '):'إنذار مبكر — لسه مفيش شهر مكمل';
 var tag=r.f.isLate?'⚠️ متأخرات':(r.f.isDue?'💰 مستحقة الآن':'🔔 إنذار الدفع');
 return '<div class="ldg-lrow" style="border-right:3px solid '+(r.f.isWarn&&!r.f.isDue&&!r.f.isLate?'var(--warning)':'var(--danger)')+';"><div style="flex:1;"><strong>'+r.s.name+'</strong> <span class="badge '+(r.f.isWarn&&!r.f.isDue&&!r.f.isLate?'badge-warning':'badge-danger')+'">'+tag+'</span><div class="text-xs text-muted">'+r.g.name+' · مطلوب: '+dueTxt+' · حصصه: '+r.ses.done+'/'+r.ses.required+'</div></div><div style="display:flex;gap:4px;align-items:center;">'+(r.f.isWarn&&!r.f.isDue?'<button class="btn btn-secondary btn-sm" onclick="LedgerUI.notifyBringFee(\''+r.s.id+'\',\''+r.g.id+'\')">🔔 بلّغه</button>':'')+'<button class="btn btn-success btn-sm" onclick="LedgerUI.payModal(\''+r.s.id+'\',\''+r.g.id+'\')">💰 تحصيل</button><button class="btn btn-ghost btn-sm" onclick="LedgerUI.studentDetails(\''+r.s.id+'\')">👁 تفاصيل</button></div></div>';
 }).join(''):'<p class="text-xs text-muted">الكل دافع 🎉</p>';
@@ -468,6 +605,7 @@ return h;
 /* ========== 🔔 إشعار مرة واحدة فقط لكل مجموعة/شهر ========== */
 function scanNotify(gs,month){
 try{
+if((db().platformMeta||{}).countingActive!==true) return; /* 🧊 مفيش إنذارات والعد موقوف */
 var d=db(); d.warn7=d.warn7||{}; d.due8=d.due8||{};
 gs.forEach(function(g){
 var ses=LU.groupSessions(g.id,month); var key=g.id+'__'+month; var fee=feeOf(g);
@@ -523,6 +661,15 @@ var fee=feeOf(g);
 var collected=rows.reduce(function(a,r){return a+r.f.paid;},0);
 var remaining=rows.reduce(function(a,r){return a+r.f.totalRem;},0);
 var tName=(DataService.getUserById&&g.teacherId)?((DataService.getUserById(g.teacherId)||{}).name||'-'):'-';
+var pend=(mode!=='view')?pendingSessionDates(g.id,month):[];
+var pendHtml='';
+if(pend.length){
+pendHtml='<div style="margin:8px 12px 0;padding:8px 10px;border:1px dashed var(--warning);border-radius:10px;background:rgba(251,191,36,.06);">'
++'<div class="text-xs" style="font-weight:800;color:var(--warning);margin-bottom:6px;">⏳ حصص عدّت من غير تسجيل (آخر 10 أيام) — سوّيها قبل آخر اليوم:</div>'
++pend.slice(-3).map(function(ds){ return '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:4px;"><span class="text-xs" style="font-family:var(--font-en);font-weight:800;">'+ds+'</span><button class="btn btn-success btn-sm" onclick="LedgerUI.confirmSession(\''+g.id+'\',\''+ds+'\')">✅ تأكيد حضور الطلاب</button><button class="btn btn-danger btn-sm" onclick="LedgerUI.cancelSessionQuick(\''+g.id+'\',\''+ds+'\')">🚫 الحصة اتلغت</button></div>'; }).join('')
++(pend.length>3?'<div class="text-xs text-muted">+ '+(pend.length-3)+' يوم تاني معلّق — سوّيهم من زرار 🚫 إلغاء حصة في التولبار</div>':'')
++'</div>';
+}
 var head='<div class="ldg-ghead">'
 +'<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;">'
 +'<div style="font-weight:800;font-size:13px;">👥 '+g.name+' <span class="text-xs text-muted">· 👨‍ '+tName+' · 🏢 '+(g.center||'-')+' · '+(g.grade||'-')+' · 💰 '+fee+' · '+rows.length+' طالب</span> '+(ses.isPast?'<span class="badge badge-muted">🔒 منتهي</span>':'')+' <span class="badge badge-info">🔔 إنذار عند '+ses.warnAt+'</span></div>'
@@ -536,6 +683,7 @@ var head='<div class="ldg-ghead">'
 +((!ses.isPast&&ses.complete&&month===localMonth())?'<button class="btn btn-warning btn-sm" onclick="LedgerUI.requestMonthTransition(\''+g.id+'\')">🔄 طلب انتقال للشهر الجديد</button>':'')
 +'</div></div>'
 +sqStrip(ses)
++pendHtml
 +'<div class="text-xs text-muted" style="margin-top:6px;">🟩 بتاريخ = حصة فعلية · 🟦 ↺ = تعويضية · 📥 = مرحّلة · 🟥 = ملغاة · ⬜ لسه — المتبقي محسوب من حصص المجموعة</div></div>';
 if(!rows.length) return '<div class="ldg-gcard">'+head+'<div class="text-xs text-muted" style="padding:10px;">لا طلاب مطابقين</div></div>';
 var editFn=(typeof window.openEditStudentProfile==='function')?'window.openEditStudentProfile':((typeof window.openStudentModal==='function')?'window.openStudentModal':null);
@@ -545,7 +693,7 @@ return '<tr>'
 +'<td data-label="#">'+(i+1)+'</td>'
 +'<td data-label="الطالب"><strong>'+s.name+'</strong><div class="text-xs text-muted">'+(s.code||'')+' · '+(s.grade||'')+' · 📱 '+(s.parentPhone||'-')+'</div></td>'
 +'<td data-label="الدفعات">'+histChips(s.id,g.id)+'</td>'
-+'<td data-label="الحالة">'+badgeOf(r.f,ses,month)+'</td>'
++'<td data-label="الحالة">'+badgeOf(r.f,ses,month,g.id)+'</td>'
 +(mode==='view'?'':'<td data-label="إجراءات" style="white-space:nowrap;">'
 +'<button class="btn btn-success btn-sm" title="تحصيل" onclick="LedgerUI.payModal(\''+s.id+'\',\''+g.id+'\',\''+month+'\')">💰</button> '
 +(editFn?'<button class="btn btn-ghost btn-sm" title="تعديل" onclick="'+editFn+'(\''+s.id+'\')">✏️</button> ':'')
@@ -564,7 +712,9 @@ var f=LU._st; f.month=normMonth(f.month);
 var gs=groupFilter(myGroups());
 var rows=buildRows(gs,f.month);
 scanNotify(gs,f.month);
-var html=toolbarHtml()+filtersHtml()+filterSummaryHtml(gs)+statsHtml(rows,gs,f.month)+carryHtml(f.month,gs);
+var html=toolbarHtml();
+if(!LU.countingState().active){ html+='<div class="filter-info" style="background:var(--warning-bg);border-color:var(--warning);color:var(--warning);margin-bottom:10px;">🧊 <strong>العد موقوف:</strong> المربعات مش بتتحسب أوتوماتيك ومش هتظهر اعتمادات — دوس "🧊 العد موقوف — دوس لبدء العد" من فوق أول ما تخلص إدخال البيانات وتبدأ فعلاً.</div>'; }
+html+=filtersHtml()+filterSummaryHtml(gs)+statsHtml(rows,gs,f.month)+carryHtml(f.month,gs);
 gs.forEach(function(g){ html+=groupCard(g,f.month,'edit',rows); });
 html+=listsHtml(rows,f.month);
 host.innerHTML=html||'<div class="card" style="text-align:center;padding:30px;">لا مجموعات</div>';
@@ -595,7 +745,7 @@ LU.openModal=function(gid){
 try{
 var g=gById(gid); var month=normMonth(LU._st.month);
 window.__ldgModalOpen={gid:gid,mode:'edit'};
-ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">📒 '+g.name+' — '+monthName(month)+'</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body" style="max-height:70vh;overflow:auto;"><div id="ldgModalContent">'+groupCard(g,month,'edit')+'</div></div>','modal-lg');
+ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">📒 '+g.name+' — '+monthName(month, gid)+'</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body" style="max-height:70vh;overflow:auto;"><div id="ldgModalContent">'+groupCard(g,month,'edit')+'</div></div>','modal-lg');
 }catch(e){ console.error(e); }
 };
 
@@ -799,13 +949,14 @@ var dms=dueMonths(sid,g.id,feeOf(g));
 var ses=LU.groupSessions(g.id,normMonth(LU._st.month));
 html+='<div class="card" style="padding:10px;margin-bottom:10px;"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><strong>👥 '+g.name+'</strong><span class="text-xs text-muted">الشهرية '+feeOf(g)+' · الحصص دلوقتي '+ses.done+'/'+ses.required+' · 🔔 إنذار عند '+ses.warnAt+'</span></div>';
 if(dms.length){ anyDue=true;
-html+='<div style="margin-top:8px;">'+dms.map(function(x){ return '<div class="ldg-lrow" style="border-right:3px solid var(--danger);"><div class="text-sm">📅 شهرية '+monthName(x.month)+' — مطلوب <strong>'+x.rem+'</strong> (من '+x.fee+' · مدفوع '+x.paid+')</div><button class="btn btn-success btn-sm" onclick="LedgerUI.payModal(\''+sid+'\',\''+g.id+'\',\''+x.month+'\')">💰 تحصيل</button></div>'; }).join('')+'</div>';
+html+='<div style="margin-top:8px;">'+dms.map(function(x){ return '<div class="ldg-lrow" style="border-right:3px solid var(--danger);"><div class="text-sm">📅 شهرية '+monthName(x.month, g.id)+' — مطلوب <strong>'+x.rem+'</strong> (من '+x.fee+' · مدفوع '+x.paid+')</div><button class="btn btn-success btn-sm" onclick="LedgerUI.payModal(\''+sid+'\',\''+g.id+'\',\''+x.month+'\')">💰 تحصيل</button></div>'; }).join('')+'</div>';
 }else{ html+='<div class="text-xs" style="color:var(--success);margin-top:6px;">✓ مفيش شهرية مكتملة غير مسددة هنا</div>'; }
 var ps=paysFor(sid,g.id);
 if(ps.length){ html+='<div style="margin-top:8px;" class="text-xs text-muted">💵 سجل الدفعات: '+ps.map(function(p){ return monthName(p.month)+' → '+paidOf(p)+'/'+(p.amount||0); }).join(' · ')+'</div>'; }
 html+='</div>';
 });
 if(!anyDue) html+='<div class="filter-info">🎉 الطالب مفيش عليه أي شهرية مكتملة غير مسددة — أي مبالغ مدفوعة مقدماً بتتخصم تلقائياً لما الشهر يكمل.</div>';
+if(cur()&&(cur().role==='admin'||cur().role==='super_admin'||cur().role==='assistant')) html+='<button class="btn btn-warning w-full" style="margin-bottom:8px;" onclick="window.editStudentPoints&&window.editStudentPoints(\''+sid+'\')">✏️ تعديل النقاط</button>';
 if(gs[0]) html+='<button class="btn btn-secondary w-full" onclick="ThemeManager.closeModal();LedgerUI.editHistory(\''+sid+'\',\''+gs[0].id+'\')">💵 عرض/تعديل كل الدفعات</button>';
 html+='</div>';
 ThemeManager.openModal(html,'modal-md');
@@ -877,15 +1028,15 @@ var doAtt=(document.getElementById('rsqAtt')||{}).checked;
 var doCanc=(document.getElementById('rsqCanc')||{}).checked;
 if(!confirm('تصفير مربعات '+ids.length+' مجموعة على '+months.length+' شهر؟')) return;
 var d=db(); var delA=[],delM=[],delC=[];
-if(doAtt){ d.attendance=(d.attendance||[]).filter(function(a){ if(ids.indexOf(a.groupId)>=0&&months.indexOf((a.date||'').slice(0,7))>=0&&a.status==='approved'){ delA.push(a); return false; } return true; }); }
-if(doMan){ d.manualSessions=(d.manualSessions||[]).filter(function(ms){ if(ids.indexOf(ms.groupId)>=0&&months.indexOf(ms.month||'')>=0&&(!ms.type||ms.type==='counter')){ delM.push(ms); return false; } return true; }); }
-if(doCanc){ d.cancelledSessions=(d.cancelledSessions||[]).filter(function(c){ if(ids.indexOf(c.groupId)>=0&&months.indexOf((c.date||'').slice(0,7))>=0){ delC.push(c); return false; } return true; }); }
+if(doAtt){ d.attendance=(d.attendance||[]).filter(function(a){ if(ids.indexOf(a.groupId)>=0&&months.some(function(mn){var r=rangeOf(a.groupId,mn);return a.date>=r.from&&(!r.to||a.date<=r.to);})&&a.status==='approved'){ delA.push(a); return false; } return true; }); }
+if(doMan){ d.manualSessions=(d.manualSessions||[]).filter(function(ms){ if(ids.indexOf(ms.groupId)>=0&&months.some(function(mn){return msInMonth(ms,ms.groupId,mn);})&&(!ms.type||ms.type==='counter')){ delM.push(ms); return false; } return true; }); }
+if(doCanc){ d.cancelledSessions=(d.cancelledSessions||[]).filter(function(c){ if(ids.indexOf(c.groupId)>=0&&months.some(function(mn){var r=rangeOf(c.groupId,mn);return c.date>=r.from&&(!r.to||c.date<=r.to);})){ delC.push(c); return false; } return true; }); }
 if(doFlags){ var nk={}; Object.keys(d.sessionFlags||{}).forEach(function(k){ var parts=k.split('__'); if(ids.indexOf(parts[0])>=0&&months.indexOf(parts[1])>=0) return; nk[k]=d.sessionFlags[k]; }); d.sessionFlags=nk; }
 saveD(d);
 delA.forEach(function(a){ cloudAtt(a,true); });
 delM.forEach(function(ms){ cloudMS(ms,true); });
 delC.forEach(function(c){ cloudCanc(c,true); });
-for(var i=0;i<ids.length;i++){ try{ if(DataService.updateGroup) await DataService.updateGroup(ids[i],{sessionNow:0,sessionNowMonth:localMonth()}); }catch(e){} }
+for(var i=0;i<ids.length;i++){ try{ var gg=gById(ids[i]); var rs=gg?rangesOf(gg).slice():[{n:1,from:localToday(),to:null}]; var openR=null; rs.forEach(function(r){if(r.to==null)openR=r;}); if(openR){openR.from=localToday();} else {rs.push({n:rs[rs.length-1].n+1,from:localToday(),to:null});} if(DataService.updateGroup) await DataService.updateGroup(ids[i],{sessionNow:0,sessionNowMonth:localMonth(),cycleRanges:rs}); }catch(e){} }
 ThemeManager.closeModal();
 if(window.safeToast) window.safeToast('✅ تم التصفير — المربعات بدأت من صفر، ضيف يدوي براحتك','success');
 LU.refresh();
@@ -902,8 +1053,7 @@ if(!ses.complete){ if(window.safeToast) window.safeToast('الشهر الحال�
 var d=db(); d.pendingMonthTransitions=d.pendingMonthTransitions||[];
 var existing=d.pendingMonthTransitions.find(function(p){return p.groupId===gid&&p.month===curM&&p.status==='pending';});
 if(existing){ if(window.safeToast) window.safeToast('في طلب سابق لسه معلق على المجموعة دي','info'); return; }
-var next=new Date(curM+'-01T12:00:00'); next.setMonth(next.getMonth()+1);
-var nextM=next.getFullYear()+'-'+String(next.getMonth()+1).padStart(2,'0');
+var nextM=cycKey((parseInt(curM.replace('cycle-',''))||1)+1);
 var u=(window.currentUser||null);
 var req={id:'mt_'+Date.now()+'_'+gid,groupId:gid,groupName:g.name,fromMonth:curM,toMonth:nextM,status:'pending',requestedBy:(u&&u.id)||'',requestedAt:new Date().toISOString()};
 d.pendingMonthTransitions.push(req);
@@ -939,7 +1089,7 @@ if(!req) return;
 if(!confirm('موافقة على انتقال مجموعة '+req.groupName+' لشهر '+monthName(req.toMonth)+'؟')) return;
 req.status='approved'; req.approvedBy=(cur()||{}).id||''; req.approvedAt=new Date().toISOString();
 var g=gById(req.groupId);
-if(g){ try{ if(DataService.updateGroup) await DataService.updateGroup(g.id,{sessionNow:0,sessionNowMonth:req.toMonth}); }catch(e){} }
+if(g){ try{ var rs2=rangesOf(g).slice(); var openR2=null; rs2.forEach(function(r){if(r.to==null)openR2=r;}); if(openR2){openR2.to=localToday(); rs2.push({n:openR2.n+1,from:nextDay(localToday()),to:null});} if(DataService.updateGroup) await DataService.updateGroup(g.id,{sessionNow:0,sessionNowMonth:req.toMonth,cycleRanges:rs2}); }catch(e){} }
 saveD(d);
 try{ if(window.FirebaseService&&FirebaseService._db) FirebaseService.saveDoc('pendingMonthTransitions',req.id,req); }catch(e){}
 if(window.safeToast) window.safeToast('✅ تمت الموافقة — العداد صفّر للشهر الجديد','success');
@@ -958,6 +1108,344 @@ try{ if(window.FirebaseService&&FirebaseService._db) FirebaseService.saveDoc('pe
 if(window.safeToast) window.safeToast('✗ تم الرفض','info');
 ThemeManager.closeModal(); LU.refresh();
 }catch(e){}
+};
+
+/* ========== ⏳ حصص محتاجة تسوية + تأكيد/إلغاء سريع ========== */
+function pendingSessionDates(gid,month){
+var g=gById(gid)||{}; var tStr=localToday();
+var minD=new Date(); minD.setDate(minD.getDate()-10);
+var minStr=minD.getFullYear()+'-'+String(minD.getMonth()+1).padStart(2,'0')+'-'+String(minD.getDate()).padStart(2,'0');
+var sch=(g.schedules&&g.schedules.length)?g.schedules:(g.day?[{day:g.day}]:[]);
+var d=db(); var attDates={},cancDates={};
+var rng2=rangeOf(gid,month);
+function inR2(ds){return !!ds&&ds>=rng2.from&&(!rng2.to||ds<=rng2.to);}
+(d.attendance||[]).forEach(function(a){ if(a.groupId===gid&&inR2(a.date||'')) attDates[a.date]=1; });
+(d.cancelledSessions||[]).forEach(function(c){ if(c.groupId===gid&&inR2(c.date||'')) cancDates[c.date]=1; });
+var out=[];
+var meta=(db().platformMeta||{});
+if(meta.countingActive!==true) return out;
+var nowD=new Date(); var nowMin2=nowD.getHours()*60+nowD.getMinutes();
+monthDays(month,gid).forEach(function(ds){
+if(ds>tStr||ds<minStr) return;
+var wd=WD[new Date(ds+'T12:00:00').getDay()]; var hit=false; var sMin=-1;
+for(var i=0;i<sch.length;i++){ if(sch[i].day===wd){ hit=true; var tt=String(sch[i].time||'00:00').split(':'); sMin=(+tt[0])*60+(+(tt[1]||0)); break; } }
+if(!hit) return;
+if(ds===tStr&&sMin>=0&&nowMin2<sMin) return; /* ⏰ لسه معاد الحصة مجاش — مش هتظهر للاعتماد */
+if(attDates[ds]||cancDates[ds]) return;
+out.push(ds);
+});
+return out;
+}
+
+LU.confirmSession=async function(gid,date){
+try{
+var g=gById(gid); if(!g) return;
+var sts=studentsOf(gid); if(!sts.length){ if(window.safeToast) window.safeToast('مفيش طلاب','error'); return; }
+/* فحص الحضور الموجود مسبقاً */
+var d=db(); var existingRec=(d.attendance||[]).find(function(a){return a.groupId===gid&&a.date===date&&a.status==='approved';});
+var existingMap={}; if(existingRec&&existingRec.records){ existingRec.records.forEach(function(r){existingMap[r.studentId]=r.status;}); }
+window._attMarks={}; window._attGid=gid; window._attDate=date;
+var html='<div class="modal-header"><h3 class="modal-title">✅ تأكيد حضور: '+g.name+' — '+date+'</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">';
+html+='<div class="filter-info">💡 دوس ✓ للحاضر و ✗ للغائب — الحفظ فوري. الطلاب الغايبين مش هيظهر جنب اسمهم ✓</div>';
+html+='<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;"><button class="btn btn-success btn-sm" onclick="window.attBulk(\'present\')">✓ تحديد الكل حاضر</button><button class="btn btn-danger btn-sm" onclick="window.attBulk(\'absent\')">✗ تحديد الكل غائب</button></div>';
+html+='<div id="attStList" style="max-height:400px;overflow:auto;">';
+html+=sts.map(function(s){
+var st=existingMap[s.id]||'present';
+window._attMarks[s.id]=st;
+var presAct=st==='present'?'opacity:1;font-weight:900;':'opacity:0.5;';
+var absAct=st==='absent'?'opacity:1;font-weight:900;':'opacity:0.5;';
+return '<div class="sub-row" style="padding:8px;" id="attRow_'+s.id+'"><div style="flex:1;"><strong>'+s.name+'</strong><div class="text-xs text-muted">'+(s.code||'')+'</div></div><div style="display:flex;gap:6px;"><button class="btn btn-success btn-sm" id="attP_'+s.id+'" style="'+presAct+'" onclick="window.attMark(\''+s.id+'\',\'present\',this)">✓ حاضر</button><button class="btn btn-danger btn-sm" id="attA_'+s.id+'" style="'+absAct+'" onclick="window.attMark(\''+s.id+'\',\'absent\',this)">✗ غائب</button></div></div>';
+}).join('');
+html+='</div>';
+html+='<button class="btn btn-primary w-full" style="margin-top:12px;" onclick="window.attSaveAll(\''+gid+'\',\''+date+'\')">💾 حفظ الكل</button>';
+html+='</div>';
+ThemeManager.openModal(html,'modal-md');
+}catch(e){if(window.safeToast)window.safeToast('خطأ: '+e.message,'error');}
+};
+window.attBulk=function(status){
+var rows=document.querySelectorAll('[id^="attRow_"]');
+rows.forEach(function(r){
+var sid=r.id.replace('attRow_','');
+window.attMark(sid,status,r.querySelector(status==='present'?'[id^="attP_"]':'[id^="attA_"]'));
+});
+};
+window.attMark=function(sid,status,btn){
+window._attMarks=window._attMarks||{};
+window._attMarks[sid]=status;
+var row=document.getElementById('attRow_'+sid);
+if(!row)return;
+var pBtn=row.querySelector('[id^="attP_"]');
+var aBtn=row.querySelector('[id^="attA_"]');
+if(pBtn){pBtn.style.opacity=status==='present'?'1':'0.5';pBtn.style.fontWeight=status==='present'?'900':'normal';}
+if(aBtn){aBtn.style.opacity=status==='absent'?'1':'0.5';aBtn.style.fontWeight=status==='absent'?'900':'normal';}
+};
+window.attSaveAll=async function(gid,date){
+try{
+var d=db(); d.attendance=d.attendance||[];
+var g=gById(gid);
+var marks=window._attMarks||{};
+var sts=studentsOf(gid);
+var records=sts.map(function(s){return {studentId:s.id,status:marks[s.id]||'present'};});
+var existing=(d.attendance||[]).find(function(a){return a.groupId===gid&&a.date===date&&a.status==='approved';});
+if(existing){
+existing.records=records;
+existing.updatedAt=new Date().toISOString();
+try{if(window.FirebaseService&&FirebaseService._db)FirebaseService.saveDoc('attendance',existing.id,existing);}catch(e){}
+}else{
+var rec={id:'att_'+Date.now()+'_'+gid,groupId:gid,groupName:g.name,date:date,status:'approved',source:'manual-confirm',teacherId:g.teacherId||null,createdAt:new Date().toISOString(),records:records};
+d.attendance.push(rec);
+try{if(window.FirebaseService&&FirebaseService._db)FirebaseService.saveDoc('attendance',rec.id,rec);}catch(e){}
+}
+saveD(d);
+/* نقاط الحضور للحاضرين فقط */
+var gamification=d.gamification||{};
+var attPts=(gamification.evalPoints&&gamification.evalPoints.attendance)||5;
+var present=records.filter(function(r){return r.status==='present';});
+var absent=records.filter(function(r){return r.status==='absent';});
+var awarded=0;
+for(var i=0;i<present.length;i++){
+try{if(typeof Ops!=='undefined'&&Ops.addManualPoints){await Ops.addManualPoints(present[i].studentId,attPts,'حضور '+date+' ('+g.name+')',(cur()||{}).id||'');awarded++;}}catch(e){}
+}
+/* تحديث streaks للحاضرين فقط */
+present.forEach(function(r){
+try{
+var userData=DataService.getUserById?DataService.getUserById(r.studentId):null;
+if(userData){
+var streaks=userData.streaks||{attendance:0,lastDate:null};
+var yesterday=new Date(date);yesterday.setDate(yesterday.getDate()-1);
+var yStr=yesterday.toISOString().slice(0,10);
+if(streaks.lastDate===yStr){streaks.attendance=(streaks.attendance||0)+1;}
+else if(streaks.lastDate!==date){streaks.attendance=1;}
+streaks.lastDate=date;
+if(DataService.updateUser)DataService.updateUser(r.studentId,{streaks:streaks});
+}
+}catch(e){}
+});
+ThemeManager.closeModal();
+if(window.safeToast)window.safeToast('✅ '+present.length+' حاضر'+(awarded?' +'+awarded+'×'+attPts+' نقطة':'')+' · '+absent.length+' غائب','success');
+LU.refresh();
+}catch(e){if(window.safeToast)window.safeToast('خطأ: '+e.message,'error');}
+};
+
+LU.cancelSessionQuick=function(gid,date){
+var reason=prompt('سبب إلغاء حصة '+date+' (هيظهر في السجل):','');
+if(reason===null) return;
+LU.doCancelSession(gid,date,reason);
+};
+LU.doCancelSession=async function(gid,date,reason){
+try{
+var d=db(); d.cancelledSessions=d.cancelledSessions||[];
+var exists=d.cancelledSessions.some(function(c){ return c.groupId===gid&&c.date===date; });
+if(exists){ if(window.safeToast) window.safeToast('الحصة دي ملغية بالفعل','info'); return; }
+var g=gById(gid);
+var rec={id:'cs_'+Date.now()+'_'+gid,groupId:gid,groupName:g?g.name:'',date:date,reason:reason||'إلغاء',makeupStatus:'outstanding',cancelledBy:(cur()||{}).id||'',createdAt:new Date().toISOString()};
+d.cancelledSessions.push(rec); saveD(d);
+try{ if(window.FirebaseService&&FirebaseService._db) FirebaseService.saveDoc('cancelledSessions',rec.id,rec); }catch(e){}
+try{
+var staff=(DataService.getUsers?DataService.getUsers():[]).filter(function(u){ return u.role==='teacher'&&g&&u.id===g.teacherId||u.role==='admin'||u.role==='assistant'; });
+staff.forEach(function(u){ if(DataService.addNotification) DataService.addNotification({targetUserId:u.id,title:'🚫 حصة اتلغت',message:'حصة '+(g?g.name:'')+' يوم '+date+' اتلغت'+(reason?(' — السبب: '+reason):'')+' — محتاجة تعويض.',type:'general',priority:'medium',meta:{event:'session_cancel'}}); });
+}catch(e){}
+if(window.__cnWaAuto!==false){
+try{
+var waMsg='🚫 إلغاء حصة — '+(g?g.name:'')+'\n📅 '+date+(reason?('\n📝 السبب: '+reason):'')+'\nهيتم تحديد حصة تعويضية قريباً — شكراً لتفهمكم 🌹';
+window.openGroupWa(gid,waMsg);
+}catch(e){}
+}
+if(window.safeToast) window.safeToast('🚫 اتعلمت ملغية + إشعار للطلاب + الرسالة منسوخة للجروب','warning');
+LU.refresh();
+}catch(e){ if(window.safeToast) window.safeToast('خطأ: '+e.message,'error'); }
+};
+LU.openCancelModal=function(prefGid,prefDate){
+try{
+var gs=isAdmin()?groups():myGroups();
+var tStr=localToday();
+ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">🚫 إلغاء حصة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">'
++'<div class="filter-info">💡 الإلغاء بيعلّم المربع أحمر ✗ في دفتر التحصيل فوراً، وبيتحسب دين تعويض، وبيفضل ظاهر في صندوق "حصص محتاجة تسوية" لحد ما تتعوض.</div>'
++'<div class="form-group"><label>المجموعة</label><select id="cnGroup" class="form-select">'+gs.map(function(g){return '<option value="'+g.id+'" '+(g.id===prefGid?'selected':'')+'>'+g.name+'</option>';}).join('')+'</select></div>'
++'<div class="form-group"><label>تاريخ الحصة *</label><input type="date" id="cnDate" class="form-input" value="'+(prefDate||tStr)+'" max="'+tStr+'"></div>'
++'<div class="form-group"><label>السبب (اختياري)</label><input type="text" id="cnReason" class="form-input" placeholder="مثال: ظرف طارئ / مرض / قرار إداري"></div>'
++'<label style="display:flex;gap:8px;align-items:center;margin:10px 0;cursor:pointer;"><input type="checkbox" id="cnWa" checked style="width:18px;height:18px;"> 💬 فتح واتساب المجموعة تلقائياً بعد الإلغاء (الرسالة منسوخة)</label>'
++'<div style="display:flex;gap:6px;"><button class="btn btn-danger w-full" onclick="LedgerUI.cancelFromModal()">🚫 تأكيد الإلغاء</button><button type="button" class="btn btn-success" style="flex:1;" onclick="LedgerUI.waFromModal()">💬 واتساب الآن</button></div>'
++'</div>','modal-sm');
+}catch(e){ console.error(e); }
+};
+LU.cancelFromModal=function(){
+var gid=(document.getElementById('cnGroup')||{}).value;
+var date=(document.getElementById('cnDate')||{}).value;
+var reason=(document.getElementById('cnReason')||{}).value||'';
+if(!gid||!date){ if(window.safeToast) window.safeToast('اختار المجموعة والتاريخ','error'); return; }
+window.__cnWaAuto=(document.getElementById('cnWa')||{}).checked!==false;
+ThemeManager.closeModal();
+LU.doCancelSession(gid,date,reason);
+};
+
+LU.waFromModal=function(){
+var gid=(document.getElementById('cnGroup')||{}).value;
+var date=(document.getElementById('cnDate')||{}).value;
+var reason=(document.getElementById('cnReason')||{}).value||'';
+if(!gid){if(window.safeToast)window.safeToast('اختار المجموعة الأول','error');return;}
+var g=gById(gid);
+var msg='🚫 إلغاء حصة — '+(g?g.name:'')+'\n📅 '+date+(reason?('\n📝 السبب: '+reason):'')+'\nهيتم تحديد حصة تعويضية قريباً — شكراً لتفهمكم 🌹';
+window.openGroupWa(gid,msg);
+};
+
+/* 🚫 tile سريع في لوحة الأستاذ/المساعد لو مش موجود */
+function injectCancelTile(){
+try{
+var u=cur(); if(!u||(u.role!=='teacher'&&u.role!=='assistant')) return;
+if(document.getElementById('qaCancelSession')) return;
+if(document.querySelector('[onclick*="openCancelSessionModal"]')) return;
+var first=document.querySelector('#section-overview .quick-action');
+if(!first||!first.parentNode) return;
+var b=document.createElement('button'); b.type='button'; b.className='quick-action'; b.id='qaCancelSession';
+b.innerHTML='<div class="quick-action-icon">🚫</div><div class="quick-action-label">إلغاء حصة</div>';
+b.onclick=function(){ LedgerUI.openCancelModal(); };
+first.parentNode.appendChild(b);
+}catch(e){}
+}
+
+/* ========== 📡 حصص اليوم + إجراءات ========== */
+window.openTodaySessionsModal=function(){
+try{
+var gs=isAdmin()?groups():myGroups();
+var todayDs=localToday();
+var wd=WD[new Date(todayDs+'T12:00:00').getDay()];
+var d=db(); var rows=[];
+gs.forEach(function(g){
+var sch=(g.schedules&&g.schedules.length)?g.schedules:(g.day?[{day:g.day,time:g.time}]:[]);
+sch.forEach(function(s){
+if(s.day!==wd)return;
+var att=(d.attendance||[]).find(function(a){return a.groupId===g.id&&a.date===todayDs&&a.status==='approved';});
+var canc=(d.cancelledSessions||[]).find(function(c){return c.groupId===g.id&&c.date===todayDs;});
+rows.push({g:g,time:s.time||'',status:canc?'cancelled':(att?'taken':'pending')});
+});
+});
+rows.sort(function(a,b){return String(a.time).localeCompare(String(b.time));});
+var html='<div class="modal-header"><h3 class="modal-title">📡 حصص اليوم — '+todayDs+'</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">';
+html+=rows.length?rows.map(function(r){
+var badge=r.status==='taken'?'<span class="badge badge-success">✅ اتأخذت</span>':r.status==='cancelled'?'<span class="badge badge-danger">🚫 ملغية</span>':'<span class="badge badge-warning">⏳ لسه</span>';
+return '<div class="sub-row" style="margin-bottom:8px;"><div style="flex:1;"><strong>'+(r.time||'--:--')+' — '+r.g.name+'</strong><div class="text-xs text-muted">'+(r.g.center||'')+' · '+(r.g.grade||'')+'</div></div><div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;">'+badge+
+(r.status==='pending'?'<button class="btn btn-success btn-sm" onclick="ThemeManager.closeModal();LedgerUI.confirmSession(\''+r.g.id+'\',\''+todayDs+'\')">✅ حضور</button>':'')+
+(r.status!=='cancelled'?'<button class="btn btn-danger btn-sm" onclick="ThemeManager.closeModal();LedgerUI.cancelSessionQuick(\''+r.g.id+'\',\''+todayDs+'\')">🚫 إلغاء</button>':'')+
+'<button class="btn btn-ghost btn-sm" onclick="ThemeManager.closeModal();LedgerUI.editSquares(\''+r.g.id+'\',\''+normMonth(LU._st.month)+'\')">✏️</button>'+
+(r.g.whatsappLink?'<button class="btn btn-ghost btn-sm" onclick="window.openGroupWa(\''+r.g.id+'\')">💬</button>':'')+
+'</div></div>';
+}).join(''):'<p class="text-muted" style="text-align:center;padding:20px;">مفيش حصص مجدولة اليوم</p>';
+html+='</div>';
+ThemeManager.openModal(html,'modal-md');
+}catch(e){console.error(e);}
+};
+window.openGroupWa=function(gid,msg){
+var g=gById(gid);var link=g&&(g.whatsappLink||'');
+if(msg&&navigator.clipboard&&navigator.clipboard.writeText){try{navigator.clipboard.writeText(msg);}catch(e){}}
+if(link){window.open(link,'_blank');if(window.safeToast)window.safeToast(msg?'📋 الرسالة منسوخة — افتحنا الجروب، الصقها وابعتها':'💬 فتحنا جروب المجموعة','info');}
+else if(window.safeToast)window.safeToast('مفيش رابط واتساب مسجل للمجموعة','error');
+};
+
+/* ========== ✋ اعتراضات الحضور ========== */
+window.disputeAbsent=function(nid,gid,date){
+try{
+var u=cur();if(!u)return;
+var d=db();d.attDisputes=d.attDisputes||[];
+if(d.attDisputes.some(function(x){return x.nid===nid&&x.status==='pending';})){if(window.safeToast)window.safeToast('الاعتبار مرسل بالفعل','info');return;}
+d.attDisputes.push({id:'dsp_'+Date.now(),nid:nid,sid:u.id,gid:gid,date:date,status:'pending',at:new Date().toISOString()});
+var n=(d.notifications||[]).find(function(x){return x.id===nid;});if(n)n.disputed=true;
+saveD(d);
+(DataService.getUsers?DataService.getUsers():[]).filter(function(x){return x.role==='assistant'||x.role==='admin'||x.role==='super_admin';}).forEach(function(a){
+if(DataService.addNotification)DataService.addNotification({targetUserId:a.id,title:'✋ اعتراض حضور',message:(u.name||'طالب')+' بيقول إنه كان حاضر يوم '+date+' — راجع واعتمد أو ارفض',type:'attendance',priority:'high',meta:{event:'dispute'}});
+});
+if(window.safeToast)window.safeToast('✋ تم إرسال اعتراضك — المساعد هيراجعه','success');
+if(window.openNotifPanel)window.openNotifPanel();
+}catch(e){}
+};
+window.openDisputesModal=function(){
+try{
+var d=db();var list=(d.attDisputes||[]).filter(function(x){return x.status==='pending';});
+var html='<div class="modal-header"><h3 class="modal-title">✋ اعتراضات الحضور ('+list.length+')</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">';
+html+=list.length?list.map(function(x){
+var s=DataService.getUserById?DataService.getUserById(x.sid):null;var g=gById(x.gid);
+return '<div class="sub-row" style="border-right:3px solid var(--warning);margin-bottom:8px;"><div style="flex:1;"><strong>'+(s?s.name:'-')+'</strong><div class="text-xs text-muted">'+(g?g.name:'-')+' · 📅 '+x.date+'</div></div><div style="display:flex;gap:6px;"><button class="btn btn-success btn-sm" onclick="window.resolveDispute(\''+x.id+'\',true)">✓ كان حاضر</button><button class="btn btn-danger btn-sm" onclick="window.resolveDispute(\''+x.id+'\',false)">✗ تأكيد الغياب</button></div></div>';
+}).join(''):'<p class="text-muted" style="text-align:center;padding:20px;">مفيش اعتراضات معلقة 🎉</p>';
+html+='</div>';
+ThemeManager.openModal(html,'modal-md');
+}catch(e){console.error(e);}
+};
+window.resolveDispute=async function(id,approve){
+try{
+var d=db();var x=(d.attDisputes||[]).find(function(v){return v.id===id;});if(!x)return;
+x.status=approve?'approved':'rejected';x.resolvedAt=new Date().toISOString();
+if(approve){
+var rec=(d.attendance||[]).find(function(a){return a.groupId===x.gid&&a.date===x.date&&a.status==='approved';});
+if(rec&&rec.records){rec.records.forEach(function(r){if(r.studentId===x.sid)r.status='present';});cloudAtt(rec,false);}
+var pts=(d.gamification&&d.gamification.evalPoints&&d.gamification.evalPoints.attendance)||5;
+if(typeof Ops!=='undefined'&&Ops.addManualPoints)Ops.addManualPoints(x.sid,pts,'تصحيح غياب → حاضر '+x.date,(cur()||{}).id||'');
+}
+saveD(d);
+if(DataService.addNotification)DataService.addNotification({targetUserId:x.sid,title:approve?'✅ تم قبول اعتراضك':'❌ تم تأكيد الغياب',message:'حصة '+x.date+' — '+(approve?'اتعدل حضورك واتضافت النقاط':'الغياب مؤكد — لو فيه لبس كلم المساعد'),type:'attendance',priority:'medium',meta:{event:'dispute_result'}});
+ThemeManager.closeModal();window.openDisputesModal();
+if(window.safeToast)window.safeToast(approve?'✅ اتعدل الحضور والنقاط':'✗ تم تأكيد الغياب','success');
+}catch(e){}
+};
+/* إشعار غياب تلقائي لكل طالب اتعلّم غائب في attSaveAll */
+(function(){
+if(typeof window.attSaveAll==='function'&&!window.attSaveAll.__nf){
+var os=window.attSaveAll;
+window.attSaveAll=async function(gid,date){
+var r=await os.apply(this,arguments);
+try{
+var rec=(db().attendance||[]).find(function(a){return a.groupId===gid&&a.date===date&&a.status==='approved';});
+if(rec&&rec.records){rec.records.forEach(function(rc){
+if(rc.status==='absent'&&DataService.addNotification){
+DataService.addNotification({targetUserId:rc.studentId,title:'❌ تسجيل غياب',message:'اتسجلت غائب في حصة '+date+' — لو ده غلط دوس "✋ أنا كنت حاضر" من قائمة الإشعارات',type:'attendance',priority:'high',meta:{event:'absent',gid:gid,date:date}});
+}});}
+}catch(e){}
+return r;
+};
+window.attSaveAll.__nf=1;
+}
+})();
+
+/* ========== 🔘 حقن أزرار حصص اليوم والاعتراضات في كل اللوحات ========== */
+function injectActionTiles(){
+try{
+var u=cur();if(!u||['teacher','assistant','admin','super_admin'].indexOf(u.role)<0)return;
+var first=document.querySelector('#section-overview .quick-action');
+if(!first||!first.parentNode)return;
+if(!document.getElementById('qaTodaySessions')){
+var b=document.createElement('button');b.type='button';b.className='quick-action';b.id='qaTodaySessions';
+b.innerHTML='<div class="quick-action-icon">📡</div><div class="quick-action-label">حصص اليوم</div>';
+b.onclick=function(){window.openTodaySessionsModal();};
+first.parentNode.appendChild(b);
+}
+if(!document.getElementById('qaDisputes')){
+var b2=document.createElement('button');b2.type='button';b2.className='quick-action';b2.id='qaDisputes';
+b2.innerHTML='<div class="quick-action-icon">✋</div><div class="quick-action-label">اعتراضات الحضور</div>';
+b2.onclick=function(){window.openDisputesModal();};
+first.parentNode.appendChild(b2);
+}
+}catch(e){}
+}
+
+/* ========== 🧊▶️ التحكم العالمي في العد ========== */
+LU.countingState=function(){
+var m=(db().platformMeta||{});
+return {active:(m.countingActive===true),since:(m.countingSince||null)};
+};
+LU.toggleCounting=function(){
+var d=db(); d.platformMeta=d.platformMeta||{countingActive:false,countingSince:null};
+var m=d.platformMeta;
+if(m.countingActive!==true){
+m.countingActive=true;
+m.countingSince=m.countingSince||localToday();
+if(window.safeToast) window.safeToast('▶️ تم بدء العد فعلياً من '+m.countingSince+' — أي حصة قبل كده مش هتتحسب أوتوماتيك','success');
+}else{
+m.countingActive=false;
+if(window.safeToast) window.safeToast('🧊 تم إيقاف العد — المربعات مش هتزيد لحد ما تفعّله تاني','warning');
+}
+saveD(d);
+try{ if(window.FirebaseService&&FirebaseService._db) FirebaseService.saveDoc('platformMeta','meta',m); }catch(e){}
+LU._sesCache={};
+LU.refresh();
 };
 
 /* ========== ريفريش ========== */
@@ -1077,9 +1565,14 @@ if(a) a.insertAdjacentHTML('afterend',html); else nav.insertAdjacentHTML('before
 }catch(e){}
 }
 function init(){
+try{migrateCycles();}catch(e){console.error(e);}
 tickClock(); setInterval(tickClock,1000);
 injectSidebar(); setTimeout(injectSidebar,800); setTimeout(injectSidebar,2000);
 injectTeacherMenu(); setTimeout(injectTeacherMenu,800); setTimeout(injectTeacherMenu,2000);
+injectCancelTile(); setTimeout(injectCancelTile,1000); setTimeout(injectCancelTile,2500);
+setInterval(injectCancelTile,5000);
+injectActionTiles(); setTimeout(injectActionTiles,1200); setTimeout(injectActionTiles,3000);
+setInterval(injectActionTiles,6000);
 hookShowSection(); setTimeout(hookShowSection,600); setTimeout(hookShowSection,1500);
 document.addEventListener('click',function(e){
 var t=e.target.closest?e.target.closest('[data-section="ledger"],[data-section="monthly"]'):null;

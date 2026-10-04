@@ -457,5 +457,30 @@ clock(); setInterval(clock,1000);
 render(); setInterval(render,10000);
 })();
 </script>
+<script>
+/* 👁 شاشة المتابعة: حصص اليوم لحظياً (بدون أي أزرار تعديل) */
+(function(){
+function render(){
+try{
+var d=(DataService._getData)?DataService._getData():{};
+var t=new Date();var ds=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+var WD=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];var wd=WD[t.getDay()];
+var rows=[];
+(DataService.getGroups?DataService.getGroups():[]).forEach(function(g){
+var sch=(g.schedules&&g.schedules.length)?g.schedules:(g.day?[{day:g.day,time:g.time}]:[]);
+sch.forEach(function(s){if(s.day!==wd)return;
+var att=(d.attendance||[]).some(function(a){return a.groupId===g.id&&a.date===ds&&a.status==='approved';});
+var canc=(d.cancelledSessions||[]).some(function(c){return c.groupId===g.id&&c.date===ds;});
+rows.push({g:g,tm:s.time||'',st:canc?'🚫 ملغية':(att?'✅ اتأخذت':'⏳ لسه')});});
+});
+rows.sort(function(a,b){return String(a.tm).localeCompare(String(b.tm));});
+var host=document.getElementById('monitorSessions');
+if(!host){host=document.createElement('div');host.id='monitorSessions';host.style.cssText='position:fixed;bottom:12px;right:12px;z-index:50;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;max-width:300px;max-height:40vh;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.4);';document.body.appendChild(host);}
+host.innerHTML='<strong style="font-size:13px;">📡 حصص اليوم</strong>'+(rows.length?rows.map(function(r){return '<div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:4px 0;border-bottom:1px dashed var(--border);"><span>'+r.tm+' '+r.g.name+'</span><b>'+r.st+'</b></div>';}).join(''):'<div style="font-size:11px;opacity:.6;padding:6px;">مفيش حصص اليوم</div>');
+}catch(e){}
+}
+render();setInterval(render,30000);
+})();
+</script>
 </body>
 </html>

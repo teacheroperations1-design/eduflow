@@ -299,14 +299,13 @@
 <h3 style="margin:16px 0 12px;">⚡ اختصارات سريعة</h3>
 <div class="quick-actions">
 <a href="qr-scan.html" class="quick-action"><div class="quick-action-icon">📷</div><div class="quick-action-label">مسح باركود</div></a>
-<a href="print-qr.html" class="quick-action"><div class="quick-action-icon">🖨️</div><div class="quick-action-label">طباعة باركودات</div></a>
-<button class="quick-action" onclick="window.showSection('attendance')"><div class="quick-action-icon">📋</div><div class="quick-action-label">تسجيل حضور</div></button>
 <button class="quick-action" onclick="window.showSection('monthly')"><div class="quick-action-icon">💰</div><div class="quick-action-label">تحصيل شهرية</div></button>
 <button class="quick-action" onclick="window.showSection('paperGrades')"><div class="quick-action-icon">📝</div><div class="quick-action-label">درجات ورقية</div></button>
 <button class="quick-action" onclick="window.showSection('makeups')"><div class="quick-action-icon">📅</div><div class="quick-action-label">حصص تعويضية</div></button>
 <button class="quick-action" onclick="window.showSection('classPosts')"><div class="quick-action-icon">📰</div><div class="quick-action-label">إيه اللي اتاخد في الحصة</div></button>
 <button class="quick-action" onclick="window.openBulkGradeScan()"><div class="quick-action-icon">📝</div><div class="quick-action-label">رصد درجات مجمع</div></button>
 <button class="quick-action" onclick="window.openCancelSessionModal()"><div class="quick-action-icon">🚫</div><div class="quick-action-label">إلغاء حصة</div></button>
+<button class="quick-action" onclick="window.openCustomNotifyModal()"><div class="quick-action-icon">📢</div><div class="quick-action-label">إشعار مخصص</div></button>
 </div>
 <h3 style="margin:16px 0 12px;">🎯 ماذا يحتاج انتباهي الآن؟</h3>
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:20px;" id="attentionGrid"></div>
@@ -644,6 +643,20 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+<script>
+/* 🔒 حماية viewas: تطوير محلي بس — بتتمسح تلقائياً على أي دومين منتشر */
+(function(){
+try{
+var p=new URLSearchParams(location.search);
+if(!p.has('viewas'))return;
+var local=/^(127\.0\.0\.1|localhost|::1|0\.0\.0\.0)$/.test(location.hostname);
+if(!local){
+p.delete('viewas');
+history.replaceState(null,'',location.pathname+(p.toString()?'?'+p.toString():''));
+}
+}catch(e){}
+})();
+</script>
 <script src="js/config.js"></script>
 <script src="js/firebase-service.js"></script>
 <script src="js/data-service.js"></script>
@@ -973,7 +986,7 @@ try{
 const menu=[
 {s:'الرئيسية',items:[{id:'command',l:'مركز العمليات',i:'🎯'},{id:'inbox',l:'صندوق الوارد',i:'📥'},{id:'pending',l:'طلبات التسجيل',i:'⏳'},{id:'barcode',l:'طلبات الباركود',i:'🎟️'}]},
 {s:'التشغيل',items:[{id:'teachers',l:'إدارة المجموعات',i:'👨🏫'},{id:'students',l:'الطلاب',i:'🎓'},{id:'attendance',l:'الحضور',i:'📋'},{id:'makeups',l:'الحصص التعويضية',i:'📅'},{id:'paperGrades',l:'الواجبات الورقية',i:'📝'},{id:'grades',l:'الدرجات أونلاين',i:'🎯'},{id:'homework',l:'الواجبات الأونلاين',i:'📝'},{id:'exams',l:'الامتحانات الأونلاين',i:'🎓'}]},
-{s:'🚀 التحفيز والذكاء',items:[{id:'quickEval',l:'⚡ التقييم السريع',i:'🎙️'},{id:'battles',l:'⚔️ التحديات والتصفيات',i:'🏆'},{id:'aiTools',l:'🤖 أدوات الذكاء الاصطناعي',i:'🧠'}]},{s:'💰 الدورات والمتجر',items:[{id:'cycles',l:'دورات الطلاب',i:'🔄'},{id:'storeAs',l:'المتجر والجرد',i:'🏪'}]},
+{s:'🚀 التحفيز والذكاء',items:[{id:'quickEval',l:'⚡ التقييم السريع',i:'🎙️'},{id:'battles',l:'⚔️ التحديات والتصفيات',i:'🏆'},{id:'aiTools',l:'🤖 أدوات الذكاء الاصطناعي',i:'🧠'}]},{s:'💰 المتجر',items:[{id:'store',l:'المتجر والجرد',i:'🏪'}]},
 {s:'🏢 البنية',items:[{id:'mySchedule',l:'جدولي',i:'🗓️'}]},
 {s:'المالية',items:[{id:'monthly',l:'دفتر التحصيل',i:'💰'},{id:'accounting',l:'المحاسبة',i:'🧮'},{id:'expenses',l:'المصروفات',i:'💸'},{id:'payments',l:'المدفوعات',i:'💵'}]},
 {s:'المحتوى',items:[{id:'interactive',l:'المواد التفاعلية',i:'🧩'},{id:'videos',l:'الفيديوهات',i:'🎬'},{id:'classPosts',l:'بوستات الحصة',i:'📰'},{id:'challenges',l:'المسابقات',i:'🏆'},{id:'paperExams',l:'الامتحانات الورقية',i:'📝'}]},
@@ -1517,26 +1530,7 @@ window._asPre=(DataService.getStudentTeachers(id)||[]).filter(t=>!teacher||t.tea
 
 window.asClearPre=function(){ window._asPre=[]; };
 
-window.openAssistantAddStudentModal=function(){
-try{
-const myTid=window.getMyTeacherId?window.getMyTeacherId():null;
-const groups=myTid?(DataService.getGroupsByTeacher?DataService.getGroupsByTeacher(myTid):[]):[];
-const stageOptions=Object.entries(EduFlowConfig?.educationLevels||{}).map(([k,v])=>`<option value="${k}">${v.nameAr}</option>`).join('');
-window._asSmartMatch=null;
-ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🎓 إضافة طالب</h3><button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">
-<div id="asSmartMatchBox" class="filter-info" style="display:none;background:var(--warning-bg);border-color:var(--warning);color:var(--warning);"></div>
-<div class="form-group"><label>الاسم الكامل *</label><input type="text" id="asStName" class="form-input" placeholder="مثال: أحمد محمد علي" oninput="window.asSmartScan()"></div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-<div class="form-group"><label>هاتف الطالب</label><input type="tel" id="asStPhone" class="form-input" oninput="window.asSmartScan()"></div>
-<div class="form-group"><label>هاتف ولي الأمر</label><input type="tel" id="asStParent" class="form-input" oninput="window.asSmartScan()"></div></div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-<div class="form-group"><label>المرحلة</label><select id="asStStage" class="form-select" onchange="window.asStGradeCascade()"><option value="">--</option>${stageOptions}</select></div>
-<div class="form-group"><label>الصف</label><select id="asStGrade" class="form-select"><option value="">--</option></select></div></div>
-<div class="form-group"><label>المجموعة اللي هيتسجل فيها *</label><input type="text" id="asStGroupSearch" class="form-input" style="margin-bottom:6px;" placeholder="🔍 ابحث عن مجموعة..." oninput="window.asStFilterGroups()"><select id="asStGroup" class="form-select" size="4" style="min-height:120px;">${groups.map(g=>`<option value="${g.id}">${g.name} — ${g.day} ${g.time||''} (${g.center||'-'})</option>`).join('')}</select><div class="text-xs text-muted" style="margin-top:4px;">💡 القائمة بتتفلتر مع الكتابة — دوس على المجموعة لاختيارها</div></div>
-<button class="btn btn-primary w-full" onclick="window.saveAsSmartStudent()">💾 حفظ</button>
-</div>`,'modal-md');
-}catch(e){ window.safeToast('خطأ: '+e.message,'error'); }
-};
+
 window.asStGradeCascade=function(){
 try{
 const st=document.getElementById('asStStage')?.value||'';
@@ -1547,58 +1541,37 @@ if(el) el.innerHTML='<option value="">--</option>'+grades.map(g=>`<option>${g}</
 };
 window._asNorm=function(v){ return String(v||'').toLowerCase().replace(/\s+/g,' ').trim(); };
 window._asDigits=function(v){ return String(v||'').replace(/\D/g,''); };
-window.asSmartScan=function(){
+
+
+window.bulkGroupsRefresh=function(){
 try{
-const nm=window._asNorm(document.getElementById('asStName')?.value);
-const ph=window._asDigits(document.getElementById('asStPhone')?.value);
-const pp=window._asDigits(document.getElementById('asStParent')?.value);
-const box=document.getElementById('asSmartMatchBox'); if(!box) return;
-const students=(DataService.getStudents?DataService.getStudents():[]);
-const matches=students.filter(s=>{
-if(nm.length>=3&&window._asNorm(s.name)===nm) return true;
-if(nm.length>=3&&nm.split(' ').length>=2&&window._asNorm(s.name).indexOf(nm)===0) return true;
-if(ph.length>=7&&(window._asDigits(s.phone)===ph||window._asDigits(s.parentPhone)===ph)) return true;
-if(pp.length>=7&&window._asDigits(s.parentPhone)===pp) return true;
-return false;
-}).slice(0,3);
-if(!matches.length){ box.style.display='none'; window._asSmartMatch=null; return; }
-window._asSmartMatch=matches[0];
-box.style.display='block';
-box.innerHTML='⚠️ احتمال تكرار: '+matches.map(m=>`<div style="margin-top:6px;"><strong>${m.name}</strong> <span class="text-xs">(${m.code||''})</span></div>`).join('')+
-`<label style="display:flex;gap:8px;align-items:center;margin-top:8px;cursor:pointer;"><input type="checkbox" id="asLinkExisting" checked style="width:18px;height:18px;"> ✅ نفس الطالب — سجّله في مجموعتي بدون إنشاء حساب جديد</label>`;
-}catch(e){}
-};
-window.saveAsSmartStudent=async function(){
-try{
-const name=(document.getElementById('asStName')?.value||'').trim();
-if(!name){ window.safeToast('اكتب الاسم','error'); return; }
-const gid=document.getElementById('asStGroup')?.value;
-if(!gid){ window.safeToast('اختار المجموعة','error'); return; }
-const tid=window.getMyTeacherId?window.getMyTeacherId():null;
-const data={name:name,phone:(document.getElementById('asStPhone')?.value||'').trim(),parentPhone:(document.getElementById('asStParent')?.value||'').trim(),stage:document.getElementById('asStStage')?.value||'',grade:document.getElementById('asStGrade')?.value||''};
-if(window._asSmartMatch&&document.getElementById('asLinkExisting')?.checked){
-const sid=window._asSmartMatch.id;
-if(typeof DataService.addEnrollment==='function'){ await DataService.addEnrollment({studentId:sid,groupId:gid,teacherId:tid,status:'active'}); }
-else if(window.SSM&&typeof SSM.enroll==='function'){ await SSM.enroll(sid,gid,tid); }
-else{ window.safeToast('خدمة الربط مش متوفرة','error'); return; }
-ThemeManager.closeModal();
-window.safeToast('🔗 تم ربط الطالب الموجود بمجموعتك بدون تكرار','success');
-}else{
-const r=await DataService.addStudentByAdmin(Object.assign({},data,{password:'1234',enrollments:[{groupId:gid,teacherId:tid}]}));
-ThemeManager.closeModal();
-window.safeToast('✅ تم إنشاء الطالب بالكود: '+(r&&r.code?r.code:'-'),'success');
+var tid=(document.getElementById('bulkTeacher')||{}).value||'';
+var all=(DataService.getGroups?DataService.getGroups():[]);
+var byT=tid?all.filter(function(g){return g.teacherId===tid;}):all;
+var gSelEl=document.getElementById('bulkGroup');
+if(gSelEl&&!document.getElementById('bulkCenter')){
+var fg=gSelEl.closest('.form-group');
+var wrap=document.createElement('div');
+wrap.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:8px;';
+wrap.innerHTML='<div class="form-group"><label>🏢 السنتر</label><select id="bulkCenter" class="form-select" onchange="window.bulkGroupsRefresh()"><option value="">الكل</option></select></div><div class="form-group"><label>🎓 الصف</label><select id="bulkGrade" class="form-select" onchange="window.bulkGroupsRefresh()"><option value="">الكل</option></select></div>';
+if(fg&&fg.parentNode)fg.parentNode.insertBefore(wrap,fg);
 }
-if(window.loadStudents) window.loadStudents();
-if(window.renderStudents) window.renderStudents();
-if(window.loadAsCycles) window.loadAsCycles();
-}catch(e){ window.safeToast('خطأ: '+e.message,'error'); }
-};
-window.asStFilterGroups=function(){
-try{
-const q=(document.getElementById('asStGroupSearch')?.value||'').toLowerCase();
-const sel=document.getElementById('asStGroup'); if(!sel) return;
-Array.prototype.slice.call(sel.options).forEach(function(o){ o.hidden = !!q && o.textContent.toLowerCase().indexOf(q)<0; });
-}catch(e){}
+var cen=(document.getElementById('bulkCenter')||{}).value||'';
+var cSel=document.getElementById('bulkCenter');
+if(cSel){var cs={};byT.forEach(function(g){if(g.center)cs[g.center]=1;});var cv=cSel.value;
+cSel.innerHTML='<option value="">الكل</option>'+Object.keys(cs).map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('');
+if(cs[cv])cSel.value=cv;cen=cSel.value||'';}
+var byC=byT.filter(function(g){return !cen||g.center===cen;});
+var grSel=document.getElementById('bulkGrade');var grd='';
+if(grSel){var gs2=[];byC.forEach(function(g){if(g.grade&&gs2.indexOf(g.grade)<0)gs2.push(g.grade);});var gv=grSel.value;
+grSel.innerHTML='<option value="">الكل</option>'+gs2.sort().map(function(x){return '<option value="'+x+'">'+x+'</option>';}).join('');
+if(gs2.indexOf(gv)>=0)grSel.value=gv;grd=grSel.value||'';}
+var filtered=byC.filter(function(g){return !grd||g.grade===grd;});
+if(gSelEl){var cur=gSelEl.value;
+gSelEl.innerHTML=filtered.length?filtered.map(function(g){return '<option value="'+g.id+'">'+g.name+' · '+(g.grade||'-')+' · '+(g.center||'-')+(g.day?' · '+g.day:'')+'</option>';}).join(''):'<option value="">⚠️ مفيش مجموعات — وسّع الفلاتر</option>';
+if(filtered.some(function(g){return g.id===cur;}))gSelEl.value=cur;
+}
+}catch(e){console.error(e);}
 };
 
 window.renderAssistantStudentGroups=function(){
@@ -1718,74 +1691,6 @@ console.error('saveAssistantStudent error:',e);
 window.safeToast('خطأ في الحفظ: '+e.message,'error');
 return false;
 }
-};
-
-window.openAssistantBulkAddStudentModal=function(){
-try{
-const teacher=window.getMyTeacher?window.getMyTeacher():null;
-if(!teacher){ window.safeToast('يجب ربطك بأستاذ أولاً من قبل الأدمن','error'); return; }
-window._bulkRows=[];
-const stageOptions=Object.entries(EduFlowConfig?.educationLevels||{}).map(([k,v])=>`<option value="${k}">${v.nameAr}</option>`).join('');
-ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📋 إضافة دفعة طلاب (سريع)</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
-<div class="modal-body">
-<div class="filter-info">
-💡 اختار المجموعة والمرحلة مرة واحدة، بعدين ضيف الطلاب واحد واحد من الخانات.<br>
-كل الطلاب هيتربطوا أوتوماتيك بالأستاذ: <strong>${teacher.name}</strong>
-</div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-<div class="form-group">
-<label>👥 المجموعة *</label>
-<select id="aBulkGroup" class="form-select"></select>
-</div>
-<div class="form-group">
-<label>🔑 كلمة المرور (للكل)</label>
-<input type="text" id="aBulkPass" class="form-input" value="1234">
-</div>
-</div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-<div class="form-group">
-<label>المرحلة</label>
-<select id="aBulkStage" class="form-select" onchange="window.assistantBulkStageCascade()">
-<option value="">--</option>${stageOptions}
-</select>
-</div>
-<div class="form-group">
-<label>الصف</label>
-<select id="aBulkGrade" class="form-select"><option value="">--</option></select>
-</div>
-</div>
-<div style="background:var(--surface-hover);border:2px dashed var(--primary-border);border-radius:12px;padding:14px;margin-bottom:14px;">
-<div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--primary);">➕ أضف طالب جديد للقائمة</div>
-<div style="display:grid;grid-template-columns:2fr 1.2fr 1.2fr auto;gap:8px;align-items:end;">
-<div class="form-group" style="margin:0;">
-<label style="font-size:11px;">اسم الطالب *</label>
-<input type="text" id="aBrName" class="form-input" placeholder="الاسم الكامل" onkeydown="if(event.key==='Enter'){event.preventDefault();window.assistantBulkAddRow();}">
-</div>
-<div class="form-group" style="margin:0;">
-<label style="font-size:11px;">هاتف ولي الأمر *</label>
-<input type="tel" id="aBrParent" class="form-input" placeholder="01xxxxxxxxx" onkeydown="if(event.key==='Enter'){event.preventDefault();window.assistantBulkAddRow();}">
-</div>
-<div class="form-group" style="margin:0;">
-<label style="font-size:11px;">هاتف الطالب</label>
-<input type="tel" id="aBrPhone" class="form-input" placeholder="اختياري" onkeydown="if(event.key==='Enter'){event.preventDefault();window.assistantBulkAddRow();}">
-</div>
-<button type="button" class="btn btn-success" onclick="window.assistantBulkAddRow()" title="إضافة للقائمة" style="height:38px;min-width:44px;">➕</button>
-</div>
-</div>
-<div class="form-group">
-<label style="display:flex;justify-content:space-between;align-items:center;">
-<span>📃 القائمة الجاهزة للحفظ</span>
-<span class="badge badge-primary" id="aBulkCount">0</span>
-</label>
-<div id="aBulkRowsList" style="max-height:240px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:8px;"></div>
-</div>
-<button class="btn btn-primary w-full" style="padding:14px;font-size:15px;" onclick="window.saveAssistantBulkStudents()">
-💾 حفظ الكل وإنشاء الأكواد
-</button>
-</div>`,'modal-lg');
-window.assistantBulkGroupsRefresh();
-window.assistantRenderBulkList();
-}catch(e){ console.error(e); }
 };
 
 window.loadBarcodeRequests=function(){
@@ -2227,7 +2132,8 @@ try{
 const g=DataService?.getGroups?DataService.getGroups().find(x=>x.id===gid):null;
 await window.notifyGroup(gid,`🚫 حصة ملغية: ${g?.name||''}`,`تم إلغاء حصة يوم ${date}${reason?` — السبب: ${reason}`:''}. الحصة هتتعوض أو تتخصم من الشهرية.`,'session_cancel',{groupId:gid,date:date,reason:reason});
 }catch(e){}
-window.safeToast('🚫 اتلغت الحصة — اتسجلت كدين ووصل إشعار للطلاب','warning'); window.loadMakeups();
+try{var g2=(DataService.getGroups?DataService.getGroups():[]).find(function(x){return x.id===gid;});var waMsg='🚫 إلغاء حصة — '+((g2&&g2.name)||'')+'\n📅 '+date+(reason?('\n📝 السبب: '+reason):'')+'\nهيتم تحديد حصة تعويضية قريباً — شكراً لتفهمكم 🌹';if(window.openGroupWa)window.openGroupWa(gid,waMsg);else if(g2&&g2.whatsappLink){if(navigator.clipboard)navigator.clipboard.writeText(waMsg);window.open(g2.whatsappLink,'_blank');}}catch(e){}
+window.safeToast('🚫 اتلغت الحصة — إشعار للطلاب + الرسالة منسوخة للجروب','warning'); window.loadMakeups();
 }
 else window.safeToast(r.message||'فشل','error');
 }catch(e){}
@@ -2277,36 +2183,6 @@ resultDiv.dataset.matchId = '';
 } catch(e) { console.error(e); }
 };
 
-window.loadMakeups=function(){
-try{
-const gids=(typeof Ops?.groupsInScope==='function'&&currentUser)?Ops.groupsInScope(currentUser.id).map(g=>g.id):[];
-const all=DataService?.getOutstandingMakeups?DataService.getOutstandingMakeups({}):[];
-const list=all.filter(m=>!gids.length||gids.includes(m.groupId));
-const done=(DataService?.getCancelledSessions?DataService.getCancelledSessions():[]).filter(c=>c.makeupStatus==='done'&&gids.includes(c.groupId)).length;
-const statsEl=document.getElementById('makeupStats');
-if(statsEl) statsEl.innerHTML=`
-<div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">مستحقة</span><span class="stat-card-icon">⏳</span></div><div class="stat-card-value" style="color:var(--warning)">${list.filter(m=>m.makeupStatus==='outstanding').length}</div></div>
-<div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">مجدولة</span><span class="stat-card-icon">📅</span></div><div class="stat-card-value" style="color:var(--info)">${list.filter(m=>m.makeupStatus==='scheduled').length}</div></div>
-<div class="stat-card"><div class="stat-card-header"><span class="stat-card-label">اتعملت</span><span class="stat-card-icon">✅</span></div><div class="stat-card-value" style="color:var(--success)">${done}</div></div>`;
-const el=document.getElementById('makeupsList');
-if(!el)return;
-el.innerHTML=list.length?list.map(m=>{
-const g=DataService?.getGroups?DataService.getGroups().find(x=>x.id===m.groupId):null;
-const t=g?DataService.getUserById(g.teacherId):null;
-const photo=t?.photoUrl?`<img src="${window.driveThumb(t.photoUrl)}" class="teacher-photo-sm" onerror="this.style.display='none'">`:'';
-return `<div class="makeup-card ${m.makeupStatus||'outstanding'}">
-<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
-<div><strong>${g?.name||'-'}</strong>${photo?' '+photo:''}<div class="text-xs text-muted">🚫 ${m.date} ${m.makeupStatus==='scheduled'&&m.makeupDate?`· 📅 التعويض: <strong>${m.makeupDate}</strong>`:''}</div></div>
-<div style="display:flex;gap:6px;flex-wrap:wrap;">
-<button class="btn btn-secondary btn-sm" onclick="window.openScheduleMakeup('${m.id}')">📅 جدولة</button>
-<button class="btn btn-success btn-sm" onclick="window.markMakeupDoneNow('${m.id}')">✅ اتعملت</button>
-<button class="btn btn-warning btn-sm" onclick="window.deductMakeupNow('${m.id}')">💵 خصم</button>
-</div>
-</div>
-</div>`;
-}).join(''):'<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">✅</div><strong>مفيش حصص مستحقة</strong></div>';
-}catch(e){}
-};
 
 window.openScheduleMakeup=function(id){
 try{
@@ -4017,19 +3893,36 @@ await Ops.addManualPoints(sid, pts, reason, currentUser?.id);
 window.safeToast(`✅ تم إضافة ${pts} نقطة للطالب`, 'success');
 }
 };
+
 window.openEvalSettings = function() {
 const d = db();
-const intPts = (d.gamification && d.gamification.evalPoints && d.gamification.evalPoints.interaction) || 5;
-const recPts = (d.gamification && d.gamification.evalPoints && d.gamification.evalPoints.recitation) || 10;
-ThemeManager.openModal(`
-<div class="modal-header"><h3 class="modal-title">⚙️ إعدادات نقاط التقييم</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
-<div class="modal-body">
+const intPts = (d.gamification && d.gamification.evalPoints && d.gamification.evalPoints.interaction)|| 5;
+const recPts = (d.gamification && d.gamification.evalPoints && d.gamification.evalPoints.recitation)|| 10;
+const attPts = (d.gamification && d.gamification.evalPoints && d.gamification.evalPoints.attendance)|| 5;
+
+ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">⚙️ إعدادات نقاط التقييم</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">
 <div class="form-group"><label>نقاط التفاعل ⭐</label><input type="number" id="setIntPts" class="form-input" value="${intPts}"></div>
 <div class="form-group"><label>نقاط التسميع 🎙️</label><input type="number" id="setRecPts" class="form-input" value="${recPts}"></div>
+<div class="form-group"><label>نقاط الحضور 📋</label><input type="number" id="setAttPts" class="form-input" value="${attPts}"></div>
+<div class="filter-info">💡 نقاط الحضور تُمنح تلقائياً عند "تأكيد حضور الطلاب" في دفتر التحصيل</div>
 <button class="btn btn-primary w-full" onclick="window.saveEvalSettings()">💾 حفظ</button>
-</div>
-`);
+</div>`,'modal-sm');
 };
+
+window.saveEvalSettings = async function() {
+const d = db();
+d.gamification = d.gamification || {};
+d.gamification.evalPoints = {
+  interaction: parseInt(document.getElementById('setIntPts').value)||5,
+  recitation: parseInt(document.getElementById('setRecPts').value)||10,
+  attendance: parseInt(document.getElementById('setAttPts').value)||5
+};
+DataService._saveData(d);
+try{ if(window.FirebaseService&&FirebaseService._db) FirebaseService.saveDoc('gamification','evalPoints',d.gamification.evalPoints); }catch(e){}
+ThemeManager.closeModal();
+safeToast('✅ تم حفظ إعدادات النقاط','success');
+};
+
 window.saveEvalSettings = function() {
 const d = db();
 d.gamification = d.gamification || {};
@@ -4500,7 +4393,13 @@ html+='<div class="card" style="margin-bottom:12px"><h3 class="card-title" style
 +window.cmdTileSafe('⚡','تقييم سريع',"window.showSection('quickEval')")
 +window.cmdTileSafe('📝','واجبات ورقية',"window.showSection('paperGrades')")
 +window.cmdTileSafe('🎯','الدرجات',"window.showSection('grades')")
++window.cmdTileSafe('🚫','إلغاء حصة',"window.openCancelSessionModal()")
++window.cmdTileSafe('📢','إشعار مخصص',"window.openCustomNotifyModal()")
++window.cmdTileSafe('🎮','مصنع الألعاب',"window.showSection('fcGamesStaff')")
 +window.cmdTileSafe('🎟️','باركود',"window.showSection('barcode')")
++window.cmdTileSafe('📡','حصص اليوم',"window.openTodaySessionsModal()")
++window.cmdTileSafe('✋','اعتراضات الحضور',"window.openDisputesModal()")
++window.cmdTileSafe('🛍️','المتجر',"window.showSection('store')")
 +'</div></div>';
 var m2t=function(m){ return Math.floor(m/60)+':'+((m%60)<10?'0':'')+(m%60); };
 var liveCount=today.filter(function(g){ var schs2=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}]; var s2=schs2.find(function(x){return x.day===todayEn;}); if(!s2) return false; var st2=minOf(s2.time); return nowMin>=st2&&nowMin<st2+(parseInt(g.duration)||60); }).length;
@@ -5144,11 +5043,14 @@ return total;
 if(!window.DEFAULT_WHATSAPP_TEMPLATES){
 window.DEFAULT_WHATSAPP_TEMPLATES=[
 {id:'tpl_def_1',name:'تذكير بالدفع',category:'payment',content:'السلام عليكم، نود تذكيركم بأن موعد سداد المصروفات الشهرية قد حان. المبلغ المستحق: {{amount}} ج.م. يرجى السداد في أقرب وقت. شكرًا لتعاونكم.'},
-{id:'tpl_def_2',name:'إشعار غياب',category:'absence',content:'السلام عليكم، نود إبلاغكم بأن الطالب/ة {{name}} تغيب/ت عن حصة اليوم. يرجى متابعة حضوره/ا. شكرًا لتعاونكم.'},
+{id:'tpl_def_2',name:'إشعار غياب',category:'absence',content:'السلام عليكم، نود إبلاغكم بأن الطالب/ة {{name}} تغيب/ت عن حصة اليوم. يرجى متابعة حضوره/ا. شكرًا لكم.'},
 {id:'tpl_def_3',name:'تهنئة تميز',category:'praise',content:'السلام عليكم، يسعدنا إبلاغكم بأن الطالب/ة {{name}} أظهر/ت تميزًا ملحوظًا في الحصة. ألف مبروك! 🌟'},
-{id:'tpl_def_4',name:'اجتماع ولي أمر',category:'meeting',content:'السلام عليكم، نود دعوتكم لاجتماع لمناقشة مستوى الطالب/ة {{name}}. يرجى تحديد موعد مناسب. شكرًا.'},
-{id:'tpl_def_5',name:'واجب منزلي',category:'homework',content:'السلام عليكم، تم تكليف الطالب/ة {{name}} بواجب منزلي. يرجى المتابعة والتأكد من إنجازه. شكرًا لتعاونكم.'},
-{id:'tpl_def_6',name:'تقرير أسبوعي',category:'report',content:'السلام عليكم، إليكم التقرير الأسبوعي للطالب/ة {{name}}: الحضور: {{attendance}}، الأداء: {{performance}}. شكرًا لمتابعتكم.'}
+{id:'tpl_def_4',name:'إلغاء حصة',category:'schedule',content:'السلام عليكم، نعتذر لكم: تم إلغاء حصة {{group}} يوم {{date}} ({{reason}}). سيتم تحديد حصة تعويضية قريبًا. شكرًا لتفهمكم 🌹'},
+{id:'tpl_def_5',name:'تعديل موعد',category:'schedule',content:'السلام عليكم، نود إفادتكم بتعديل موعد حصة {{group}} ليصبح {{newDay}} {{newTime}} بدل {{oldDay}} {{oldTime}}. نعتذر عن أي إزعاج.'},
+{id:'tpl_def_6',name:'استلام دفعة',category:'payment',content:'السلام عليكم، تم استلام دفعة بقيمة {{amount}} ج.م للطالب/ة {{name}}. شكرًا لالتزامكم 💚'},
+{id:'tpl_def_7',name:'شهرية مستحقة',category:'payment',content:'السلام عليكم، اكتملت حصص الشهر للطالب/ة {{name}} والمستحق {{amount}} ج.م. يرجى السداد في أقرب حصة. شكرًا 🌹'},
+{id:'tpl_def_8',name:'واجب جديد',category:'grades',content:'السلام عليكم، تم إضافة واجب جديد في {{group}} بعنوان: {{title}} — آخر موعد للتسليم {{deadline}}. بالتوفيق 📝'},
+{id:'tpl_def_9',name:'رد عام سريع',category:'general',content:'السلام عليكم 👋 تم استلام رسالتكم وجاري التعامل معها من فريق المتابعة، وسيصلكم رد مفصل خلال ساعة عمل على الأكثر.'}
 ];
 }
 
@@ -5837,6 +5739,7 @@ refreshAll();
 }catch(e){ console.error(e); window.safeToast('خطأ في التصفير: '+e.message,'error'); }
 };
 })();
+
 </script>
 <!-- 📒 دفتر التحصيل -->
 <section class="section" id="section-monthly">
@@ -5931,5 +5834,366 @@ c.appendChild(row);
 window.__gAddRow=function(){ window.addScheduleRow('','10:00'); };
 })();
 </script>
+<script src="js/fun-center.js"></script>
+<script>
+window.editStudentPoints=function(sid){
+try{
+var u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null;
+if(!u||(u.role!=='assistant'&&u.role!=='admin'&&u.role!=='super_admin')){if(window.safeToast)window.safeToast('صلاحية مساعد/أدمن فقط','error');return;}
+var s=DataService.getUserById?DataService.getUserById(sid):null;if(!s)return;
+var d=(window.DataService&&DataService._getData)?DataService._getData():{};
+var rows=[];
+(s.pointsHistory||[]).forEach(function(h,i){rows.push({src:'user',idx:i,pts:(h.points!=null?h.points:(h.amount||0)),reason:h.reason||h.note||'نقطة مسجلة',date:h.awardedAt||h.at||''});});
+(d.manualPoints||[]).forEach(function(m,i){if(m.studentId===sid)rows.push({src:'manualPoints',idx:i,pts:m.points||0,reason:m.reason||'نقاط يدوية',date:m.awardedAt||m.createdAt||''});});
+['interactionPoints','interactions'].forEach(function(key){(d[key]||[]).forEach(function(m,i){if(m.studentId===sid)rows.push({src:key,idx:i,pts:m.points||0,reason:m.note||'تفاعل حصة',date:m.awardedAt||m.createdAt||''});});});
+rows.sort(function(a,b){return String(b.date||'').localeCompare(String(a.date||''));});
+var total=rows.reduce(function(a,r){return a+(r.pts||0);},0);
+var html='<div class="modal-header"><h3 class="modal-title">✏️ تعديل نقاط: '+s.name+'</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">';
+html+='<div class="filter-info">💡 الإجمالي من كل المصادر: <strong style="font-family:var(--font-en);">'+total+'</strong> نقطة — عدّل أو احذف أي سطر وهيتحدث فوراً</div>';
+html+=rows.length?rows.map(function(r,i){
+return '<div class="sub-row" style="padding:6px 8px;margin-bottom:4px;"><div style="flex:1;"><strong>'+r.reason+'</strong><div class="text-xs text-muted">'+(r.date?new Date(r.date).toLocaleDateString('ar-EG'):'-')+' · المصدر: '+({user:'سجل الطالب',manualPoints:'يدوي',interactionPoints:'تفاعل',interactions:'تفاعل'}[r.src]||r.src)+'</div></div><input type="number" class="form-input"style="width:80px;" id="ptsRow'+i+'" value="'+r.pts+'"><button class="btn btn-ghost btn-sm" onclick="window.savePtsRow(\''+sid+'\',\''+r.src+'\','+r.idx+','+i+')">💾</button><button class="btn btn-danger btn-sm" onclick="window.delPtsRow(\''+sid+'\',\''+r.src+'\','+r.idx+')">🗑</button></div>';
+}).join(''):'<p class="text-muted">مفيش نقاط مسجلة — ضيف أول نقطة من تحت</p>';
+html+='<div class="card" style="padding:10px;margin-top:10px;"><strong class="text-sm">➕ إضافة نقاط</strong><div style="display:flex;gap:6px;margin-top:8px;"><input type="number" id="ptsAddVal" class="form-input" style="width:90px;" value="5"><input type="text" id="ptsAddReason" class="form-input" placeholder="السبب" style="flex:1;"><button class="btn btn-success btn-sm" onclick="window.addPtsRow(\''+sid+'\')">➕</button></div></div>';
+html+='</div>';
+ThemeManager.openModal(html,'modal-md');
+}catch(e){console.error(e);}
+};
+window.savePtsRow=async function(sid,src,idx,inputIdx){
+try{
+var val=parseInt((document.getElementById('ptsRow'+inputIdx)||{}).value)||0;
+if(src==='user'){
+var s=DataService.getUserById?DataService.getUserById(sid):null;if(!s||!s.pointsHistory||!s.pointsHistory[idx])return;
+s.pointsHistory[idx].points=val;
+if(DataService.updateUser)await DataService.updateUser(sid,{pointsHistory:s.pointsHistory});
+}else{
+var d=(window.DataService&&DataService._getData)?DataService._getData():{};
+var rec=(d[src]||[])[idx];if(!rec)return;
+rec.points=val;
+DataService._saveData(d);
+try{if(window.FirebaseService&&FirebaseService._db)FirebaseService.saveDoc(src,rec.id,rec);}catch(e){}
+}
+if(window.safeToast)window.safeToast('✅ تم التعديل','success');
+window.editStudentPoints(sid);
+}catch(e){if(window.safeToast)window.safeToast('خطأ','error');}
+};
+window.delPtsRow=async function(sid,src,idx){
+try{
+if(!confirm('حذف النقطة دي؟'))return;
+if(src==='user'){
+var s=DataService.getUserById?DataService.getUserById(sid):null;if(!s||!s.pointsHistory)return;
+s.pointsHistory.splice(idx,1);
+if(DataService.updateUser)await DataService.updateUser(sid,{pointsHistory:s.pointsHistory});
+}else{
+var d=(window.DataService&&DataService._getData)?DataService._getData():{};
+var rec=(d[src]||[])[idx];
+d[src]=(d[src]||[]).filter(function(_,j){return j!==idx;});
+DataService._saveData(d);
+try{if(rec&&window.FirebaseService&&FirebaseService._db)FirebaseService.deleteDoc(src,rec.id);}catch(e){}
+}
+if(window.safeToast)window.safeToast('🗑 تم الحذف','success');
+window.editStudentPoints(sid);
+}catch(e){}
+};
+window.addPtsRow=async function(sid){
+try{
+var pts=parseInt((document.getElementById('ptsAddVal')||{}).value)||0;
+if(!pts){if(window.safeToast)window.safeToast('اكتب عدد النقاط','error');return;}
+var reason=(document.getElementById('ptsAddReason')||{}).value||'نقاط يدوية';
+var u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null;
+var d=(window.DataService&&DataService._getData)?DataService._getData():{};
+d.manualPoints=d.manualPoints||[];
+var rec={id:'mp_'+Date.now(),studentId:sid,points:pts,reason:reason,awardedBy:(u||{}).id||'',awardedAt:new Date().toISOString()};
+d.manualPoints.push(rec);
+DataService._saveData(d);
+try{if(window.FirebaseService&&FirebaseService._db)FirebaseService.saveDoc('manualPoints',rec.id,rec);}catch(e){}
+try{if(DataService.addNotification)DataService.addNotification({targetUserId:sid,title:'🏆 نقاط جديدة',message:'+'+pts+' نقطة — '+reason,type:'points',priority:'medium',meta:{event:'points'}});}catch(e){}
+if(window.safeToast)window.safeToast('✅ اتضافت '+pts+' نقطة','success');
+window.editStudentPoints(sid);
+}catch(e){if(window.safeToast)window.safeToast('خطأ','error');}
+};
+</script>
+<script>
+
+/* ============ 🛠️ أدوات النقاط والستريك + تنظيف ذاتي آمن ============ */
+(function(){
+"use strict";
+function db(){return (window.DataService&&DataService._getData)?DataService._getData():{};}
+function cur(){try{return (window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null;}catch(e){return null;}}
+window.editStreak=function(sid){
+var s=DataService.getUserById?DataService.getUserById(sid):null;if(!s)return;
+var st=(s.streaks&&s.streaks.attendance)||0;
+var v=prompt('🔥 ستريك حضور '+s.name+' الحالي: '+st+'\nاكتب الرقم الجديد:',String(st));
+if(v===null)return;
+s.streaks=s.streaks||{};s.streaks.attendance=parseInt(v)||0;
+if(DataService.updateUser)DataService.updateUser(sid,{streaks:s.streaks});
+if(window.safeToast)window.safeToast('✅ الستريك بقى '+s.streaks.attendance,'success');
+};
+window.addPtsManual=function(sid){
+var amt=prompt('عدد النقاط المضافة (سالب للخصم):','5');
+if(amt===null)return;
+var n=parseInt(amt);if(!n)return;
+var reason=prompt('السبب:','تعديل يدوي');
+if(typeof Ops!=='undefined'&&Ops.addManualPoints)Ops.addManualPoints(sid,n,reason||'تعديل يدوي',(cur()||{}).id||'');
+if(window.safeToast)window.safeToast('✅ تم تعديل النقاط ('+(n>0?'+':'')+n+')','success');
+};
+window.openPointsPicker=function(){
+var sts=(DataService.getStudents?DataService.getStudents():[]);
+ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">✏️ تعديل نقاط / ستريك طالب</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">'+
+'<div class="form-group"><label>🎓 الطالب</label><select id="ppSid" class="form-select">'+sts.map(function(s){return '<option value="'+s.id+'">'+s.name+' ('+(s.code||'')+')</option>';}).join('')+'</select></div>'+
+'<div style="display:flex;gap:6px;flex-wrap:wrap;"><button class="btn btn-warning btn-sm" onclick="var s=document.getElementById(\'ppSid\').value;ThemeManager.closeModal();window.editStudentPoints(s)">✏️ النقاط</button>'+
+'<button class="btn btn-secondary btn-sm" onclick="var s=document.getElementById(\'ppSid\').value;ThemeManager.closeModal();window.editStreak(s)">🔥 الستريك</button>'+
+'<button class="btn btn-success btn-sm" onclick="var s=document.getElementById(\'ppSid\').value;ThemeManager.closeModal();window.addPtsManual(s)">➕ إضافة نقاط</button></div></div>','modal-sm');
+};
+function injectPointsTool(){
+try{
+var u=cur();
+if(!u||(u.role!=='assistant'&&u.role!=='admin'&&u.role!=='super_admin'))return;
+var sec=document.getElementById('section-students');if(!sec)return;
+if(document.getElementById('ptsToolBtn'))return;
+var hdr=sec.querySelector('.section-header');
+var btn=document.createElement('button');btn.id='ptsToolBtn';btn.type='button';btn.className='btn btn-warning btn-sm';btn.textContent='✏️ تعديل نقاط طالب';
+btn.onclick=function(){window.openPointsPicker();};
+if(hdr)hdr.appendChild(btn);else sec.insertBefore(btn,sec.firstChild);
+}catch(e){}
+}
+function dedupe(){
+try{
+var seen={};
+document.querySelectorAll('section.section[id]').forEach(function(s){if(seen[s.id]){s.remove();}else seen[s.id]=1;});
+var nav=document.getElementById('sidebarNav');
+if(nav){var s2={};nav.querySelectorAll('.sidebar-item[data-section]').forEach(function(it){var k=it.getAttribute('data-section');if(s2[k]){it.remove();}else s2[k]=1;});}
+}catch(e){}
+}
+function run(){
+try{dedupe();}catch(e){}
+try{injectPointsTool();}catch(e){}
+}
+if(typeof window.showSection==='function'&&!window.__ptsHook){
+window.__ptsHook=1;
+var os2=window.showSection;
+window.showSection=function(id){var r=os2.apply(this,arguments);if(id==='students')setTimeout(injectPointsTool,150);return r;};
+}
+run();setTimeout(run,1200);setTimeout(run,3000);
+})();
+
+(function(){
+"use strict";
+var tab='catalog';
+function D(){ return DataService._getData(); }
+function S(d){ DataService._saveData(d); }
+function me(){ return window.currentUser||{}; }
+function fb(col,id,o){ try{ if(window.FirebaseService&&FirebaseService.connected) FirebaseService.saveDoc(col,id,o); }catch(e){} }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function toast(m,t){ if(window.safeToast) window.safeToast(m,t||'success'); }
+
+function shell(){
+  var sec=document.getElementById('section-store'); if(!sec) return null;
+  sec.style.display='';               /* السبب الرئيسي: display:none كان ثابت inline */
+  if(!sec.dataset.shell){
+    sec.dataset.shell='1';
+    sec.innerHTML=
+      '<div class="section-header"><div><h2 class="section-title">🛍️ المتجر والجرد</h2><p class="text-sm text-muted">المنتجات، المخزون، وطلبات الطلاب</p></div>'+
+      '<button class="btn btn-primary" onclick="window.openStoreItem()">+ منتج جديد</button></div>'+
+      '<div id="stStats" class="stat-mini" style="margin-bottom:12px"></div>'+
+      '<div class="card" style="margin-bottom:12px"><div class="filter-bar">'+
+      '<button class="filter-btn active" data-t="catalog" onclick="window.setStoreTab(\'catalog\',this)">📦 المنتجات</button>'+
+      '<button class="filter-btn" data-t="orders" onclick="window.setStoreTab(\'orders\',this)">🧾 الطلبات</button></div></div>'+
+      '<div id="stCatalog" class="store-grid"></div><div id="stOrders" style="display:none"></div>';
+  }
+  return sec;
+}
+
+window.setStoreTab=function(t,btn){
+  tab=t;
+  document.querySelectorAll('#section-store .filter-btn').forEach(function(b){ b.classList.toggle('active',b===btn); });
+  window.loadStore();
+};
+
+window.loadStore=function(){
+  try{
+    if(!shell()) return;
+    var d=D(); var items=d.storeCatalog||[]; var orders=(d.storeOrders||[]).slice();
+    /* حصر الطلبات على طلاب نطاق المساعد لو متاح */
+    try{
+      if(window.Ops&&Ops.studentsInScope&&me().id){
+        var ids={}; Ops.studentsInScope(me().id).forEach(function(s){ ids[s.id]=1; });
+        orders=orders.filter(function(o){ return ids[o.studentId]; });
+      }
+    }catch(e){}
+    orders.sort(function(a,b){ return new Date(b.createdAt||0)-new Date(a.createdAt||0); });
+    var pend=orders.filter(function(o){ return o.status==='pending_payment'||o.status==='pending_reserve'; }).length;
+    var low=items.filter(function(i){ return (i.stock||0)<=3; }).length;
+    document.getElementById('stStats').innerHTML=
+      '<div class="stat-mini-box"><div class="stat-mini-value">'+items.length+'</div><div class="stat-mini-label">منتج</div></div>'+
+      '<div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--warning)">'+pend+'</div><div class="stat-mini-label">طلب معلق</div></div>'+
+      '<div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--danger)">'+low+'</div><div class="stat-mini-label">مخزون قليل</div></div>'+
+      '<div class="stat-mini-box"><div class="stat-mini-value">'+orders.length+'</div><div class="stat-mini-label">إجمالي الطلبات</div></div>';
+    var cat=document.getElementById('stCatalog'), ord=document.getElementById('stOrders');
+    cat.style.display=tab==='catalog'?'grid':'none';
+    ord.style.display=tab==='orders'?'block':'none';
+
+    cat.innerHTML=items.length?items.map(function(i){
+      var av={available:'متاح',coming_soon:'قريباً',unavailable:'غير متاح'}[i.availability||'available']||'متاح';
+      return '<div class="store-item" style="text-align:right;cursor:default">'+
+        (i.imageUrl?'<img src="'+esc(window.driveThumb?driveThumb(i.imageUrl):i.imageUrl)+'" style="width:100%;height:100px;object-fit:cover;border-radius:8px;margin-bottom:8px" onerror="this.style.display=\'none\'">':'<div class="store-item-icon" style="text-align:center">📦</div>')+
+        '<strong>'+esc(i.name)+'</strong>'+
+        '<div class="text-xs text-muted" style="margin:4px 0">📂 '+esc(i.category||'-')+' · '+av+'</div>'+
+        '<div class="store-item-price">💰 '+(i.price||0)+' ج.م</div>'+
+        '<div class="text-xs text-muted" style="margin:6px 0">📦 متاح: '+(i.stock||0)+' · 🧊 محجوز: '+(i.reserved||0)+'</div>'+
+        '<div style="display:flex;gap:6px;align-items:center">'+
+        '<input type="number" min="0" class="form-input" style="width:70px;padding:4px 6px" id="stk_'+i.id+'" value="'+(i.stock||0)+'">'+
+        '<button class="btn btn-ghost btn-sm" onclick="window.storeAdjustStock(\''+i.id+'\')">💾 جرد</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="window.openStoreItem(\''+i.id+'\')">✏️</button>'+
+        '<button class="btn btn-danger btn-sm" onclick="window.storeDeleteItem(\''+i.id+'\')">🗑️</button></div></div>';
+    }).join(''):'<div class="card" style="grid-column:1/-1;text-align:center;padding:24px"><div style="font-size:40px">🛍️</div><strong>لا منتجات — ضيف أول منتج</strong></div>';
+
+    var lab={pending_payment:'⏳ بانتظار الدفع',pending_reserve:'⏳ بانتظار الحجز',approved:'✅ محجوز',delivered:'📬 مسلّم',cancelled:'❌ ملغي'};
+    ord.innerHTML=orders.length?orders.map(function(o){
+      var s=DataService.getUserById?DataService.getUserById(o.studentId):null;
+      var it=items.filter(function(x){ return x.id===o.catalogItemId; })[0];
+      var acts='';
+      if(o.status==='pending_payment'||o.status==='pending_reserve')
+        acts='<button class="btn btn-success btn-sm" onclick="window.storeApprove(\''+o.id+'\')">✅ موافقة</button><button class="btn btn-danger btn-sm" onclick="window.storeReject(\''+o.id+'\')">❌ رفض</button>';
+      else if(o.status==='approved')
+        acts='<input type="date" class="form-input" style="width:145px;padding:4px 6px" id="pk_'+o.id+'" value="'+esc(o.pickupDate||'')+'"><button class="btn btn-primary btn-sm" onclick="window.storeDeliver(\''+o.id+'\')">📬 تسليم</button>';
+      return '<div class="sub-row"><div><strong>'+esc(s?s.name:'-')+'</strong><div class="text-xs text-muted">📚 '+esc(it?it.name:'(منتج محذوف)')+' × '+(o.quantity||1)+' · '+(lab[o.status]||esc(o.status))+'</div></div><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+acts+'</div></div>';
+    }).join(''):'<div class="card" style="text-align:center;padding:24px">لا طلبات</div>';
+  }catch(e){ console.error('loadStore',e); }
+};
+
+window.openStoreItem=function(id){
+  var it=id?(D().storeCatalog||[]).filter(function(x){ return x.id===id; })[0]:null; it=it||{};
+  var cats=['مذكرة','كتاب','ملزمة','امتحان','هدايا','أخرى'];
+  ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">'+(id?'✏️ تعديل منتج':'➕ منتج جديد')+'</h3><button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">'+
+    '<div class="form-group"><label>الاسم *</label><input id="stName" class="form-input" value="'+esc(it.name)+'"></div>'+
+    '<div class="form-group"><label>الوصف</label><textarea id="stDesc" class="form-textarea" rows="2">'+esc(it.description)+'</textarea></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="form-group"><label>التصنيف</label><select id="stCat" class="form-select">'+cats.map(function(c){ return '<option'+(it.category===c?' selected':'')+'>'+c+'</option>'; }).join('')+'</select></div>'+
+    '<div class="form-group"><label>السعر</label><input type="number" id="stPrice" class="form-input" min="0" value="'+(it.price||0)+'"></div></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="form-group"><label>المخزون</label><input type="number" id="stStock" class="form-input" min="0" value="'+(it.stock!=null?it.stock:10)+'"></div>'+
+    '<div class="form-group"><label>الحالة</label><select id="stAvail" class="form-select"><option value="available"'+(it.availability==='available'||!it.availability?' selected':'')+'>متاح</option><option value="coming_soon"'+(it.availability==='coming_soon'?' selected':'')+'>قريباً</option><option value="unavailable"'+(it.availability==='unavailable'?' selected':'')+'>غير متاح</option></select></div></div>'+
+    '<div class="form-group"><label>رابط الصورة</label><input id="stImg" class="form-input" value="'+esc(it.imageUrl)+'"></div>'+
+    '<button type="button" class="btn btn-primary w-full" onclick="window.saveStoreItem(\''+(id||'')+'\')">💾 حفظ</button></div>','modal-md');
+};
+
+window.saveStoreItem=function(id){
+  try{
+    var name=(document.getElementById('stName').value||'').trim();
+    if(!name){ toast('اكتب اسم المنتج','error'); return; }
+    var data={name:name,description:document.getElementById('stDesc').value||'',category:document.getElementById('stCat').value,
+      price:parseFloat(document.getElementById('stPrice').value)||0,stock:parseInt(document.getElementById('stStock').value)||0,
+      availability:document.getElementById('stAvail').value,imageUrl:document.getElementById('stImg').value||''};
+    var d=D(); d.storeCatalog=d.storeCatalog||[]; var rec;
+    if(id){ rec=d.storeCatalog.filter(function(x){ return x.id===id; })[0]; if(rec) Object.assign(rec,data,{updatedAt:new Date().toISOString()}); }
+    else{ rec=Object.assign({id:'cat_'+Date.now(),reserved:0,createdAt:new Date().toISOString(),createdBy:me().id||''},data); d.storeCatalog.push(rec); }
+    S(d); if(rec) fb('storeCatalog',rec.id,rec);
+    ThemeManager.closeModal(); toast('✅ تم الحفظ'); window.loadStore();
+  }catch(e){ toast('خطأ: '+e.message,'error'); }
+};
+
+window.storeDeleteItem=function(id){
+  if(!confirm('حذف المنتج نهائياً؟')) return;
+  var d=D(); d.storeCatalog=(d.storeCatalog||[]).filter(function(x){ return x.id!==id; }); S(d);
+  try{ if(window.FirebaseService&&FirebaseService.connected) FirebaseService.deleteDoc('storeCatalog',id); }catch(e){}
+  window.loadStore();
+};
+
+window.storeAdjustStock=function(id){
+  var d=D(); var it=(d.storeCatalog||[]).filter(function(x){ return x.id===id; })[0]; if(!it) return;
+  it.stock=Math.max(0,parseInt((document.getElementById('stk_'+id)||{}).value)||0);
+  S(d); fb('storeCatalog',id,it); toast('✅ تم تحديث المخزون'); window.loadStore();
+};
+
+function order(id){ var d=D(); var o=(d.storeOrders||[]).filter(function(x){ return x.id===id; })[0];
+  var it=o?(d.storeCatalog||[]).filter(function(x){ return x.id===o.catalogItemId; })[0]:null; return {d:d,o:o,it:it}; }
+
+window.storeApprove=function(id){
+  var c=order(id); if(!c.o) return;
+  var q=c.o.quantity||1;
+  if(!c.it||((c.it.stock||0)-(c.it.reserved||0))<q){ toast('المخزون غير كافي','error'); return; }
+  c.o.status='approved'; c.o.approvedBy=me().id; c.o.approvedAt=new Date().toISOString();
+  c.it.reserved=(c.it.reserved||0)+q;
+  S(c.d); fb('storeOrders',id,c.o); fb('storeCatalog',c.it.id,c.it);
+  toast('✅ موافقة — المنتج اتحجز'); window.loadStore();
+};
+window.storeReject=function(id){
+  if(!confirm('رفض الطلب؟')) return;
+  var c=order(id); if(!c.o) return;
+  c.o.status='cancelled'; c.o.cancelledAt=new Date().toISOString(); c.o.cancelReason='مرفوض من المساعد';
+  S(c.d); fb('storeOrders',id,c.o); toast('✅ تم الرفض'); window.loadStore();
+};
+window.storeDeliver=function(id){
+  var c=order(id); if(!c.o||!c.it) return;
+  var q=c.o.quantity||1, pk=(document.getElementById('pk_'+id)||{}).value||'';
+  c.o.status='delivered'; c.o.deliveredAt=new Date().toISOString(); c.o.deliveredBy=me().id; if(pk) c.o.pickupDate=pk;
+  c.it.stock=Math.max(0,(c.it.stock||0)-q); c.it.reserved=Math.max(0,(c.it.reserved||0)-q);
+  S(c.d); fb('storeOrders',id,c.o); fb('storeCatalog',c.it.id,c.it);
+  toast('✅ تم التسليم والخصم من المخزون'); window.loadStore();
+};
+
+/* أسماء قديمة بتشير لنفس النسخة (عشان أي كود قديم متبقي ميكسرش) */
+window.loadAsStore=window.loadMyStore=window.loadStore;
+window.openAsStoreItem=window.openAsStoreItemModalV2=window.openStoreItem;
+window.saveAsStoreItem=window.saveAsStoreItemV2=window.saveStoreItem;
+window.asAdjustStock=window.storeAdjustStock;
+window.asApproveOrder=window.storeApprove; window.asRejectOrder=window.storeReject; window.asDeliverOrder=window.storeDeliver;
+
+/* ربط showSection('store') — مرة واحدة بس */
+if(!window.__storeHook){
+  window.__storeHook=1;
+  var prev=window.showSection;
+  window.showSection=function(id){
+    var r=prev.apply(this,arguments);
+    if(id==='store') window.loadStore();
+    return r;
+  };
+}
+})();
+
+</script>
+<script>
+/* 🔗 فرض المتجر الموحّد بعد كل التعريفات */
+(function(){
+function fix(){
+try{
+if(window.loadStoreUnified){
+window.loadStore=window.loadStoreUnified;
+if(window.setStoreTabUnified)window.setAsStoreTab=window.setStoreTabUnified;
+if(window.openCatalogItemModal)window.openAsStoreItem=window.openCatalogItemModal;
+}
+}catch(e){}
+}
+fix();setTimeout(fix,800);setTimeout(fix,2000);
+})();
+</script>
+<script>
+/* 🛡️ وسم التكرار اللحظي جوّا مودالات الإضافة */
+(function(){
+function nm(x){return String(x||'').toLowerCase().replace(/[\u064B-\u0652]/g,'').replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/\s+/g,' ').trim();}
+function check(t){
+try{
+var row=t.closest('tr')||t.closest('.form-group')||t.parentNode;if(!row)return;
+var val=t.value||'';var tag=row.querySelector?row.querySelector('.dupLiveTag'):null;
+if(nm(val).length<3){if(tag)tag.remove();t.style.borderColor='';return;}
+var all=(window.DataService&&DataService.getStudents)?DataService.getStudents():[];
+var hit=all.find(function(s){return nm(s.name)===nm(val);});
+if(hit){
+if(!tag){tag=document.createElement('span');tag.className='dupLiveTag badge badge-warning';tag.style.margin='0 6px';t.parentNode.insertBefore(tag,t.nextSibling);}
+var ens=(DataService.getStudentTeachers?DataService.getStudentTeachers(hit.id):[])||[];
+tag.textContent='⚠️ موجود: '+hit.name+' ('+(hit.code||'')+')'+(ens.length?' · مقيّد في '+ens.length+' مجموعة':' · غير مقيّد');
+t.style.borderColor='var(--warning)';
+if(row.setAttribute)row.setAttribute('data-dup-id',hit.id);
+}else{if(tag)tag.remove();t.style.borderColor='';if(row.removeAttribute)row.removeAttribute('data-dup-id');}
+}catch(e){}
+}
+function onEv(e){
+var t=e.target;if(!t||!t.closest||!t.closest('.modal-body'))return;
+var ph=String(t.placeholder||''),id=String(t.id||'');
+if(ph.indexOf('الاسم')>=0||ph.indexOf('اسم')>=0||(/name/i.test(id)&&t.type==='text'))check(t);
+}
+document.addEventListener('input',onEv,true);
+document.addEventListener('focusout',onEv,true);
+})();
+</script>
+<script src="js/unified-students.js"></script>
 </body>
 </html>

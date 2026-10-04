@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧨 تصفير المصنع — تطوير فقط</title>
+<link rel="stylesheet" href="css/eduflow-theme.css">
+<style>
+body{background:var(--bg,#0b0e1a);padding:16px;}
+.rz-card{max-width:780px;margin:10px auto;background:var(--surface,#161b2e);border:2px solid var(--danger,#ef4444);border-radius:18px;padding:22px;color:var(--text,#f1f5f9);}
+.rz-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0;}
+label.rz{display:flex;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--border,#2b3355);border-radius:10px;cursor:pointer;font-size:12px;font-weight:700;background:var(--surface-hover,rgba(255,255,255,.04));}
+label.rz input{width:18px;height:18px;accent-color:#ef4444;}
+.rz-keep{background:var(--success-bg,rgba(34,197,94,.12));border:1px solid var(--success,#22c55e);border-radius:12px;padding:12px;font-size:13px;font-weight:800;color:var(--success,#22c55e);margin:12px 0;line-height:1.8;}
+#rzLog div{padding:3px 0;border-bottom:1px dashed var(--border,#2b3355);}
+</style>
+</head>
+<body data-theme="dark">
+<div class="rz-card" id="rzMain"></div>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="js/config.js"></script>
+<script src="js/firebase-service.js"></script>
+<script src="js/data-service.js"></script>
+<script>
+(function(){
+"use strict";
+/* 🔒 مشتغلش غير من بيئة التطوير المحلية */
+var ALLOWED=(location.hostname==='127.0.0.1'||location.hostname==='localhost'||location.hostname==='');
+var main=document.getElementById('rzMain');
+if(!ALLOWED){main.innerHTML='<h2>🔒 الوصول مرفوض</h2><p style="opacity:.8;">الصفحة دي بتشتغل من بيئة التطوير المحلية بس (127.0.0.1 / localhost).</p>';return;}
+var COLS=[
+{k:'attendance',l:'📋 سجلات الحضور',on:true},
+{k:'manualSessions',l:'📥 حصص مرحّلة/يدوية (المربعات)',on:true},
+{k:'sessionFlags',l:'✋ أعلام المربعات اليدوية',on:true},
+{k:'cancelledSessions',l:'🚫 الإلغاءات والتعويضات',on:true},
+{k:'payments',l:'💰 الدفعات والشهريات',on:true},
+{k:'pendingMonthTransitions',l:'🔄 طلبات انتقال الشهر',on:true},
+{k:'ledgerLog',l:'📒 سجل نشاط الدفتر',on:true},
+{k:'manualPoints',l:'🏆 النقاط اليدوية',on:true},
+{k:'interactionPoints',l:'⭐ نقاط التفاعل',on:true},
+{k:'gamePlays',l:'🎮 نتائج الألعاب',on:true},
+{k:'dailyQuizAttempts',l:'🧠 محاولات سؤال اليوم',on:true},
+{k:'achievements',l:'🏅 الإنجازات',on:true},
+{k:'streakBonuses',l:'🔥 مكافآت السلاسل',on:true},
+{k:'missionClaims',l:'🎯 المهام المستلمة',on:true},
+{k:'notifications',l:'🔔 الإشعارات',on:true},
+{k:'submissions',l:'📝 تسليمات الواجبات',on:true},
+{k:'examAttempts',l:'🎓 محاولات الامتحانات',on:true},
+{k:'storeOrders',l:'📦 طلبات واستبدالات المتجر',on:true},
+{k:'gameBank',l:'🎮 بنك الألعاب (اختياري)',on:false},
+{k:'dailyQuizPool',l:'🧠 بنك سؤال اليوم (اختياري)',on:false},
+{k:'challenges',l:'🏆 التحديات (اختياري)',on:false},
+{k:'homework',l:'📝 الواجبات (اختياري)',on:false},
+{k:'exams',l:'🎓 الامتحانات (اختياري)',on:false}
+];
+function render(){
+main.innerHTML='<h2 style="margin:0 0 6px;">🧨 تصفير المصنع — بيئة التطوير فقط</h2>'+
+'<div class="rz-keep">✅ مش هنقرب خالص لـ: <u>المجموعات وجداولها</u> · <u>الطلاب وحساباتهم</u> · كل المستخدمين (أدمن/أساتذة/مساعدين) · منتجات المتجر والإعدادات<br>⚠️ التغيير الوحيد في المجموعات: تصفير العداد المدفون (sessionNow) لأنه جزء من المربعات — ومفيش أي مسح لمجموعة ولا طالب.</div>'+
+'<div class="rz-grid">'+COLS.map(function(c,i){return '<label class="rz"><input type="checkbox" data-i="'+i+'" '+(c.on?'checked':'')+'> '+c.l+'</label>';}).join('')+'</div>'+
+'<div style="margin:14px 0;"><label style="font-size:13px;font-weight:900;">اكتب كلمة <span style="color:var(--danger);">تصفير</span> للتأكيد:</label><input type="text" id="rzWord" class="form-input" style="margin-top:6px;"></div>'+
+'<button class="btn btn-danger w-full" style="padding:14px;font-size:15px;font-weight:900;" onclick="window.rzRun()">🧨 تنفيذ التصفير الآن</button>'+
+'<div id="rzLog" style="margin-top:12px;font-size:12px;max-height:220px;overflow:auto;"></div>';
+}
+function log(m){var el=document.getElementById('rzLog');if(!el)return;el.innerHTML+='<div>• '+m+'</div>';el.scrollTop=el.scrollHeight;}
+window.rzRun=async function(){
+if((document.getElementById('rzWord')||{}).value!=='تصفير'){alert('اكتب كلمة التصفير للتأكيد الأول');return;}
+if(!confirm('تأكيد نهائي: هتمسح البيانات المختارة محلياً وسحابياً. المجموعات والطلاب في أمان. متأكد؟'))return;
+var d=DataService._getData();
+for(var i=0;i<COLS.length;i++){
+var cb=document.querySelector('input[data-i="'+i+'"]');
+if(!cb||!cb.checked)continue;
+var c=COLS[i];
+var list=d[c.k];
+var n=Array.isArray(list)?list.length:(list?Object.keys(list).length:0);
+d[c.k]=Array.isArray(list)?[]:{};
+log('🗑 '+c.l+' — '+n+' سجل محلياً');
+try{
+if(window.FirebaseService&&FirebaseService._db){
+var snap=await FirebaseService._db.collection(c.k).limit(300).get();
+var batch=FirebaseService._db.batch();var cnt=0;
+snap.forEach(function(doc){batch.delete(doc.ref);cnt++;});
+if(cnt)await batch.commit();
+log('☁️ '+c.l+' — '+cnt+' من السحابة'+(snap.size>=300?' (لو فيه أكتر دوس تنفيذ تاني)':''));
+}
+}catch(e){log('⚠️ خطأ سحابي في '+c.l+': '+e.message);}
+}
+/* تصفير نقاط وستريك الطلاب من غير مسح أي طالب */
+try{
+var users=(d.users||[]);var touched=0;
+for(var u2=0;u2<users.length;u2++){var u=users[u2];if(u.role!=='student')continue;
+u.pointsHistory=[];u.streaks={attendance:0,lastDate:null};u.points=0;touched++;
+try{if(window.FirebaseService&&FirebaseService._db)await FirebaseService.saveDoc('users',u.id,u);}catch(e){}
+}
+log('🧍 اتصفّرت نقاط/ستريك '+touched+' طالب — الطلاب نفسهم زي ما هم');
+}catch(e){log('⚠️ خطأ في الطلاب: '+e.message);}
+/* تصفير عداد المجموعات المدفون فقط */
+try{
+var gs=(d.groups||[]);
+for(var g2=0;g2<gs.length;g2++){gs[g2].sessionNow=0;gs[g2].sessionNowMonth=null;
+try{if(window.FirebaseService&&FirebaseService._db)await FirebaseService.saveDoc('groups',gs[g2].id,gs[g2]);}catch(e){}
+}
+log('👥 اتصفّر العداد المدفون لـ '+gs.length+' مجموعة — المجموعات والجداول والملكات زي ما هي');
+}catch(e){log('⚠️ خطأ في المجموعات: '+e.message);}
+try{Object.keys(localStorage).filter(function(k){return k.indexOf('eduNotify')===0||k.indexOf('ldgOnly')===0;}).forEach(function(k){localStorage.removeItem(k);});}catch(e){}
+DataService._saveData(d);
+log('✅ خلصنا — افتح أي داشبورد وهتلاقي كل حاجة بدأت من صفر');
+alert('✅ تم التصفير بنجاح');
+};
+if(window.DataService&&DataService.init){DataService.init().then(render).catch(render);}else{render();}
+})();
+</script>
+</body>
+</html>

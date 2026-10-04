@@ -1549,38 +1549,7 @@ return `<tr><td><strong style="color:var(--primary)">${s.code||'—'}</strong></
 }catch(e){console.error(e);}
 };
 
-// 🆕 مودال الإضافة السريعة
-window.openQuickAddStudentModal=function(){
-  try{
-    const teachers=DataService.getTeachers();
-    ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">⚡ إضافة سريعة للطالب</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
-    <div class="modal-body">
-      <div class="quick-add-section">
-        <div class="filter-info">💡 نموذج مبسط لإضافة طالب واحد بسرعة. البيانات الأساسية فقط.</div>
-        <form onsubmit="return window.saveQuickStudent(event)">
-          <div class="form-group"><label>الاسم الكامل *</label><input type="text" id="qsName" class="form-input" required placeholder="مثال: أحمد محمد علي"></div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <div class="form-group"><label>هاتف الطالب</label><input type="tel" id="qsPhone" class="form-input" placeholder="01XXXXXXXXX"></div>
-            <div class="form-group"><label>هاتف ولي الأمر *</label><input type="tel" id="qsParent" class="form-input" required placeholder="01XXXXXXXXX"></div>
-          </div>
-          <div class="form-group"><label>👨‍🏫 اختر الأستاذ *</label>
-            <select id="qsTeacher" class="form-select" onchange="window.loadQuickStudentGroups()" required>
-              <option value="">-- اختر أستاذ --</option>
-              ${teachers.map(t=>`<option value="${t.id}">${t.name} (${t.subject||'-'})</option>`).join('')}
-            </select>
-          </div>
-          <div class="form-group"><label>👥 اختر المجموعة *</label>
-            <select id="qsGroup" class="form-select" required>
-              <option value="">-- اختر أستاذ أولاً --</option>
-            </select>
-          </div>
-          <div class="form-group"><label>كلمة المرور</label><input type="text" id="qsPass" class="form-input" value="1234"></div>
-          <button class="btn btn-success w-full" style="font-size:16px;padding:14px;">⚡ إضافة الطالب الآن</button>
-        </form>
-      </div>
-    </div>`);
-  }catch(e){console.error(e);}
-};
+
 
 window.loadQuickStudentGroups=function(){
   try{
@@ -1627,38 +1596,6 @@ window.saveQuickStudent=async function(e){
   }
 };
 
-// 🆕 مودال الإضافة المجمعة
-window.openBulkAddStudentModal=function(){
-  try{
-    window._bulkRows=[];
-    const teachers=DataService.getTeachers();
-    const stageOptions=Object.entries(EduFlowConfig?.educationLevels||{}).map(([k,v])=>`<option value="${k}">${v.nameAr}</option>`).join('');
-    ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">📋 إضافة طلاب بالجملة (سريع)</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
-    <div class="modal-body">
-      <div class="filter-info">💡 اختار الأستاذ والمجموعة والمرحلة مرة واحدة، بعدين ضيف الطلاب سطر سطر — القائمة تتجمع تحت لحد ما تدوس "حفظ الكل".</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label>👨‍🏫 الأستاذ *</label><select id="bulkTeacher" class="form-select" onchange="window.bulkGroupsRefresh()">${teachers.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}</select></div>
-        <div class="form-group"><label>👥 المجموعة *</label><select id="bulkGroup" class="form-select"></select></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label>المرحلة (للكل)</label><select id="bulkStage" class="form-select" onchange="window.bulkStageCascade()"><option value="">--</option>${stageOptions}</select></div>
-        <div class="form-group"><label>الصف (للكل)</label><select id="bulkGrade" class="form-select"><option value="">--</option></select></div>
-      </div>
-      <div style="background:var(--surface-hover);border:1px dashed var(--border);border-radius:10px;padding:12px;margin-bottom:12px;">
-        <div style="display:grid;grid-template-columns:2fr 1.2fr 1.2fr auto;gap:8px;align-items:end;">
-          <div class="form-group" style="margin:0;"><label>اسم الطالب *</label><input type="text" id="brName" class="form-input" placeholder="الاسم الكامل"></div>
-          <div class="form-group" style="margin:0;"><label>هاتف ولي الأمر *</label><input type="tel" id="brParent" class="form-input" placeholder="01xxxxxxxxx"></div>
-          <div class="form-group" style="margin:0;"><label>هاتف الطالب (اختياري)</label><input type="tel" id="brPhone" class="form-input" placeholder="اختياري"></div>
-          <button type="button" class="btn btn-success" onclick="window.bulkAddRow()" title="إضافة للقائمة">➕</button>
-        </div>
-      </div>
-      <div class="form-group"><label>📃 القائمة الجاهزة للحفظ (<span id="bulkCount">0</span> طالب)</label><div id="bulkRowsList" style="max-height:220px;overflow-y:auto;"></div></div>
-      <button class="btn btn-primary w-full" onclick="window.saveBulkStudents()">💾 حفظ الكل</button>
-    </div>`,'modal-lg');
-    window.bulkGroupsRefresh();
-    window.renderBulkList();
-  }catch(e){ console.error(e); }
-};
 
 window.loadBulkStudentGroups=function(){
   try{
@@ -1694,35 +1631,7 @@ window.saveBulkStudents=async function(){
   }catch(e){ console.error(e); window.safeToast('خطأ في الحفظ','error'); }
 };
 
-// تبديل مجموعة طالب
-window.openSwapStudentModal=function(studentId){
-  try{
-    const s=DataService.getUserById(studentId);
-    const currentEnrollments=DataService.getStudentTeachers(studentId);
-    const teachers=DataService.getTeachers();
-    
-    let currentTeacherId = currentEnrollments.length > 0 ? currentEnrollments[0].teacher.id : '';
-    let currentGroupId = currentEnrollments.length > 0 ? currentEnrollments[0].group.id : '';
 
-    ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🔄 تبديل مجموعة الطالب: ${s.name}</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>
-    <div class="modal-body">
-      <div class="filter-info">💡 يمكنك نقل الطالب إلى مجموعة أخرى (نفس الأستاذ أو أستاذ آخر).</div>
-      <div class="form-group"><label>👨‍🏫 اختر الأستاذ الجديد</label>
-        <select id="swapTeacher" class="form-select" onchange="window.loadSwapGroups('${studentId}')">
-          <option value="">-- اختر أستاذ --</option>
-          ${teachers.map(t=>`<option value="${t.id}" ${t.id===currentTeacherId?'selected':''}>${t.name}</option>`).join('')}
-        </select>
-      </div>
-      <div class="form-group"><label>👥 اختر المجموعة الجديدة</label>
-        <select id="swapGroup" class="form-select">
-          <option value="">-- اختر مجموعة --</option>
-        </select>
-      </div>
-      <button class="btn btn-primary w-full" onclick="window.doSwapStudent('${studentId}')">✅ تأكيد التبديل</button>
-    </div>`);
-    window.loadSwapGroups(studentId);
-  }catch(e){console.error(e);}
-};
 
 window.loadSwapGroups=function(studentId){
   try{
@@ -5085,31 +4994,6 @@ try{ if(id==='cycles'&&window.loadStudentCycles) window.loadStudentCycles(); }ca
 return r;
 };
 }
-/* ================================================================
-🎓 مودال إضافة الطالب المحسّن (أدمن)
-================================================================ */
-window.openStudentModal = function(editId) {
-try {
-window._linkMode = null;
-const s = editId ? DataService.getUserById(editId) : null;
-window._preChecked = s ? (DataService.getStudentTeachers(s.id)||[]).map(t=>t.group.id) : [];
-const tIds = s ? (DataService.getStudentTeachers(s.id)||[]).map(t=>t.teacher&&t.teacher.id).filter(Boolean) : [];
-window._selectedTeachers = tIds.slice();
-window._preTeachers = tIds.slice();
-const centers = window.getAllCenters ? window.getAllCenters() : [];
-const stageOpts = Object.entries(EduFlowConfig?.educationLevels||{}).map(([k,v])=>`<option value="${k}" ${s&&s.stage===k?'selected':''}>${v.nameAr}</option>`).join('');
-const esc = v => String(v==null?'':v).replace(/"/g,'&quot;');
-ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${s?'✏️ تعديل طالب':'🎓 إضافة طالب'}</h3><button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return window.saveStudent(event,'${editId||''}')"><div id="linkBanner" class="link-banner" style="display:none;"></div><div class="filter-info">💡 في وضع التعديل تقدر تعلّم على أساتذة جداد وتضيف لهم مجموعات — الحفظ بيضيف الجديد ويشيل اللي اتفك تعليمه.</div><div class="form-group"><label>الاسم الكامل *</label><input type="text" id="sName" class="form-input" value="${esc(s?.name)}" required oninput="SSM.scan('admin')"><div id="smartMatchBox"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>📱 هاتف الطالب</label><input type="tel" id="sPhone" class="form-input" value="${esc(s?.phone)}" placeholder="01XXXXXXXXX" oninput="SSM.scan('admin')"></div><div class="form-group"><label>👨‍👩 هاتف ولي الأمر</label><input type="tel" id="sParentPhone" class="form-input" value="${esc(s?.parentPhone)}" placeholder="01XXXXXXXXX" oninput="SSM.scan('admin')"></div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;"><div class="form-group"><label>المرحلة</label><select id="sStage" class="form-select" onchange="if(window.sStageCascade)window.sStageCascade();if(window.renderStudentGroups)window.renderStudentGroups();"><option value="">--</option>${stageOpts}</select></div><div class="form-group"><label>الصف</label><select id="sGrade" class="form-select" onchange="if(window.renderStudentGroups)window.renderStudentGroups();"><option value="">--</option></select></div><div class="form-group"><label>🏢 فلتر السنتر</label><select id="sCenter" class="form-select" onchange="if(window.renderStudentGroups)window.renderStudentGroups();"><option value="">كل السناتر</option>${centers.map(c=>`<option>${esc(c)}</option>`).join('')}</select></div></div>${editId?'':'<div class="form-group"><label>🔑 كلمة المرور</label><input type="text" id="sPass" class="form-input" value="1234"></div>'}<div class="stu-section"><div class="stu-section-title">👨 الأساتذة (تقدر تختار أكتر من أستاذ)</div><div id="teacherSelectionGrid" class="teacher-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;"></div></div><div class="stu-section"><div class="stu-section-title">👥 المجموعات (مجموعة واحدة لكل أستاذ)</div><div id="sGroupsList" style="max-height:320px;overflow-y:auto;"></div><div class="text-xs text-muted" style="margin-top:4px;">المحدد: <span id="grpCountBadge">0</span> مجموعة</div></div><button class="btn btn-primary w-full">💾 حفظ</button></form></div>`,'modal-lg');
-if(s){
-if(window.sStageCascade) window.sStageCascade(); else if(window.adminFillGrades) window.adminFillGrades(s.stage);
-const g=document.getElementById('sGrade'); if(g) g.value=s.grade||'';
-const b=document.getElementById('linkBanner');
-if(b){ b.style.display='block'; b.innerHTML='✏️ <strong>وضع التعديل:</strong> بيانات الطالب محملة — الأساتذة الحاليين متعلمين بالأخضر، علّم على أي أستاذ جديد تنزل مجموعاته فوراً.'; }
-}
-window.renderStudentTeachersGrid(window._selectedTeachers||[]);
-if(window.renderStudentGroups) window.renderStudentGroups();
-}catch(e){ console.error('openStudentModal error',e); }
-};
 
 window.renderStudentTeachersGrid = function() {
   try {
@@ -5196,77 +5080,6 @@ window.loadGroupsPage=function(){
   }catch(e){ console.error(e); }
 };
 
-window.saveStudent = async function(e, editId) {
-try {
-if(e&&e.preventDefault) e.preventDefault();
-const name=(document.getElementById('sName')?.value||'').trim();
-if(!name){ window.safeToast('اكتب الاسم','error'); return false; }
-const data={name:name, phone:document.getElementById('sPhone')?.value||'', parentPhone:document.getElementById('sParentPhone')?.value||'', stage:document.getElementById('sStage')?.value||'', grade:document.getElementById('sGrade')?.value||''};
-const pre=(window._preChecked||[]).slice();
-const selectedTeachers=(window._selectedTeachers||[]).slice();
-const groups=(DataService.getGroups?DataService.getGroups():[]);
-const byId={}; groups.forEach(g=>{byId[g.id]=g;});
-const checkedGroups=Array.from(document.querySelectorAll('#sGroupsList input.grp-check:checked, #sGroupsList input.as-grp:checked')).map(cb=>({groupId:cb.value, teacherId:cb.getAttribute('data-teacher')||''}));
-const checkedGids=checkedGroups.map(x=>x.groupId);
-const enroll=[];
-selectedTeachers.forEach(tid=>{
-const myGroups=checkedGroups.filter(x=>x.teacherId===tid);
-if(myGroups.length){
-myGroups.forEach(x=>enroll.push(x));
-} else {
-const firstG=groups.find(g=>g.teacherId===tid);
-if(firstG) enroll.push({groupId:firstG.id, teacherId:tid});
-}
-});
-checkedGroups.forEach(x=>{
-if(!enroll.some(e=>e.groupId===x.groupId)){
-enroll.push(x);
-}
-});
-const doEnroll=async function(sid,gid,tid){
-try{ if(window.SSM&&typeof SSM.enroll==='function'){ await SSM.enroll(sid,gid,tid); return true; } }catch(err){}
-try{ if(DataService&&typeof DataService.addEnrollment==='function'){ await DataService.addEnrollment({studentId:sid,groupId:gid,teacherId:tid,status:'active'}); return true; } }catch(err){}
-try{
-const d=DataService._getData(); d.enrollments=d.enrollments||[];
-if(!d.enrollments.some(x=>x.studentId===sid&&x.groupId===gid)){
-const rec={id:'en_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),studentId:sid,groupId:gid,teacherId:tid,status:'active',enrolledAt:new Date().toISOString()};
-d.enrollments.push(rec); DataService._saveData(d);
-if(window.FirebaseService&&FirebaseService.connected){ try{ await FirebaseService.saveDoc('enrollments',rec.id,rec); }catch(err){} }
-}
-return true;
-}catch(err){ return false; }
-};
-const doUnenroll=async function(sid,gid){
-try{ if(window.SSM&&typeof SSM.unenroll==='function'){ await SSM.unenroll(sid,gid); return true; } }catch(err){}
-try{
-const d=DataService._getData();
-const rec=(d.enrollments||[]).find(x=>x.studentId===sid&&x.groupId===gid);
-d.enrollments=(d.enrollments||[]).filter(x=>!(x.studentId===sid&&x.groupId===gid));
-DataService._saveData(d);
-if(rec&&window.FirebaseService&&FirebaseService.connected){ try{ await FirebaseService.deleteDoc('enrollments',rec.id); }catch(err){} }
-return true;
-}catch(err){ return false; }
-};
-if(window._linkMode&&window._linkMode.id&&!editId) editId=window._linkMode.id;
-if(editId){
-if(DataService.updateUser) await DataService.updateUser(editId,data);
-const cur=(DataService.getStudentTeachers?DataService.getStudentTeachers(editId):[]).map(t=>t.group.id);
-let added=0, removed=0;
-for(const en of enroll){ if(cur.indexOf(en.groupId)<0){ if(await doEnroll(editId,en.groupId,en.teacherId)) added++; } }
-for(const gid of pre){ if(!enroll.some(x=>x.groupId===gid)){ if(await doUnenroll(editId,gid)) removed++; } }
-window.safeToast('✅ تم حفظ التعديل'+(added?' · ➕ '+added+' مجموعة جديدة':'')+(removed?' · ➖ '+removed+' مجموعة':''),'success');
-}else{
-if(!enroll.length){ window.safeToast('اختار مجموعة واحدة على الأقل أو علّم على أستاذ','error'); return false; }
-const pass=document.getElementById('sPass')?.value||'1234';
-const r=await DataService.addStudentByAdmin(Object.assign({},data,{password:pass,enrollments:enroll}));
-window.safeToast(r&&r.linked?'🔗 تم الربط بدون تكرار':'✅ تم إنشاء الطالب بالكود: '+r.code,'success');
-}
-ThemeManager.closeModal();
-window._linkMode=null; window._preChecked=[]; window._selectedTeachers=[]; window._preTeachers=[];
-if(window.loadStudents) window.loadStudents();
-return false;
-}catch(err){ console.error('saveStudent error',err); window.safeToast('خطأ في الحفظ: '+err.message,'error'); return false; }
-};
 
 /* ================================================================
 📋 إضافة مجموعات بالجملة — باليوم والترتيب
@@ -6547,29 +6360,7 @@ function tNameX(id){ var t=DataService.getUserById?DataService.getUserById(id):n
 /* ================================================================
    📋 مودال الإضافة المجمعة — بحث أساتذة + شرائح مجموعات + فلتر أوتوماتيكي
 ================================================================ */
-window.openBulkAddStudentModal=function(){
-try{
-window._bulkRows=[];
-var ts=DataService.getTeachers?DataService.getTeachers():[];
-var stageOptions=Object.entries((window.EduFlowConfig&&EduFlowConfig.educationLevels)||{}).map(function(en){ return '<option value="'+en[0]+'">'+en[1].nameAr+'</option>'; }).join('');
-ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">📋 إضافة طلاب بالجملة</h3><button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">'+
-'<div class="filter-info">💡 اختار المرحلة والصف والمجموعات هتتفلتر تلقائياً — علّم على الأساتذة ومجموعاتهم، وضيف الطلاب للقائمة وعدّلها براحتك قبل الحفظ.</div>'+
-'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group" style="margin:0;"><label>🎯 المرحلة</label><select id="bulkStage" class="form-select" onchange="window.bulkStageCascade2()"><option value="">الكل</option>'+stageOptions+'</select></div><div class="form-group" style="margin:0;"><label>🎓 الصف</label><select id="bulkGrade" class="form-select" onchange="window.bulkTeachersChanged()"><option value="">الكل</option></select></div></div>'+
-'<div class="form-group" style="margin-top:12px;"><label>👨‍🏫 الأساتذة</label><input type="text" id="bulkTeacherSearch" class="form-input" placeholder="🔍 ابحث عن أستاذ..." oninput="window.bulkFilterTeachers()" style="margin-bottom:8px;"><div id="bulkTeacherChips" style="display:flex;flex-wrap:wrap;gap:8px;max-height:150px;overflow-y:auto;padding:8px;background:var(--surface-hover);border-radius:10px;">'+ts.map(function(t){ return '<label class="bulk-t-chip" data-tname="'+(t.name||'').toLowerCase()+'" style="display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:6px 12px;cursor:pointer;font-size:12px;font-weight:700;"><input type="checkbox" value="'+t.id+'" onchange="window.bulkTeachersChanged()" style="width:16px;height:16px;">'+t.name+'</label>'; }).join('')+'</div></div>'+
-'<div id="bulkGroupsArea" style="margin-bottom:12px;"></div>'+
-'<div style="border-top:1px dashed var(--border);padding-top:12px;"><div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;">'+
-'<input type="text" id="bulkName" class="form-input" placeholder="اسم الطالب *">'+
-'<input type="tel" id="bulkPhone" class="form-input" placeholder="هاتف الطالب">'+
-'<input type="tel" id="bulkParent" class="form-input" placeholder="هاتف ولي الأمر">'+
-'<button type="button" class="btn btn-primary" onclick="window.bulkPushRow()">➕ للقائمة</button>'+
-'</div></div>'+
-'<div id="bulkRowsList" style="margin-top:12px;"></div>'+
-'<button type="button" class="btn btn-success w-full" style="margin-top:12px;padding:14px;font-size:15px;" onclick="window.bulkSaveAll()">💾 حفظ الكل (<span id="bulkCount">0</span> طالب)</button>'+
-'</div>','modal-lg');
-window.bulkRenderRows();
-window.bulkTeachersChanged();
-}catch(e){ console.error(e); window.safeToast('خطأ في فتح المودال','error'); }
-};
+
 window.bulkFilterTeachers=function(){
 try{
 var q=((document.getElementById('bulkTeacherSearch')||{}).value||'').toLowerCase();
@@ -6759,5 +6550,36 @@ return '<div class="card" style="padding:10px;margin-bottom:8px;border-right:3px
 };
 })();
 </script>
+<script src="js/fun-center.js"></script>
+<script>
+/* 🛡️ وسم التكرار اللحظي جوّا مودالات الإضافة */
+(function(){
+function nm(x){return String(x||'').toLowerCase().replace(/[\u064B-\u0652]/g,'').replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/\s+/g,' ').trim();}
+function check(t){
+try{
+var row=t.closest('tr')||t.closest('.form-group')||t.parentNode;if(!row)return;
+var val=t.value||'';var tag=row.querySelector?row.querySelector('.dupLiveTag'):null;
+if(nm(val).length<3){if(tag)tag.remove();t.style.borderColor='';return;}
+var all=(window.DataService&&DataService.getStudents)?DataService.getStudents():[];
+var hit=all.find(function(s){return nm(s.name)===nm(val);});
+if(hit){
+if(!tag){tag=document.createElement('span');tag.className='dupLiveTag badge badge-warning';tag.style.margin='0 6px';t.parentNode.insertBefore(tag,t.nextSibling);}
+var ens=(DataService.getStudentTeachers?DataService.getStudentTeachers(hit.id):[])||[];
+tag.textContent='⚠️ موجود: '+hit.name+' ('+(hit.code||'')+')'+(ens.length?' · مقيّد في '+ens.length+' مجموعة':' · غير مقيّد');
+t.style.borderColor='var(--warning)';
+if(row.setAttribute)row.setAttribute('data-dup-id',hit.id);
+}else{if(tag)tag.remove();t.style.borderColor='';if(row.removeAttribute)row.removeAttribute('data-dup-id');}
+}catch(e){}
+}
+function onEv(e){
+var t=e.target;if(!t||!t.closest||!t.closest('.modal-body'))return;
+var ph=String(t.placeholder||''),id=String(t.id||'');
+if(ph.indexOf('الاسم')>=0||ph.indexOf('اسم')>=0||(/name/i.test(id)&&t.type==='text'))check(t);
+}
+document.addEventListener('input',onEv,true);
+document.addEventListener('focusout',onEv,true);
+})();
+</script>
+<script src="js/unified-students.js"></script>
 </body>
 </html>

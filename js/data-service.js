@@ -174,6 +174,17 @@ const newCollections = [
   getAssistants() { return (this._getData().users || []).filter(u => u.role === 'assistant'); },
 
   async addUser(data) {
+    /* 🛡️ حارس تكرار لحسابات الطلاب */
+try{
+var __u=arguments[0]||{};
+if(__u.role==='student'){
+var __all2=this.getStudents?this.getStudents():[];
+function __nm2(x){return String(x||'').toLowerCase().replace(/[\u064B-\u0652]/g,'').replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/\s+/g,' ').trim();}
+var __p2=String(__u.phone||__u.parentPhone||'').replace(/\D/g,'');
+var __h2=__all2.find(function(s){return (__nm2(s.name)&&__nm2(s.name)===__nm2(__u.name))||(__p2&&(__p2===String(s.phone||'').replace(/\D/g,'')||__p2===String(s.parentPhone||'').replace(/\D/g,'')));});
+if(__h2){if(window.safeToast)window.safeToast('🛡️ الحساب موجود: '+__h2.name+' — استخدمه بدل إنشاء تكرار','warning');return Promise.resolve(__h2);}
+}
+}catch(e){}
     const d = this._getData(); if (!d.users) d.users = [];
     const id = data.id || ('u_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
     const user = { id, createdAt: new Date().toISOString(), photoUrl: '', ...data };
@@ -199,6 +210,28 @@ const newCollections = [
   },
 
   async addStudentByAdmin(data) {
+    /* 🛡️ حارس التكرار: لو الطالب موجود → اربطه بمجموعة بدل إنشاء حساب جديد */
+try{
+var __data=arguments[0]||{};
+var __self=this;
+var __all=__self.getStudents?__self.getStudents():[];
+function __nm(x){return String(x||'').toLowerCase().replace(/[\u064B-\u0652]/g,'').replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/\s+/g,' ').trim();}
+var __ph=String(__data.phone||__data.parentPhone||'').replace(/\D/g,'');
+var __hit=__all.find(function(s){
+return (__nm(s.name)&&__nm(s.name)===__nm(__data.name))||(__ph&&(__ph===String(s.phone||'').replace(/\D/g,'')||__ph===String(s.parentPhone||'').replace(/\D/g,'')));
+});
+if(__hit){
+var __d=__self._getData();__d.enrollments=__d.enrollments||[];
+(__data.enrollments||[]).forEach(function(en,ix){
+var gid=en.groupId||(en.group&&en.group.id);if(!gid)return;
+var ex=__d.enrollments.find(function(x){return x.studentId===__hit.id&&x.groupId===gid&&x.status==='active';});
+if(!ex){var ne={id:'en_'+Date.now()+'_'+ix,studentId:__hit.id,groupId:gid,teacherId:en.teacherId||null,status:'active',createdAt:new Date().toISOString()};__d.enrollments.push(ne);try{if(window.FirebaseService&&FirebaseService._db)FirebaseService.saveDoc('enrollments',ne.id,ne);}catch(e){}}
+});
+__self._saveData(__d);
+if(window.safeToast)window.safeToast('🛡️ الطالب موجود بالفعل: '+__hit.name+' — اتربط بالمجموعة من غير تكرار','warning');
+return Promise.resolve(__hit);
+}
+}catch(e){console.error('dup-guard',e);}
     const code = 'EDU-' + Math.floor(1000 + Math.random() * 9000);
     const studentId = 'STU-' + Date.now().toString().slice(-4);
     const user = await this.addUser({
