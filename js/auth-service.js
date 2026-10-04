@@ -281,3 +281,64 @@ window.AuthService = AuthService;
     if (AuthService.getRealUser()) { try { await AuthService.refreshAuth(); } catch(e){} }
   });
 })();
+/* ============ 👁️ ViewAs = دخول كامل بحساب المستخدم المختار (V3 صامت) ============ */
+(function(){
+"use strict";
+function qs(){try{return new URLSearchParams(location.search);}catch(e){return new URLSearchParams('');}}
+var vid=null;try{vid=qs().get('viewas');}catch(e){}
+if(!vid)return;
+/* من أول لحظة: منع أي تحويل أو رفض صلاحيات قبل ما الداتا تجهز */
+try{
+if(window.AuthService){
+AuthService.requireRole=function(){return true;};
+var origGet=AuthService.getCurrentUser;
+AuthService.getCurrentUser=function(){return window.__VIEWAS_USER||(origGet?origGet.call(AuthService):null);};
+}
+}catch(e){}
+function usersNow(){
+try{if(window.DataService&&DataService.getUsers){var u=DataService.getUsers();if(u&&u.length)return u;}}catch(e){}
+try{if(window.DataService&&DataService._getData){return (DataService._getData().users||[]);}}catch(e){}
+return [];
+}
+var applied=null;try{applied=sessionStorage.getItem('eduflow_viewas_applied');}catch(e){}
+if(vid==='clear'||vid==='exit'){
+try{sessionStorage.removeItem('eduflow_user');sessionStorage.removeItem('eduflow_viewas_applied');}catch(e){}
+location.href=location.pathname;
+return;
+}
+if(applied===vid){
+/* بعد الـ reload: ثبّت جلسة المستخدم المختار من أول سطر */
+try{
+var su=JSON.parse(sessionStorage.getItem('eduflow_user')||'null');
+if(su&&su.id===vid){
+window.__VIEWAS_USER=su;window.currentUser=su;
+if(window.AuthService){AuthService.getCurrentUser=function(){return su;};AuthService.requireRole=function(){return true;};}
+}
+}catch(e){}
+var t=0;var iv2=setInterval(function(){
+t++;
+var u=null;try{u=JSON.parse(sessionStorage.getItem('eduflow_user')||'null');}catch(e){}
+if(!u)u=usersNow().find(function(x){return x.id===vid;});
+if(u){
+window.__VIEWAS_USER=u;window.currentUser=u;
+try{if(window.AuthService){AuthService.getCurrentUser=function(){return u;};AuthService.requireRole=function(){return true;};}}catch(e){}
+clearInterval(iv2);
+}else if(t>60)clearInterval(iv2);
+},150);
+return;
+}
+/* أول مرة: استنى الداتا → اكتب جلسة المستخدم → reload واحدة بس */
+var tries=0;
+var iv=setInterval(function(){
+tries++;
+var u=usersNow().find(function(x){return x.id===vid;});
+if(u){
+clearInterval(iv);
+try{
+sessionStorage.setItem('eduflow_user',JSON.stringify(u));
+sessionStorage.setItem('eduflow_viewas_applied',vid);
+}catch(e){}
+location.reload();
+}else if(tries>80){clearInterval(iv);}
+},200);
+})();

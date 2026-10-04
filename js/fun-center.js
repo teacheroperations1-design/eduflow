@@ -220,7 +220,7 @@ document.head.appendChild(st);}
 /* ========== إعدادات + مساعدات ========== */
 function cfg(){var g=(db().gamification||{});return Object.assign({quizPoints:5,streak7:10,streak14:25,streak30:60,ach:true,board:true,fact:true,mPlay:3,mQuiz:2,mWin:5},g.engagement||{});}
 function saveCfg(c){var d=db();d.gamification=d.gamification||{};d.gamification.engagement=c;saveD(d);}
-function addPts(sid,pts,reason){try{if(typeof Ops!=='undefined'&&Ops.addManualPoints){Ops.addManualPoints(sid,pts,reason,(cur()||{}).id||'system');return true;}}catch(e){}return false;}
+function gamesFrozen(){try{var f=(db().platformMeta||{}).freeze||{};return f.games===true||f.full===true;}catch(e){return false;}} function addPts(sid,pts,reason){if(gamesFrozen())return false;try{if(typeof Ops!=='undefined'&&Ops.addManualPoints){Ops.addManualPoints(sid,pts,reason,(cur()||{}).id||'system');return true;}}catch(e){}return false;}
 function gradeOptions(sel){
 var out=[];var lv=(typeof EduFlowConfig!=='undefined'&&EduFlowConfig.educationLevels)?EduFlowConfig.educationLevels:{};
 Object.keys(lv).forEach(function(k){(lv[k].grades||[]).forEach(function(gr){out.push(gr);});});
@@ -314,7 +314,7 @@ var claimed=!!d.missionClaims[sid][m.k+'_'+today];
 return '<div class="fc-mission '+(m.done?'done':'')+'"><span style="font-size:22px;">'+m.i+'</span><div style="flex:1;"><strong style="font-size:12px;">'+m.l+'</strong><div class="text-xs text-muted">+'+m.pts+' نقاط</div></div>'+(m.done?(claimed?'<span class="badge badge-success">✓ تم الاستلام</span>':'<button class="btn btn-success btn-sm" onclick="window.fcClaimMission(\''+m.k+'\')">🎁 استلم</button>'):'<span class="badge badge-muted">لسه</span>')+'</div>';
 }).join('')+'</div></div>';
 }
-window.fcClaimMission=function(k){
+window.fcClaimMission=function(k){if(gamesFrozen()){if(window.safeToast)window.safeToast('🧊 النقاط مجمدة حالياً','info');return;}
 var u=cur();if(!u)return;var d=db(),today=new Date().toISOString().slice(0,10);
 d.missionClaims=d.missionClaims||{};d.missionClaims[u.id]=d.missionClaims[u.id]||{};
 if(d.missionClaims[u.id][k+'_'+today])return;
@@ -357,7 +357,7 @@ ACH.forEach(function(a){if(!d.achievements[sid][a.k]&&a.t(s)){d.achievements[sid
 if(newly.length){saveD(d);setTimeout(function(){newly.forEach(function(a){if(window.safeToast)window.safeToast('🏅 إنجاز: '+a.i+' '+a.l,'success');});SND.win();},300);}
 return '<div class="card" style="padding:14px;"><strong>🏅 شاراتي</strong><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">'+ACH.map(function(a){var ok=!!d.achievements[sid][a.k];return '<span class="fc-badge '+(ok?'unlocked':'locked')+'"><span class="ic">'+a.i+'</span>'+a.l+'</span>';}).join('')+'</div></div>';
 }
-function streakBonus(sid){
+function streakBonus(sid){if(gamesFrozen())return;
 var c=cfg(),u=DataService.getUserById?DataService.getUserById(sid):null;
 var s=(u&&u.streaks&&u.streaks.attendance)||0;
 var d=db();d.streakBonuses=d.streakBonuses||{};d.streakBonuses[sid]=d.streakBonuses[sid]||{};
@@ -884,7 +884,7 @@ SND.hint();
 function recordPlay(game,score,win,opts,scored){
 try{
 var u=cur(),d=db();d.gamePlays=d.gamePlays||[];
-if(scored&&u&&u.role==='student'){
+if(gamesFrozen())scored=false; if(scored&&u&&u.role==='student'){
 d.gamePlays.push({id:'gp_'+Date.now(),gameId:game.id,sid:u.id,name:u.name,points:score,win:win,at:new Date().toISOString(),scored:true});
 saveD(d);
 if(score>0)addPts(u.id,score,'🎮 '+game.title);
@@ -1460,7 +1460,13 @@ var ch=document.getElementById('section-challenges');
 if(ch&&ch.parentNode)ch.parentNode.insertBefore(sec,ch.nextSibling);
 else document.querySelector('.content-area').appendChild(sec);
 }
-sidebarItem(document.getElementById('sidebarNav'),'fcGamesStaff','مصنع الألعاب','🎮','challenges');
+(function(){
+var nav=document.getElementById('sidebarNav');if(!nav)return;
+if(nav.querySelector('[data-section="fcGamesStaff"]'))return;
+var html='<div class="sidebar-item" data-section="fcGamesStaff" onclick="window.showSection(\'fcGamesStaff\')"><span class="sidebar-item-icon">🎮</span><span class="sidebar-item-label">مصنع الألعاب</span></div>';
+var a=nav.querySelector('[data-section="challenges"]')||nav.querySelector('[data-section="gamification"]')||nav.querySelector('[data-section="points"]');
+if(a)a.insertAdjacentHTML('beforebegin',html);else nav.insertAdjacentHTML('afterbegin',html);
+})();
 }
 window.fcStaffTab=function(k,btn){
 var g=document.getElementById('fcTabGames'),r=document.getElementById('fcTabResults');
@@ -1485,11 +1491,26 @@ return r;
 };
 }
 }
+function injectStaffTiles(){
+try{
+var u=cur();if(!u||u.role!=='admin')return;
+var first=document.querySelector('#section-command .quick-action')||document.querySelector('#section-overview .quick-action');
+if(!first||!first.parentNode)return;
+if(!document.getElementById('qaGameFactory')){
+var b=document.createElement('button');b.type='button';b.className='quick-action';b.id='qaGameFactory';
+b.innerHTML='<div class="quick-action-icon">🏭</div><div class="quick-action-label">مصنع الألعاب</div>';
+b.onclick=function(){window.showSection('fcGamesStaff');};
+first.parentNode.insertBefore(b,first.nextSibling);
+}
+}catch(e){}
+}
+
 function init(){
 var u=cur();if(!u)return;
 if(u.role==='student'){streakBonus(u.id);buildStudent();hook();window.fcRenderStudentGames();renderPtTabs();setTimeout(function(){buildStudent();window.fcRenderStudentGames();},1200);}
 else{buildStaff();hook();window.fcRenderStaffGames();setTimeout(function(){buildStaff();window.fcRenderStaffGames();},1200);}
 }
+injectStaffTiles();setTimeout(injectStaffTiles,1200);setTimeout(injectStaffTiles,3000);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(init,700);});else setTimeout(init,700);
 setTimeout(init,2500);
 })();

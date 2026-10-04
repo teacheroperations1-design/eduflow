@@ -32,6 +32,17 @@ if(wn.length>=3){var k=words3(n),sk=words3(s.name);return loose?(sk===k||sk.inde
 return false;
 });
 }
+/* 🆕 البحث عن الإخوة: نفس رقم ولي الأمر بس اسم مختلف */
+function findSiblings(name,phone){
+var n=nm(name),p=String(phone||'').replace(/\D/g,'');
+if(p.length<6)return [];
+return students().filter(function(s){
+var sp=String(s.phone||'').replace(/\D/g,''),pp=String(s.parentPhone||'').replace(/\D/g,'');
+if(sp!==p&&pp!==p)return false;
+var sn=nm(s.name);
+return sn!==n&&!(sn.length>=3&&n.length>=3&&(sn.indexOf(n)>=0||n.indexOf(sn)>=0));
+});
+}
 function refreshLists(){['loadStudents','loadWorkspace','renderWorkspace','loadGroups'].forEach(function(f){try{if(typeof window[f]==='function')window[f]();}catch(e){}});}
 async function enrollMany(sid,gids){
 var d=db();d.enrollments=d.enrollments||[];var added=0,skipped=0;
@@ -95,7 +106,7 @@ if(!document.getElementById('ustCss')){var st=document.createElement('style');st
 document.head.appendChild(st);}
 
 /* ========== مكونات ========== */
-function newState(){return {teachers:[],picks:{},centers:{},stage:'',grade:'',gq:'',tq:'',target:null,initial:[]};}
+function newState(){return {teachers:[],picks:{},centers:{},stage:'',grade:'',gq:'',tq:'',target:null,initial:[],siblingOf:null};}
 function dataFieldsHtml(st,pfx){
 return '<div class="ust-data"><div class="text-xs" style="font-weight:800;color:var(--primary);margin-bottom:6px;">1️⃣ بيانات الطالب — وهي نفسها الفلاتر:</div>'+
 '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">'+
@@ -142,6 +153,14 @@ return '<div class="ust-dup" style="display:flex;gap:6px;align-items:center;flex
 '<div style="flex:1;"><strong style="font-size:12px;">⚠️ مكرر في المنصة: '+s.name+'</strong> <span class="text-xs text-muted">'+(s.code||'')+' · '+(s.grade||'-')+'</span><div class="text-xs text-muted">'+(ens.length?'👥 '+ens.map(function(e){return (e.group&&e.group.name)||'';}).join('، '):'غير مقيّد')+'</div></div>'+
 '<button type="button" class="btn btn-warning btn-sm" onclick="UST.'+fillFn+'(\''+s.id+'\')">✏️ تعديل بياناته هنا</button>'+
 '<button type="button" class="btn btn-ghost btn-sm" onclick="openEditExistingPlatform(\''+s.id+'\')">🪟</button></div>';
+}).join('')+'</div>';
+}
+/* 🆕 واجهة الإخوة (متابعة موحدة) */
+function siblingPanel(sibs,markAsSibling){
+return '<div style="margin-top:6px;">'+sibs.slice(0,4).map(function(s){
+return '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:7px 9px;border:1.5px solid var(--info);border-radius:10px;margin-bottom:5px;background:var(--info-bg);">'+
+'<div style="flex:1;"><strong style="font-size:12px;">👨‍👧‍👦 قريب/أخ: '+s.name+'</strong> <span class="text-xs text-muted">'+(s.code||'')+' · '+(s.grade||'-')+'</span><div class="text-xs text-muted">نفس رقم ولي الأمر — سيتم ربط الطالب الجديد بمتابعة نفس الأسرة</div></div>'+
+'<button type="button" class="btn btn-primary btn-sm" onclick="UST.'+markAsSibling+'(\''+s.id+'\')">✓ نعم، ده أخوه</button></div>';
 }).join('')+'</div>';
 }
 
@@ -199,9 +218,28 @@ var box=document.getElementById('uasDup');if(!box)return;
 var st=window._ustS||{};
 var name=(document.getElementById('uasName')||{}).value||'';
 var phone=(document.getElementById('uasPhone')||{}).value||'';
-var m=findDups(name,phone,true).filter(function(s){return st.target!==s.id;});
-if(!m.length){box.innerHTML='';return;}
-box.innerHTML='<div class="filter-info" style="background:var(--warning-bg);border-color:var(--warning);color:var(--warning);margin-bottom:6px;"><strong>⚠️ موجود في المنصة — دوس "تعديل بياناته هنا":</strong></div>'+dupPanel(m,'fillSingle');
+var selfMatches=findDups(name,phone,true).filter(function(s){return st.target!==s.id;});
+var sibs=findSiblings(name,phone).filter(function(s){return st.target!==s.id;});
+if(!selfMatches.length&&!sibs.length){box.innerHTML='';return;}
+var html='';
+if(selfMatches.length){
+html+='<div class="filter-info" style="background:var(--warning-bg);border-color:var(--warning);color:var(--warning);margin-bottom:6px;"><strong>⚠️ نفس الطالب موجود — دوس "تعديل بياناته هنا":</strong></div>'+dupPanel(selfMatches,'fillSingle');
+}
+if(sibs.length){
+html+='<div class="filter-info" style="background:var(--info-bg);border-color:var(--info);color:var(--info);margin-bottom:6px;"><strong>👨‍👧‍👦 في إخوة/قرايب مسجلين بنفس رقم ولي الأمر:</strong></div>'+siblingPanel(sibs,'markSibling');
+}
+box.innerHTML=html;
+};
+/* 🆕 وسم الطالب الجديد كأخ (الحفظ هيضيفه طالب جديد مربوط بنفس الأسرة) */
+UST.markSibling=function(sid){
+var s=DataService.getUserById?DataService.getUserById(sid):null;if(!s)return;
+var st=window._ustS;if(!st)return;
+st.siblingOf=sid;
+var p=document.getElementById('uasPhone');if(p)p.value=s.parentPhone||'';
+var md=document.getElementById('uasMode');
+if(md){md.innerHTML='👨‍👧‍👦 الوضع: <strong>إضافة أخ جديد</strong> لعائلة '+(s.name||'')+' — سيضاف كطالب مستقل تحت متابعة نفس ولي الأمر.';md.style.background='var(--info-bg)';md.style.borderColor='var(--info)';md.style.color='var(--info)';}
+var bx=document.getElementById('uasDup');if(bx)bx.innerHTML='';
+if(window.safeToast)window.safeToast('✓ سيعامل كأخ لـ '+s.name,'info');
 };
 UST.fillSingle=function(sid){
 var s=DataService.getUserById?DataService.getUserById(sid):null;if(!s)return;
@@ -242,6 +280,18 @@ var r2=await unenrollMany(st.target,toRemove);
 ThemeManager.closeModal();
 if(window.safeToast)window.safeToast('✏️ تم الحفظ: +'+r1.added+' مجموعة · −'+r2+' مجموعة','success');
 refreshLists();return;
+}
+/* 🆕 لو موصوف كأخ → إضافته كطالب جديد مربوط بنفس الأسرة */
+if(st.siblingOf){
+var sib=DataService.getUserById?DataService.getUserById(st.siblingOf):null;
+if(sib){
+var nu=await DataService.addUser({role:'student',name:name.trim(),parentPhone:phone.trim(),phone:phone2||sib.phone||'',stage:st.stage,grade:st.grade,center:st.center,code:'EDU-'+Date.now().toString().slice(-6),password:'1234',siblingOf:st.siblingOf,familyId:sib.familyId||sib.id});
+await enrollMany((nu&&nu.id)||nu,gids);
+try{if(sib.familyId==null&&DataService.updateUser)await DataService.updateUser(sib.id,{familyId:sib.id});}catch(e){}
+ThemeManager.closeModal();
+if(window.safeToast)window.safeToast('✅ تم إضافة '+name.trim()+' كأخ لـ '+sib.name+' — متابعة موحدة للأسرة','success');
+refreshLists();return;
+}
 }
 var dupExact=findDups(name,phone,false);
 if(dupExact.length){
@@ -291,14 +341,27 @@ window._ustActive='bulk';
 UST.renderBulk();UST.renderRows();
 }catch(e){console.error('openUnifiedBulkAdd',e);if(window.safeToast)window.safeToast('خطأ: '+e.message,'error');}
 };
+
 UST.scanBulkInput=function(){
 var name=(document.getElementById('ubName')||{}).value||'';
 var phone=(document.getElementById('ubPhone')||{}).value||'';
-var m=findDups(name,phone,true);
-window._ubPending=m.length?m[0]:null;
+var selfMatches=findDups(name,phone,true);
+var sibs=findSiblings(name,phone);
+window._ubPending=selfMatches.length?selfMatches[0]:null;
+window._ubSibling=sibs.length?sibs[0]:null;
 var b=document.getElementById('ubDupBadge');if(!b)return;
-b.innerHTML=m.length?'<div class="filter-info" style="background:var(--warning-bg);border-color:var(--warning);color:var(--warning);margin-bottom:4px;"><strong>⚠️ مكرر في المنصة:</strong></div>'+dupPanel(m,'fillBulkInputs'):'';
+var html='';
+if(selfMatches.length)html+='<div class="filter-info" style="background:var(--warning-bg);border-color:var(--warning);color:var(--warning);margin-bottom:4px;"><strong>⚠️ مكرر في المنصة:</strong></div>'+dupPanel(selfMatches,'fillBulkInputs');
+if(sibs.length)html+='<div class="filter-info" style="background:var(--info-bg);border-color:var(--info);color:var(--info);margin-bottom:4px;"><strong>👨‍👧‍👦 قريب/أخ:</strong></div>'+siblingPanel(sibs,'markBulkSibling');
+b.innerHTML=html;
 };
+UST.markBulkSibling=function(sid){
+var s=DataService.getUserById?DataService.getUserById(sid):null;if(!s)return;
+window._ubSiblingOf=sid;
+var p=document.getElementById('ubPhone');if(p)p.value=s.parentPhone||'';
+var b=document.getElementById('ubDupBadge');if(b)b.innerHTML='<span class="badge badge-info">👨‍👧‍👦 وضع أخ لـ '+s.name+' — دوس "إضافة للكشف"</span>';
+};
+
 UST.fillBulkInputs=function(sid){
 var s=DataService.getUserById?DataService.getUserById(sid):null;if(!s)return;
 window._ubPendingEdit=sid;
@@ -324,7 +387,8 @@ return;
 }
 var editId=window._ubPendingEdit||null;
 var dup=editId?null:(window._ubPending||null);
-window._ubRows.push({name:name.trim(),pp:pp.trim(),sp:sp.trim(),editId:editId,dupId:dup?dup.id:null,link:!!dup,override:''});
+window._ubRows.push({name:name.trim(),pp:pp.trim(),sp:sp.trim(),editId:editId,dupId:dup?dup.id:null,link:!!dup,siblingOf:window._ubSiblingOf||null,override:''});
+window._ubSiblingOf=null;
 document.getElementById('ubName').value='';document.getElementById('ubPhone').value='';document.getElementById('ubPhone2').value='';
 window._ubPending=null;window._ubPendingEdit=null;
 var b=document.getElementById('ubDupBadge');if(b)b.innerHTML='';

@@ -1747,45 +1747,43 @@ window.loadStore = function() {
 const el = document.getElementById('storeList');
 if (!el) return;
 const d = db();
-const gamification = d.gamification || { store: { enabled: false, items: [] } };
-const storeSettings = gamification.store || { enabled: false, items: [] };
-if (!storeSettings.enabled) {
-el.innerHTML = '<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">🛒</div><strong>المتجر غير مفعل حالياً</strong></div>';
-return;
+const gamification = d.gamification || {};
+/* 🛡️ fallback: لو الأدمن مفعّل بس مش محفوظ في gamification.store، استخدم الكاش */
+let storeSettings = gamification.store || null;
+if (!storeSettings) {
+  try { var cached = JSON.parse(localStorage.getItem('ptsStoreCache') || 'null'); if (cached && cached.items && cached.items.length) storeSettings = cached; } catch(e) {}
 }
-const items = (storeSettings.items || []).filter(i => i.active);
+if (!storeSettings) storeSettings = { enabled: true, items: [] };
+/* ✅ الشرط الصحيح: ===false علشان undefined يبقى "مفعّل" */
+if (storeSettings.enabled === false) {
+  el.innerHTML = '<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">🛒</div><strong>المتجر موقوف مؤقتاً من الإدارة</strong><div class="text-xs text-muted" style="margin-top:8px;">كلّم الإدارة للتفعيل</div></div>';
+  return;
+}
+const items = (storeSettings.items || []).filter(i => i.active !== false);
 const myPoints = (typeof Ops?.getStudentPoints === 'function') ? Ops.getStudentPoints(activeStudentId, null, 'all') : 0;
 if (!items.length) {
-el.innerHTML = '<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">🛒</div><strong>لا توجد مكافآت متاحة</strong></div>';
+el.innerHTML = '<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">🏆</div><strong>لا توجد مكافآت متاحة حالياً</strong><div class="text-xs text-muted" style="margin-top:8px;">سيضيف الأستاذ منتجات قريباً</div></div>';
 return;
 }
-el.innerHTML = `
-<div class="store-balance-card">
-<div class="store-balance-label">رصيدك الحالي من النقاط</div>
-<div class="store-balance-value">${myPoints} 🏆</div>
+el.innerHTML = `<div class="store-balance-card" style="background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-radius:16px;padding:18px;margin-bottom:16px;text-align:center;">
+<div style="font-size:12px;opacity:.9;margin-bottom:4px;">رصيدك الحالي من النقاط</div>
+<div style="font-size:32px;font-weight:900;font-family:var(--font-en);">${myPoints} 🏆</div>
 </div>
-<div class="store-grid">
-${items.map(item => {
-const canAfford = myPoints >= item.cost;
-return `<div class="store-item-card ${!canAfford ? 'disabled' : ''}">
-<div>
-<div class="store-item-icon">${item.icon || '🎁'}</div>
-<h3 style="margin:0 0 4px;font-size:16px;">${item.name}</h3>
-<div style="margin-bottom:12px;"><span class="badge ${item.type === 'real' ? 'badge-success' : 'badge-info'}">${item.type === 'real' ? '🏢 مكافأة حقيقية' : '✨ شارة افتراضية'}</span></div>
-</div>
-<div>
-<div class="store-item-cost">${item.cost} نقطة</div>
-<button class="btn ${canAfford ? 'btn-primary' : 'btn-secondary'} w-full" ${!canAfford ? 'disabled' : ''} onclick="window.purchaseStoreItem('${item.id}', ${item.cost}, '${item.name.replace(/'/g, "\\'")}')">
-${canAfford ? '🛒 استبدال الآن' : '🔒 نقاط غير كافية'}
-</button>
-</div>
+<div class="store-grid">${items.map(item => {
+const canAfford = myPoints >= (item.cost || 0);
+const stockOk = (item.stock == null || item.stock > 0);
+const disabled = !canAfford || !stockOk;
+return `<div class="store-item-card ${disabled ? 'disabled' : ''}" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center;transition:all .2s;${disabled?'opacity:.55;':'cursor:pointer;'}">
+${item.imageUrl ? `<img src="${window.driveThumb ? driveThumb(item.imageUrl) : item.imageUrl}" style="width:100%;height:90px;object-fit:cover;border-radius:10px;margin-bottom:10px;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div style="display:none;height:90px;align-items:center;justify-content:center;font-size:38px;background:var(--surface-hover);border-radius:10px;margin-bottom:10px;">${item.icon || '🎁'}</div>` : `<div style="height:90px;display:flex;align-items:center;justify-content:center;font-size:38px;background:var(--surface-hover);border-radius:10px;margin-bottom:10px;">${item.icon || '🎁'}</div>`}
+<div style="font-weight:800;font-size:14px;margin-bottom:6px;">${item.name}</div>
+<div style="font-family:var(--font-en);font-weight:900;color:var(--primary);font-size:18px;margin-bottom:8px;">${item.cost || 0} 🏆</div>
+${item.stock != null ? `<div class="text-xs" style="color:${stockOk?'var(--text-muted)':'var(--danger)'};margin-bottom:8px;">📦 ${stockOk ? item.stock + ' متاح' : 'نفذ المخزون'}</div>` : ''}
+<button class="btn ${canAfford && stockOk ? 'btn-primary' : 'btn-secondary'} w-full" ${disabled ? 'disabled' : ''} onclick="window.purchaseStoreItem('${item.id}', ${item.cost || 0}, '${(item.name || '').replace(/'/g, "\\'")}')">${!stockOk ? '🚫 نفذ' : (canAfford ? '🛒 استبدال الآن' : '🔒 نقاط غير كافية')}</button>
 </div>`;
-}).join('')}
-</div>
-<h3 style="margin:24px 0 12px;">📦 مشترياتي السابقة</h3>
-<div id="myPurchasesList"></div>
-`;
-window.loadMyPurchases();
+}).join('')}</div>
+<h3 style="margin:24px 0 12px;font-size:15px;">📦 مشترياتي السابقة</h3>
+<div id="myPurchasesList"></div>`;
+if(window.loadMyPurchases)window.loadMyPurchases();
 };
 window.loadMyPurchases = function() {
 const el = document.getElementById('myPurchasesList');
@@ -1809,39 +1807,31 @@ el.innerHTML = purchases.map(p => `
 </div>
 `).join('');
 };
-window.purchaseStoreItem = async function(itemId, cost, itemName) {
-const myPoints = (typeof Ops?.getStudentPoints === 'function') ? Ops.getStudentPoints(activeStudentId, null, 'all') : 0;
-if (myPoints < cost) { safeToast('نقاطك لا تكفي', 'error'); return; }
-if (!confirm(`هل أنت متأكد من استبدال "${itemName}" مقابل ${cost} نقطة؟`)) return;
-try {
+window.loadMyPurchases = function() {
+const el = document.getElementById('myPurchasesList');
+if (!el) return;
 const d = db();
-const gamification = d.gamification || { store: { items: [] } };
-const item = (gamification.store?.items || []).find(i => i.id === itemId);
-if (!item) { safeToast('المكافأة غير موجودة', 'error'); return; }
-d.storePurchases = d.storePurchases || [];
-const purchaseRecord = {
-id: 'sp_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
-studentId: activeStudentId, studentName: currentUser.name,
-itemId: item.id, itemName: item.name, icon: item.icon,
-cost: cost, type: item.type,
-status: item.type === 'virtual' ? 'fulfilled' : 'pending',
-purchasedAt: new Date().toISOString()
-};
-d.storePurchases.push(purchaseRecord);
-d.manualPoints = d.manualPoints || [];
-d.manualPoints.push({
-id: 'mp_deduct_' + Date.now(), studentId: activeStudentId,
-points: -cost, reason: 'استبدال مكافأة: ' + item.name,
-awardedBy: 'SYSTEM_STORE', awardedAt: new Date().toISOString(), _type: 'manual'
-});
-save(d);
-if (window.FirebaseService?.connected) {
-try { await FirebaseService.saveDoc('storePurchases', purchaseRecord.id, purchaseRecord); } catch (e) {}
+const purchases = (d.storePurchases || []).filter(p => p.studentId === activeStudentId).sort((a,b) => new Date(b.purchasedAt || 0) - new Date(a.purchasedAt || 0));
+if (!purchases.length) {
+el.innerHTML = '<p class="text-muted" style="text-align:center;padding:12px;">لم تقم بأي عملية شراء بعد.</p>';
+return;
 }
-safeToast('✅ تم استبدال المكافأة بنجاح!', 'success');
-window.loadStore();
-} catch (e) { safeToast('حدث خطأ', 'error'); }
+el.innerHTML = purchases.slice(0, 20).map(p => {
+const statusColors = { pending: 'var(--warning)', approved: 'var(--info)', delivered: 'var(--success)', cancelled: 'var(--danger)' };
+const statusLabels = { pending: '⏳ بانتظار التسليم', approved: '✅ موافق عليه', delivered: '📬 تم التسليم', cancelled: '❌ ملغي' };
+return `<div class="sub-row ${p.status === 'delivered' ? 'graded' : (p.status === 'cancelled' ? 'missing' : 'pending')}" style="padding:10px;">
+<div style="display:flex;align-items:center;gap:10px;flex:1;">
+<span style="font-size:24px;">${p.icon || '🎁'}</span>
+<div>
+<strong>${p.itemName}</strong>
+<div class="text-xs text-muted" style="margin-top:2px;">${new Date(p.purchasedAt).toLocaleDateString('ar-EG')} · 🏆 ${p.cost} نقطة</div>
+</div>
+</div>
+<span class="badge" style="background:${statusColors[p.status] || 'var(--text-muted)'};color:#fff;padding:4px 10px;border-radius:8px;font-size:11px;">${statusLabels[p.status] || p.status}</span>
+</div>`;
+}).join('');
 };
+
 window.loadTeachers=function(){
 const ts=DataService?.getStudentTeachers?DataService.getStudentTeachers(activeStudentId):[];
 const el=document.getElementById('teachersList');
@@ -2776,5 +2766,6 @@ setTimeout(checkUrgentNotifs,2000);
 setTimeout(checkUrgentNotifs,5000);
 })();
 </script>
+
 </body>
 </html>

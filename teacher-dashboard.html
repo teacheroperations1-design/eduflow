@@ -2448,5 +2448,39 @@ html,body{overflow-x:hidden}
   applyM();
 })();
 </script>
+<script>
+/* ============ ⚡ التقييم السريع: تحميل المجموعة والطلاب فوراً ============ */
+(function(){
+function autoLoadQuickEval(){
+try{
+var sec=document.getElementById('section-quickEval'); if(!sec) return;
+var u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null;
+if(!u) return;
+var gs=[];
+if(u.role==='admin'||u.role==='super_admin') gs=(DataService.getGroups?DataService.getGroups():[]);
+else if(u.role==='assistant'){var tid=window.getMyTeacherId?window.getMyTeacherId():null; gs=(DataService.getGroups?DataService.getGroups():[]).filter(function(g){return g.teacherId===tid;});}
+else if(u.role==='teacher') gs=(DataService.getGroups?DataService.getGroups():[]).filter(function(g){return g.teacherId===u.id;});
+if(!gs.length) return;
+var sel=document.getElementById('qeGroup');
+if(sel && !sel.value && gs.length){
+sel.value=gs[0].id;
+if(window.loadQuickEvalStudents) window.loadQuickEvalStudents();
+else if(window.renderQuickEval) window.renderQuickEval();
+else { var ev = new Event('change'); sel.dispatchEvent(ev); }
+}
+}catch(e){}
+}
+if(typeof window.showSection==='function'&&!window.__qeHook){
+window.__qeHook=1;
+var os=window.showSection;
+window.showSection=function(id){
+var r=os.apply(this,arguments);
+if(id==='quickEval') setTimeout(autoLoadQuickEval,250);
+return r;
+};
+}
+setInterval(autoLoadQuickEval,4000);
+})();
+</script>
 </body>
 </html>

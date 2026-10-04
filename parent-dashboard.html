@@ -193,6 +193,7 @@
 <div class="main-header-right"><button class="menu-toggle" id="menuToggle"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button><div><h1 class="page-title" id="pageTitle">لوحة ولي الأمر</h1><p class="page-subtitle" id="pageSubtitle">متابعة أداء ابني</p></div></div>
 <div class="main-header-left"><div class="header-actions"><button class="icon-btn" id="notifyBell" style="border:1px solid var(--border);background:var(--surface-hover);border-radius:12px;width:42px;height:42px;font-size:19px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;position:relative;margin-inline-end:6px;" title="الإشعارات">🔔</button><button class="icon-btn" id="themeToggle"></button></div></div>
 </header>
+<div id="fullFreezeBanner" style="display:none;background:linear-gradient(90deg,#0ea5e9,#6366f1);color:#fff;text-align:center;padding:10px;font-weight:900;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,.35);position:sticky;top:0;z-index:100;">❄️ المنصة في وضع الإجازة — الحسابات والدفعات والنقاط متوقفة مؤقتاً</div>
 <div class="content-area">
 
 <!-- 🏠 نظرة عامة -->
@@ -209,6 +210,7 @@
 <div id="childPicker" style="margin-bottom:12px;"></div>
 <div id="actionItemsBanner"></div>
 <div class="child-hero float-in" id="childHero"></div>
+<div id="siblingsHost" style="display:none;"></div>
 <a class="team-btn" id="teamBtn" href="#" target="_blank"><span class="icon">💬</span> تواصل مع تيم الدعم</a>
 
 <div class="modern-card float-in">
@@ -319,19 +321,44 @@
 <script>
 /* 🖼️ تطبيق البراندنج */
 function applyBrandingHere(b){
-  try{
-    if(!b) return;
-    if(b.name) document.querySelectorAll('[data-brand-name]').forEach(function(el){ el.textContent=b.name; });
-    document.querySelectorAll('[data-logo]').forEach(function(el){
-      if(b.logoUrl){
-        var src = window.driveThumb ? window.driveThumb(b.logoUrl) : b.logoUrl;
-        el.innerHTML = '<img src="'+src+'" alt="logo" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" onerror="this.style.display=\'none\';">';
-      } else {
-        el.innerHTML = '<span style="font-size:26px;">🎓</span>';
-      }
-    });
-    try{ if(typeof DataService?.applyBrandingColors === 'function') DataService.applyBrandingColors(b); }catch(e){}
-  }catch(e){}
+try{
+if(!b) return;
+if(b.name) document.querySelectorAll('[data-brand-name]').forEach(function(el){ el.textContent=b.name; });
+var src=b.logoUrl?(window.driveThumb?window.driveThumb(b.logoUrl):b.logoUrl):'';
+document.querySelectorAll('[data-logo]').forEach(function(el){
+if(src){
+el.innerHTML='<img src="'+src+'" alt="logo" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" onerror="this.style.display=\'none\';">';
+}else{
+el.innerHTML='<span style="font-size:26px;">🎓</span>';
+}
+});
+/* فافيكون التبويب */
+if(src){
+var link=document.querySelector('link[rel="icon"]');
+if(!link){link=document.createElement('link');link.rel='icon';document.head.appendChild(link);}
+link.setAttribute('href',src);
+/* أيقونة التثبيت كتطبيق */
+var apple=document.querySelector('link[rel="apple-touch-icon"]');
+if(!apple){apple=document.createElement('link');apple.rel='apple-touch-icon';document.head.appendChild(apple);}
+apple.setAttribute('href',src);
+/* مانيفست PVA ديناميكي */
+try{
+var man={name:(b.name||'EduFlow'),short_name:(b.name||'EduFlow').slice(0,12),start_url:location.pathname,display:'standalone',background_color:'#0a0f1e',theme_color:'#6366f1',icons:[{src:src,sizes:'any',type:'image/png',purpose:'any'},{src:src,sizes:'any',type:'image/png',purpose:'maskable'}]};
+var blob=new Blob([JSON.stringify(man)],{type:'application/manifest+json'});
+var murl=URL.createObjectURL(blob);
+var ml=document.querySelector('link[rel="manifest"]');
+if(!ml){ml=document.createElement('link');ml.rel='manifest';document.head.appendChild(ml);}
+ml.href=murl;
+}catch(e){}
+}
+/* حقن اللوغو جنب اسم الابن في الهيدر */
+var heroCode=document.querySelector('.child-hero-code');
+if(heroCode&&src&&!heroCode.previousElementSibling?.classList?.contains('heroLogo')){
+var img=document.createElement('img');img.className='heroLogo';img.src=src;img.style.cssText='width:28px;height:28px;border-radius:8px;object-fit:cover;margin-inline-end:8px;vertical-align:middle;';
+heroCode.parentNode.insertBefore(img,heroCode);
+}
+try{ if(typeof DataService?.applyBrandingColors === 'function') DataService.applyBrandingColors(b); }catch(e){}
+}catch(e){}
 }
 (async function(){
   try{
@@ -517,10 +544,52 @@ window.renderAll=function(){
     if(!activeChild) activeChild=children[0];
     document.getElementById('childPicker').innerHTML=children.map(c=>`<span class="child-chip ${c.id===activeChild.id?'active':''}" onclick="window.pickChild('${c.id}')">👤 ${c.name}</span>`).join('')+`<span class="child-chip" onclick="window.openAddChild()">➕ إضافة ابن</span>`;
     window.renderOverview();
+    window.renderSiblings();
   }catch(e){console.error(e);}
 };
 
-window.pickChild=function(id){ const c=window.getChildren().find(x=>x.id===id); if(c){ activeChild=c; selectedTeacherId=null; window.renderAll(); } };
+window.pickChild=function(id){ const c=window.getChildren().find(x=>x.id===id); if(c){ activeChild=c; selectedTeacherId=null; window.renderAll(); window.renderSiblings(); } };
+
+/* 👨‍👧‍👦 الإخوة/القرايب: كل أبناء نفس رقم ولي الأمر في مكان واحد */
+window.findSiblings=function(){
+try{
+if(!activeChild||!activeChild.parentPhone)return [];
+var pp=String(activeChild.parentPhone).replace(/\D/g,'');
+if(pp.length<6)return [];
+var all=DataService.getUsers?DataService.getUsers():[];
+return all.filter(function(s){
+return s.role==='student'&&s.id!==activeChild.id&&String(s.parentPhone||'').replace(/\D/g,'')===pp;
+});
+}catch(e){return [];}
+};
+window.renderSiblings=function(){
+var host=document.getElementById('siblingsHost');if(!host)return;
+var sibs=window.findSiblings();
+if(!sibs.length){host.innerHTML='';host.style.display='none';return;}
+host.style.display='block';
+host.innerHTML='<div class="modern-card float-in" style="border-color:var(--info);"><div class="modern-card-header"><div class="modern-card-title">👨‍👧‍👦 إخوة/قرايب تحت متابعة واحدة</div><span class="text-xs text-muted">'+sibs.length+' أخ/أخت</span></div>'+
+'<div class="text-xs text-muted" style="margin-bottom:10px;">كل أبناء الأسرة الظاهرين بنفس رقم ولي الأمر — دوس على أي واحد علشان تشوف بياناته</div>'+
+sibs.map(function(sib){
+var ts2=(DataService.getStudentTeachers?DataService.getStudentTeachers(sib.id):[]);
+var pts=(typeof Ops?.getStudentPoints==='function')?Ops.getStudentPoints(sib.id,null,'all'):0;
+return '<div class="sub-row clickable" onclick="window.switchToSibling(\''+sib.id+'\')" style="border-right:3px solid var(--info);">'+
+'<div style="flex:1;"><strong>👤 '+sib.name+'</strong><div class="text-xs text-muted">'+(sib.code||'')+' · '+(sib.grade||'-')+' · '+ts2.length+' أستاذ · 🏆 '+pts+' نقطة</div></div>'+
+'<span class="badge badge-info">عرض →</span></div>';
+}).join('')+
+'</div>';
+};
+window.switchToSibling=function(sid){
+try{
+var s=DataService.getUserById?DataService.getUserById(sid):null;
+if(!s){if(ThemeManager?.toast)ThemeManager.toast('غير موجود','error');return;}
+activeChild=s;selectedTeacherId=null;
+var ids=currentUser.studentIds||[];if(!ids.includes(s.id))ids.push(s.id);
+currentUser.studentIds=ids;
+sessionStorage.setItem('eduflow_user',JSON.stringify(currentUser));
+window.renderAll();window.renderSiblings();
+if(ThemeManager?.toast)ThemeManager.toast('🔄 تم التبديل لعرض '+s.name,'info');
+}catch(e){}
+};
 
 window.openAddChild=function(){
   if(typeof ThemeManager?.openModal==='function'){
@@ -582,19 +651,52 @@ window.renderWeekSchedule=function(){
   el.innerHTML=html;
 };
 
-/* 🆕 متجر النقاط */
 window.renderStorePreview=function(){
-  if(!activeChild) return;
-  const el=document.getElementById('storePreview'); if(!el) return;
-  const items=(DataService?.getStoreItems?DataService.getStoreItems():[]).filter(i=>i.available!==false).slice(0,6);
-  if(!items.length){ el.innerHTML='<p class="text-muted" style="text-align:center;padding:20px;">لا منتجات في المتجر حالياً</p>'; return; }
-  el.innerHTML=items.map(item=>`
-    <div class="store-item" onclick="window.showSection('overview');if(typeof ThemeManager?.toast==='function')ThemeManager.toast('يرجى الدخول من حساب الطالب للشراء','info');">
-      ${item.imageUrl?`<img src="${window.driveThumb(item.imageUrl)}" class="store-item-img" onerror="this.style.background='var(--grad-modern)';this.src='';">`:'<div class="store-item-img" style="display:flex;align-items:center;justify-content:center;font-size:32px;">🎁</div>'}
-      <div class="store-item-name">${item.name}</div>
-      <div class="store-item-cost">${item.points||0} 🏆</div>
-    </div>
-  `).join('');
+if(!activeChild) return;
+const el=document.getElementById('storePreview'); if(!el) return;
+var storeData=(DataService._getData?DataService._getData():{}).gamification?.store||{};
+var items=(storeData.items||[]).filter(function(i){return i.active!==false;});
+var totalPoints=(typeof Ops?.getStudentPoints==='function')?Ops.getStudentPoints(activeChild.id,null,'all'):0;
+var header='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div><strong>🏆 نقاط ابنك:</strong> <span style="font-family:var(--font-en);font-weight:900;color:var(--primary);">'+totalPoints+'</span></div>'+(storeData.enabled===false?'<span class="badge badge-danger">المتجر موقوف</span>':'')+'</div>';
+if(!items.length){ el.innerHTML=header+'<p class="text-muted" style="text-align:center;padding:20px;">لا منتجات في المتجر حالياً</p>'; return; }
+el.innerHTML=header+items.map(function(item){
+var canAfford=totalPoints>=(item.cost||0);
+var stockOk=(item.stock==null||item.stock>0);
+var disabled=!canAfford||!stockOk||storeData.enabled===false;
+return '<div class="store-item" '+(disabled?'style="opacity:.6;"':'onclick="window.purchaseStoreItem(\''+item.id+'\')"')+'>'+
+(item.imageUrl?'<img src="'+window.driveThumb(item.imageUrl)+'" class="store-item-img" onerror="this.style.display=\'none\'">':'<div class="store-item-img" style="display:flex;align-items:center;justify-content:center;font-size:32px;">'+(item.icon||'🎁')+'</div>')+
+'<div class="store-item-name">'+item.name+'</div>'+
+'<div class="store-item-cost">'+(item.cost||0)+' 🏆</div>'+
+(stockOk?'':'<div class="text-xs" style="color:var(--danger);margin-top:4px;">نفذ</div>')+
+(!canAfford&&stockOk?'<div class="text-xs" style="color:var(--warning);margin-top:4px;">نقاطك أقل</div>':'')+
+'</div>';
+}).join('');
+};
+window.purchaseStoreItem=function(itemId){
+try{
+if(!activeChild){if(ThemeManager?.toast)ThemeManager.toast('اختار ابنك الأول','error');return;}
+var storeData=(DataService._getData?DataService._getData():{}).gamification?.store||{};
+var item=(storeData.items||[]).find(function(i){return i.id===itemId;});
+if(!item){if(ThemeManager?.toast)ThemeManager.toast('المنتج غير موجود','error');return;}
+if(storeData.enabled===false){if(ThemeManager?.toast)ThemeManager.toast('المتجر موقوف من الأدمن','error');return;}
+var totalPoints=(typeof Ops?.getStudentPoints==='function')?Ops.getStudentPoints(activeChild.id,null,'all'):0;
+if(totalPoints<(item.cost||0)){if(ThemeManager?.toast)ThemeManager.toast('نقاط غير كافية','error');return;}
+if(item.stock!=null&&item.stock<=0){if(ThemeManager?.toast)ThemeManager.toast('المنتج نفذ من المخزون','error');return;}
+if(!confirm('تأكيد استبدال '+item.name+' مقابل '+item.cost+' نقطة لابنك '+activeChild.name+'؟'))return;
+var d=DataService._getData();
+d.storeOrders=d.storeOrders||[];
+var order={id:'ord_'+Date.now()+'_'+Math.random().toString(36).slice(2,5),studentId:activeChild.id,catalogItemId:item.id,itemName:item.name,cost:item.cost,quantity:1,status:'pending_reserve',at:new Date().toISOString(),createdAt:new Date().toISOString()};
+d.storeOrders.push(order);
+d.manualPoints=d.manualPoints||[];
+var mp={id:'mp_'+Date.now(),studentId:activeChild.id,points:-(item.cost||0),reason:'🛒 استبدال: '+item.name,awardedBy:currentUser?.id||'parent',awardedAt:new Date().toISOString()};
+d.manualPoints.push(mp);
+if(item.stock!=null)item.stock=Math.max(0,(item.stock||1)-1);
+DataService._saveData(d);
+try{if(window.FirebaseService&&FirebaseService._db){FirebaseService.saveDoc('storeOrders',order.id,order);FirebaseService.saveDoc('manualPoints',mp.id,mp);FirebaseService.saveDoc('platformMeta','store',storeData);}}catch(e){}
+try{if(DataService.addNotification)DataService.addNotification({targetUserId:activeChild.id,title:'🛒 طلب استبدال',message:'تم طلب '+item.name+' — بانتظار تسليم الأستاذ',type:'store',priority:'medium'});}catch(e){}
+if(ThemeManager?.toast)ThemeManager.toast('✅ تم الطلب — سيتم التسليم في الحصة القادمة','success');
+window.renderStorePreview();
+}catch(e){console.error(e);if(ThemeManager?.toast)ThemeManager.toast('خطأ في الشراء','error');}
 };
 
 /* 🆕 دفتر التحصيل */
@@ -1068,6 +1170,15 @@ el.innerHTML=html;
 /* تحديث تلقائي للدفتر وهو مفتوح */
 setInterval(function(){ try{ var act=document.querySelector('.section.active'); if(act&&act.id==='section-ledger') window.renderLedger(); }catch(e){} },15000);
 })();
+/* ❄️ بانر التجميد الكلي */
+setInterval(function(){
+try{
+var f=(DataService._getData?DataService._getData():{}).platformMeta?.freeze||{};
+var b=document.getElementById('fullFreezeBanner');if(!b)return;
+if(f.full===true)b.style.display='block';
+else b.style.display='none';
+}catch(e){}
+},3000);
 </script>
 </body>
 </html>

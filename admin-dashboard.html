@@ -895,7 +895,7 @@
 <section class="section" id="section-logs">
 <div class="section-header"><div><h2 class="section-title">📜 سجل النشاط</h2><p class="text-sm text-muted">كل العمليات اللي تمت على النظام</p></div></div>
 <div class="card">
-<div class="search-bar" style="margin-bottom:12px;"><input type="text" id="logsSearch" class="form-input" placeholder="بحث في السجل..." onkeyup="window.loadLogs()"></div>
+<div class="search-bar" style="margin-bottom:12px;"><input type="text" id="logsSearch" class="form-input" placeholder="بحث في السجل..." onkeyup="window.loadLogs()"><button class="btn btn-danger btn-sm" style="margin-inline-start:6px;" onclick="window.clearActivityLogs()">🗑 مسح السجل</button></div>
 <div id="logsList"></div>
 </div>
 </section>
@@ -904,6 +904,11 @@
 <div class="section-header">
 <div><h2 class="section-title">🎁 تحكم التحفيز</h2><p class="text-sm text-muted">الستريك + متجر النقاط + صندوق الكنز + نقاط التسميع والتفاعل + الثناء وتقرير الثلاجة</p></div>
 <button class="btn btn-primary" onclick="window.saveGamification()">💾 حفظ كل الإعدادات</button>
+<div class="card" id="freezeCard" style="margin:12px 0;padding:14px;border-color:var(--warning);">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+<div><strong id="freezeTitle" style="font-size:14px;">…</strong><div class="text-xs text-muted" id="freezeSub" style="margin-top:4px;"></div></div>
+<button class="btn btn-warning btn-lg" id="freezeBtn" onclick="window.togglePlatformFreeze()">…</button>
+</div></div>
 </div>
 
 <div class="gam-card">
@@ -6581,5 +6586,114 @@ document.addEventListener('focusout',onEv,true);
 })();
 </script>
 <script src="js/unified-students.js"></script>
+<script>
+window.clearActivityLogs=async function(){
+if(!confirm('مسح كل سجل النشاطات نهائياً؟'))return;
+var d=DataService._getData();
+['logs','activityLogs','activity','ledgerLog','auditLog'].forEach(function(k){d[k]=[];});
+DataService._saveData(d);
+try{
+if(window.FirebaseService&&FirebaseService._db){
+var cols=['logs','activityLogs','ledgerLog'];
+for(var c=0;c<cols.length;c++){
+var snap=await FirebaseService._db.collection(cols[c]).limit(300).get();
+if(!snap.empty){var b=FirebaseService._db.batch();snap.forEach(function(dc){b.delete(dc.ref);});await b.commit();}
+}
+}
+}catch(e){}
+try{if(window.loadLogs)window.loadLogs();}catch(e){}
+try{if(window.LedgerUI&&LedgerUI.refresh)LedgerUI.refresh();}catch(e){}
+if(window.safeToast)window.safeToast('🗑 تم مسح السجل محلياً وسحابياً','success');
+};
+</script>
+<script>
+/* ============ 🧊 لوحة التجميد المفصّلة داخل إعدادات المنصة ============ */
+(function(){
+function fz(){var d=DataService._getData();d.platformMeta=d.platformMeta||{};d.platformMeta.freeze=d.platformMeta.freeze||{ledger:false,notify:false,games:false,full:false};return d.platformMeta.freeze;}
+function saveFz(f){var d=DataService._getData();d.platformMeta=d.platformMeta||{};d.platformMeta.freeze=f;d.platformMeta.ledgerFrozen=(f.ledger===true||f.full===true);DataService._saveData(d);try{if(window.FirebaseService&&FirebaseService._db)FirebaseService.saveDoc('platformMeta','meta',d.platformMeta);}catch(e){}try{if(window.LedgerUI){LedgerUI._sesCache={};LedgerUI.refresh();}}catch(e){}}
+function panelHtml(){
+var f=fz();
+function row(key,icon,title,desc){return '<label style="display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--border);border-radius:12px;margin-bottom:8px;cursor:pointer;background:var(--surface-hover);"><input type="checkbox" '+(f[key]?'checked':'')+' style="width:18px;height:18px;margin-top:2px;" onchange="window.fzToggle(\''+key+'\',this.checked)"><div><strong style="font-size:13px;">'+icon+' '+title+'</strong><div class="text-xs text-muted">'+desc+'</div></div></label>';}
+return '<div class="card" style="padding:14px;margin-bottom:12px;border-color:var(--warning);"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;"><strong style="font-size:14px;">🧊 التحكم في التجميد</strong><span class="badge '+(f.full?'badge-danger':'badge-success')+'">'+(f.full?'❄️ المنصة كلها مجمدة':'▶️ التشغيل طبيعي')+'</span></div>'+
+row('ledger','📒','تجميد دفتر التحصيل','المربعات والعداد والشهريات والمتأخرات تقف — الحضور والجدول والكاميرا شغالين عادي')+
+row('notify','🔔','تجميد الإشعارات والتنبيهات','مفيش إشعارات غياب أو دفع أو دورات بتتبعت لحد')+
+row('games','🎮','تجميد الألعاب والنقاط','الألعاب تشتغل تدريب بس — من غير نقاط ولا مهام ولا ستريك')+
+row('full','❄️','تجميد كلي (إجازة نصف العام)','بيفعّل التلاتة فوق + بانر إجازة أزرق فوق كل الشاشات')+
+'</div>';
+}
+window.fzToggle=function(key,val){var f=fz();f[key]=val;if(key==='full'&&val){f.ledger=true;f.notify=true;f.games=true;}saveFz(f);renderPanel();};
+function renderPanel(){var host=document.getElementById('fzPanelHost');if(host)host.innerHTML=panelHtml();}
+function inject(){
+try{
+var old=document.getElementById('freezeCard');if(old)old.remove();
+var sec=document.getElementById('section-settings')||document.getElementById('section-gamification');
+if(!sec)return;
+if(!document.getElementById('fzPanelHost')){
+var host=document.createElement('div');host.id='fzPanelHost';
+var hdr=sec.querySelector('.section-header');
+if(hdr&&hdr.parentNode)hdr.parentNode.insertBefore(host,hdr.nextSibling);else sec.insertBefore(host,sec.firstChild);
+}
+renderPanel();
+}catch(e){}
+}
+inject();setTimeout(inject,1000);setTimeout(inject,2500);
+if(typeof window.showSection==='function'&&!window.__fzHook){window.__fzHook=1;var os=window.showSection;window.showSection=function(id){var r=os.apply(this,arguments);if(id==='settings'||id==='gamification')setTimeout(inject,150);return r;};}
+})();
+</script>
+<script>
+/* ============ 🔥 التحكم في الستريك (تبويب داخل نظام النقاط) ============ */
+(function(){
+function injectStreakTab(){
+try{
+var sec=document.getElementById('section-points'); if(!sec) return;
+var tabs=sec.querySelector('.section-tabs'); if(!tabs || tabs.querySelector('[data-streak-tab]')) return;
+var btn=document.createElement('button');
+btn.className='section-tab'; btn.dataset.streakTab='1';
+btn.textContent='🔥 الستريك';
+btn.onclick=function(){
+tabs.querySelectorAll('.section-tab').forEach(function(b){b.classList.remove('active');});
+btn.classList.add('active');
+sec.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('active');c.style.display='none';});
+var host=document.getElementById('points-streak-host');
+if(!host){
+host=document.createElement('div'); host.id='points-streak-host'; host.className='tab-content active';
+host.style.display='block';
+host.innerHTML='<div class="card"><div class="card-title" style="margin-bottom:12px;">🔥 التحكم في ستريك الحضور (بحث وتعديل)</div>'+
+'<div class="form-group"><label>🔍 بحث طالب</label><input type="text" id="streakSearch" class="form-input" placeholder="اسم أو كود..." oninput="window.renderStreakList()"></div>'+
+'<div id="streakListHost" style="max-height:500px;overflow:auto;"></div></div>';
+sec.appendChild(host);
+} else { host.style.display='block'; host.classList.add('active'); }
+window.renderStreakList();
+};
+tabs.appendChild(btn);
+}catch(e){}
+}
+window.renderStreakList=function(){
+var host=document.getElementById('streakListHost'); if(!host) return;
+var q=(document.getElementById('streakSearch')?.value||'').toLowerCase();
+var sts=(DataService.getStudents?DataService.getStudents():[]);
+if(q) sts=sts.filter(function(s){return (s.name||'').toLowerCase().indexOf(q)>=0||(s.code||'').toLowerCase().indexOf(q)>=0;});
+sts.sort(function(a,b){var sa=(a.streaks&&a.streaks.attendance)||0;var sb=(b.streaks&&b.streaks.attendance)||0;return sb-sa;});
+host.innerHTML=sts.slice(0,100).map(function(s){
+var st=(s.streaks&&s.streaks.attendance)||0;
+return '<div class="sub-row" style="padding:10px;margin-bottom:6px;"><div style="flex:1;"><strong>'+s.name+'</strong> <span class="text-xs text-muted">'+(s.code||'')+'</span><div class="text-xs text-muted">الستريك الحالي: <b style="color:var(--primary);">'+st+'</b> يوم</div></div>'+
+'<div style="display:flex;gap:6px;align-items:center;">'+
+'<input type="number" id="stIn_'+s.id+'" class="form-input" style="width:80px;" value="'+st+'" min="0">'+
+'<button class="btn btn-primary btn-sm" onclick="window.saveStreak(\''+s.id+'\')">💾 حفظ</button>'+
+'</div></div>';
+}).join('') || '<p class="text-muted">لا طلاب</p>';
+};
+window.saveStreak=function(sid){
+var v=parseInt(document.getElementById('stIn_'+sid)?.value)||0;
+var s=DataService.getUserById?DataService.getUserById(sid):null; if(!s) return;
+s.streaks=s.streaks||{}; s.streaks.attendance=v;
+try{if(DataService.updateUser)DataService.updateUser(sid,{streaks:s.streaks});}catch(e){}
+try{if(window.FirebaseService&&FirebaseService._db)FirebaseService.saveDoc('users',sid,s);}catch(e){}
+if(window.safeToast)window.safeToast('✅ تم حفظ ستريك '+s.name+' ('+v+')','success');
+};
+injectStreakTab(); setTimeout(injectStreakTab,1000); setTimeout(injectStreakTab,2500);
+if(typeof window.showSection==='function'&&!window.__streakHook){window.__streakHook=1;var os=window.showSection;window.showSection=function(id){var r=os.apply(this,arguments);if(id==='points')setTimeout(injectStreakTab,150);return r;};}
+})();
+</script>
 </body>
 </html>

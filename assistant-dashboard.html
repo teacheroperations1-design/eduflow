@@ -6195,5 +6195,94 @@ document.addEventListener('focusout',onEv,true);
 })();
 </script>
 <script src="js/unified-students.js"></script>
+<script>
+/* ============ 🔥 التحكم في الستريك (تبويب داخل نظام النقاط) ============ */
+(function(){
+function injectStreakTab(){
+try{
+var sec=document.getElementById('section-points'); if(!sec) return;
+var tabs=sec.querySelector('.section-tabs'); if(!tabs || tabs.querySelector('[data-streak-tab]')) return;
+var btn=document.createElement('button');
+btn.className='section-tab'; btn.dataset.streakTab='1';
+btn.textContent='🔥 الستريك';
+btn.onclick=function(){
+tabs.querySelectorAll('.section-tab').forEach(function(b){b.classList.remove('active');});
+btn.classList.add('active');
+sec.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('active');c.style.display='none';});
+var host=document.getElementById('points-streak-host');
+if(!host){
+host=document.createElement('div'); host.id='points-streak-host'; host.className='tab-content active';
+host.style.display='block';
+host.innerHTML='<div class="card"><div class="card-title" style="margin-bottom:12px;">🔥 التحكم في ستريك الحضور (بحث وتعديل)</div>'+
+'<div class="form-group"><label>🔍 بحث طالب</label><input type="text" id="streakSearch" class="form-input" placeholder="اسم أو كود..." oninput="window.renderStreakList()"></div>'+
+'<div id="streakListHost" style="max-height:500px;overflow:auto;"></div></div>';
+sec.appendChild(host);
+} else { host.style.display='block'; host.classList.add('active'); }
+window.renderStreakList();
+};
+tabs.appendChild(btn);
+}catch(e){}
+}
+window.renderStreakList=function(){
+var host=document.getElementById('streakListHost'); if(!host) return;
+var q=(document.getElementById('streakSearch')?.value||'').toLowerCase();
+var sts=(DataService.getStudents?DataService.getStudents():[]);
+if(q) sts=sts.filter(function(s){return (s.name||'').toLowerCase().indexOf(q)>=0||(s.code||'').toLowerCase().indexOf(q)>=0;});
+sts.sort(function(a,b){var sa=(a.streaks&&a.streaks.attendance)||0;var sb=(b.streaks&&b.streaks.attendance)||0;return sb-sa;});
+host.innerHTML=sts.slice(0,100).map(function(s){
+var st=(s.streaks&&s.streaks.attendance)||0;
+return '<div class="sub-row" style="padding:10px;margin-bottom:6px;"><div style="flex:1;"><strong>'+s.name+'</strong> <span class="text-xs text-muted">'+(s.code||'')+'</span><div class="text-xs text-muted">الستريك الحالي: <b style="color:var(--primary);">'+st+'</b> يوم</div></div>'+
+'<div style="display:flex;gap:6px;align-items:center;">'+
+'<input type="number" id="stIn_'+s.id+'" class="form-input" style="width:80px;" value="'+st+'" min="0">'+
+'<button class="btn btn-primary btn-sm" onclick="window.saveStreak(\''+s.id+'\')">💾 حفظ</button>'+
+'</div></div>';
+}).join('') || '<p class="text-muted">لا طلاب</p>';
+};
+window.saveStreak=function(sid){
+var v=parseInt(document.getElementById('stIn_'+sid)?.value)||0;
+var s=DataService.getUserById?DataService.getUserById(sid):null; if(!s) return;
+s.streaks=s.streaks||{}; s.streaks.attendance=v;
+try{if(DataService.updateUser)DataService.updateUser(sid,{streaks:s.streaks});}catch(e){}
+try{if(window.FirebaseService&&FirebaseService._db)FirebaseService.saveDoc('users',sid,s);}catch(e){}
+if(window.safeToast)window.safeToast('✅ تم حفظ ستريك '+s.name+' ('+v+')','success');
+};
+injectStreakTab(); setTimeout(injectStreakTab,1000); setTimeout(injectStreakTab,2500);
+if(typeof window.showSection==='function'&&!window.__streakHook){window.__streakHook=1;var os=window.showSection;window.showSection=function(id){var r=os.apply(this,arguments);if(id==='points')setTimeout(injectStreakTab,150);return r;};}
+})();
+</script>
+<script>
+/* ============ ⚡ التقييم السريع: تحميل المجموعة والطلاب فوراً ============ */
+(function(){
+function autoLoadQuickEval(){
+try{
+var sec=document.getElementById('section-quickEval'); if(!sec) return;
+var u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null;
+if(!u) return;
+var gs=[];
+if(u.role==='admin'||u.role==='super_admin') gs=(DataService.getGroups?DataService.getGroups():[]);
+else if(u.role==='assistant'){var tid=window.getMyTeacherId?window.getMyTeacherId():null; gs=(DataService.getGroups?DataService.getGroups():[]).filter(function(g){return g.teacherId===tid;});}
+else if(u.role==='teacher') gs=(DataService.getGroups?DataService.getGroups():[]).filter(function(g){return g.teacherId===u.id;});
+if(!gs.length) return;
+var sel=document.getElementById('qeGroup');
+if(sel && !sel.value && gs.length){
+sel.value=gs[0].id;
+if(window.loadQuickEvalStudents) window.loadQuickEvalStudents();
+else if(window.renderQuickEval) window.renderQuickEval();
+else { var ev = new Event('change'); sel.dispatchEvent(ev); }
+}
+}catch(e){}
+}
+if(typeof window.showSection==='function'&&!window.__qeHook){
+window.__qeHook=1;
+var os=window.showSection;
+window.showSection=function(id){
+var r=os.apply(this,arguments);
+if(id==='quickEval') setTimeout(autoLoadQuickEval,250);
+return r;
+};
+}
+setInterval(autoLoadQuickEval,4000);
+})();
+</script>
 </body>
 </html>
