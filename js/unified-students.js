@@ -1,7 +1,9 @@
 /* ================================================================
-🎓 Unified Students V6 — تكرار بالاسم الثالث + حفظ تعديل مضمون
+🎓 Unified Students V7.1 — فرض تطابق المرحلة والصف + منع اختلاط المجموعات
 • هاب باركود إداري كامل + تحكم نقاط/ستريك من عرض الطالب بالأدمن
 • البيانات فوق وهي الفلاتر • المجموعات تحت • ربط بدل التكرار
+• 🛡️ حماية صارمة: الطالب لا يدخل إلا مجموعات تطابق مرحلته وصفه
+• 👨‍👧‍👦 الأخوة: ربط برقم ولي الأمر فقط + مجموعات مستقلة تماماً
 ================================================================ */
 (function(){
 "use strict";
@@ -22,6 +24,43 @@ function isAdminRole(){var u=cur();return u&&(u.role==='admin'||u.role==='super_
 function lockedTeacherId(){return isAssistant()?myTeacherId():null;}
 function centersAll(){var o={};groupsAll().forEach(function(g){if(g.center)o[g.center]=1;});return Object.keys(o).sort();}
 function gradeListFor(stage){var out=[];if(stage&&lv()[stage])out=lv()[stage].grades||[];else Object.keys(lv()).forEach(function(k){(lv()[k].grades||[]).forEach(function(g){if(out.indexOf(g)<0)out.push(g);});});return out;}
+
+/* 🛡️ فحص صارم: كل المجموعات المختارة يجب أن تكون من نفس المرحلة والصف الخاص بالطالب */
+function validateEnrollmentsStrict(gids, studentStage, studentGrade) {
+    if (!gids || !gids.length) return { valid: [], invalid: [], stage: studentStage || '', grade: studentGrade || '' };
+    var valid = [];
+    var invalid = [];
+    var targetStage = studentStage || '';
+    var targetGrade = studentGrade || '';
+    
+    // If student stage/grade is not set, infer from the first valid group
+    if (!targetStage && !targetGrade) {
+        var firstG = groupsAll().find(function(x) { return x.id === gids[0]; });
+        if (firstG) {
+            targetStage = firstG.stage || '';
+            targetGrade = firstG.grade || '';
+        }
+    }
+
+    gids.forEach(function(gid) {
+        var g = groupsAll().find(function(x) { return x.id === gid; });
+        if (!g) return;
+        var gStage = g.stage || '';
+        var gGrade = g.grade || '';
+        
+        // Strict matching: if student has a stage, group must match it exactly (if group has a stage)
+        var stageMatch = !targetStage || !gStage || gStage === targetStage;
+        var gradeMatch = !targetGrade || !gGrade || gGrade === targetGrade;
+        
+        if (stageMatch && gradeMatch) {
+            valid.push(gid);
+        } else {
+            invalid.push(g.name + ' (' + (gStage || '-') + '/' + (gGrade || '-') + ')');
+        }
+    });
+    return { valid: valid, invalid: invalid, stage: targetStage, grade: targetGrade };
+}
+
 /* كشف التكرار: رقم كامل (6+) أو 3 كلمات اسم على الأقل */
 function findDups(name,phone,loose){
 var n=nm(name),p=String(phone||'').replace(/\D/g,'');
@@ -102,6 +141,9 @@ if(!document.getElementById('ustCss')){var st=document.createElement('style');st
 '.ust-row{display:grid;grid-template-columns:2fr 1.2fr 1.1fr 1.5fr 1.6fr auto;gap:6px;align-items:center;padding:6px;border:1px solid var(--border);border-radius:10px;margin-bottom:6px;background:var(--surface);}'+
 '.ust-note{font-size:11px;color:var(--text-muted);background:var(--surface-hover);border:1px dashed var(--border);border-radius:8px;padding:6px 10px;margin-bottom:8px;}'+
 '.ust-data{background:var(--primary-bg);border:1px solid var(--primary-border);border-radius:12px;padding:10px;margin-bottom:10px;}'+
+'@keyframes ustSpin{to{transform:rotate(360deg)}}'+
+'.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:ustSpin .6s linear infinite;vertical-align:middle;margin-inline-end:6px;}'+
+'button:disabled{cursor:not-allowed;opacity:.6;}'+
 '@media(max-width:760px){.ust-row{grid-template-columns:1fr 1fr;}}';
 document.head.appendChild(st);}
 
@@ -159,7 +201,7 @@ return '<div class="ust-dup" style="display:flex;gap:6px;align-items:center;flex
 function siblingPanel(sibs,markAsSibling){
 return '<div style="margin-top:6px;">'+sibs.slice(0,4).map(function(s){
 return '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:7px 9px;border:1.5px solid var(--info);border-radius:10px;margin-bottom:5px;background:var(--info-bg);">'+
-'<div style="flex:1;"><strong style="font-size:12px;">👨‍👧‍👦 قريب/أخ: '+s.name+'</strong> <span class="text-xs text-muted">'+(s.code||'')+' · '+(s.grade||'-')+'</span><div class="text-xs text-muted">نفس رقم ولي الأمر — سيتم ربط الطالب الجديد بمتابعة نفس الأسرة</div></div>'+
+'<div style="flex:1;"><strong style="font-size:12px;">👨‍👧‍👦 قريب/أخ: '+s.name+'</strong> <span class="text-xs text-muted">'+(s.code||'')+' · '+(s.grade||'-')+'</span><div class="text-xs text-muted">نفس رقم ولي الأمر — سيتم ربط الطالب الجديد بمتابعة نفس الأسرة (المجموعات مستقلة تماماً)</div></div>'+
 '<button type="button" class="btn btn-primary btn-sm" onclick="UST.'+markAsSibling+'(\''+s.id+'\')">✓ نعم، ده أخوه</button></div>';
 }).join('')+'</div>';
 }
@@ -198,6 +240,7 @@ UST.renderBulk=function(){
 var st=window._ustB;if(!st)return;
 var t=document.getElementById('ustT2');if(t)t.innerHTML=teachersHtml(st);
 var g=document.getElementById('ustG2');if(g)g.innerHTML=groupsHtml(st);
+var cn=document.getElementById('ubCount');if(cn)cn.textContent=window._ubRows.length;
 };
 UST.dataField=function(k,v){
 var st=S();if(!st)return;
@@ -206,19 +249,69 @@ if(k==='stage'){st.grade='';
 var gs=document.getElementById(window._ustActive==='single'?'uasGrade':'ubGrade');
 if(gs){gs.innerHTML='<option value="">🎓 الصف</option>'+gradeListFor(v).map(function(g){return '<option value="'+g+'">'+g+'</option>';}).join('');}
 }
+/* 🛡️ تنظيف المجموعات المختارة اللي مش مطابقة للمرحلة/الصف الجديد */
+Object.keys(st.picks).forEach(function(tid) {
+    var gid = st.picks[tid];
+    if (gid) {
+        var g = groupsAll().find(function(x){return x.id===gid;});
+        if (g) {
+            if (st.stage && g.stage && g.stage !== st.stage) st.picks[tid] = null;
+            if (st.grade && g.grade && g.grade !== st.grade) st.picks[tid] = null;
+        }
+    }
+});
 render();
 };
 UST.tq=function(v){var st=S();if(!st)return;st.tq=v;render();};
-UST.toggleTeacher=function(id){var st=S();if(!st)return;var i=st.teachers.indexOf(id);if(i>=0){st.teachers.splice(i,1);delete st.picks[id];}else st.teachers.push(id);render();};
+UST.toggleTeacher=function(id){
+var st=S();if(!st)return;
+var i=st.teachers.indexOf(id);
+if(i>=0){
+st.teachers.splice(i,1);
+delete st.picks[id];
+}else{
+st.teachers.push(id);
+}
+render();
+if(window.safeToast){
+var count=st.teachers.length;
+window.safeToast('🔍 الفلتر: '+count+' أستاذ'+(count===1?'':'ون')+' · الكشف محفوظ ('+window._ubRows.length+' طالب)','info');
+}
+};
 UST.fGq=function(v){var st=S();if(!st)return;st.gq=v;render();};
 UST.fCenter=function(tid,v){var st=S();if(!st)return;st.centers[tid]=v;delete st.picks[tid];render();};
-UST.pick=function(tid,gid){var st=S();if(!st)return;st.picks[tid]=(st.picks[tid]===gid?null:gid);render();};
+UST.pick=function(tid,gid){
+    var st=S();if(!st)return;
+    var isPicked = st.picks[tid] === gid;
+    st.picks[tid] = isPicked ? null : gid;
+    
+    /* 🔒 القفل التلقائي: أول مجموعة بتحدد مرحلة وصف الطالب */
+    if (!isPicked) {
+        var g = groupsAll().find(function(x){return x.id===gid;});
+        if (g) {
+            if (!st.stage && g.stage) {
+                st.stage = g.stage;
+                var stgEl = document.getElementById(window._ustActive==='single'?'uasStage':'ubStage');
+                if (stgEl) stgEl.value = st.stage;
+            }
+            if (!st.grade && g.grade) {
+                st.grade = g.grade;
+                var grEl = document.getElementById(window._ustActive==='single'?'uasGrade':'ubGrade');
+                if (grEl) {
+                    grEl.innerHTML = '<option value="">🎓 الصف</option>' + gradeListFor(st.stage).map(function(gr){return '<option value="'+gr+'" '+(gr===st.grade?'selected':'')+'>'+gr+'</option>';}).join('');
+                    grEl.value = st.grade;
+                }
+            }
+        }
+    }
+    render();
+};
 UST.scanSingle=function(){
 var box=document.getElementById('uasDup');if(!box)return;
 var st=window._ustS||{};
 var name=(document.getElementById('uasName')||{}).value||'';
 var phone=(document.getElementById('uasPhone')||{}).value||'';
-var selfMatches=findDups(name,phone,true).filter(function(s){return st.target!==s.id;});
+var selfMatches=(st.siblingOf?findDups(name,'',true):findDups(name,phone,true)).filter(function(s){return st.target!==s.id;});
 var sibs=findSiblings(name,phone).filter(function(s){return st.target!==s.id;});
 if(!selfMatches.length&&!sibs.length){box.innerHTML='';return;}
 var html='';
@@ -230,16 +323,16 @@ html+='<div class="filter-info" style="background:var(--info-bg);border-color:va
 }
 box.innerHTML=html;
 };
-/* 🆕 وسم الطالب الجديد كأخ (الحفظ هيضيفه طالب جديد مربوط بنفس الأسرة) */
 UST.markSibling=function(sid){
 var s=DataService.getUserById?DataService.getUserById(sid):null;if(!s)return;
 var st=window._ustS;if(!st)return;
 st.siblingOf=sid;
+st.target=null;
 var p=document.getElementById('uasPhone');if(p)p.value=s.parentPhone||'';
 var md=document.getElementById('uasMode');
-if(md){md.innerHTML='👨‍👧‍👦 الوضع: <strong>إضافة أخ جديد</strong> لعائلة '+(s.name||'')+' — سيضاف كطالب مستقل تحت متابعة نفس ولي الأمر.';md.style.background='var(--info-bg)';md.style.borderColor='var(--info)';md.style.color='var(--info)';}
+if(md){md.innerHTML='👨‍👧‍👦 الوضع: <strong>إضافة أخ جديد</strong> لعائلة '+(s.name||'')+' — سيضاف كطالب مستقل تحت متابعة نفس ولي الأمر.<br>⚠️ <strong>مجموعات الأخوه مستقلة تماماً</strong>، اختر مجموعات هذا الطالب حسب مرحلته.';md.style.background='var(--info-bg)';md.style.borderColor='var(--info)';md.style.color='var(--info)';}
 var bx=document.getElementById('uasDup');if(bx)bx.innerHTML='';
-if(window.safeToast)window.safeToast('✓ سيعامل كأخ لـ '+s.name,'info');
+if(window.safeToast)window.safeToast('✓ سيعامل كأخ لـ '+s.name+' (مجموعات مستقلة)','info');
 };
 UST.fillSingle=function(sid){
 var s=DataService.getUserById?DataService.getUserById(sid):null;if(!s)return;
@@ -268,8 +361,18 @@ var name=(document.getElementById('uasName')||{}).value||'';
 var phone=(document.getElementById('uasPhone')||{}).value||'';
 var phone2=(document.getElementById('uasPhone2')||{}).value||'';
 var gids=Object.keys(st.picks).map(function(k){return st.picks[k];}).filter(Boolean);
+
+/* 🛡️ فحص صارم للمجموعات */
+var validation = validateEnrollmentsStrict(gids, st.stage, st.grade);
+if (validation.invalid.length > 0) {
+    if (window.safeToast) window.safeToast('⚠️ تم استبعاد مجموعات لا تطابق مرحلة/صف الطالب: ' + validation.invalid.join('، '), 'warning');
+}
+gids = validation.valid;
+if (!st.stage && validation.stage) st.stage = validation.stage;
+if (!st.grade && validation.grade) st.grade = validation.grade;
+
 if(!name.trim()||!phone.trim()){if(window.safeToast)window.safeToast('الاسم وتليفون ولي الأمر مطلوبين','error');return;}
-if(!gids.length){if(window.safeToast)window.safeToast('اختار مجموعة واحدة على الأقل','error');return;}
+if(!gids.length){if(window.safeToast)window.safeToast('اختار مجموعة واحدة على الأقل مطابقة لمرحلة الطالب','error');return;}
 var g0=groupsAll().find(function(x){return x.id===gids[0];});var centerVal=(g0&&g0.center)||'';
 if(st.target){
 await updateStudentFields(st.target,{name:name.trim(),pp:phone.trim(),sp:phone2||'',stage:st.stage,grade:st.grade,center:centerVal});
@@ -281,15 +384,18 @@ ThemeManager.closeModal();
 if(window.safeToast)window.safeToast('✏️ تم الحفظ: +'+r1.added+' مجموعة · −'+r2+' مجموعة','success');
 refreshLists();return;
 }
-/* 🆕 لو موصوف كأخ → إضافته كطالب جديد مربوط بنفس الأسرة */
 if(st.siblingOf){
 var sib=DataService.getUserById?DataService.getUserById(st.siblingOf):null;
 if(sib){
+// Create new student with sibling's parentPhone, but DO NOT copy groups
 var nu=await DataService.addUser({role:'student',name:name.trim(),parentPhone:phone.trim(),phone:phone2||sib.phone||'',stage:st.stage,grade:st.grade,center:st.center,code:'EDU-'+Date.now().toString().slice(-6),password:'1234',siblingOf:st.siblingOf,familyId:sib.familyId||sib.id});
-await enrollMany((nu&&nu.id)||nu,gids);
+// Enroll ONLY in the explicitly selected gids for this new student
+if (gids && gids.length) {
+    await enrollMany((nu&&nu.id)||nu,gids);
+}
 try{if(sib.familyId==null&&DataService.updateUser)await DataService.updateUser(sib.id,{familyId:sib.id});}catch(e){}
 ThemeManager.closeModal();
-if(window.safeToast)window.safeToast('✅ تم إضافة '+name.trim()+' كأخ لـ '+sib.name+' — متابعة موحدة للأسرة','success');
+if(window.safeToast)window.safeToast('✅ تم إضافة '+name.trim()+' كأخ لـ '+sib.name+' — مجموعات مستقلة تماماً','success');
 refreshLists();return;
 }
 }
@@ -345,7 +451,8 @@ UST.renderBulk();UST.renderRows();
 UST.scanBulkInput=function(){
 var name=(document.getElementById('ubName')||{}).value||'';
 var phone=(document.getElementById('ubPhone')||{}).value||'';
-var selfMatches=findDups(name,phone,true);
+/* 🛡️ لو وضع الأخ مفعّل: الرقم مشترك عمداً — كشف التكرار بالاسم فقط */
+var selfMatches=window._ubSiblingOf?findDups(name,'',true):findDups(name,phone,true);
 var sibs=findSiblings(name,phone);
 window._ubPending=selfMatches.length?selfMatches[0]:null;
 window._ubSibling=sibs.length?sibs[0]:null;
@@ -355,11 +462,12 @@ if(selfMatches.length)html+='<div class="filter-info" style="background:var(--wa
 if(sibs.length)html+='<div class="filter-info" style="background:var(--info-bg);border-color:var(--info);color:var(--info);margin-bottom:4px;"><strong>👨‍👧‍👦 قريب/أخ:</strong></div>'+siblingPanel(sibs,'markBulkSibling');
 b.innerHTML=html;
 };
+
 UST.markBulkSibling=function(sid){
 var s=DataService.getUserById?DataService.getUserById(sid):null;if(!s)return;
 window._ubSiblingOf=sid;
 var p=document.getElementById('ubPhone');if(p)p.value=s.parentPhone||'';
-var b=document.getElementById('ubDupBadge');if(b)b.innerHTML='<span class="badge badge-info">👨‍👧‍👦 وضع أخ لـ '+s.name+' — دوس "إضافة للكشف"</span>';
+var b=document.getElementById('ubDupBadge');if(b)b.innerHTML='<span class="badge badge-info">👨‍‍👦 وضع أخ لـ '+s.name+' — دوس "إضافة للكشف"</span>';
 };
 
 UST.fillBulkInputs=function(sid){
@@ -376,6 +484,8 @@ var name=(document.getElementById('ubName')||{}).value||'';
 var pp=(document.getElementById('ubPhone')||{}).value||'';
 var sp=(document.getElementById('ubPhone2')||{}).value||'';
 if(!name.trim()){if(window.safeToast)window.safeToast('اكتب الاسم','error');return;}
+var st=window._ustB||newState();
+var snapshotGids=Object.keys(st.picks).map(function(k){return st.picks[k];}).filter(Boolean);
 if(window._ubEditIndex!=null&&window._ubRows[window._ubEditIndex]){
 var r=window._ubRows[window._ubEditIndex];
 r.name=name.trim();r.pp=pp.trim();r.sp=sp.trim();
@@ -385,14 +495,21 @@ UST.renderRows();
 if(window.safeToast)window.safeToast('💾 تم تحديث الصف في الكشف','success');
 return;
 }
-var editId=window._ubPendingEdit||null;
-var dup=editId?null:(window._ubPending||null);
-window._ubRows.push({name:name.trim(),pp:pp.trim(),sp:sp.trim(),editId:editId,dupId:dup?dup.id:null,link:!!dup,siblingOf:window._ubSiblingOf||null,override:''});
+var editId=window._ubSiblingOf?null:(window._ubPendingEdit||null);
+var dup=(editId||window._ubSiblingOf)?null:(window._ubPending||null);
+window._ubRows.push({
+name:name.trim(),pp:pp.trim(),sp:sp.trim(),
+editId:editId,dupId:dup?dup.id:null,link:!!dup,
+siblingOf:window._ubSiblingOf||null,
+override:'',
+gids:snapshotGids.slice()
+});
 window._ubSiblingOf=null;
 document.getElementById('ubName').value='';document.getElementById('ubPhone').value='';document.getElementById('ubPhone2').value='';
 window._ubPending=null;window._ubPendingEdit=null;
 var b=document.getElementById('ubDupBadge');if(b)b.innerHTML='';
 UST.renderRows();
+if(window.safeToast)window.safeToast('✅ أُضيف للكشف بـ '+snapshotGids.length+' مجموعة (التشكيلة محفوظة)','success');
 };
 UST.rowToForm=function(i){
 var r=window._ubRows[i];if(!r)return;
@@ -400,9 +517,16 @@ window._ubEditIndex=i;
 var n=document.getElementById('ubName');if(n)n.value=r.name;
 var p=document.getElementById('ubPhone');if(p)p.value=r.pp;
 var p2=document.getElementById('ubPhone2');if(p2)p2.value=r.sp;
+var st=window._ustB||newState();
+st.picks={};st.teachers=[];
+(r.gids||[]).forEach(function(gid){
+var g=groupsAll().find(function(x){return x.id===gid;});
+if(g&&!st.teachers.includes(g.teacherId)){st.teachers.push(g.teacherId);st.picks[g.teacherId]=gid;}
+});
 var ab=document.getElementById('ubAddBtn');if(ab){ab.textContent='💾 تحديث الصف '+(i+1);ab.className='btn btn-warning btn-sm';}
 var cb=document.getElementById('ubCancelEdit');if(cb)cb.style.display='';
-if(window.safeToast)window.safeToast('✏️ عدّل في الفورم فوق ودوس "تحديث الصف"','info');
+UST.renderBulk();
+if(window.safeToast)window.safeToast('✏️ عدّل في الفورم فوق — التشكيلة محفوظة ('+(r.gids||[]).length+' مجموعة)','info');
 };
 UST.cancelRowEdit=function(){
 window._ubEditIndex=null;
@@ -445,6 +569,7 @@ var r=window._ubRows[i];if(!r)return;
 if(r.editId){var s=DataService.getUserById?DataService.getUserById(r.editId):null;el.innerHTML='<span class="badge badge-info">✏️ تعديل موجود: '+(s?s.name:'')+'</span>';return;}
 if(r.dupId){var s2=DataService.getUserById?DataService.getUserById(r.dupId):null;
 el.innerHTML='<span class="badge badge-warning ust-dup" onclick="UST.rowFill('+i+',\''+r.dupId+'\')">⚠️ مكرر: '+(s2?s2.name:'')+' — دوس للتعديل/الربط</span> <label style="font-size:10px;"><input type="checkbox" '+(r.link?'checked':'')+' onchange="window._ubRows['+i+'].link=this.checked"> ربط</label>';return;}
+if(r.siblingOf){var s3=DataService.getUserById?DataService.getUserById(r.siblingOf):null;el.innerHTML='<span class="badge badge-info">👨‍👧‍👦 أخ لـ '+((s3&&s3.name)||'')+' — طالب جديد مستقل</span>';return;}
 el.innerHTML='<span class="badge badge-info">🆕 جديد</span>';
 };
 UST.renderRows=function(){
@@ -454,50 +579,123 @@ if(!el)return;
 var st=window._ustB||newState();
 var pickGids=Object.keys(st.picks).map(function(k){return st.picks[k];}).filter(Boolean);
 el.innerHTML=window._ubRows.length?window._ubRows.map(function(r,i){
+var rowGids=(r.gids&&r.gids.length)?r.gids.slice():pickGids.slice();
+if(r.override&&rowGids.indexOf(r.override)<0)rowGids.push(r.override);
+var chipsHtml=rowGids.map(function(gid){
+var g=groupsAll().find(function(x){return x.id===gid;});
+if(!g)return '';
+return '<span class="ust-gchip" style="font-size:9px;padding:3px 6px;margin:2px;" onclick="UST.rowRemoveGid('+i+',\''+gid+'\')" title="اضغط لإزالة">'+g.name.substring(0,18)+' </span>';
+}).join('');
 var opts='<option value="">🌐 كل المجموعات المختارة</option>'+pickGids.map(function(gid){var g=groupsAll().find(function(x){return x.id===gid;});return '<option value="'+gid+'" '+(r.override===gid?'selected':'')+'>'+(g?g.name:gid)+'</option>';}).join('');
-return '<div class="ust-row">'+
+return '<div class="ust-row" style="grid-template-columns:2fr 1.2fr 1.1fr 1.6fr auto;">'+
 '<input type="text" class="form-input" style="padding:5px 8px;font-size:12px;" value="'+r.name+'" oninput="UST.rowEdit('+i+',\'name\',this.value)">'+
 '<input type="text" class="form-input" style="padding:5px 8px;font-size:12px;" value="'+r.pp+'" oninput="UST.rowEdit('+i+',\'pp\',this.value)">'+
 '<input type="text" class="form-input" style="padding:5px 8px;font-size:12px;" value="'+r.sp+'" oninput="UST.rowEdit('+i+',\'sp\',this.value)">'+
-'<select class="form-select" style="padding:4px 6px;font-size:10px;" onchange="UST.rowOverride('+i+',this.value)">'+opts+'</select>'+
+'<div style="display:flex;flex-direction:column;gap:4px;">'+
+'<div style="display:flex;flex-wrap:wrap;gap:2px;max-height:50px;overflow:auto;">'+(chipsHtml||'<span class="text-xs text-muted">لا مجموعات — اختر من الفلتر</span>')+'</div>'+
+'<select class="form-select" style="padding:3px 6px;font-size:10px;" onchange="UST.rowOverride('+i+',this.value)">'+opts+'</select>'+
+'</div>'+
+'<div style="display:flex;flex-direction:column;gap:4px;">'+
 '<span id="ubBadge'+i+'"></span>'+
-'<div style="display:flex;gap:4px;"><button type="button" class="btn btn-secondary btn-sm" title="تعديل الصف في الفورم" onclick="UST.rowToForm('+i+')">✏️</button><button type="button" class="btn btn-ghost btn-sm" title="فتح في المنصة" onclick="var r=window._ubRows['+i+'];var sid=r.editId||r.dupId;if(sid)openEditExistingPlatform(sid);">🪟</button><button type="button" class="btn btn-danger btn-sm" onclick="UST.delRow('+i+')">🗑</button></div></div>';
+'<div style="display:flex;gap:4px;"><button type="button" class="btn btn-secondary btn-sm" title="تعديل الصف في الفورم" onclick="UST.rowToForm('+i+')">✏️</button><button type="button" class="btn btn-ghost btn-sm" title="فتح في المنصة" onclick="var r=window._ubRows['+i+'];var sid=r.editId||r.dupId;if(sid)openEditExistingPlatform(sid);">🪟</button><button type="button" class="btn btn-danger btn-sm" onclick="UST.delRow('+i+')">🗑</button></div>'+
+'</div></div>';
 }).join(''):'<p class="text-muted" style="text-align:center;padding:12px;">الكشف فاضي — ضيف طلاب من فوق</p>';
 window._ubRows.forEach(function(_,i){UST.rowBadge(i);});
 };
+UST.rowRemoveGid=function(i,gid){
+var r=window._ubRows[i];if(!r)return;
+r.gids=(r.gids||[]).filter(function(g){return g!==gid;});
+if(r.override===gid)r.override='';
+UST.renderRows();
+};
+
 UST.saveBulk=async function(){
 try{
 var st=window._ustB;if(!st)return;
 var pickGids=Object.keys(st.picks).map(function(k){return st.picks[k];}).filter(Boolean);
 if(!pickGids.length){if(window.safeToast)window.safeToast('اختار مجموعة واحدة على الأقل لكل مدرس','error');return;}
-var g0=groupsAll().find(function(x){return x.id===pickGids[0];});var centerVal=(g0&&g0.center)||'';
 if(!window._ubRows.length){if(window.safeToast)window.safeToast('الكشف فاضي','error');return;}
+var saveBtn=document.querySelector('button[onclick*="saveBulk"]');
+if(saveBtn){
+saveBtn.disabled=true;
+saveBtn.innerHTML='<span class="spinner"></span> جاري الحفظ... ('+window._ubRows.length+' طالب)';
+saveBtn.style.opacity='0.7';
+}
 var added=0,linked=0,skipped=0,failed=0;
+var total=window._ubRows.length;
+var warnedMismatch = false;
 for(var i=0;i<window._ubRows.length;i++){
+if(i%5===0&&saveBtn){
+saveBtn.innerHTML='<span class="spinner"></span> جاري الحفظ... '+Math.round((i/total)*100)+'% ('+i+'/'+total+')';
+}
 var r=window._ubRows[i];
-var gids=r.override?[r.override]:pickGids;
-if(!r.name){failed++;continue;}
+var gids=r.override?[r.override]:((r.gids&&r.gids.length)?r.gids.slice():pickGids.slice());
+
+/* 🛡️ فحص صارم للمجموعات */
+var rowStage = st.stage || '';
+var rowGrade = st.grade || '';
+var validation = validateEnrollmentsStrict(gids, rowStage, rowGrade);
+if (validation.invalid.length > 0 && !warnedMismatch) {
+    if (window.safeToast) window.safeToast('⚠️ تم استبعاد مجموعات لا تطابق المرحلة/الصف في بعض الصفوف', 'warning');
+    warnedMismatch = true;
+}
+gids = validation.valid;
+rowStage = rowStage || validation.stage || '';
+rowGrade = rowGrade || validation.grade || '';
+
+if(!r.name || !gids.length){
+if (!r.name) failed++;
+else skipped++;
+continue;
+}
 if(r.editId||(r.dupId&&r.link)){
 var sid=r.editId||r.dupId;
-await updateStudentFields(sid,{name:r.name,pp:r.pp,sp:r.sp,stage:st.stage,grade:st.grade,center:centerVal});
+await updateStudentFields(sid,{name:r.name,pp:r.pp,sp:r.sp,stage:rowStage,grade:rowGrade,center:st.center});
 var res=await enrollMany(sid,gids);
 if(res.added)linked++;else skipped++;
 continue;
 }
 try{
+var newId=null;
 if(typeof DataService.addStudentByAdmin==='function'){
-await DataService.addStudentByAdmin({name:r.name,parentPhone:r.pp,phone:r.sp,stage:st.stage,grade:st.grade,center:centerVal,password:'1234',enrollments:gids.map(function(gid){var g=groupsAll().find(function(x){return x.id===gid;});return {groupId:gid,teacherId:g?g.teacherId:null};})});
+var ra2=await DataService.addStudentByAdmin({name:r.name,parentPhone:r.pp,phone:r.sp,stage:rowStage,grade:rowGrade,center:st.center,password:'1234',enrollments:gids.map(function(gid){var g=groupsAll().find(function(x){return x.id===gid;});return {groupId:gid,teacherId:g?g.teacherId:null};})});
+newId=(ra2&&ra2.id)||null;
 }else{
-var nu=await DataService.addUser({role:'student',name:r.name,parentPhone:r.pp,phone:r.sp,stage:st.stage,grade:st.grade,center:centerVal,code:'EDU-'+Date.now().toString().slice(-6)+i,password:'1234'});
-await enrollMany((nu&&nu.id)||nu,gids);
+var nu=await DataService.addUser({role:'student',name:r.name,parentPhone:r.pp,phone:r.sp,stage:rowStage,grade:rowGrade,center:st.center,code:'EDU-'+Date.now().toString().slice(-6)+i,password:'1234'});
+newId=(nu&&nu.id)||nu;
+await enrollMany(newId,gids);
+}
+/* 👨‍👧‍ ربط الأسرة: الأخ الجديد والأخ الأصلي تحت نفس familyId */
+if(r.siblingOf&&newId){
+try{
+var sibU=DataService.getUserById?DataService.getUserById(r.siblingOf):null;
+if(sibU){
+var fam=sibU.familyId||sibU.id;
+if(!sibU.familyId&&DataService.updateUser)await DataService.updateUser(sibU.id,{familyId:fam});
+if(DataService.updateUser)await DataService.updateUser(newId,{familyId:fam,siblingOf:r.siblingOf});
+}
+}catch(e){}
 }
 added++;
 }catch(e){failed++;}
 }
+if(saveBtn){
+saveBtn.disabled=false;
+saveBtn.innerHTML='💾 حفظ الكل';
+saveBtn.style.opacity='1';
+}
 ThemeManager.closeModal();
 if(window.safeToast)window.safeToast('✅ جديد: '+added+' · مرتبط/معدّل: '+linked+' · متخطي: '+skipped+(failed?' · فشل: '+failed:''),'success');
 refreshLists();
-}catch(e){if(window.safeToast)window.safeToast('خطأ: '+e.message,'error');}
+}catch(e){
+var saveBtn=document.querySelector('button[onclick*="saveBulk"]');
+if(saveBtn){
+saveBtn.disabled=false;
+saveBtn.innerHTML='💾 حفظ الكل';
+saveBtn.style.opacity='1';
+}
+if(window.safeToast)window.safeToast('خطأ: '+e.message,'error');
+}
 };
 
 /* ========== 🛠️ محرر نقاط + ستريك (لكل الأدوار) ========== */
@@ -644,7 +842,6 @@ grid.parentNode.appendChild(b);
 }
 injectAdminTiles();setTimeout(injectAdminTiles,1200);setTimeout(injectAdminTiles,3000);
 setInterval(injectAdminTiles,6000);
-/* حقن صندوق التحكم في مودال عرض الطالب (أدمن) */
 setInterval(function(){
 try{
 if(!isAdminRole())return;

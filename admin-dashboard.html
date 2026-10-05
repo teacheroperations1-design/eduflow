@@ -478,27 +478,6 @@
 </div>
 </div>
 <div class="card">
-<!-- 🆕 الفلاتر الجديدة -->
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:12px;">
-    <div class="form-group" style="margin:0;">
-        <label>👨‍🏫 فلتر الأساتذة (الطلاب المشتركين)</label>
-        <div id="stuMultiTeacherWrap" style="position:relative;">
-            <input type="text" class="form-input" readonly placeholder="اختر الأساتذة للمقارنة..." onclick="document.getElementById('stuMultiTeacherList').style.display='block'" style="cursor:pointer;">
-            <div id="stuMultiTeacherList" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;max-height:250px;overflow-y:auto;z-index:50;padding:8px;box-shadow:0 4px 12px rgba(0,0,0,.15);"></div>
-        </div>
-        <div id="stuSelectedTeachersBadges" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;"></div>
-    </div>
-    <div class="form-group" style="margin:0;">
-        <label>🏢 فلتر السنتر</label>
-        <select id="stuCenterFilter" class="form-select" onchange="window.loadStudents()">
-            <option value="">كل السناتر</option>
-        </select>
-    </div>
-    <div class="form-group" style="margin:0;">
-        <label>🔍 بحث سريع</label>
-        <input type="text" id="stuSearch" class="form-input" placeholder="بحث بالاسم أو الكود..." onkeyup="window.loadStudents()">
-    </div>
-</div>
 
 <div style="overflow-x:auto;">
 <table class="table">
@@ -1012,7 +991,6 @@
 <script src="js/notify-service.js"></script>
 <script src="js/billing/core.js"></script>
 <script src="js/billing/notify-rules.js"></script>
-<script src="js/billing/ui-ledger-select.js"></script>
 <script src="js/footer-injector.js"></script>
 <script src="js/smart-student.js"></script>
 
@@ -1506,55 +1484,6 @@ window.loadTower=function(){
   }catch(e){console.error('loadTower error:',e);}
 };
 
-/* ================================================================
-   🎓 STUDENTS (قائمة كاملة)
-   ================================================================ */
-window.loadStudents=function(){
-try{
-const q=(document.getElementById('stuSearch')?.value||'').toLowerCase();
-
-// 🆕 جلب قيم الفلاتر الجديدة
-const selectedTeachers = Array.from(document.querySelectorAll('#stuMultiTeacherList input:checked')).map(cb => cb.value);
-const selectedCenter = document.getElementById('stuCenterFilter')?.value || '';
-
-let list=DataService.getStudents();
-
-// 🆕 تطبيق فلتر الأساتذة المتعدد (تقاطع - Intersection)
-// يعني الطالب لازم يكون مشترك مع كل الأساتذة اللي اتختاروا
-if(selectedTeachers.length > 0) {
-    list = list.filter(s => {
-        const studentTeachers = (DataService.getStudentTeachers(s.id) || []).map(t => t.teacher?.id);
-        return selectedTeachers.every(tid => studentTeachers.includes(tid));
-    });
-}
-
-// 🆕 تطبيق فلتر السنتر (الطالب يكون مسجل في مجموعة تابعة للسنتر ده)
-// 🆕 تطبيق فلتر السنتر
-if(selectedCenter) {
-    list = list.filter(s => {
-        const studentTeachers = DataService.getStudentTeachers(s.id) || [];  // ✅ أضفنا || []
-        return studentTeachers.some(t => t.group?.center === selectedCenter);
-    });
-}
-
-// فلتر البحث النصي
-if(q)list=list.filter(s=>(s.name||'').toLowerCase().includes(q)||(s.code||'').toLowerCase().includes(q)||(s.phone||'').toLowerCase().includes(q));
-
-const tb=document.getElementById('studentsTable');
-if(tb)tb.innerHTML=list.map(s=>{
-const st=EduFlowConfig?.educationLevels?.[s.stage]?.nameAr||'-';
-const points=(typeof Ops?.getStudentPoints==='function')?Ops.getStudentPoints(s.id,selectedTeachers[0]||undefined,'all'):0;
-return `<tr><td><strong style="color:var(--primary)">${s.code||'—'}</strong></td><td>${s.name}</td><td>${st}</td><td>${s.grade||'-'}</td><td>${s.phone||'-'}</td><td><span class="points-badge">🏆 ${points}</span></td><td>
-<button class="btn btn-primary btn-sm" onclick="window.openStudentProfile('${s.id}')">👁️</button>
-<button class="btn btn-secondary btn-sm" onclick="window.openSwapStudentModal('${s.id}')">🔄 تبديل</button>
-<button class="btn btn-ghost btn-sm" onclick="window.openStudentModal('${s.id}')">✏️</button>
-<button class="btn btn-danger btn-sm" onclick="window.delUser('${s.id}')">🗑️</button>
-</td></tr>`;
-}).join('')||'<tr><td colspan="8" class="text-center text-muted">لا طلاب مطابقين للفلاتر</td></tr>';
-}catch(e){console.error(e);}
-};
-
-
 
 window.loadQuickStudentGroups=function(){
   try{
@@ -1880,6 +1809,17 @@ window.updStudentGrades=function(sel){
   }catch(e){}
 };
 
+/* 🔧 حساب مكان القائمة المنسدلة للفلتر المقصوص */
+window.positionTeacherDropdown = function() {
+  var wrap = document.getElementById('stuMultiTeacherWrap');
+  var list = document.getElementById('stuMultiTeacherList');
+  if (!wrap || !list) return;
+  var rect = wrap.getBoundingClientRect();
+  list.style.top = (rect.bottom + 4) + 'px';
+  list.style.left = rect.left + 'px';
+  list.style.width = rect.width + 'px';
+};
+
 /* ================================================================
 🆕 فلاتر الطلاب المتقدمة (أساتذة متعددين + سناتر)
 ================================================================ */
@@ -1911,26 +1851,6 @@ window.fillStudentFilters = function() {
     }
 };
 
-window.updateStudentTeacherFilter = function() {
-    const checked = Array.from(document.querySelectorAll('#stuMultiTeacherList input:checked'));
-    const badgesEl = document.getElementById('stuSelectedTeachersBadges');
-    
-    if(badgesEl) {
-        badgesEl.innerHTML = checked.map(cb => {
-            const labelSpan = cb.closest('label')?.querySelector('span');
-            const label = labelSpan ? labelSpan.textContent : 'أستاذ';  // ✅ حماية أفضل
-            return `<span class="badge badge-info" style="font-size:11px;display:inline-flex;align-items:center;gap:4px;">
-                        ${label} 
-                        <span style="cursor:pointer;font-weight:bold;margin-inline-start:2px;" onclick="event.stopPropagation();this.parentElement.remove();document.querySelector('#stuMultiTeacherList input[value=&quot;${cb.value}&quot;]').checked=false;window.loadStudents();">✕</span>
-                    </span>`;
-        }).join('') + (checked.length ? `<button class="btn btn-ghost btn-sm" style="font-size:11px;padding:2px 6px;" onclick="window.clearStudentTeacherFilter()">مسح الكل</button>` : '');
-    }
-    
-    const input = document.querySelector('#stuMultiTeacherWrap input');
-    if(input) input.placeholder = checked.length ? `تم اختيار ${checked.length} أستاذ (عرض المشتركين)` : 'اختر الأساتذة للمقارنة...';
-    
-    window.loadStudents();
-};
 
 window.clearStudentTeacherFilter = function() {
     document.querySelectorAll('#stuMultiTeacherList input').forEach(cb => cb.checked = false);
@@ -6586,6 +6506,7 @@ document.addEventListener('focusout',onEv,true);
 })();
 </script>
 <script src="js/unified-students.js"></script>
+<script src="js/students-page.js"></script>
 <script>
 window.clearActivityLogs=async function(){
 if(!confirm('مسح كل سجل النشاطات نهائياً؟'))return;
