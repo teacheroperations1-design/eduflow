@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🛍️ المتجر والجرد - EduFlow</title>
+<link rel="stylesheet" href="css/eduflow-theme.css">
+<style>
+body{background:var(--bg);margin:0;padding:14px;}
+.sm-wrap{max-width:1100px;margin:0 auto;}
+.sm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;}
+.sm-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;transition:all .2s;}
+.sm-card:hover{transform:translateY(-3px);border-color:var(--primary);}
+.sm-img{width:100%;height:95px;object-fit:cover;border-radius:10px;background:var(--surface-hover);display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:8px;overflow:hidden;}
+.sm-img img{width:100%;height:100%;object-fit:cover;}
+.sm-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:10px;margin-bottom:6px;background:var(--surface);flex-wrap:wrap;}
+.sm-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.sm-tab{padding:9px 16px;border:1px solid var(--border);border-radius:9999px;background:var(--surface-hover);cursor:pointer;font-weight:800;font-size:12px;font-family:inherit;color:inherit;}
+.sm-tab.on{background:var(--primary);color:#fff;border-color:var(--primary);}
+.sm-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+.sm-head h2{margin:0;font-size:18px;}
+.sm-empty{text-align:center;padding:34px 10px;color:var(--text-muted);}
+.sm-empty .big{font-size:46px;margin-bottom:8px;}
+</style>
+</head>
+<body data-theme="dark">
+<div class="sm-wrap">
+<div class="sm-head">
+<h2>🛍️ المتجر والجرد</h2>
+<div style="display:flex;gap:6px;flex-wrap:wrap;">
+<button class="btn btn-primary btn-sm" onclick="SM.openCat()">➕ كتاب/مذكرة</button>
+<button class="btn btn-success btn-sm" onclick="SM.openPt()">🏆 منتج نقاط</button>
+<button class="btn btn-ghost btn-sm" onclick="SM.render()">🔄 تحديث</button>
+</div>
+</div>
+<div class="sm-tabs">
+<button class="sm-tab on" id="smTab-catalog" onclick="SM.tab('catalog')">📚 كتب ومذكرات الأساتذة</button>
+<button class="sm-tab" id="smTab-points" onclick="SM.tab('points')">🏆 متجر النقاط</button>
+<button class="sm-tab" id="smTab-orders" onclick="SM.tab('orders')">📦 الطلبات والاستبدالات</button>
+</div>
+<div id="smPane-catalog"></div>
+<div id="smPane-points" style="display:none;"></div>
+<div id="smPane-orders" style="display:none;"></div>
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="js/config.js"></script>
+<script src="js/firebase-service.js"></script>
+<script src="js/data-service.js"></script>
+<script src="js/drive-service.js"></script>
+<script src="js/theme-manager.js"></script>
+<script>
+/* ============ 🛍️ Store Manager — صفحة نظيفة مستقلة ============ */
+(function(){
+"use strict";
+var SM=window.SM={tabCur:'catalog'};
+function db(){return (window.DataService&&DataService._getData)?DataService._getData():{};}
+function saveD(d){if(DataService._saveData)DataService._saveData(d);}
+function cloud(col,o,del){try{if(window.FirebaseService&&FirebaseService._db){if(del)FirebaseService.deleteDoc(col,o.id);else FirebaseService.saveDoc(col,o.id,o);}}catch(e){}}
+function thumb(u){try{return window.driveThumb?window.driveThumb(u):u;}catch(e){return u;}}
+function imgBox(url,icon){return '<div class="sm-img">'+(url?'<img src="'+thumb(url)+'" onerror="this.parentNode.innerHTML=\''+icon+'\'">':icon)+'</div>';}
+SM.tab=function(t){
+SM.tabCur=t;
+['catalog','points','orders'].forEach(function(k){
+var p=document.getElementById('smPane-'+k);if(p)p.style.display=(k===t)?'':'none';
+var b=document.getElementById('smTab-'+k);if(b)b.classList.toggle('on',k===t);
+});
+SM.render();
+};
+SM.render=function(){
+try{
+var d=db();
+/* 📚 كتب ومذكرات */
+var cat=(d.storeCatalog||[]);
+var pc=document.getElementById('smPane-catalog');
+if(pc)pc.innerHTML=cat.length?'<div class="sm-grid">'+cat.map(function(i){
+var t=i.teacherId?(DataService.getUserById?DataService.getUserById(i.teacherId):null):null;
+return '<div class="sm-card">'+imgBox(i.imageUrl,'📚')+
+'<strong style="font-size:13px;">'+i.name+'</strong><div style="font-size:11px;color:var(--text-muted);margin:4px 0;">'+(i.type||'مذكرة')+' · 👨 '+(t?t.name:'عام')+' · '+(i.grade||'كل الصفوف')+'</div>'+
+'<div style="display:flex;justify-content:space-between;font-size:12px;"><b style="color:var(--success);">'+(i.price||0)+' ج.م</b><span>متاح '+(i.stock||0)+' · محجوز '+(i.reserved||0)+'</span></div>'+
+'<div style="display:flex;gap:4px;margin-top:8px;"><button class="btn btn-ghost btn-sm" onclick="SM.openCat(\''+i.id+'\')">✏️</button><button class="btn btn-'+(i.active===false?'success':'danger')+' btn-sm" onclick="SM.togCat(\''+i.id+'\')">'+(i.active===false?'تفعيل':'إيقاف')+'</button><button class="btn btn-danger btn-sm" onclick="SM.delCat(\''+i.id+'\')">🗑</button></div></div>';
+}).join('')+'</div>':'<div class="sm-empty"><div class="big">📚</div><strong>مفيش كتب أو مذكرات</strong><div style="margin-top:6px;font-size:12px;">دوس "➕ كتاب/مذكرة" لإضافة أول منتج</div></div>';
+/* 🏆 متجر النقاط */
+var g=d.gamification||{};var store=g.store||{enabled:true,items:[]};var items=store.items||[];
+var pp=document.getElementById('smPane-points');
+if(pp)pp.innerHTML='<div style="background:var(--info-bg);border:1px solid var(--info-border);color:var(--info);border-radius:10px;padding:10px;margin-bottom:10px;font-size:12px;">💡 المنتجات دي بيستبدلها الطلاب بنقاطهم من صفحة "استبدال النقاط" عندهم — '+(store.enabled!==false?'<b>المتجر مفعّل</b>':'<b>المتجر موقوف</b>')+' <button class="btn btn-ghost btn-sm" onclick="SM.togStore()">'+(store.enabled!==false?'إيقاف':'تفعيل')+'</button></div>'+
+(items.length?'<div class="sm-grid">'+items.map(function(i){
+return '<div class="sm-card" style="text-align:center;">'+imgBox(i.imageUrl,i.icon||'🎁')+
+'<strong style="font-size:13px;">'+i.name+'</strong><div style="font-size:11px;color:var(--text-muted);margin:4px 0;">'+(i.cost||0)+' نقطة · مخزون '+(i.stock!=null?i.stock:'∞')+'</div>'+(i.active===false?'<span class="badge badge-muted">موقوف</span>':'')+
+'<div style="display:flex;gap:4px;justify-content:center;margin-top:8px;"><button class="btn btn-ghost btn-sm" onclick="SM.openPt(\''+i.id+'\')">✏️</button><button class="btn btn-'+(i.active===false?'success':'danger')+' btn-sm" onclick="SM.togPt(\''+i.id+'\')">'+(i.active===false?'تفعيل':'إيقاف')+'</button><button class="btn btn-danger btn-sm" onclick="SM.delPt(\''+i.id+'\')">🗑</button></div></div>';
+}).join('')+'</div>':'<div class="sm-empty"><div class="big">🏆</div><strong>مفيش منتجات نقاط</strong><div style="margin-top:6px;font-size:12px;">دوس "🏆 منتج نقاط" علشان الطلاب تلاقي حاجة تستبدلها</div></div>');
+/* 📦 الطلبات */
+var orders=[];
+['storeOrders','purchases','orders'].forEach(function(k){(d[k]||[]).forEach(function(o){o.__src=k;orders.push(o);});});
+orders.sort(function(a,b){return String(b.purchasedAt||b.at||b.createdAt||'').localeCompare(String(a.purchasedAt||a.at||a.createdAt||''));});
+var op=document.getElementById('smPane-orders');
+if(op)op.innerHTML=orders.length?orders.slice(0,80).map(function(o){
+var s=DataService.getUserById?DataService.getUserById(o.studentId):null;
+var kind=o.type==='real'?'📚 طلب كاش':'🏆 استبدال نقاط';
+return '<div class="sm-row"><div style="flex:1;"><strong>'+(s?s.name:'-')+'</strong> <span class="badge badge-info">'+kind+'</span><div style="font-size:11px;color:var(--text-muted);margin-top:3px;">'+(o.itemName||'')+' · '+(o.price?(o.price+' ج.م'):((o.cost||o.points||0)+' نقطة'))+' · '+new Date(o.purchasedAt||o.at||o.createdAt||Date.now()).toLocaleDateString('ar-EG')+'</div></div><div style="display:flex;gap:4px;align-items:center;"><span class="badge '+(o.status==='delivered'?'badge-success':o.status==='cancelled'?'badge-danger':'badge-warning')+'">'+(o.status||'جديد')+'</span>'+(o.status!=='delivered'&&o.status!=='cancelled'?'<button class="btn btn-success btn-sm" onclick="SM.ord(\''+o.__src+'\',\''+o.id+'\',\'delivered\')">✓ تسليم</button>':'')+(o.status!=='cancelled'?'<button class="btn btn-danger btn-sm" onclick="SM.ord(\''+o.__src+'\',\''+o.id+'\',\'cancelled\')">✗</button>':'')+'</div></div>';
+}).join(''):'<div class="sm-empty"><div class="big">📦</div><strong>مفيش طلبات بعد</strong></div>';
+}catch(e){console.error(e);}
+};
+SM.togCat=function(id){var d=db();var i=(d.storeCatalog||[]).find(function(x){return x.id===id;});if(!i)return;i.active=(i.active===false);saveD(d);cloud('storeCatalog',i,false);SM.render();};
+SM.delCat=function(id){if(!confirm('حذف المنتج؟'))return;var d=db();var i=(d.storeCatalog||[]).find(function(x){return x.id===id;});d.storeCatalog=(d.storeCatalog||[]).filter(function(x){return x.id!==id;});saveD(d);if(i)cloud('storeCatalog',i,true);SM.render();};
+SM.togPt=function(id){var d=db();d.gamification=d.gamification||{};d.gamification.store=d.gamification.store||{enabled:true,items:[]};var i=(d.gamification.store.items||[]).find(function(x){return x.id===id;});if(!i)return;i.active=(i.active===false);saveD(d);SM.render();};
+SM.delPt=function(id){if(!confirm('حذف المنتج؟'))return;var d=db();d.gamification=d.gamification||{};d.gamification.store=d.gamification.store||{enabled:true,items:[]};d.gamification.store.items=(d.gamification.store.items||[]).filter(function(x){return x.id!==id;});saveD(d);SM.render();};
+SM.togStore=function(){var d=db();d.gamification=d.gamification||{};d.gamification.store=d.gamification.store||{enabled:true,items:[]};d.gamification.store.enabled=(d.gamification.store.enabled===false);saveD(d);SM.render();};
+SM.ord=function(src,id,status){var d=db();var o=(d[src]||[]).find(function(x){return x.id===id;});if(!o)return;o.status=status;if(status==='delivered')o.deliveredAt=new Date().toISOString();saveD(d);cloud(src,o,false);SM.render();};
+SM.openCat=function(editId){
+var d=db();var i=editId?(d.storeCatalog||[]).find(function(x){return x.id===editId;}):null;
+var teachers=(DataService.getTeachers?DataService.getTeachers():[]);
+ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">📚 '+(i?'✏️ تعديل':'➕ إضافة')+' كتاب/مذكرة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">'+
+'<div class="form-group"><label>الاسم *</label><input type="text" id="ciName" class="form-input" value="'+(i?i.name:'')+'"></div>'+
+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+
+'<div class="form-group"><label>النوع</label><select id="ciType" class="form-select"><option value="مذكرة" '+((i&&i.type==='مذكرة')?'selected':'')+'>مذكرة</option><option value="كتاب" '+((i&&i.type==='كتاب')?'selected':'')+'>كتاب</option><option value="هدية" '+((i&&i.type==='هدية')?'selected':'')+'>هدية</option></select></div>'+
+'<div class="form-group"><label>الأستاذ</label><select id="ciTeacher" class="form-select"><option value="">عام (المركز)</option>'+teachers.map(function(t){return '<option value="'+t.id+'" '+((i&&i.teacherId===t.id)?'selected':'')+'>'+t.name+'</option>';}).join('')+'</select></div>'+
+'<div class="form-group"><label>السعر (ج.م) *</label><input type="number" id="ciPrice" class="form-input" value="'+(i?i.price:0)+'" min="0"></div>'+
+'<div class="form-group"><label>المخزون *</label><input type="number" id="ciStock" class="form-input" value="'+(i?i.stock:10)+'" min="0"></div>'+
+'<div class="form-group"><label>الصف</label><input type="text" id="ciGrade" class="form-input" value="'+(i?i.grade||'':'')+'" placeholder="كل الصفوف"></div>'+
+'<div class="form-group"><label>المرحلة</label><input type="text" id="ciStage" class="form-input" value="'+(i?i.stage||'':'')+'" placeholder="اختياري"></div></div>'+
+'<div class="form-group"><label>🔗 رابط صورة (Drive أو URL)</label><input type="text" id="ciImg" class="form-input" value="'+(i?i.imageUrl||'':'')+'"></div>'+
+'<button class="btn btn-primary w-full" onclick="SM.saveCat(\''+(editId||'')+'\')">💾 حفظ</button></div>','modal-md');
+};
+SM.saveCat=function(editId){
+var d=db();d.storeCatalog=d.storeCatalog||[];
+var name=(document.getElementById('ciName')||{}).value||'';
+if(!name){alert('اكتب الاسم');return;}
+var i=editId?d.storeCatalog.find(function(x){return x.id===editId;}):null;
+if(!i){i={id:'cat_'+Date.now(),createdAt:new Date().toISOString(),reserved:0};d.storeCatalog.push(i);}
+i.name=name;i.type=(document.getElementById('ciType')||{}).value;
+i.teacherId=(document.getElementById('ciTeacher')||{}).value||'';
+i.price=parseFloat((document.getElementById('ciPrice')||{}).value)||0;
+i.stock=parseInt((document.getElementById('ciStock')||{}).value)||0;
+i.grade=(document.getElementById('ciGrade')||{}).value||'';
+i.stage=(document.getElementById('ciStage')||{}).value||'';
+i.imageUrl=(document.getElementById('ciImg')||{}).value||'';
+if(i.active===undefined)i.active=true;
+saveD(d);cloud('storeCatalog',i,false);
+ThemeManager.closeModal();SM.render();
+};
+SM.openPt=function(editId){
+var d=db();var st=(d.gamification&&d.gamification.store)||{items:[]};
+var i=editId?(st.items||[]).find(function(x){return x.id===editId;}):null;
+ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">🏆 '+(i?'✏️ تعديل':'➕ إضافة')+' منتج نقاط</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">'+
+'<div class="form-group"><label>الاسم *</label><input type="text" id="piName" class="form-input" value="'+(i?i.name:'')+'"></div>'+
+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+
+'<div class="form-group"><label>التكلفة بالنقاط *</label><input type="number" id="piCost" class="form-input" value="'+(i?i.cost:50)+'" min="1"></div>'+
+'<div class="form-group"><label>المخزون</label><input type="number" id="piStock" class="form-input" value="'+((i&&i.stock!=null)?i.stock:99)+'" min="0"></div></div>'+
+'<div class="form-group"><label>أيقونة (إيموجي)</label><input type="text" id="piIcon" class="form-input" value="'+(i?i.icon||'':'🎁')+'"></div>'+
+'<div class="form-group"><label>🔗 صورة (اختياري)</label><input type="text" id="piImg" class="form-input" value="'+(i?i.imageUrl||'':'')+'"></div>'+
+'<button class="btn btn-primary w-full" onclick="SM.savePt(\''+(editId||'')+'\')">💾 حفظ</button></div>','modal-sm');
+};
+SM.savePt=function(editId){
+var d=db();d.gamification=d.gamification||{};d.gamification.store=d.gamification.store||{enabled:true,items:[]};
+var name=(document.getElementById('piName')||{}).value||'';
+if(!name){alert('اكتب الاسم');return;}
+var i=editId?d.gamification.store.items.find(function(x){return x.id===editId;}):null;
+if(!i){i={id:'pit_'+Date.now()};d.gamification.store.items.push(i);}
+i.name=name;i.cost=parseInt((document.getElementById('piCost')||{}).value)||1;
+i.stock=parseInt((document.getElementById('piStock')||{}).value)||99;
+i.icon=(document.getElementById('piIcon')||{}).value||'🎁';
+i.imageUrl=(document.getElementById('piImg')||{}).value||'';
+if(i.active===undefined)i.active=true;
+saveD(d);
+ThemeManager.closeModal();SM.render();
+};
+function boot(){
+if(window.DataService&&DataService.init){DataService.init().then(function(){SM.render();}).catch(function(){SM.render();});}
+else setTimeout(boot,400);
+}
+boot();
+setInterval(SM.render,8000);
+})();
+</script>
+</body>
+</html>

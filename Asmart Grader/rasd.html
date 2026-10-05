@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>رصد الدرجات — أوفلاين</title>
+<style>
+:root{--bg:#0f172a;--p:#1e293b;--p2:#273449;--ln:#334155;--t:#e2e8f0;--m:#94a3b8;
+--ac:#38bdf8;--ok:#34d399;--bd:#f87171;--wn:#fbbf24}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Segoe UI,Tahoma,Arial}
+body{background:var(--bg);color:var(--t);padding-bottom:40px}
+header{position:sticky;top:0;z-index:9;background:#111827ee;border-bottom:1px solid var(--ln);
+ padding:10px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+header b{font-size:17px}
+.off{background:rgba(52,211,153,.15);color:var(--ok);border-radius:999px;padding:3px 11px;font-size:12px;font-weight:700}
+main{max-width:960px;margin:auto;padding:14px}
+.card{background:var(--p);border:1px solid var(--ln);border-radius:14px;padding:15px;margin-bottom:13px}
+.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.btn{border:0;border-radius:10px;padding:11px 17px;font-weight:800;cursor:pointer;font-size:14px}
+.bp{background:var(--ac);color:#062033}.bo{background:var(--ok);color:#04281c}
+.bd{background:var(--bd);color:#330a0a}.bg{background:var(--p2);color:var(--t);border:1px solid var(--ln)}
+.bw{background:var(--wn);color:#3a2a02}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+input,select,textarea{background:var(--p2);border:1px solid var(--ln);color:var(--t);padding:10px;border-radius:9px;font-size:15px}
+#name{font-size:19px;font-weight:700;flex:1;min-width:180px}
+.hint{font-size:12.5px;color:var(--m);line-height:1.6}
+.rec{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.dot{width:13px;height:13px;border-radius:50%;background:#555}
+.dot.on{background:var(--bd);animation:bl 1s infinite}
+@keyframes bl{50%{opacity:.25}}
+#timer{font-variant-numeric:tabular-nums;font-size:20px;font-weight:800;color:var(--bd)}
+.tally{display:flex;gap:10px;flex-wrap:wrap}
+.tal{background:var(--p2);border:1px solid var(--ln);border-radius:12px;padding:10px 14px;text-align:center;min-width:96px}
+.tal .v{font-size:30px;font-weight:800}
+.tal .l{font-size:12px;color:var(--m)}
+.tal button{width:38px;height:34px;border-radius:8px;border:0;font-size:19px;font-weight:800;cursor:pointer;margin:0 2px}
+.calc{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--p2);border-radius:12px;padding:12px}
+.calc input{width:86px;text-align:center;font-size:18px;font-weight:800}
+.final{font-size:40px;font-weight:800;color:var(--ac)}
+.pct{font-size:15px;color:var(--m);font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:9px 8px;border-bottom:1px solid var(--ln);text-align:right}
+th{color:var(--m);font-size:12px}
+.play{background:var(--ac);color:#062033;border:0;border-radius:8px;padding:5px 10px;cursor:pointer;font-weight:800}
+.stats{display:flex;gap:10px;flex-wrap:wrap}
+.stats div{background:var(--p2);border-radius:10px;padding:8px 14px;text-align:center}
+.stats .v{font-size:19px;font-weight:800}.stats .l{font-size:11px;color:var(--m)}
+audio{height:34px}
+</style></head><body>
+<header><b>🎙 رصد الدرجات</b><span class="off">● أوفلاين</span>
+ <a href="index.html" class="btn bg" style="text-decoration:none;margin-inline-start:auto">← المصحح الذكي</a></header>
+<main>
+
+<div class="card">
+ <div class="row"><input id="name" placeholder="اسم الطالب…"></div>
+ <div class="row rec">
+  <button class="btn bd" id="recBtn">🎙 تسجيل</button>
+  <span class="dot" id="dot"></span><span id="timer">00:00</span>
+  <button class="btn bg" id="playBtn" disabled>▶ استماع</button>
+  <label class="hint"><input type="checkbox" id="loop"> تكرار</label>
+  <button class="btn bg" id="dlCur" disabled>⬇ تنزيل الصوت</button>
+ </div>
+ <div class="row tally">
+  <div class="tal"><div class="v" style="color:var(--ok)" id="vOk">0</div><div class="l">✓ صح</div>
+   <button style="background:var(--ok);color:#04281c" data-k="ok" data-d="1">+</button>
+   <button style="background:var(--p);color:var(--t)" data-k="ok" data-d="-1">−</button></div>
+  <div class="tal"><div class="v" style="color:var(--bd)" id="vBd">0</div><div class="l">✗ غلط</div>
+   <button style="background:var(--bd);color:#330a0a" data-k="bd" data-d="1">+</button>
+   <button style="background:var(--p);color:var(--t)" data-k="bd" data-d="-1">−</button></div>
+  <div class="tal"><div class="v" id="vBl">0</div><div class="l">ـ فارغ</div>
+   <button style="background:var(--m);color:#111" data-k="bl" data-d="1">+</button>
+   <button style="background:var(--p);color:var(--t)" data-k="bl" data-d="-1">−</button></div>
+ </div>
+ <div class="calc">
+  <label class="hint">الدرجة من</label><input type="number" id="total" value="40" min="1">
+  <label class="hint"><input type="checkbox" id="deductBl" checked> خصم الفارغ</label>
+  <span style="font-size:22px;font-weight:800">=</span>
+  <span class="final" id="final">40</span><span class="pct" id="pct">100%</span>
+  <button class="btn bo" id="saveBtn" style="margin-inline-start:auto">💾 حفظ والتالي (S)</button>
+ </div>
+ <div class="row"><textarea id="notes" rows="1" placeholder="ملاحظة (اختياري)" style="flex:1"></textarea></div>
+ <p class="hint">💡 اضغط تسجيل (R) وقل إجابات الطالب بصوتك وعينك على الورقة، واضغط + غلط كلما لقيت غلطة. استمع بالتكرار وإنت بتعلّم.</p>
+</div>
+
+<div class="card">
+ <div class="stats" id="stats"></div>
+</div>
+
+<div class="card">
+ <div class="row"><input id="q" placeholder="🔍 بحث" style="flex:1;min-width:140px">
+  <select id="sort"><option value="new">الأحدث</option><option value="desc">الأعلى درجة</option>
+  <option value="asc">الأقل درجة</option><option value="name">بالاسم</option></select>
+  <button class="btn bp" id="csv">⬇ CSV</button>
+  <button class="btn bd" id="clr">🗑 مسح الكل</button></div>
+ <table><thead><tr><th>#</th><th>الطالب</th><th>🎙</th><th>من</th><th>غلط</th><th>فارغ</th><th>الناتج</th><th>%</th><th></th></tr></thead>
+ <tbody id="tb"></tbody></table>
+ <p class="hint" id="noRes" style="text-align:center;padding:16px">لا يوجد طلاب بعد.</p>
+</div>
+</main>
+
+<script>
+'use strict';
+const $=i=>document.getElementById(i);
+let ROWS=[], cur={ok:0,bd:0,bl:0}, curBlob=null, curURL=null, rec=null, chunks=[], t0=0, tickT=null, lastTotal=40;
+
+/* ===== تخزين محلي أوفلاين (IndexedDB) ===== */
+let db;
+function idb(){return new Promise((res,rej)=>{const r=indexedDB.open('rasd',1);
+ r.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains('stu'))d.createObjectStore('stu',{keyPath:'id',autoIncrement:true});};
+ r.onsuccess=e=>{db=e.target.result;res();};r.onerror=e=>rej(e);});}
+const dbAll=()=>new Promise(res=>{const t=db.transaction('stu','readonly').objectStore('stu').getAll();t.onsuccess=()=>res(t.result);});
+const dbPut=o=>new Promise(res=>{const t=db.transaction('stu','readwrite');t.objectStore('stu').put(o);t.oncomplete=res;});
+const dbDel=id=>new Promise(res=>{const t=db.transaction('stu','readwrite');t.objectStore('stu').delete(id);t.oncomplete=res;});
+const dbClear=()=>new Promise(res=>{const t=db.transaction('stu','readwrite');t.objectStore('stu').clear();t.oncomplete=res;});
+
+/* ===== التسجيل ===== */
+$('recBtn').onclick=async()=>{
+ if(rec){rec.stop();return;}
+ try{
+  const st=await navigator.mediaDevices.getUserMedia({audio:true});
+  rec=new MediaRecorder(st);chunks=[];
+  rec.ondataavailable=e=>chunks.push(e.data);
+  rec.onstop=()=>{st.getTracks().forEach(t=>t.stop());
+   curBlob=new Blob(chunks,{type:rec.mimeType||'audio/webm'});
+   if(curURL)URL.revokeObjectURL(curURL);curURL=URL.createObjectURL(curBlob);
+   $('playBtn').disabled=false;$('dlCur').disabled=false;
+   $('recBtn').textContent='🎙 تسجيل';$('dot').classList.remove('on');clearInterval(tickT);};
+  rec.start();t0=Date.now();
+  $('recBtn').textContent='⏹ إيقاف';$('dot').classList.add('on');
+  tickT=setInterval(()=>{$('timer').textContent=fmt(Date.now()-t0);},250);
+ }catch(e){alert('المايكروفون مرفوض — فعّل الإذن من المتصفح.');}};
+function fmt(ms){const s=ms/1000|0;return String(s/60|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+$('playBtn').onclick=()=>{if(!curURL)return;const a=new Audio(curURL);a.loop=$('loop').checked;a.play();};
+$('dlCur').onclick=()=>{if(!curURL)return;const a=document.createElement('a');a.href=curURL;
+ a.download=('صوت_'+($('name').value||'طالب')+'.webm');a.click();};
+
+/* ===== العدادات + الحاسبة ===== */
+document.querySelectorAll('.tal button').forEach(b=>b.onclick=()=>{
+ const k=b.dataset.k,d=+b.dataset.d;cur[k]=Math.max(0,cur[k]+d);sync();});
+function sync(){
+ $('vOk').textContent=cur.ok;$('vBd').textContent=cur.bd;$('vBl').textContent=cur.bl;
+ const tot=+$('total').value||0;
+ const loss=cur.bd+($('deductBl').checked?cur.bl:0);
+ const fin=Math.max(0,tot-loss);
+ $('final').textContent=fin;
+ $('pct').textContent=(tot?Math.round(fin/tot*100):0)+'%';
+ lastTotal=tot;}
+['total','deductBl'].forEach(id=>$(id).onchange=sync);
+
+/* ===== حفظ ===== */
+$('saveBtn').onclick=async()=>{
+ const name=$('name').value.trim();
+ if(!name){alert('اكتب اسم الطالب');$('name').focus();return;}
+ const tot=+$('total').value||0, loss=cur.bd+($('deductBl').checked?cur.bl:0), fin=Math.max(0,tot-loss);
+ const row={name,total:tot,bd:cur.bd,bl:cur.bl,final:fin,notes:$('notes').value,
+  audio:curBlob||null,ts:Date.now()};
+ await dbPut(row);
+ ROWS.push(row);row.id=row.id||ROWS.length;
+ resetCur();draw();};
+function resetCur(){
+ $('name').value='';$('notes').value='';cur={ok:0,bd:0,bl:0};
+ if(curURL){URL.revokeObjectURL(curURL);curURL=null;}curBlob=null;
+ $('playBtn').disabled=true;$('dlCur').disabled=true;$('timer').textContent='00:00';
+ $('total').value=lastTotal;sync();$('name').focus();}
+
+/* ===== الجدول + الإحصائيات ===== */
+function draw(){
+ const q=($('q').value||'').toLowerCase(), sort=$('sort').value;
+ let rows=ROWS.slice();
+ if(q)rows=rows.filter(r=>r.name.toLowerCase().includes(q));
+ if(sort==='desc')rows.sort((a,b)=>b.final/a.total-a.final/a.total);
+ if(sort==='asc')rows.sort((a,b)=>a.final/a.total-b.final/a.total);
+ if(sort==='name')rows.sort((a,b)=>a.name.localeCompare(b.name,'ar'));
+ if(sort==='new')rows.sort((a,b)=>b.ts-a.ts);
+ const tb=$('tb');tb.innerHTML='';$('noRes').style.display=rows.length?'none':'';
+ rows.forEach((r,i)=>{const p=r.total?Math.round(r.final/r.total*100):0;
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td>${i+1}</td><td><b>${r.name}</b>${r.notes?`<div class="hint">${r.notes}</div>`:''}</td>
+   <td>${r.audio?`<button class="play" data-id="${r.id}">▶</button>`:'—'}</td>
+   <td>${r.total}</td><td>${r.bd}</td><td>${r.bl}</td>
+   <td><b style="color:var(--ac)">${r.final}</b></td><td>${p}%</td>
+   <td><button class="btn bd" style="padding:3px 8px" data-del="${r.id}">✕</button></td>`;
+  tb.appendChild(tr);});
+ tb.querySelectorAll('.play').forEach(b=>b.onclick=()=>{
+  const r=ROWS.find(x=>x.id==b.dataset.id);if(r&&r.audio)new Audio(URL.createObjectURL(r.audio)).play();});
+ tb.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{
+  if(!confirm('حذف الطالب؟'))return;const id=+b.dataset.del;
+  await dbDel(id);ROWS=ROWS.filter(x=>x.id!==id);draw();});
+ // إحصائيات
+ const n=ROWS.length;
+ if(!n){$('stats').innerHTML='';return;}
+ const avg=ROWS.reduce((s,r)=>s+(r.total?r.final/r.total:0),0)/n*100;
+ const hi=Math.max(...ROWS.map(r=>r.total?r.final/r.total:0))*100;
+ const lo=Math.min(...ROWS.map(r=>r.total?r.final/r.total:0))*100;
+ const pass=ROWS.filter(r=>(r.total?r.final/r.total:0)>=0.5).length;
+ $('stats').innerHTML=`<div><div class="v">${n}</div><div class="l">طالب</div></div>
+  <div><div class="v" style="color:var(--ac)">${avg.toFixed(1)}%</div><div class="l">المتوسط</div></div>
+  <div><div class="v" style="color:var(--ok)">${hi.toFixed(0)}%</div><div class="l">أعلى</div></div>
+  <div><div class="v" style="color:var(--bd)">${lo.toFixed(0)}%</div><div class="l">أدنى</div></div>
+  <div><div class="v" style="color:var(--wn)">${pass}/${n}</div><div class="l">ناجحون</div></div>`;}
+$('q').oninput=draw;$('sort').onchange=draw;
+$('clr').onclick=async()=>{if(!confirm('مسح كل الطلاب والأصوات؟'))return;
+ await dbClear();ROWS=[];draw();};
+$('csv').onclick=()=>{let s='\uFEFFالطالب,من,غلط,فارغ,الناتج,%,ملاحظة\n';
+ ROWS.forEach(r=>{const p=r.total?Math.round(r.final/r.total*100):0;
+  s+=`"${r.name}",${r.total},${r.bd},${r.bl},${r.final},${p}%,"${(r.notes||'').replace(/"/g,'')}"\n`;});
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([s],{type:'text/csv'}));
+ a.download='رصد_الدرجات.csv';a.click();};
+
+/* ===== اختصارات ===== */
+document.addEventListener('keydown',e=>{
+ if(/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;
+ if(e.key==='r'||e.key==='R'){$('recBtn').click();e.preventDefault();}
+ if(e.key==='s'||e.key==='S'){$('saveBtn').click();e.preventDefault();}
+ if(e.key==='1'){cur.ok++;sync();} if(e.key==='2'){cur.bd++;sync();} if(e.key==='3'){cur.bl++;sync();}});
+
+/* ===== بدء ===== */
+(async()=>{await idb();ROWS=await dbAll();$('total').value=lastTotal;sync();draw();})();
+</script></body></html>

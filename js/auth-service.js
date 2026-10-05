@@ -1,88 +1,221 @@
-// js/auth-service.js — إدارة المصادقة والصلاحيات
+// js/auth-service.js — إدارة المصادقة والصلاحيات (نسخة نهائية مصححة)
+// ✅ تخزين موحّد (session + local) + جلسة باركود سريعة + دعم Firebase الصحيح
+
+const QR_SESSION_KEY = 'eduflow_qr_session_v1';
+
+// ═══════════════ دوال التخزين الموحّدة ═══════════════
+window.setEduUser = function(u){
+  try {
+    if (!u) return;
+    const raw = JSON.stringify(u);
+    sessionStorage.setItem('eduflow_user', raw);
+    localStorage.setItem('eduflow_user', raw);
+  } catch(e){ console.warn('setEduUser failed:', e); }
+};
+
+window.clearEduUser = function(){
+  try {
+    sessionStorage.removeItem('eduflow_user');
+    localStorage.removeItem('eduflow_user');
+    sessionStorage.removeItem('eduflow_view_as');
+    localStorage.removeItem('eduflow_view_as');
+    if (window.clearQrQuickSession) window.clearQrQuickSession();
+  } catch(e){}
+};
+
+// ═══════════════ جلسة الباركود السريعة ═══════════════
+window.setQrQuickSession = function(role = 'assistant', hours = 12){
+  const session = { role, ts: Date.now(), exp: Date.now() + (hours*60*60*1000), via: 'qr' };
+  try {
+    localStorage.setItem(QR_SESSION_KEY, JSON.stringify(session));
+    sessionStorage.setItem(QR_SESSION_KEY, JSON.stringify(session));
+  } catch(e){}
+  return session;
+};
+
+window.clearQrQuickSession = function(){
+  try {
+    localStorage.removeItem(QR_SESSION_KEY);
+    sessionStorage.removeItem(QR_SESSION_KEY);
+  } catch(e){}
+};
+
+window.getQrQuickSession = function(){
+  try {
+    const raw = sessionStorage.getItem(QR_SESSION_KEY) || localStorage.getItem(QR_SESSION_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    if (s.exp && s.exp > Date.now()) return s;
+    window.clearQrQuickSession();
+    return null;
+  } catch(e){ return null; }
+};
+
+// ═══════════════ AuthService ═══════════════
 const AuthService = {
+
   async waitAuth() {
-    if (!window.FirebaseService?.initialized) return null;
+    if (!(window.firebase && firebase.apps.length)) return null;
     return new Promise(resolve => {
-      const un = firebase.auth().onAuthStateChanged(u => { un(); resolve(u); }, () => { un(); resolve(null); });
+      const un = firebase.auth().onAuthStateChanged(
+        u => { un(); resolve(u); },
+        () => { un(); resolve(null); }
+      );
     });
   },
 
+  /** تسجيل دخول (أدمن/مساعد/مدرس/طالب) — Firebase أولاً ثم محلي */
   async login(identifier, password) {
-    // 1) محلي أولاً
-    const local = DataService.authenticate(identifier, password);
-    if (local) {
-      sessionStorage.setItem('eduflow_user', JSON.stringify(local));
-      return { success:true, user:local, source:'local' };
-    }
-    // 2) Firebase
-    if (window.FirebaseService?.connected) {
+    if (!identifier || !password) return { success:false, message:'أكمل البيانات' };
+    const id = String(identifier).trim();
+
+    // 1) Firebase Firestore
+    if (window.firebase && firebase.apps.length) {
       try {
-        const r = await FirebaseService.signIn(identifier, password);
-        if (r) {
-          sessionStorage.setItem('eduflow_user', JSON.stringify(r));
-          return { success:true, user:r, source:'firebase' };
+        let doc = null;
+        const strategies = [
+          { field:'email',    value: id.toLowerCase() },
+          { field:'code',     value: id.toUpperCase() },
+          { field:'phone',    value: id.replace(/\D/g,'') },
+          { field:'username', value: id.toLowerCase() }
+        ];
+        for (const s of strategies) {
+          if (!s.value) continue;
+          try {
+            const snap = await firebase.firestore().collection('users')
+              .where(s.field,'==',s.value).limit(1).get();
+            if (!snap.empty) { doc = snap.docs[0]; break; }
+          } catch(e) {}
         }
-      } catch (e) { console.warn(e); }
+        if (doc) {
+          const u = { id: doc.id, ...doc.data() };
+          if (String(u.password||'') === String(password)) {
+            window.setEduUser(u);
+            return { success:true, user:u, source:'firebase' };
+          }
+          return { success:false, message:'كلمة المرور غير صحيحة' };
+        }
+      } catch(e) { console.warn('Firebase login error:', e); }
     }
-    return { success:false, message:'بيانات غير صحيحة' };
+
+    // 2) محلي
+    if (typeof DataService?.authenticate === 'function') {
+      const local = DataService.authenticate(id, password);
+      if (local) { window.setEduUser(local); return { success:true, user:local, source:'local' }; }
+    }
+    return { success:false, message:'بيانات الدخول غير صحيحة' };
   },
 
   async loginStudent(code, password) {
-    const s = DataService.findStudentByCode(code);
-    if (!s) return { success:false, message:'كود غير صحيح' };
+    const s = typeof DataService?.findStudentByCode === 'function' ? DataService.findStudentByCode(code) : null;
+    if (!s) return { success:false, message:'كود الطالب غير صحيح' };
     if (s.password && s.password !== password) return { success:false, message:'كلمة المرور غير صحيحة' };
-    sessionStorage.setItem('eduflow_user', JSON.stringify(s));
+    window.setEduUser(s);
     return { success:true, user:s };
   },
 
   async loginParent(code, password) {
-    const s = DataService.findStudentByCode(code);
+    const s = typeof DataService?.findStudentByCode === 'function' ? DataService.findStudentByCode(code) : null;
     if (!s) return { success:false, message:'كود الابن غير صحيح' };
     if ((s.parentAccess||'') !== password) return { success:false, message:'كلمة مرور ولي الأمر غير صحيحة' };
     const parent = {
       id:'parent_'+s.id, role:'parent', name:'ولي أمر '+s.name,
-      phone:s.parentPhone, studentIds:[s.studentId], viaChildCode:true
+      phone:s.parentPhone, studentIds:[s.id], viaChildCode:true, parentOf:s.name
     };
-    sessionStorage.setItem('eduflow_user', JSON.stringify(parent));
+    window.setEduUser(parent);
     return { success:true, user:parent };
   },
 
   async logout() {
-    sessionStorage.removeItem('eduflow_user');
-    sessionStorage.removeItem('eduflow_view_as');
-    if (window.FirebaseService?.connected) await FirebaseService.signOut();
+    window.clearEduUser();
+    if (window.FirebaseService?.connected) {
+      try { await firebase.auth().signOut(); } catch(e) {}
+    }
     location.href = 'login.html';
   },
 
+  /** المستخدم الحالي: View As ← جلسة باركود ← session ← local */
   getCurrentUser() {
-    const viewAs = sessionStorage.getItem('eduflow_view_as');
-    if (viewAs) return JSON.parse(viewAs);
-    const s = sessionStorage.getItem('eduflow_user');
-    return s ? JSON.parse(s) : null;
+    try {
+      const viewAs = sessionStorage.getItem('eduflow_view_as') || localStorage.getItem('eduflow_view_as');
+      if (viewAs) { try { return JSON.parse(viewAs); } catch(e){} }
+
+      const qr = window.getQrQuickSession ? window.getQrQuickSession() : null;
+      if (qr) {
+        return { uid:'qr_'+qr.role, role:qr.role, name:'📷 مستخدم الباركود', isQrUser:true, code:qr.code };
+      }
+
+      const sessionUser = sessionStorage.getItem('eduflow_user');
+      if (sessionUser) { try { return JSON.parse(sessionUser); } catch(e){} }
+
+      const localUser = localStorage.getItem('eduflow_user');
+      if (localUser) {
+        try {
+          const user = JSON.parse(localUser);
+          sessionStorage.setItem('eduflow_user', localUser);
+          return user;
+        } catch(e){}
+      }
+    } catch(e) {}
+    return null;
   },
 
   getRealUser() {
-    const s = sessionStorage.getItem('eduflow_user');
-    return s ? JSON.parse(s) : null;
+    try {
+      const s = sessionStorage.getItem('eduflow_user') || localStorage.getItem('eduflow_user');
+      return s ? JSON.parse(s) : null;
+    } catch(e){ return null; }
   },
 
-  setViewAs(user) { sessionStorage.setItem('eduflow_view_as', JSON.stringify(user)); },
-  clearViewAs() { sessionStorage.removeItem('eduflow_view_as'); },
+  /** تحديث بيانات المستخدم من Firestore */
+  async refreshAuth() {
+    const user = this.getRealUser();
+    if (!user?.id || !(window.firebase && firebase.apps.length)) return user;
+    try {
+      const snap = await firebase.firestore().collection('users').doc(user.id).get();
+      if (snap.exists) {
+        const fresh = { id: snap.id, ...snap.data() };
+        window.setEduUser(fresh);
+        return fresh;
+      }
+    } catch(e) {}
+    return user;
+  },
+
+  setViewAs(user) {
+    try {
+      const raw = JSON.stringify(user);
+      sessionStorage.setItem('eduflow_view_as', raw);
+      localStorage.setItem('eduflow_view_as', raw);
+    } catch(e){}
+  },
+  clearViewAs() {
+    try {
+      sessionStorage.removeItem('eduflow_view_as');
+      localStorage.removeItem('eduflow_view_as');
+    } catch(e){}
+  },
 
   requireRole(roles) {
     const u = this.getCurrentUser();
+    if (u?.isQrUser) {
+      if (!roles) return true;
+      const arr = Array.isArray(roles) ? roles : [roles];
+      return arr.includes(u.role);
+    }
     if (!u) { location.href = 'login.html'; return false; }
-    if (!roles.includes(u.role)) { this.redirectToDashboard(u.role); return false; }
+    if (roles) {
+      const arr = Array.isArray(roles) ? roles : [roles];
+      if (!arr.includes(u.role)) { this.redirectToDashboard(u.role); return false; }
+    }
     return true;
   },
 
   redirectToDashboard(role) {
     const map = {
-      super_admin:'admin-dashboard.html',
-      assistant:'assistant-dashboard.html',
-      teacher:'teacher-dashboard.html',
-      student:'student-dashboard.html',
-      parent:'parent-dashboard.html'
+      super_admin:'admin-dashboard.html', admin:'admin-dashboard.html',
+      assistant:'assistant-dashboard.html', teacher:'teacher-dashboard.html',
+      student:'student-dashboard.html', parent:'parent-dashboard.html'
     };
     location.href = map[role] || 'login.html';
   },
@@ -90,25 +223,122 @@ const AuthService = {
   hasPermission(module, action) {
     const u = this.getCurrentUser();
     if (!u) return false;
-    if (u.role === 'super_admin') return true;
+    if (u.role === 'super_admin' || u.role === 'admin') return true;
     return (u.permissions||{})[module]?.[action] === true;
   },
 
-  // ============ تسجيل أستاذ عبر رابط مؤقت ============
   async registerTeacherViaLink(linkCode, teacherData) {
-    const validation = DataService.validateTeacherRegisterLink(linkCode);
+    const validation = typeof DataService?.validateTeacherRegisterLink === 'function'
+      ? DataService.validateTeacherRegisterLink(linkCode)
+      : { valid:false, message:'غير مدعوم' };
     if (!validation.valid) return { success:false, message:validation.message };
+    const teacher = await DataService.addUser({ ...teacherData, role:'teacher' });
+    if (typeof DataService?.markTeacherRegisterLinkUsed === 'function') {
+      await DataService.markTeacherRegisterLinkUsed(linkCode, teacher.id);
+    }
+    window.setEduUser(teacher);
+    return { success:true, user:teacher, code:teacher.id };
+  },
 
-    const teacher = await DataService.addUser({
-      ...teacherData,
-      role: 'teacher'
-    });
+  /** دخول آمن عبر QR Token (مرحلة لاحقة) */
+  async loginWithQrToken(token) {
+    if (!(window.firebase && firebase.apps.length)) return { success:false, message:'Firebase غير متصل' };
+    try {
+      const snap = await firebase.firestore().collection('qr_tokens')
+        .where('token','==',token).where('used','==',false).limit(1).get();
+      if (snap.empty) return { success:false, message:'رمز غير صالح أو مستخدم' };
+      const td = snap.docs[0].data();
+      if (td.exp && td.exp < Date.now()) return { success:false, message:'انتهت صلاحية الرمز' };
+      const userSnap = await firebase.firestore().collection('users').doc(td.userId).get();
+      if (!userSnap.exists) return { success:false, message:'المستخدم غير موجود' };
+      await snap.docs[0].ref.update({ used:true, usedAt:Date.now() });
+      const user = { id:userSnap.id, ...userSnap.data() };
+      window.setEduUser(user);
+      return { success:true, user, source:'qr_token' };
+    } catch(e) {
+      return { success:false, message:'فشل تسجيل الدخول' };
+    }
+  },
 
-    await DataService.markTeacherRegisterLinkUsed(linkCode, teacher.id);
-
-    sessionStorage.setItem('eduflow_user', JSON.stringify(teacher));
-    return { success:true, user:teacher, code: teacher.id };
+  checkSession() {
+    const u = this.getCurrentUser();
+    return {
+      isLoggedIn: !!u, isQrUser: !!u?.isQrUser,
+      isViewingAs: !!sessionStorage.getItem('eduflow_view_as'),
+      role: u?.role || null, name: u?.name || null
+    };
   }
 };
 
 window.AuthService = AuthService;
+
+// تحديث تلقائي عند العودة للتبويب أو رجوع النت
+(function(){
+  document.addEventListener('visibilitychange', async () => {
+    if (!document.hidden && AuthService.getRealUser()) { try { await AuthService.refreshAuth(); } catch(e){} }
+  });
+  window.addEventListener('online', async () => {
+    if (AuthService.getRealUser()) { try { await AuthService.refreshAuth(); } catch(e){} }
+  });
+})();
+/* ============ 👁️ ViewAs = دخول كامل بحساب المستخدم المختار (V3 صامت) ============ */
+(function(){
+"use strict";
+function qs(){try{return new URLSearchParams(location.search);}catch(e){return new URLSearchParams('');}}
+var vid=null;try{vid=qs().get('viewas');}catch(e){}
+if(!vid)return;
+/* من أول لحظة: منع أي تحويل أو رفض صلاحيات قبل ما الداتا تجهز */
+try{
+if(window.AuthService){
+AuthService.requireRole=function(){return true;};
+var origGet=AuthService.getCurrentUser;
+AuthService.getCurrentUser=function(){return window.__VIEWAS_USER||(origGet?origGet.call(AuthService):null);};
+}
+}catch(e){}
+function usersNow(){
+try{if(window.DataService&&DataService.getUsers){var u=DataService.getUsers();if(u&&u.length)return u;}}catch(e){}
+try{if(window.DataService&&DataService._getData){return (DataService._getData().users||[]);}}catch(e){}
+return [];
+}
+var applied=null;try{applied=sessionStorage.getItem('eduflow_viewas_applied');}catch(e){}
+if(vid==='clear'||vid==='exit'){
+try{sessionStorage.removeItem('eduflow_user');sessionStorage.removeItem('eduflow_viewas_applied');}catch(e){}
+location.href=location.pathname;
+return;
+}
+if(applied===vid){
+/* بعد الـ reload: ثبّت جلسة المستخدم المختار من أول سطر */
+try{
+var su=JSON.parse(sessionStorage.getItem('eduflow_user')||'null');
+if(su&&su.id===vid){
+window.__VIEWAS_USER=su;window.currentUser=su;
+if(window.AuthService){AuthService.getCurrentUser=function(){return su;};AuthService.requireRole=function(){return true;};}
+}
+}catch(e){}
+var t=0;var iv2=setInterval(function(){
+t++;
+var u=null;try{u=JSON.parse(sessionStorage.getItem('eduflow_user')||'null');}catch(e){}
+if(!u)u=usersNow().find(function(x){return x.id===vid;});
+if(u){
+window.__VIEWAS_USER=u;window.currentUser=u;
+try{if(window.AuthService){AuthService.getCurrentUser=function(){return u;};AuthService.requireRole=function(){return true;};}}catch(e){}
+clearInterval(iv2);
+}else if(t>60)clearInterval(iv2);
+},150);
+return;
+}
+/* أول مرة: استنى الداتا → اكتب جلسة المستخدم → reload واحدة بس */
+var tries=0;
+var iv=setInterval(function(){
+tries++;
+var u=usersNow().find(function(x){return x.id===vid;});
+if(u){
+clearInterval(iv);
+try{
+sessionStorage.setItem('eduflow_user',JSON.stringify(u));
+sessionStorage.setItem('eduflow_viewas_applied',vid);
+}catch(e){}
+location.reload();
+}else if(tries>80){clearInterval(iv);}
+},200);
+})();

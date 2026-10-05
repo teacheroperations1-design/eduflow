@@ -1,150 +1,997 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>مسح باركود - EduFlow</title>
-  <link rel="stylesheet" href="css/eduflow-theme.css">
-  <style>
-    .scan-wrap{max-width:520px;margin:30px auto;padding:16px;position:relative;z-index:1}
-    .cam-box{position:relative;border-radius:var(--radius-xl);overflow:hidden;border:2px solid var(--primary);background:#000;aspect-ratio:1/1}
-    .cam-box video{width:100%;height:100%;object-fit:cover}
-    .scan-line{position:absolute;left:8%;right:8%;height:3px;background:var(--primary);box-shadow:0 0 12px var(--primary);animation:scan 2s infinite;border-radius:2px}
-    @keyframes scan{0%,100%{top:12%}50%{top:86%}}
-    .cam-corners::before,.cam-corners::after{content:'';position:absolute;width:34px;height:34px;border:4px solid var(--primary)}
-    .cam-corners::before{top:10px;right:10px;border-left:none;border-bottom:none;border-radius:0 8px 0 0}
-    .cam-corners::after{bottom:10px;left:10px;border-right:none;border-top:none;border-radius:0 0 0 8px}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>📷 مسح الباركود - EduFlow</title>
+<link rel="stylesheet" href="css/eduflow-theme.css">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Fira+Code:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --scan-primary: #6366f1;
+  --scan-success: #10b981;
+  --scan-danger: #ef4444;
+  --scan-warning: #f59e0b;
+}
+
+body {
+  background: #0a0a0f;
+  min-height: 100vh;
+  margin: 0;
+  font-family: 'Cairo', sans-serif;
+  overflow-x: hidden;
+}
+
+.scan-wrapper {
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 16px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.scan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 8px 0;
+}
+
+.scan-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.scan-header-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--scan-primary), #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.scan-header h1 {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0;
+  color: #fff;
+}
+
+.scan-header p {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 2px 0 0;
+}
+
+.close-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: var(--scan-danger);
+}
+
+.scan-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3/4;
+  border-radius: 24px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(99, 102, 241, 0.2);
+  margin-bottom: 16px;
+}
+
+#videoElement {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  background: #000;
+}
+
+.scan-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scan-frame {
+  width: 70%;
+  height: 55%;
+  position: relative;
+}
+
+.scan-corner {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  border: 4px solid var(--scan-primary);
+  z-index: 2;
+}
+
+.scan-corner.tl { top: 0; left: 0; border-right: none; border-bottom: none; border-top-left-radius: 12px; }
+.scan-corner.tr { top: 0; right: 0; border-left: none; border-bottom: none; border-top-right-radius: 12px; }
+.scan-corner.bl { bottom: 0; left: 0; border-right: none; border-top: none; border-bottom-left-radius: 12px; }
+.scan-corner.br { bottom: 0; right: 0; border-left: none; border-top: none; border-bottom-right-radius: 12px; }
+
+.scan-line {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--scan-primary), transparent);
+  box-shadow: 0 0 20px var(--scan-primary);
+  animation: scanLineMove 2.5s infinite ease-in-out;
+  border-radius: 2px;
+}
+
+@keyframes scanLineMove {
+  0%, 100% { top: 5%; opacity: 0; }
+  10% { opacity: 1; }
+  50% { top: 92%; opacity: 1; }
+  90% { opacity: 1; }
+}
+
+.scan-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 35%, rgba(0, 0, 0, 0.55) 75%);
+  pointer-events: none;
+}
+
+.scan-hint {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 13px;
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  z-index: 3;
+}
+
+.scanning-animation {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--scan-primary);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.camera-toggle {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  transition: all 0.2s;
+}
+
+.camera-toggle:hover {
+  background: rgba(99, 102, 241, 0.4);
+}
+
+.flash-toggle {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  transition: all 0.2s;
+}
+
+.flash-toggle.active {
+  background: rgba(251, 191, 36, 0.4);
+  border-color: #fbbf24;
+}
+
+.manual-entry {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.manual-entry-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #94a3b8;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.manual-entry-row {
+  display: flex;
+  gap: 8px;
+}
+
+.manual-input {
+  flex: 1;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #fff;
+  font-family: 'Fira Code', monospace;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.manual-input:focus {
+  outline: none;
+  border-color: var(--scan-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.manual-input::placeholder {
+  color: #475569;
+  letter-spacing: 0;
+  font-family: 'Cairo', sans-serif;
+  font-weight: 500;
+}
+
+.scan-btn {
+  padding: 12px 20px;
+  background: linear-gradient(135deg, var(--scan-primary), #8b5cf6);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.scan-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+}
+
+.scan-btn:active {
+  transform: translateY(0);
+}
+
+.hint-text {
+  font-size: 11px;
+  color: #64748b;
+  text-align: center;
+  margin-top: 10px;
+  line-height: 1.6;
+}
+
+.hint-text strong {
+  color: #94a3b8;
+}
+
+.result-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 10;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.result-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.result-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  animation: bounceIn 0.5s ease;
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.result-title {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0 0 8px;
+  color: #fff;
+}
+
+.result-subtitle {
+  font-size: 14px;
+  color: #94a3b8;
+  margin: 0 0 20px;
+  text-align: center;
+}
+
+.result-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.camera-selector-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.camera-selector-modal.show {
+  display: flex;
+}
+
+.camera-selector-card {
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 24px;
+  max-width: 400px;
+  width: 100%;
+}
+
+.camera-list {
+  margin-top: 16px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.camera-option {
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.camera-option:hover {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: var(--scan-primary);
+}
+
+.camera-option.recommended {
+  border-color: var(--scan-success);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.camera-option-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.camera-option-label {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  background: var(--scan-success);
+  color: #fff;
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .scan-wrapper { padding: 12px; }
+  .scan-frame { width: 80%; height: 50%; }
+  .scan-corner { width: 24px; height: 24px; }
+  .manual-entry { padding: 14px; }
+  .manual-input { font-size: 13px; }
+}
+</style>
 </head>
 <body data-theme="dark">
-  <div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div>
-  <div class="scan-wrap">
-    <div style="text-align:center;margin-bottom:16px;">
-      <div class="sidebar-logo" data-logo style="margin:0 auto;width:56px;height:56px;"></div>
-      <h2 style="margin-top:8px;">📱 مسح باركود</h2>
-      <p class="text-sm text-muted">باركود طالب → بروفايل كامل · باركود حضور → تسجيل حضور</p>
+
+<div class="scan-wrapper">
+  <header class="scan-header">
+    <div class="scan-header-title">
+      <div class="scan-header-icon">📷</div>
+      <div>
+        <h1>مسح الباركود</h1>
+        <p>وجّه الكاميرا نحو باركود الطالب</p>
+      </div>
     </div>
-    <div class="cam-box"><video id="preview" muted playsinline></video><div class="scan-line"></div><div class="cam-corners"></div></div>
-    <div id="scanStatus" class="filter-info" style="margin-top:12px;text-align:center;">🎥 تشغيل الكاميرا...</div>
-    <div class="card" style="margin-top:16px;">
-      <div class="form-group"><label>أو اكتب الكود يدوياً</label><input type="text" id="manualCode" class="form-input" placeholder="EDU-1234 أو كود الحضور"></div>
-      <button class="btn btn-primary w-full" onclick="window.handleScan(document.getElementById('manualCode').value)">➡️ متابعة</button>
+    <button class="close-btn" onclick="window.closeScanner()" title="إغلاق">✕</button>
+  </header>
+
+  <div class="scan-container">
+    <video id="videoElement" autoplay muted playsinline></video>
+    
+    <div class="scan-overlay">
+      <div class="scan-frame">
+        <div class="scan-corner tl"></div>
+        <div class="scan-corner tr"></div>
+        <div class="scan-corner bl"></div>
+        <div class="scan-corner br"></div>
+        <div class="scan-line"></div>
+      </div>
     </div>
-    <div id="scanResult" style="margin-top:14px;"></div>
+    
+    <button class="camera-toggle" onclick="window.openCameraSelector()" title="اختيار الكاميرا">🔄</button>
+    <button class="flash-toggle" id="flashToggle" onclick="window.toggleFlash()" title="الفلاش">⚡</button>
+    
+    <div class="scan-hint" id="scanStatus">
+      <span class="scanning-animation"></span>
+      <span>جاري البحث عن باركود...</span>
+    </div>
+    
+    <div class="result-overlay" id="resultOverlay">
+      <div class="result-icon" id="resultIcon">✅</div>
+      <h2 class="result-title" id="resultTitle">تم المسح بنجاح</h2>
+      <p class="result-subtitle" id="resultSubtitle">جاري تحويلك...</p>
+      <div class="result-actions" id="resultActions"></div>
+    </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-  <script src="js/config.js"></script>
-  <script src="js/firebase-service.js"></script>
-  <script src="js/data-service.js"></script>
-  <script src="js/operations-service.js"></script>
-  <script src="js/ui-helpers.js"></script>
-  <script src="js/drive-service.js"></script>
-  <script src="js/theme-manager.js"></script>
-  <script src="js/auth-service.js"></script>
+  <div class="manual-entry">
+    <div class="manual-entry-label">
+      <span>⌨️</span>
+      <span>أو أدخل الكود يدوياً</span>
+    </div>
+    <div class="manual-entry-row">
+      <input type="text" id="manualCode" class="manual-input" 
+             placeholder="مثال: EDU-1234 أو 1234" 
+             autocomplete="off" spellcheck="false">
+      <button class="scan-btn" onclick="window.handleBarcodeScan(document.getElementById('manualCode').value)">
+        🔍 بحث
+      </button>
+    </div>
+    <div class="hint-text">
+      💡 يمكنك كتابة الكود مع أو بدون <strong>EDU-</strong> — النظام هيفهمها تلقائياً
+    </div>
+  </div>
 
-  <script>
-    let currentUser=null, stream=null, scanning=true, lastScan=0;
-    const video=document.getElementById('preview');
-    const canvas=document.createElement('canvas');
-    const ctx=canvas.getContext('2d',{willReadFrequently:true});
+  <div style="text-align:center;padding-bottom:20px;">
+    <button class="close-btn" style="width:auto;padding:10px 20px;border-radius:10px;gap:6px;display:inline-flex;align-items:center;" onclick="window.closeScanner()">
+      <span>←</span> العودة
+    </button>
+  </div>
+</div>
 
-    (async function boot(){
-      try{
-        if(typeof DataService?.init==='function') await DataService.init();
-        currentUser = AuthService?.getCurrentUser ? AuthService.getCurrentUser() : null;
-        window.startCamera();
-      }catch(e){ console.error(e); }
-    })();
+<div class="camera-selector-modal" id="cameraModal">
+  <div class="camera-selector-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h3 style="margin:0;color:#fff;">📷 اختار الكاميرا</h3>
+      <button class="close-btn" onclick="window.closeCameraModal()" style="width:32px;height:32px;">✕</button>
+    </div>
+    <p style="font-size:12px;color:#94a3b8;margin:8px 0 0;">الكاميرا المميزة باللون الأخضر هي الموصى بها (الخلفية العادية)</p>
+    <div class="camera-list" id="cameraList"></div>
+  </div>
+</div>
 
-    window.startCamera=async function(){
-      try{
-        stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
-        video.srcObject=stream;
-        await video.play();
-        document.getElementById('scanStatus').innerHTML='✅ الكاميرا شغالة — وجّه الباركود داخل الإطار';
-        requestAnimationFrame(window.tick);
-      }catch(e){
-        document.getElementById('scanStatus').innerHTML='⚠️ الكاميرا مش متاحة — استخدم الإدخال اليدوي بالأسفل';
-      }
-    };
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="js/config.js"></script>
+<script src="js/firebase-service.js"></script>
+<script src="js/data-service.js"></script>
+<script src="js/operations-service.js"></script>
+<script src="js/ui-helpers.js"></script>
+<script src="js/drive-service.js"></script>
+<script src="js/theme-manager.js"></script>
+<script src="js/auth-service.js"></script>
+<script src="js/camera-helper.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 
-    window.tick=function(){
-      try{
-        if(scanning && video.readyState===video.HAVE_ENOUGH_DATA && window.jsQR){
-          canvas.width=video.videoWidth; canvas.height=video.videoHeight;
-          ctx.drawImage(video,0,0);
-          const img=ctx.getImageData(0,0,canvas.width,canvas.height);
-          const code=jsQR(img.data,img.width,img.height);
-          if(code && code.data && (Date.now()-lastScan>2500)){
-            lastScan=Date.now();
-            if(navigator.vibrate) navigator.vibrate(120);
-            window.handleScan(code.data);
+<script>
+window.safeToast = function(msg, type='info') {
+  try { 
+    if (typeof ThemeManager?.toast === 'function') ThemeManager.toast(msg, type);
+    else console.log('[Toast]', type, msg);
+  } catch(e) { console.log('[Toast fallback]', msg); }
+};
+
+let currentUser = null;
+let scanStream = null;
+let scanTimer = null;
+let lastScannedCode = null;
+let isProcessing = false;
+let currentCameraId = null;
+let flashOn = false;
+let availableCameras = [];
+
+(async function boot() {
+  try {
+    if (typeof DataService?.init === 'function') await DataService.init();
+    currentUser = AuthService?.getCurrentUser ? AuthService.getCurrentUser() : null;
+    
+    await loadCameras();
+    await startCamera();
+    
+    setTimeout(() => {
+      const input = document.getElementById('manualCode');
+      if (input) input.focus();
+    }, 500);
+    
+  } catch (e) {
+    console.error('Boot error:', e);
+    updateStatus('⚠️ استخدم الإدخال اليدوي', 'warning');
+  }
+})();
+
+async function loadCameras() {
+  try {
+    if (typeof window.CameraHelper?.listCameras === 'function') {
+      availableCameras = await window.CameraHelper.listCameras();
+    }
+  } catch (e) {
+    console.warn('Could not list cameras:', e);
+  }
+}
+
+async function startCamera(cameraId = null) {
+  try {
+    stopCamera();
+    
+    if (!window.jsQR) {
+      updateStatus('⚠️ مكتبة المسح غير محملة', 'warning');
+      return;
+    }
+    
+    const video = document.getElementById('videoElement');
+    
+    if (typeof window.CameraHelper?.getPreferredCamera === 'function') {
+      const preferred = await window.CameraHelper.getPreferredCamera();
+      currentCameraId = preferred.deviceId;
+      
+      const constraints = preferred.deviceId 
+        ? { 
+            video: { 
+              deviceId: { exact: preferred.deviceId },
+              width: { ideal: 1920 },
+              height: { ideal: 1080 },
+              facingMode: 'environment'
+            }, 
+            audio: false 
           }
-        }
-      }catch(e){}
-      requestAnimationFrame(window.tick);
-    };
+        : { video: { facingMode: 'environment' }, audio: false };
+      
+      scanStream = await navigator.mediaDevices.getUserMedia(constraints);
+    } else {
+      scanStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }, 
+        audio: false
+      });
+    }
+    
+    video.srcObject = scanStream;
+    await video.play();
+    
+    updateStatus('جاري البحث عن باركود...', 'scanning');
+    startScanning(video);
+    
+  } catch (e) {
+    console.error('Camera error:', e);
+    if (e.name === 'NotAllowedError') {
+      updateStatus('❌ يرجى السماح بالوصول للكاميرا', 'error');
+    } else if (e.name === 'NotFoundError') {
+      updateStatus('❌ لا توجد كاميرا متاحة', 'error');
+    } else {
+      updateStatus('⚠️ استخدم الإدخال اليدوي', 'warning');
+    }
+  }
+}
 
-    // 🧠 التوجيه الذكي حسب نوع الباركود ونوع المستخدم
-    window.handleScan=function(raw){
-      try{
-        raw=String(raw||'').trim();
-        if(!raw) return;
-        scanning=false;
-
-        // 1) باركود حضور حصة
-        if(raw.includes('EDUFLOW-ATT:')){
-          const code=raw.split('EDUFLOW-ATT:')[1]||'';
-          window.attendanceFlow(code);
-          return;
-        }
-        // 2) استخراج كود الطالب
-        let m=raw.match(/code=([A-Za-z]+-?\d+)/i)||raw.match(/(EDU-\d+)/i);
-        const code=m?m[1].toUpperCase():raw.toUpperCase();
-
-        const role=currentUser?.role;
-        let target;
-        if(role==='super_admin'||role==='assistant'||role==='teacher'){
-          target='student-qr.html?code='+code; // بروفايل إدارة كامل
-        }else if(role==='student'){
-          target=(currentUser.code&&currentUser.code.toUpperCase()===code)?'student-dashboard.html':'student-qr.html?code='+code;
-        }else if(role==='parent'){
-          target='student-qr.html?code='+code; // بيوجّهه تلقائياً للداشبورد
-        }else{
-          target='student-qr.html?code='+code; // زائر: عرض عام + دخول
-        }
-        document.getElementById('scanResult').innerHTML=`<div class="card" style="text-align:center;"><div style="font-size:36px;">✅</div><strong>تم المسح: <span style="font-family:var(--font-en);">${code}</span></strong><p class="text-sm text-muted">ثانية واحدة وبنحوّلك...</p></div>`;
-        setTimeout(()=>{ window.location.href=target; },900);
-      }catch(e){
-        console.error(e);
-        scanning=true;
+function startScanning(video) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  
+  const tick = () => {
+    if (!scanStream) return;
+    
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+      
+      const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = window.jsQR(img.data, img.width, img.height, {
+        inversionAttempts: 'dontInvert'
+      });
+      
+      if (code && code.data && code.data !== lastScannedCode && !isProcessing) {
+        lastScannedCode = code.data;
+        if (navigator.vibrate) navigator.vibrate(150);
+        window.handleBarcodeScan(code.data);
+        setTimeout(() => { lastScannedCode = null; }, 3000);
       }
-    };
+    }
+    
+    scanTimer = requestAnimationFrame(tick);
+  };
+  
+  tick();
+}
 
-    // ✋ تسجيل حضور طالب بكود الحصة
-    window.attendanceFlow=async function(code){
-      try{
-        const resEl=document.getElementById('scanResult');
-        if(!currentUser || currentUser.role!=='student'){
-          if(resEl) resEl.innerHTML='<div class="card" style="text-align:center;border-color:var(--warning);">⚠️ ده باركود <strong>حضور حصة</strong> — لازم تكون مسجل دخول كطالب الأول<br><a class="btn btn-primary btn-sm" style="margin-top:8px;" href="login.html">تسجيل دخول</a></div>';
-          scanning=true; return;
-        }
-        const r = await DataService.checkInByCode(currentUser.id, code);
-        if(resEl){
-          resEl.innerHTML = r.success
-            ? `<div class="card" style="text-align:center;border-color:var(--success);"><div style="font-size:40px;">✅</div><strong>تم تسجيل حضورك!</strong><div class="text-sm text-muted">مجموعة: ${r.groupName||''}</div></div>`
-            : `<div class="card" style="text-align:center;border-color:var(--danger);">❌ ${r.message||'فشل التسجيل'}</div>`;
-        }
-        if(typeof ThemeManager?.toast==='function') ThemeManager.toast(r.success?'✅ تم الحضور':'❌ '+r.message, r.success?'success':'error');
-        scanning=true;
-      }catch(e){ scanning=true; console.error(e); }
-    };
+function stopCamera() {
+  if (scanTimer) {
+    cancelAnimationFrame(scanTimer);
+    scanTimer = null;
+  }
+  if (scanStream) {
+    scanStream.getTracks().forEach(t => t.stop());
+    scanStream = null;
+  }
+}
 
-    window.addEventListener('beforeunload',()=>{ try{stream?.getTracks().forEach(t=>t.stop());}catch(e){} });
-  </script>
-  <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}</script>
+window.openCameraSelector = async function() {
+  const modal = document.getElementById('cameraModal');
+  const list = document.getElementById('cameraList');
+  
+  if (!availableCameras.length) {
+    await loadCameras();
+  }
+  
+  if (!availableCameras.length) {
+    safeToast('لا توجد كاميرات متعددة', 'info');
+    return;
+  }
+  
+  list.innerHTML = availableCameras.map(cam => {
+    const isRecommended = cam.isPreferred;
+    return `
+      <div class="camera-option ${isRecommended ? 'recommended' : ''}" 
+           onclick="window.switchCamera('${cam.deviceId}')">
+        <div class="camera-option-name">${cam.label}</div>
+        ${isRecommended ? '<span class="camera-option-label">✓ موصى بها</span>' : ''}
+      </div>
+    `;
+  }).join('');
+  
+  modal.classList.add('show');
+};
+
+window.closeCameraModal = function() {
+  document.getElementById('cameraModal').classList.remove('show');
+};
+
+window.switchCamera = async function(deviceId) {
+  window.closeCameraModal();
+  updateStatus('جاري تبديل الكاميرا...', 'scanning');
+  
+  if (typeof window.CameraHelper?.openCamera === 'function') {
+    const video = document.getElementById('videoElement');
+    stopCamera();
+    try {
+      scanStream = await navigator.mediaDevices.getUserMedia({
+        video: { deviceId: { exact: deviceId } },
+        audio: false
+      });
+      video.srcObject = scanStream;
+      await video.play();
+      currentCameraId = deviceId;
+      startScanning(video);
+      updateStatus('جاري البحث عن باركود...', 'scanning');
+      safeToast('✅ تم تبديل الكاميرا', 'success');
+    } catch (e) {
+      safeToast('فشل تبديل الكاميرا', 'error');
+      startCamera();
+    }
+  }
+};
+
+window.toggleFlash = async function() {
+  try {
+    if (!scanStream) return;
+    const track = scanStream.getVideoTracks()[0];
+    const capabilities = track.getCapabilities?.() || {};
+    
+    if (!capabilities.torch) {
+      safeToast('الكاميرا لا تدعم الفلاش', 'info');
+      return;
+    }
+    
+    flashOn = !flashOn;
+    await track.applyConstraints({ advanced: [{ torch: flashOn }] });
+    document.getElementById('flashToggle').classList.toggle('active', flashOn);
+    safeToast(flashOn ? '🔦 تم تشغيل الفلاش' : '🔦 تم إيقاف الفلاش', 'info');
+  } catch (e) {
+    safeToast('فشل التحكم في الفلاش', 'error');
+  }
+};
+
+function updateStatus(text, type = 'scanning') {
+  const status = document.getElementById('scanStatus');
+  if (!status) return;
+  
+  if (type === 'scanning') {
+    status.innerHTML = `<span class="scanning-animation"></span><span>${text}</span>`;
+  } else if (type === 'success') {
+    status.innerHTML = `<span style="color:var(--scan-success);">✅ ${text}</span>`;
+  } else if (type === 'error') {
+    status.innerHTML = `<span style="color:var(--scan-danger);">❌ ${text}</span>`;
+  } else if (type === 'warning') {
+    status.innerHTML = `<span style="color:var(--scan-warning);">⚠️ ${text}</span>`;
+  } else {
+    status.innerHTML = `<span>${text}</span>`;
+  }
+}
+
+window.parseBarcode = function(rawCode) {
+  if (!rawCode) return null;
+  const code = String(rawCode).trim();
+  
+  let extracted = null;
+  let type = 'student';
+  
+  try {
+    const parsed = JSON.parse(code);
+    if (parsed.studentId || parsed.id || parsed.code) {
+      extracted = parsed.studentId || parsed.id || parsed.code;
+    }
+  } catch(e) {}
+  
+  if (!extracted) {
+    const urlMatch = code.match(/[?&]code=([A-Za-z0-9\-_]+)/i);
+    if (urlMatch) extracted = urlMatch[1];
+  }
+  
+  if (!extracted) {
+    const attMatch = code.match(/EDUFLOW-ATT:(.+)/i);
+    if (attMatch) {
+      return { type: 'attendance', value: attMatch[1], raw: code };
+    }
+  }
+  
+  if (!extracted) {
+    const studentUrlMatch = code.match(/student-qr\.html.*[?&]code=([A-Za-z0-9\-_]+)/i);
+    if (studentUrlMatch) extracted = studentUrlMatch[1];
+  }
+  
+  if (!extracted) {
+    const eduMatch = code.match(/EDU[-:]([A-Za-z0-9\-_]+)/i);
+    if (eduMatch) extracted = eduMatch[1];
+  }
+  
+  if (!extracted) {
+    const studentMatch = code.match(/STUDENT[-:]([A-Za-z0-9\-_]+)/i);
+    if (studentMatch) extracted = studentMatch[1];
+  }
+  
+  if (!extracted) {
+    const cleanMatch = code.match(/^([A-Za-z0-9\-_]{3,30})$/);
+    if (cleanMatch) extracted = cleanMatch[1];
+  }
+  
+  if (!extracted) {
+    const parts = code.split(/[:=]/);
+    if (parts.length > 1) extracted = parts[parts.length - 1].trim();
+  }
+  
+  if (extracted) {
+    return { type, value: extracted, raw: code };
+  }
+  
+  return null;
+};
+
+window.handleBarcodeScan = function(rawCode) {
+  try {
+    if (isProcessing) return;
+    isProcessing = true;
+    
+    updateStatus('جاري التحقق...', 'scanning');
+    
+    const parsed = window.parseBarcode(rawCode);
+    if (!parsed) {
+      showResult('error', '❌', 'باركود غير مفهوم', 'لم نتمكن من قراءة هذا الباركود');
+      isProcessing = false;
+      return;
+    }
+    
+    if (parsed.type === 'attendance') {
+      showResult('warning', '📋', 'QR حضور', 'هذا QR لتسجيل الحضور وليس باركود طالب');
+      isProcessing = false;
+      return;
+    }
+    
+    const codeValue = parsed.value.toUpperCase();
+    
+    const users = DataService?.getUsers ? DataService.getUsers() : [];
+    const student = users.find(u => {
+      if (u.role !== 'student') return false;
+      const uCode = (u.code || '').toUpperCase();
+      return uCode === codeValue || 
+             u.id === codeValue ||
+             uCode.replace(/^(EDU-|EDU:|STUDENT-)/i, '') === codeValue.replace(/^(EDU-|EDU:|STUDENT-)/i, '');
+    });
+    
+    if (!student) {
+      showResult('error', '❌', 'طالب غير مسجل', 
+        `الكود "${parsed.value}" غير موجود في النظام`);
+      safeToast('❌ الكود "' + parsed.value + '" غير مسجل', 'error');
+      isProcessing = false;
+      return;
+    }
+    
+    showResult('success', '✅', `مرحباً ${student.name}`, 'جاري فتح الداشبورد...');
+    stopCamera();
+    
+    setTimeout(() => {
+      window.directLoginToStudent(student);
+    }, 800);
+    
+  } catch (e) {
+    console.error('handleBarcodeScan error:', e);
+    showResult('error', '⚠️', 'خطأ في المعالجة', e.message);
+    isProcessing = false;
+  }
+};
+
+function showResult(type, icon, title, subtitle) {
+  const overlay = document.getElementById('resultOverlay');
+  const iconEl = document.getElementById('resultIcon');
+  const titleEl = document.getElementById('resultTitle');
+  const subtitleEl = document.getElementById('resultSubtitle');
+  const actionsEl = document.getElementById('resultActions');
+  
+  iconEl.textContent = icon;
+  titleEl.textContent = title;
+  subtitleEl.textContent = subtitle;
+  
+  if (type === 'error' || type === 'warning') {
+    actionsEl.innerHTML = `
+      <button class="scan-btn" onclick="window.hideResult()" style="background:rgba(255,255,255,0.1);">
+        🔄 مسح مرة أخرى
+      </button>
+    `;
+  } else {
+    actionsEl.innerHTML = '';
+  }
+  
+  overlay.classList.add('show');
+}
+
+window.hideResult = function() {
+  document.getElementById('resultOverlay').classList.remove('show');
+  isProcessing = false;
+  startCamera(currentCameraId);
+};
+
+/* ================================================================
+   🚀 DIRECT LOGIN - التوجيه لصفحة student-barcode-entry.html
+   ================================================================ */
+window.directLoginToStudent = function(student) {
+  try {
+    // 🎯 التوجيه لصفحة student-barcode-entry.html (مش الداشبورد مباشرة)
+    // الصفحة دي هتتحقق من أول مرة وتعرض البيانات والباسورد
+    const targetUrl = 'student-barcode-entry.html?code=' + encodeURIComponent(student.code || student.id);
+    
+    safeToast('✅ أهلاً ' + student.name, 'success');
+    
+    setTimeout(() => {
+      window.location.href = targetUrl;
+    }, 500);
+    
+  } catch (e) {
+    console.error('directLoginToStudent error:', e);
+    showResult('error', '⚠️', 'خطأ في الدخول', e.message);
+    isProcessing = false;
+  }
+};
+
+window.closeScanner = function() {
+  stopCamera();
+  if (window.history.length > 1) {
+    window.history.back();
+  } else {
+    window.location.href = 'login.html';
+  }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('manualCode');
+  if (input) {
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        window.handleBarcodeScan(input.value);
+      }
+    });
+  }
+  
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('cameraModal');
+      if (modal.classList.contains('show')) {
+        window.closeCameraModal();
+      } else {
+        window.closeScanner();
+      }
+    }
+  });
+});
+
+window.addEventListener('beforeunload', () => {
+  stopCamera();
+  if (typeof window.CameraHelper?.closeCamera === 'function') {
+    window.CameraHelper.closeCamera(scanStream);
+  }
+});
+</script>
 </body>
 </html>

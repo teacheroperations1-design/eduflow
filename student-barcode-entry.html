@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎓 دخول الطالب | Habbash Group</title>
+<link rel="stylesheet" href="css/eduflow-theme.css">
+<style>
+body {
+  font-family: 'Cairo', sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.entry-page {
+  background: #fff;
+  border-radius: 24px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 25px 50px rgba(0,0,0,.25);
+  overflow: hidden;
+  animation: slideUp .5s ease;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.entry-header {
+  background: linear-gradient(135deg, var(--primary, #6366f1), #8b5cf6);
+  color: #fff;
+  padding: 30px 24px;
+  text-align: center;
+}
+.entry-header h1 { margin: 0; font-size: 22px; font-weight: 800; }
+.entry-header p { margin: 8px 0 0; font-size: 13px; opacity: .9; }
+.entry-body { padding: 24px; }
+
+/* بطاقة الطالب */
+.student-welcome {
+  background: linear-gradient(135deg, rgba(99,102,241,.08), rgba(139,92,246,.08));
+  border: 2px solid rgba(99,102,241,.2);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+.welcome-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 800;
+  margin: 0 auto 12px;
+  box-shadow: 0 8px 24px rgba(99,102,241,.3);
+}
+.welcome-name {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 6px;
+  color: #1e293b;
+}
+.welcome-meta {
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* صندوق الباسورد */
+.credentials-box {
+  background: #fef3c7;
+  border: 2px dashed #f59e0b;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+.credentials-label {
+  font-size: 12px;
+  color: #92400e;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.credentials-value {
+  font-family: 'Fira Code', monospace;
+  font-size: 18px;
+  font-weight: 800;
+  color: #78350f;
+  background: #fff;
+  padding: 10px 16px;
+  border-radius: 8px;
+  display: inline-block;
+  letter-spacing: 2px;
+}
+.credentials-hint {
+  font-size: 11px;
+  color: #92400e;
+  margin-top: 8px;
+}
+
+/* البيانات */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.info-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+.info-label {
+  font-size: 11px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+.info-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* زر الدخول */
+.entry-btn {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 14px;
+  font-weight: 800;
+  font-size: 16px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: all .2s;
+  margin-bottom: 10px;
+}
+.entry-btn-primary {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(99,102,241,.3);
+}
+.entry-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(99,102,241,.4);
+}
+.entry-btn-secondary {
+  background: #f1f5f9;
+  color: #1e293b;
+  border: 1px solid #e2e8f0;
+}
+
+/* حالة التحميل */
+.loading-state {
+  text-align: center;
+  padding: 40px 20px;
+}
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* خطأ */
+.error-box {
+  background: #fee2e2;
+  border: 2px solid #ef4444;
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  color: #991b1b;
+}
+.error-icon { font-size: 48px; margin-bottom: 12px; }
+
+.entry-footer {
+  padding: 16px 24px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  text-align: center;
+}
+.entry-footer-text {
+  font-size: 11px;
+  color: #94a3b8;
+  margin: 0;
+}
+</style>
+</head>
+<body>
+<div class="entry-page">
+  <div class="entry-header">
+    <h1>🎓 بوابة الطالب</h1>
+    <p id="brandName">Habbash Group</p>
+  </div>
+  
+  <div class="entry-body" id="entryBody">
+    <div class="loading-state">
+      <div class="loading-spinner"></div>
+      <p style="color:#64748b;margin:0">جاري التحقق من الباركود...</p>
+    </div>
+  </div>
+  
+  <div class="entry-footer">
+    <p class="entry-footer-text">© 2026 <span id="footerBrand">Habbash Group</span></p>
+  </div>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="js/config.js"></script>
+<script src="js/firebase-service.js"></script>
+<script src="js/data-service.js"></script>
+<script src="js/operations-service.js"></script>
+
+<script>
+// 🎯 الصفحة دي PUBLIC - مفيش أي auth check
+(async function boot(){
+  try {
+    // تحميل البراندنج
+    try {
+      if (typeof DataService?.init === 'function') await DataService.init();
+      const branding = (typeof DataService?.getBranding === 'function') 
+        ? DataService.getBranding() 
+        : ((DataService?._getData && DataService._getData().branding) || {});
+      if (branding?.name) {
+        document.getElementById('brandName').textContent = branding.name;
+        document.getElementById('footerBrand').textContent = branding.name;
+        document.title = '🎓 بوابة الطالب | ' + branding.name;
+      }
+    } catch(e) { console.log('Branding load skipped'); }
+    
+    // جلب الكود من URL
+    const params = new URLSearchParams(location.search);
+    const code = params.get('code');
+    
+    if (!code) {
+      showError('كود غير موجود', 'الرابط غير صحيح — تأكد من مسح الباركود الصحيح');
+      return;
+    }
+    
+    // 🎯 البحث عن الطالب بالكود (بدون أي auth)
+    await DataService.init();
+    const allUsers = DataService.getUsers ? DataService.getUsers() : [];
+    const student = allUsers.find(u => 
+      u.role === 'student' && 
+      (u.code||'').toUpperCase() === code.toUpperCase()
+    );
+    
+    if (!student) {
+      showError('طالب غير موجود', 'الكود "' + code + '" غير مسجل في النظام');
+      return;
+    }
+    
+    // 🎯 التحقق من أول مرة دخول
+    const firstTimeKey = 'eduflow_first_visit_' + student.id;
+    const hasVisited = localStorage.getItem(firstTimeKey);
+    
+    if (!hasVisited) {
+      // 🎉 أول مرة: اعرض البيانات والباسورد
+      showFirstTimeView(student, firstTimeKey);
+    } else {
+      // 🚀 مرات تانية: ادخل مباشرة للداشبورد
+      directLogin(student);
+    }
+    
+  } catch(err) {
+    console.error('Entry Error:', err);
+    showError('خطأ في التحميل', err.message || 'حدث خطأ غير متوقع');
+  }
+})();
+
+// 🎉 أول مرة دخول: اعرض البيانات والباسورد
+function showFirstTimeView(student, firstTimeKey) {
+  const body = document.getElementById('entryBody');
+  
+  // حساب إحصائيات بسيطة
+  const d = (DataService._getData && DataService._getData()) || {};
+  const teachers = (typeof DataService?.getStudentTeachers === 'function') 
+    ? DataService.getStudentTeachers(student.id) 
+    : [];
+  const groupsCount = teachers.length;
+  
+  const stageLabel = (typeof EduFlowConfig !== 'undefined' && EduFlowConfig?.educationLevels?.[student.stage]?.nameAr) || '';
+  
+  body.innerHTML = `
+    <div class="student-welcome">
+      <div class="welcome-avatar">${(student.name||'?').charAt(0)}</div>
+      <h2 class="welcome-name">أهلاً بيك يا ${student.name}! 🎉</h2>
+      <div class="welcome-meta">تم التحقق من الباركود بنجاح</div>
+    </div>
+    
+    <div class="credentials-box">
+      <div class="credentials-label">🔑 كلمة المرور الخاصة بك</div>
+      <div class="credentials-value">${student.password || '1234'}</div>
+      <div class="credentials-hint">
+        ⚠️ احفظ الرقم ده — لن يظهر مرة تانية
+      </div>
+    </div>
+    
+    <div class="info-grid">
+      <div class="info-box">
+        <div class="info-label">📋 الكود</div>
+        <div class="info-value">${student.code || '-'}</div>
+      </div>
+      <div class="info-box">
+        <div class="info-label">📚 المجموعات</div>
+        <div class="info-value">${groupsCount} مجموعة</div>
+      </div>
+      <div class="info-box">
+        <div class="info-label">🎓 المرحلة</div>
+        <div class="info-value">${stageLabel || '-'}</div>
+      </div>
+      <div class="info-box">
+        <div class="info-label">📖 الصف</div>
+        <div class="info-value">${student.grade || '-'}</div>
+      </div>
+    </div>
+    
+    <button class="entry-btn entry-btn-primary" onclick="window.markVisitedAndLogin('${student.id}', '${firstTimeKey}')">
+      🚀 ادخل للداشبورد
+    </button>
+    
+    <button class="entry-btn entry-btn-secondary" onclick="window.showChangePassword('${student.id}')">
+      🔒 تغيير كلمة المرور
+    </button>
+  `;
+}
+
+// ✅ تسجيل الزيارة الأولى والدخول
+window.markVisitedAndLogin = function(studentId, firstTimeKey) {
+  try {
+    localStorage.setItem(firstTimeKey, 'true');
+    localStorage.setItem('eduflow_first_visit_timestamp_' + studentId, new Date().toISOString());
+    
+    // جلب بيانات الطالب مرة تانية
+    const allUsers = DataService.getUsers ? DataService.getUsers() : [];
+    const student = allUsers.find(u => u.id === studentId);
+    
+    if (student) {
+      directLogin(student);
+    } else {
+      alert('خطأ: بيانات الطالب غير موجودة');
+    }
+  } catch(e) {
+    console.error('Mark visited error:', e);
+    alert('خطأ في تسجيل الزيارة');
+  }
+};
+
+// 🔒 تغيير كلمة المرور
+window.showChangePassword = function(studentId) {
+  const newPass = prompt('اكتب كلمة المرور الجديدة (أرقام فقط):');
+  if (!newPass || newPass.length < 4) {
+    alert('كلمة المرور لازم تكون 4 أرقام على الأقل');
+    return;
+  }
+  
+  try {
+    // تحديث كلمة المرور في قاعدة البيانات
+    if (typeof DataService?.updateUser === 'function') {
+      DataService.updateUser(studentId, { password: newPass }).then(() => {
+        alert('✅ تم تغيير كلمة المرور بنجاح');
+        // تحديث العرض
+        const credValue = document.querySelector('.credentials-value');
+        if (credValue) credValue.textContent = newPass;
+      }).catch(e => {
+        console.error('Update password error:', e);
+        alert('خطأ في تغيير كلمة المرور');
+      });
+    } else {
+      // Fallback: تحديث محلي
+      const d = DataService._getData();
+      const user = d.users.find(u => u.id === studentId);
+      if (user) {
+        user.password = newPass;
+        DataService._saveData(d);
+        alert('✅ تم تغيير كلمة المرور بنجاح');
+        const credValue = document.querySelector('.credentials-value');
+        if (credValue) credValue.textContent = newPass;
+      }
+    }
+  } catch(e) {
+    console.error('Change password error:', e);
+    alert('خطأ في تغيير كلمة المرور');
+  }
+};
+
+// 🚀 الدخول المباشر للداشبورد
+function directLogin(student) {
+  try {
+    // 1. إنشاء session مؤقت
+    const sessionData = {
+      id: student.id,
+      code: student.code,
+      name: student.name,
+      role: 'student',
+      barcodeLogin: true,
+      loginAt: Date.now(),
+      expiresAt: Date.now() + (30 * 24 * 60 * 60 * 1000) // 30 يوم
+    };
+    
+    // 2. حفظ في localStorage
+    localStorage.setItem('eduflow_user', JSON.stringify(student));
+    localStorage.setItem('eduflow_session', JSON.stringify(sessionData));
+    localStorage.setItem('eduflow_barcode_session', JSON.stringify(sessionData));
+    
+    // 3. حفظ في sessionStorage كبديل
+    try {
+      sessionStorage.setItem('eduflow_user', JSON.stringify(student));
+      sessionStorage.setItem('eduflow_session', JSON.stringify(sessionData));
+    } catch(e) {}
+    
+    // 4. الانتقال للداشبورد فوراً
+    const targetUrl = 'student-dashboard.html?barcode=' + encodeURIComponent(student.id) + '&direct=1';
+    
+    // رسالة ترحيب سريعة
+    document.getElementById('entryBody').innerHTML = `
+      <div style="text-align:center;padding:40px 20px;">
+        <div style="font-size:64px;margin-bottom:16px;">✅</div>
+        <h2 style="margin:0 0 8px;">أهلاً ${student.name}!</h2>
+        <p style="color:#64748b;">جاري فتح الداشبورد...</p>
+      </div>
+    `;
+    
+    setTimeout(() => {
+      window.location.href = targetUrl;
+    }, 800);
+    
+  } catch(e) {
+    console.error('Direct login error:', e);
+    showError('خطأ في الدخول', e.message);
+  }
+}
+
+// ❌ عرض رسالة خطأ
+function showError(title, msg) {
+  document.getElementById('entryBody').innerHTML = `
+    <div class="error-box">
+      <div class="error-icon">⚠️</div>
+      <h3 style="margin:0 0 8px;">${title}</h3>
+      <p style="margin:0;color:#991b1b;">${msg}</p>
+      <a href="login.html" class="entry-btn entry-btn-primary" style="margin-top:20px;display:inline-block;width:auto;padding:12px 24px;">
+        🔐 تسجيل الدخول العادي
+      </a>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
