@@ -1,32 +1,85 @@
-// api/send-push.js — 📤 محرك إرسال Push عبر FCM (Vercel Serverless — شغال على الخطة المجانية)
-const admin = require('firebase-admin');
+// api/send-push.js — 📤 محرك إرسال Push عبر FCM (Vercel Serverless — خطة مجانية)
+// نسخة V3: تشخيص ذاتي — فتح الرابط في المتصفح يعرض تقرير صحي بدل صفحة خطأ
+
+/* 🔒 تحميل firebase-admin بأمان: لو مش متثبت مش هنكسر الفانكشن كلها */
+let admin = null;
+let adminLoadError = null;
+try {
+  admin = require('firebase-admin');
+} catch (e) {
+  adminLoadError = String((e && e.message) || e);
+}
 
 const BASE = 'https://eduflow-nine-dusky.vercel.app';
+
 let ready = false;
+let initError = null;
 
 function initAdmin(){
   if (ready) return true;
+  if (initError) return false;
   const b64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64 || '';
-  if (!b64) return false;
+  if (!b64) { initError = 'env-missing'; return false; }
   try {
-    const cred = JSON.parse(Buffer.from(b64, 'base64').toString('utf8'));
+    const json = Buffer.from(b64, 'base64').toString('utf8');
+    const cred = JSON.parse(json);
+    if (!cred.project_id || !cred.client_email || !cred.private_key) {
+      initError = 'env-json-incomplete (ناقص project_id/client_email/private_key)';
+      return false;
+    }
     admin.initializeApp({ credential: admin.credential.cert(cred) });
     ready = true;
     return true;
-  } catch (e) { console.error('initAdmin failed:', e); return false; }
+  } catch (e) {
+    initError = 'env-invalid: ' + String((e && e.message) || e);
+    return false;
+  }
 }
 
 function cors(req, res){
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 }
 
 module.exports = async (req, res) => {
   cors(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
+
+  /* 🩺 GET = تقرير صحي (افتح الرابط في المتصفح تشوف كل حاجة) */
+  if (req.method === 'GET') {
+    const b64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64 || '';
+    return res.status(200).json({
+      service: 'send-push',
+      status: 'alive',
+      node: process.version,
+      firebaseAdminLoaded: !!admin,
+      firebaseAdminLoadError: adminLoadError,
+      envVarPresent: b64.length > 0,
+      envVarLength: b64.length,
+      adminInitialized: ready,
+      adminInitError: initError,
+      hint: 'POST body: {to, title, body, tag, page}'
+    });
+  }
+
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
-  if (!initAdmin()) return res.status(500).json({ error: 'FIREBASE_SERVICE_ACCOUNT_BASE64 missing or invalid' });
+
+  /* 🧱 فحص الاعتماديات قبل أي حاجة */
+  if (!admin) {
+    return res.status(500).json({
+      error: 'firebase-admin مش متثبتة على Vercel',
+      detail: adminLoadError,
+      fix: 'تأكد إن package.json (اللي فيه firebase-admin) موجود في جذر الريبو على GitHub — مش جوّا مجلد api — وبعدين استنى Deploy جديد يخلص Ready'
+    });
+  }
+  if (!initAdmin()) {
+    return res.status(500).json({
+      error: 'مشكلة متغير البيئة FIREBASE_SERVICE_ACCOUNT_BASE64',
+      detail: initError,
+      fix: 'سجّل المتغير في Vercel → Projects → EduFlow → Settings → Environment Variables (مش Shared) وبعدين اعمل Redeploy'
+    });
+  }
 
   try {
     const { to, title, body, tag, url, page } = req.body || {};
