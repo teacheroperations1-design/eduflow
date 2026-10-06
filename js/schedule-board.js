@@ -36,12 +36,12 @@ st.textContent=
 '.sb-col.droppable{background:var(--primary-bg);outline:2px dashed var(--primary);outline-offset:-3px;}'+
 '.sb-col.today-col{background:rgba(99,102,241,.04);outline:3px solid var(--primary);outline-offset:-3px;}'+
 '.sb-line{position:absolute;left:0;right:0;border-bottom:1px dashed var(--border);pointer-events:none;}'+
-'.sb-card{position:absolute;left:4px;right:4px;border-radius:8px;border:1px solid var(--border);border-right:4px solid var(--primary);background:var(--surface-hover);padding:4px 6px;overflow:hidden;cursor:grab;box-shadow:0 1px 3px rgba(0,0,0,.15);}'+
+'.sb-card{position:absolute;left:4px;right:4px;border-radius:8px;border:1px solid var(--border);border-right:4px solid var(--primary);background:var(--surface-hover);padding:2px 5px;overflow:visible;cursor:grab;box-shadow:0 1px 3px rgba(0,0,0,.15);line-height:1.15;}'+
 '.sb-card:active{cursor:grabbing;}'+
 '.sb-card.dragging{opacity:.35;}'+
-'.sb-card-name{font-weight:800;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'+
-'.sb-card-time{font-size:10px;font-family:var(--font-en);color:var(--primary);font-weight:700;}'+
-'.sb-card-sub{font-size:9px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'+
+'.sb-card-name{font-weight:800;font-size:10px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'+
+'.sb-card-time{font-size:9px;line-height:1.25;font-family:var(--font-en);color:var(--primary);font-weight:700;}'+
+'.sb-card-sub{font-size:8px;line-height:1.25;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'+
 '.sb-legend{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;font-size:11px;}'+
 '.sb-legend span{display:inline-flex;align-items:center;gap:5px;}'+
 '.sb-dot{width:10px;height:10px;border-radius:50%;display:inline-block;}'+
@@ -55,7 +55,11 @@ st.textContent=
 '.sbt-head{font-weight:800;font-size:12px;margin-bottom:6px;}'+
 '.sbt-lane{position:relative;height:34px;background:var(--surface-hover);border-radius:8px;margin-bottom:4px;}'+
 '.sbt-bar{position:absolute;top:3px;bottom:3px;border-radius:6px;color:#fff;font-size:10px;display:flex;align-items:center;padding:0 8px;overflow:hidden;white-space:nowrap;cursor:grab;}'+
-'.sbc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}';
+'.sbc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}'+
+'.sb-nowline{position:absolute;left:0;right:0;height:2px;background:#ef4444;z-index:6;pointer-events:none;box-shadow:0 0 8px rgba(239,68,68,.9);}'+
+'.sb-nowline::before{content:"";position:absolute;right:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:#ef4444;}'+
+'.sb-nowbadge{position:absolute;left:2px;top:-9px;background:#ef4444;color:#fff;font-size:8px;font-weight:800;border-radius:6px;padding:1px 5px;z-index:7;pointer-events:none;font-family:var(--font-en);}'+
+'.sb-hour.now-hour{background:rgba(239,68,68,.12);color:var(--danger,#dc2626);font-weight:900;border-right:3px solid var(--danger,#dc2626);}';
 document.head.appendChild(st);
 })();
 
@@ -134,13 +138,18 @@ return '<span><span class="sb-dot" style="background:'+SB.groupColor(g.id)+';"><
 var html=legend+'<div class="sb-wrap"><div class="sb-grid" style="grid-template-columns:56px repeat(7,1fr);">';
 html+='<div class="sb-dayhead" style="background:transparent;border:none;">⏰</div>';
 SB.DAYS.forEach(function(d){ html+='<div class="sb-dayhead'+(d.en===todayEn?' today':'')+'" style="cursor:pointer;" title="اضغط لعرض تفاصيل اليوم" onclick="SB.showDayDetails(\''+d.en+'\')">'+d.ar+'</div>'; });
+var nowHour=new Date().getHours();
 html+='<div class="sb-times">';
-for(var h=minH;h<maxH;h++){ html+='<div class="sb-hour" style="height:'+H+'px;">'+SB.fmt12(h+':00')+'</div>'; }
+for(var h=minH;h<maxH;h++){ html+='<div class="sb-hour'+(h===nowHour?' now-hour':'')+'" data-hour="'+h+'" style="height:'+H+'px;">'+SB.fmt12(h+':00')+(h===nowHour?' ⏰':'')+'</div>'; }
 html+='</div>';
 SB.DAYS.forEach(function(d){
 var todayClass=(d.en===todayEn)?' today-col':'';
 html+='<div class="sb-col'+todayClass+'" data-day="'+d.en+'" data-minh="'+minH+'" style="height:'+colH+'px;">';
 for(var h2=minH;h2<maxH;h2++){ html+='<div class="sb-line" style="top:'+((h2*60-dayStart)/60*H)+'px;"></div>'; }
+var nowM=new Date().getHours()*60+new Date().getMinutes();
+if(d.en===todayEn&&nowM>=dayStart&&nowM<=maxH*60){
+html+='<div class="sb-nowline" data-nowline style="top:'+((nowM-dayStart)/60*H)+'px;"><span class="sb-nowbadge" data-nowbadge>'+SB.fmt12(SB.hm(nowM))+'</span></div>';
+}
 /* حصص اليوم + حساب التداخلات والمسارات الجانبية */
 var dayItems=[];
 groups.forEach(function(g){ SB.schedulesOf(g).forEach(function(s,si){ if(s.day!==d.en) return; var m=SB.min(s.time); var dur=parseInt(g.duration)||60; dayItems.push({g:g,s:s,si:si,m:m,dur:dur,end:m+dur}); }); });
@@ -148,14 +157,13 @@ dayItems.sort(function(a,b){ return a.m-b.m||a.end-b.end; });
 var clusters=SB.clusterItems(dayItems);
 dayItems.forEach(function(it){
 var color=SB.groupColor(it.g.id);
-var top=(it.m-dayStart)/60*H; var hh=Math.max(34,it.dur/60*H-4);
+var top=(it.m-dayStart)/60*H; var hh=Math.max(38,it.dur/60*H-4);
 var lanes=it.lanes||1; var lane=it.lane||0;
 var widthPct=100/lanes; var leftPct=lane*widthPct;
 html+='<div class="sb-card" draggable="'+(opts.editable?'true':'false')+'" style="top:'+top+'px;height:'+hh+'px;border-right-color:'+color+';left:calc('+leftPct+'% + 2px);width:calc('+widthPct+'% - 6px);right:auto;" data-gid="'+it.g.id+'" data-si="'+it.si+'" data-day="'+d.en+'" data-time="'+it.s.time+'" title="'+it.g.name+' — اضغط للتعديل أو اسحب للنقل">'
 +'<div class="sb-card-name">'+it.g.name+(lanes>1?' <span style="color:var(--danger);font-size:9px;">⚠️ متزامن</span>':'')+'</div>'
 +'<div class="sb-card-time" style="color:'+color+';">'+SB.fmt12(it.s.time)+' - '+SB.fmt12(SB.hm(it.end))+'</div>'
-+(opts.showTeacher?'<div class="sb-card-sub">👨‍ '+SB.teacherName(it.g.teacherId)+'</div>':'')
-+'<div class="sb-card-sub">🏢 '+(it.g.center||'-')+' · 👥 '+((window.DataService&&DataService.getStudentsByGroup)?DataService.getStudentsByGroup(it.g.id).length:0)+'</div>'
++'<div class="sb-card-sub">'+(opts.showTeacher?'👨‍ '+SB.teacherName(it.g.teacherId)+' · ':'')+'🏢 '+(it.g.center||'-')+' · 👥 '+((window.DataService&&DataService.getStudentsByGroup)?DataService.getStudentsByGroup(it.g.id).length:0)+'</div>'
 +'</div>';
 });
 /* شارة التداخل: ملخص مختصر في خانة اليوم + ضغط = تفاصيل الساعة بالضبط */
@@ -947,8 +955,9 @@ html+='<div style="border:1px solid '+(multi?'rgba(239,68,68,.4)':'var(--border)
 html+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;"><strong style="font-size:12px;">🕐 '+SB.fmt12(SB.hm(cl.start))+' - '+SB.fmt12(SB.hm(cl.end))+'</strong>'+(multi?'<button class="btn btn-secondary btn-sm" onclick="SB.showSlotDetails(\''+day+'\','+cl.start+','+cl.end+')">⚠️ '+cl.items.length+' حصص متزامنة — عرض التفاصيل</button>':'<span class="badge badge-muted">حصة واحدة</span>')+'</div>';
 cl.items.sort(function(a,b){ return a.m-b.m; });
 html+=cl.items.map(function(it){
-return '<div class="sub-row" style="margin-bottom:6px;"><div><strong style="border-right:3px solid '+SB.groupColor(it.g.id)+'+';
+return '<div class="sub-row" style="margin-bottom:6px;"><div><strong style="border-right:3px solid '+SB.groupColor(it.g.id)+';padding-right:8px;">'+it.g.name+'</strong><div class="text-xs text-muted">🕐 '+SB.fmt12(it.s.time)+' - '+SB.fmt12(SB.hm(it.end))+' · 👨‍ '+SB.teacherName(it.g.teacherId)+' · 🏢 '+(it.g.center||'-')+' · 👥 '+((window.DataService&&DataService.getStudentsByGroup)?DataService.getStudentsByGroup(it.g.id).length:0)+'</div></div><button class="btn btn-ghost btn-sm" onclick="ThemeManager.closeModal();SB.openMoveModal(\''+it.g.id+'\','+it.si+',null,null)">✏️</button></div>';
 }).join('');
+html+='</div>';
 });
 html+='</div>';
 ThemeManager.openModal(html,'modal-md');
@@ -1073,4 +1082,26 @@ if(window.loadGroups) window.loadGroups();
 }catch(e){ console.error(e); if(window.safeToast) window.safeToast('خطأ في التبديل','error'); }
 }
 window.sbSwapSchedules=sbSwap;
+})();
+/* ============ ⏰ مؤثر الوقت الحالي: تحديث حي كل 30 ثانية ============ */
+(function(){
+function tick(){
+try{
+var now=new Date(); var nowM=now.getHours()*60+now.getMinutes(); var nowH=now.getHours();
+document.querySelectorAll('[data-nowline]').forEach(function(el){
+var col=el.parentNode; var minH=+(col.getAttribute('data-minh')||8); var H=56;
+var top=(nowM-minH*60)/60*H;
+if(top<0||top>col.clientHeight){ el.style.display='none'; }
+else { el.style.display=''; el.style.top=top+'px'; }
+});
+document.querySelectorAll('[data-nowbadge]').forEach(function(b){ b.textContent=SB.fmt12(SB.hm(nowM)); });
+document.querySelectorAll('.sb-hour').forEach(function(hEl){
+var hh=+hEl.getAttribute('data-hour'); var isNow=(hh===nowH);
+hEl.classList.toggle('now-hour',isNow);
+if(isNow&&hEl.textContent.indexOf('⏰')<0) hEl.textContent+=' ⏰';
+if(!isNow) hEl.textContent=hEl.textContent.replace(' ⏰','');
+});
+}catch(e){}
+}
+tick(); setInterval(tick,30000);
 })();

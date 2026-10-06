@@ -1307,8 +1307,8 @@ ThemeManager.openModal(h,'modal-md');
 /* ========== قوائم الألعاب ========== */
 window.fcRenderStudentGames=function(){
 var el=document.getElementById('fcStudentGames');if(!el)return;
-var u=cur(),d=db();if(!u)return;
-return Object.assign({quizPoints:5,streak7:10,streak14:25,streak30:60,ach:true,board:true,fact:true,mPlay:3,mQuiz:2,mWin:5},g.engagement||{});
+var u=cur(),d=db();if(!u||u.role!=='student')return;
+var list=(d.gameBank||[]).filter(function(g){return g.status==='published'&&(!g.grade||gradeMatch(u&&u.grade,g.grade));});
 el.innerHTML=list.length?list.map(function(g){
 var play=(d.gamePlays||[]).find(function(p){return p.gameId===g.id&&p.sid===u.id&&p.scored;});
 var best=(d.gamePlays||[]).filter(function(p){return p.gameId===g.id&&p.sid===u.id;}).reduce(function(a,p){return Math.max(a,p.points||0);},0);

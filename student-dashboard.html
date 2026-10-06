@@ -524,6 +524,8 @@ box-shadow:0 4px 12px rgba(220,38,38,.4);
 <script src="js/pwa-injector.js"></script>
 <script src="js/auth-service.js"></script>
 <script src="js/notify-service.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
+<script src="js/push-service.js"></script>
 <script src="js/footer-injector.js"></script>
 <script>
 /* 🎯 نظام الدخول الفوري بالباركود */
@@ -1673,7 +1675,7 @@ myGroups.forEach(t => {
 const group = t.group;
 if(!group) return;
 const groupStudents = typeof DataService?.getStudentsByGroup === 'function' ? DataService.getStudentsByGroup(group.id) : [];
-const rankedStudents = groupStudents.map(s => ({ id: s.id, name: s.name, points: (typeof Ops?.getStudentPoints === 'function') ? Ops.getStudentPoints(s.id, null, 'all') : 0 })).sort((a, b) => b.points - a.points);
+const rankedStudents = groupStudents.map(s => ({ id: s.id, name: s.name, points: (typeof Ops?.getStudentPoints === 'function') ? Ops.getStudentPoints(s.id, group.id, 'all') : 0 })).sort((a, b) => b.points - a.points);
 const myIdx = rankedStudents.findIndex(s => s.id === activeStudentId);
 const top3 = rankedStudents.slice(0, 3);
 let listHtml = `<div style="margin-bottom:8px;"><strong>👥 ${group.name}</strong></div>`;
@@ -2103,6 +2105,7 @@ const select = document.getElementById('barcodeReason');
 const wrap = document.getElementById('customReasonWrap');
 if (select && wrap) wrap.style.display = select.value === 'أخرى' ? 'block' : 'none';
 };
+/* 🎟️ طلب باركود جديد — مع التحقق من الرصيد وخصم الرسوم */
 window.submitBarcodeRequest = async function() {
 try {
 const reasonSelect = document.getElementById('barcodeReason')?.value;
@@ -2110,26 +2113,68 @@ const customReason = document.getElementById('barcodeCustomReason')?.value?.trim
 const contact = document.getElementById('barcodeContact')?.value?.trim();
 let reason = reasonSelect;
 if (reasonSelect === 'أخرى') {
-if (!customReason) { safeToast('اكتب السبب', 'error'); return; }
+if (!customReason) { safeToast('اكتب السبب المخصص', 'error'); return; }
 reason = customReason;
 }
+
+/* 🔒 التحقق من الرصيد قبل أي حاجة */
+const fee = 5;
+const myPoints = (typeof Ops?.getStudentPoints === 'function')
+? Ops.getStudentPoints(activeStudentId, null, 'all')
+: 0;
+
+if (myPoints < fee) {
+safeToast('❌ رصيدك مش كافي — محتاج ' + fee + ' نقاط وعندك ' + myPoints + ' بس', 'error');
+return;
+}
+
+/* 🔒 منع الطلبات المتكررة المعلقة */
 const d = db();
+const pendingCount = (d.barcodeRequests || []).filter(function(r) {
+return r.studentId === activeStudentId && r.status === 'pending';
+}).length;
+if (pendingCount >= 2) {
+safeToast('⚠️ عندك ' + pendingCount + ' طلبات معلقة بالفعل — استنى الموافقة الأول', 'error');
+return;
+}
+
+/* ✅ تأكيد قبل الخصم */
+if (!confirm('تأكيد طلب باركود جديد؟\nالسبب: ' + reason + '\nالرسوم: ' + fee + ' نقاط هتتخصم من رصيدك')) return;
+
+/* 💰 خصم الرسوم فعلياً */
+if (typeof Ops?.addManualPoints === 'function') {
+Ops.addManualPoints(activeStudentId, -fee, '🎟️ رسوم استبدال باركود: ' + reason, activeStudentId);
+}
+
+/* 📝 إنشاء الطلب */
 d.barcodeRequests = d.barcodeRequests || [];
 const newRequest = {
-id: 'br_' + Date.now(), studentId: activeStudentId,
-studentName: currentUser.name, studentCode: currentUser.code,
-status: 'pending', reason: reason, contact: contact || currentUser.phone,
-fee: 5, requestedAt: new Date().toISOString()
+id: 'br_' + Date.now(),
+studentId: activeStudentId,
+studentName: currentUser.name,
+studentCode: currentUser.code,
+status: 'pending',
+reason: reason,
+contact: contact || currentUser.phone,
+fee: fee,
+feeDeducted: true,
+requestedAt: new Date().toISOString()
 };
 d.barcodeRequests.push(newRequest);
 save(d);
+
 if (window.FirebaseService?.connected) {
 try { await FirebaseService.saveDoc('barcodeRequests', newRequest.id, newRequest); } catch (e) {}
 }
+
 ThemeManager.closeModal();
-safeToast('✅ تم إرسال طلبك', 'success');
+safeToast('✅ تم إرسال الطلب — اتخصم ' + fee + ' نقاط من رصيدك', 'success');
 window.loadBarcodeRequests();
-} catch (e) { safeToast('خطأ', 'error'); }
+window.loadPoints && window.loadPoints();
+} catch (e) {
+console.error('submitBarcodeRequest error:', e);
+safeToast('خطأ في إرسال الطلب', 'error');
+}
 };
 
 window.recordStreakActivity = function(studentId, type) {
@@ -2295,16 +2340,6 @@ console.log('🛍️ storeCatalog count:', items.length, items);
 var list=items.slice();
 list.sort(function(a,b){ return new Date(b.createdAt||0)-new Date(a.createdAt||0); });
 
-/* فحص الحصص الملغية في المستقبل */
-var pendingCancels=(d.pendingCancelledSessions||[]).filter(function(pc){
-  return pc.groupId===groupId && pc.date>todayStr;
-});
-if(pendingCancels.length){
-  /* اعرضها بشكل مميز في الجدول */
-  pendingCancels.forEach(function(pc){
-    /* ضع علامة "🚫 ملغية" جنب الحصة */
-  });
-}
 
 /* فلاتر البحث */
 if(q) list=list.filter(function(i){ return (i.name||'').toLowerCase().indexOf(q)>=0; });
@@ -2438,42 +2473,6 @@ logScan();
 beat();
 setInterval(beat,45000);
 document.addEventListener('visibilitychange',function(){ if(!document.hidden) beat(); });
-})();
-</script>
-<script>
-/* ============ 🎰 صندوق الحظ — ويدجت الطالب ============ */
-(function(){
-function cur(){ try{ return (window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null; }catch(e){ return null; } }
-function mount(){
-try{
-var u=cur(); if(!u||u.role!=='student') return;
-if(document.getElementById('lootFloat')) return;
-if(!window.Ops||!Ops.lootEligible) return;
-var el=Ops.lootEligible(u.id);
-if(!el.ok) return;
-var b=document.createElement('div');
-b.id='lootFloat';
-b.style.cssText='position:fixed;bottom:90px;left:18px;z-index:2500;cursor:pointer;text-align:center;animation:lootBounce 1.6s infinite;';
-b.innerHTML='<div style="font-size:44px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35));">🎁</div><div style="font-size:10px;font-weight:800;background:var(--primary);color:#fff;border-radius:999px;padding:2px 8px;margin-top:2px;">صندوق الحظ</div>';
-b.onclick=function(){ openLoot(u.id); };
-document.body.appendChild(b);
-if(!document.getElementById('lootCss')){ var st=document.createElement('style'); st.id='lootCss'; st.textContent='@keyframes lootBounce{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-10px) rotate(4deg)}}'; document.head.appendChild(st); }
-}catch(e){}
-}
-async function openLoot(sid){
-var box=document.getElementById('lootFloat'); if(box) box.remove();
-try{
-var r=await Ops.tryLootBox(sid);
-var msg='',icon='';
-if(r.success&&r.type==='points'){ icon='🎉'; msg='كسبت '+r.points+' نقطة!'; }
-else if(r.success&&r.type==='bonus'){ icon='🎁'; msg='الجائزة الكبرى! '+r.points+' نقطة!'; }
-else if(r.success&&r.type==='hint'){ icon='💡'; msg='كسبت تلميح مجاني!'; }
-else { icon='😅'; msg='مالكش حظ النهارده.. جرّب بكرة!'; }
-ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">🎰 صندوق الحظ</h3><button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body" style="text-align:center;padding:30px;"><div style="font-size:64px;">'+icon+'</div><h3 style="margin:10px 0;">'+msg+'</h3><p class="text-muted">الصندوق بيظهر عشوائياً في الأوقات اللي الأدمن محددها.. وانت وحظك 😄</p></div>','modal-sm');
-}catch(e){}
-}
-setTimeout(mount,2500);
-setInterval(mount,60000);
 })();
 </script>
 <script>
@@ -2731,6 +2730,7 @@ setTimeout(function(){try{var act=document.querySelector('.section.active');if(a
 <script src="js/billing/core.js"></script>
 <script src="js/billing/notify-rules.js"></script>
 <script src="js/fun-center.js"></script>
+
 <script>
 /* 🔔 فحص الإشعارات العاجلة عند الدخول */
 (function(){

@@ -915,21 +915,6 @@
 </div>
 
 <div class="gam-card">
-<div class="gam-card-header"><div class="gam-card-title">🎁 صندوق الكنز اليومي</div><label class="switch"><input type="checkbox" id="gamLootEnabled"><span class="slider"></span></label></div>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:12px;">
-<div class="form-group" style="margin:0;"><label>⏰ ميعاد الفتح اليومي</label><input type="time" id="gamLootHour" class="form-input"></div>
-<div class="form-group" style="margin:0;"><label>🎯 أقل نقاط</label><input type="number" id="gamLootPointsMin" class="form-input" min="1"></div>
-<div class="form-group" style="margin:0;"><label>🎯 أقصى نقاط</label><input type="number" id="gamLootMaxPoints" class="form-input" min="1"></div>
-</div>
-<div style="font-size:13px;font-weight:800;margin-bottom:8px;">🎰 المحتويات والاحتمالات (المجموع لازم ≤ 100%)</div>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;">
-<div class="form-group" style="margin:0;"><label>🎯 احتمال النقاط %</label><input type="number" id="gamLootChancePoints" class="form-input" min="0" max="100"></div>
-<div class="form-group" style="margin:0;"><label>💡 احتمال تلميح %</label><input type="number" id="gamLootChanceHint" class="form-input" min="0" max="100"></div>
-<div class="form-group" style="margin:0;"><label>❓ احتمال سؤال بونص %</label><input type="number" id="gamLootChanceBonus" class="form-input" min="0" max="100"></div>
-</div>
-</div>
-
-<div class="gam-card">
 <div class="gam-card-header"><div class="gam-card-title">⭐ نقاط التسميع والتفاعل (اللي بيضيفها الأستاذ/المساعد)</div></div>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
 <div class="form-group" style="margin:0;"><label>🎙️ نقاط "سمع كويس"</label><input type="number" id="gamRecitationPts" class="form-input" min="0"></div>
@@ -983,12 +968,15 @@
 <script src="js/data-service.js"></script>
 <script src="js/operations-service.js"></script>
 <script src="js/ledger-ui.js"></script>
+<script src="js/student-utils.js"></script>
+<script src="js/ui-loading.js"></script>
 <script src="js/ui-helpers.js"></script>
 <script src="js/drive-service.js"></script>
 <script src="js/theme-manager.js"></script>
-<script src="js/pwa-injector.js"></script>
 <script src="js/auth-service.js"></script>
 <script src="js/notify-service.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
+<script src="js/push-service.js"></script>
 <script src="js/billing/core.js"></script>
 <script src="js/billing/notify-rules.js"></script>
 <script src="js/footer-injector.js"></script>
@@ -6614,6 +6602,155 @@ if(window.safeToast)window.safeToast('✅ تم حفظ ستريك '+s.name+' ('+v
 };
 injectStreakTab(); setTimeout(injectStreakTab,1000); setTimeout(injectStreakTab,2500);
 if(typeof window.showSection==='function'&&!window.__streakHook){window.__streakHook=1;var os=window.showSection;window.showSection=function(id){var r=os.apply(this,arguments);if(id==='points')setTimeout(injectStreakTab,150);return r;};}
+})();
+</script>
+
+<script>
+/* ============ ⌨️ تثبيت التركيز في البحث السريع بصفحة الطلاب ============ */
+(function(){
+var last=null;
+document.addEventListener('input',function(e){
+var t=e.target;
+if(!t||t.tagName!=='INPUT'||!t.closest)return;
+if(!t.closest('#spHost'))return;
+last={ph:t.placeholder||'',pos:(t.selectionStart!=null?t.selectionStart:(t.value||'').length)};
+},true);
+var watched=null;
+function watch(){
+var h=document.getElementById('spHost');
+if(!h||h===watched)return;
+watched=h;
+try{
+new MutationObserver(function(){
+if(!last)return;
+var inputs=h.querySelectorAll('input');
+var el=null;
+for(var i=0;i<inputs.length;i++){if((inputs[i].placeholder||'')===last.ph){el=inputs[i];break;}}
+if(el&&document.activeElement!==el){
+el.focus();
+try{var p=Math.min(last.pos,el.value.length);el.setSelectionRange(p,p);}catch(e){}
+}
+last=null;
+}).observe(h,{childList:true,subtree:true});
+}catch(e){}
+}
+watch();setTimeout(watch,600);setTimeout(watch,1800);setInterval(watch,2000);
+})();
+</script>
+<script>
+/* ============ ⚔️ الأدمن: متابعة المعارك لايف بكل أسس الاحتساب (ومنها فترة المعركة) ============ */
+(function(){
+function ready(){
+if(!window.BT||!window.BT.pointsInWindow){ setTimeout(ready,500); return; }
+window.loadBattles=function(){
+try{
+var d=(DataService._getData?DataService._getData():{});
+var battles=(d.battles||[]).slice().sort(function(a,b){return new Date(b.createdAt||0)-new Date(a.createdAt||0);});
+var el=document.getElementById('battlesList'); if(!el)return;
+if(!battles.length){ el.innerHTML='<div class="card" style="text-align:center;padding:30px;"><div style="font-size:48px;">⚔️</div><strong>مفيش معارك حالياً</strong><p class="text-sm text-muted">المعارك بتتعمل من لوحة المساعد — هنا متابعة وتتويج.</p></div>'; return; }
+el.innerHTML=battles.map(function(b){
+var G=(DataService.getGroups?DataService.getGroups():[]);
+var g1=G.find(function(x){return x.id===b.team1;}), g2=G.find(function(x){return x.id===b.team2;});
+var live=BT.isActive(b);
+var s1=BT.teamScore(b,b.team1), s2=BT.teamScore(b,b.team2);
+return '<div class="battle-card '+(live?'':'finished')+'">'+
+'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;"><strong>⚔️ '+(b.title||'معركة مجموعات')+'</strong><span class="badge '+(live?'badge-info':'badge-success')+'">'+(live?'🔥 جارية':'🏁 '+(b.winnerName?('الفائز: '+b.winnerName):'انتهت'))+'</span></div>'+
+'<div class="text-xs text-muted" style="margin:6px 0;">🎯 الأساس: '+BT.basisLabel(b.scoreBasis)+(b.startDate?' · 📅 من '+b.startDate:'')+(b.endDate?' لـ '+b.endDate:'')+(live&&b.endDate?' · ⏳ باقي: '+BT.timeLeft(b):'')+'</div>'+
+'<div class="battle-vs"><div class="battle-team"><div class="battle-team-name">'+(g1?g1.name:'-')+'</div><div class="battle-team-score">'+s1+'</div></div><div class="battle-vs-label">VS</div><div class="battle-team"><div class="battle-team-name">'+(g2?g2.name:'-')+'</div><div class="battle-team-score">'+s2+'</div></div></div>'+
+'<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">'+(live?'<button class="btn btn-success btn-sm" onclick="window.endBattle(\''+b.id+'\')">🏁 إنهاء وتتويج الفائز</button>':'')+'<button class="btn btn-danger btn-sm" onclick="window.deleteBattle(\''+b.id+'\')">🗑️ حذف</button></div></div>';
+}).join('');
+}catch(e){ console.error(e); }
+};
+window.endBattle=function(id){
+try{
+var d=(DataService._getData?DataService._getData():{});
+var b=(d.battles||[]).find(function(x){return x.id===id;}); if(!b)return;
+var s1=BT.teamScore(b,b.team1), s2=BT.teamScore(b,b.team2);
+var G=(DataService.getGroups?DataService.getGroups():[]);
+var wn=null,name='تعادل';
+if(s1>s2){wn=b.team1;name=(G.find(function(x){return x.id===b.team1;})||{}).name||'مجموعة 1';}
+else if(s2>s1){wn=b.team2;name=(G.find(function(x){return x.id===b.team2;})||{}).name||'مجموعة 2';}
+if(!confirm('🏁 إنهاء المعركة؟\nالنتيجة النهائية: '+s1+' ضد '+s2+(wn?('\nالفائز: '+name):'\nتعادل')))return;
+b.status='finished';b.winner=wn;b.winnerName=name;b.score1=s1;b.score2=s2;b.endedAt=new Date().toISOString();
+DataService._saveData(d);
+try{if(window.FirebaseService&&FirebaseService.connected)FirebaseService.saveDoc('battles',id,b);}catch(e){}
+if(wn&&typeof Ops!=='undefined'&&Ops.addManualPoints){(DataService.getStudentsByGroup?DataService.getStudentsByGroup(wn):[]).forEach(function(s){try{Ops.addManualPoints(s.id,b.reward||50,'⚔️ فوز في معركة المجموعات',currentUser?.id||'admin');}catch(e){}});}
+window.safeToast('🏁 تم إنهاء المعركة'+(wn?(' — فازت '+name+' ووزعت المكافأة'):' — تعادل'),'success');
+window.loadBattles();
+}catch(e){ window.safeToast('خطأ','error'); }
+};
+setTimeout(function(){try{var s=document.getElementById('section-battles');if(s&&s.classList.contains('active'))window.loadBattles();}catch(e){}},300);
+}
+ready();
+})();
+/* ============ 🎁 إعدادات الصندوق اليومي — كارت موحّد (أدمن + مساعد) ============ */
+(function(){
+"use strict";
+var DAYEN=['Saturday','Sunday','Monday','Tuesday','Wednesday','Thursday','Friday'];
+var DAYAR={Saturday:'السبت',Sunday:'الأحد',Monday:'الإثنين',Tuesday:'الثلاثاء',Wednesday:'الأربعاء',Thursday:'الخميس',Friday:'الجمعة'};
+function dbx(){ try{ return (window.DataService&&DataService._getData)?DataService._getData():{}; }catch(e){ return {}; } }
+function savex(d){ try{ if(DataService._saveData) DataService._saveData(d); }catch(e){} try{ if(window.FirebaseService&&FirebaseService.connected) FirebaseService.saveDoc('settings','gamification',d.gamification); }catch(e){} }
+function getBox(){
+var g=dbx().gamification||{}; var c=g.floatBox||{}; var lb=g.lootbox||{};
+return {
+enabled:c.enabled!==undefined?c.enabled:(lb.enabled!==false),
+minPts:c.minPts||lb.pointsMin||1, maxPts:c.maxPts||lb.pointsMax||5,
+startHour:c.startHour!=null?c.startHour:(parseInt((lb.openHour||'17:00').split(':')[0])||17),
+endHour:c.endHour!=null?c.endHour:23,
+showSec:c.showSec||20, everyMin:c.everyMin||45, days:c.days||[]
+};
+}
+function cardHtml(){
+var b=getBox();
+var chips=DAYEN.map(function(d){ var on=b.days.indexOf(d)>=0;
+return '<label style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid '+(on?'var(--primary)':'var(--border)')+';border-radius:999px;font-size:11px;font-weight:700;cursor:pointer;background:'+(on?'var(--primary-bg)':'var(--surface)')+';"><input type="checkbox" class="fbDay" value="'+d+'" '+(on?'checked':'')+' style="width:14px;height:14px;">'+DAYAR[d]+'</label>'; }).join('');
+return '<div class="card" id="fbSettingsCard" style="margin-bottom:16px;border:2px solid var(--primary-border,#6366f1);">'+
+'<h3 class="card-title" style="margin-bottom:12px;">🎁 إعدادات الصندوق اليومي (صندوق الحظ العائم)</h3>'+
+'<div class="filter-info">💡 الصندوق بيظهر للطلاب في الأيام وساعات النفاذ المختارة، وبيدي نقاط عشوائية عند الفتح. أي حفظ هنا بيتطبق فوراً على كل الأجهزة ولوح الطالب.</div>'+
+'<label style="display:flex;gap:8px;align-items:center;margin-bottom:10px;cursor:pointer;font-weight:800;"><input type="checkbox" id="fbEnabled" style="width:18px;height:18px;" '+(b.enabled?'checked':'')+'> تفعيل الصندوق اليومي</label>'+
+'<div class="form-group"><label>📅 أيام الظهور (فاضي = كل الأيام)</label><div style="display:flex;gap:6px;flex-wrap:wrap;">'+chips+'</div></div>'+
+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'+
+'<div class="form-group"><label>⏰ بداية نافذة الظهور (ساعة 0-23)</label><input type="number" id="fbStart" class="form-input" min="0" max="23" value="'+b.startHour+'"></div>'+
+'<div class="form-group"><label>⏰ نهاية نافذة الظهور (ساعة 0-23)</label><input type="number" id="fbEnd" class="form-input" min="0" max="23" value="'+b.endHour+'"></div>'+
+'<div class="form-group"><label>🎯 أقل نقاط</label><input type="number" id="fbMin" class="form-input" min="1" value="'+b.minPts+'"></div>'+
+'<div class="form-group"><label>🎯 أقصى نقاط</label><input type="number" id="fbMax" class="form-input" min="1" value="'+b.maxPts+'"></div>'+
+'<div class="form-group"><label>⏳ مدة ظهور الصندوق (ثواني)</label><input type="number" id="fbShow" class="form-input" min="5" value="'+b.showSec+'"></div>'+
+'<div class="form-group"><label>🔁 يظهر تاني كل (دقائق)</label><input type="number" id="fbEvery" class="form-input" min="5" value="'+b.everyMin+'"></div>'+
+'</div>'+
+'<button class="btn btn-primary w-full" onclick="window.saveFloatBoxSettings()">💾 حفظ إعدادات الصندوق</button></div>';
+}
+window.saveFloatBoxSettings=function(){
+var days=[];document.querySelectorAll('.fbDay:checked').forEach(function(c){days.push(c.value);});
+var fb={enabled:document.getElementById('fbEnabled').checked,
+startHour:parseInt(document.getElementById('fbStart').value)||0,
+endHour:parseInt(document.getElementById('fbEnd').value)||23,
+minPts:parseInt(document.getElementById('fbMin').value)||1,
+maxPts:parseInt(document.getElementById('fbMax').value)||5,
+showSec:parseInt(document.getElementById('fbShow').value)||20,
+everyMin:parseInt(document.getElementById('fbEvery').value)||45,
+days:days};
+if(fb.maxPts<fb.minPts)fb.maxPts=fb.minPts;
+var d=dbx();d.gamification=d.gamification||{};
+d.gamification.floatBox=fb;
+d.gamification.lootbox=Object.assign({},d.gamification.lootbox,{enabled:fb.enabled,openHour:(fb.startHour<10?'0':'')+fb.startHour+':00',pointsMin:fb.minPts,pointsMax:fb.maxPts});
+savex(d);
+try{localStorage.setItem('floatBoxCfg',JSON.stringify(fb));}catch(e){}
+if(window.safeToast)window.safeToast('✅ اتحفظت إعدادات الصندوق واتطبقت فوراً','success');
+};
+function inject(){
+try{
+var u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():(typeof currentUser!=='undefined'?currentUser:null);
+if(!u||(u.role!=='admin'&&u.role!=='super_admin'&&u.role!=='assistant'))return;
+if(document.getElementById('fbSettingsCard'))return;
+var host=(u.role==='assistant')?document.getElementById('section-points'):document.getElementById('section-gamification');
+if(!host)return;
+var div=document.createElement('div');div.innerHTML=cardHtml();var card=div.firstChild;
+if(u.role==='assistant'){ var hdr=host.querySelector('.section-header'); if(hdr&&hdr.parentNode)hdr.parentNode.insertBefore(card,hdr.nextSibling); else host.appendChild(card); }
+else { var first=host.querySelector('.gam-card')||host.querySelector('.card'); if(first&&first.parentNode)first.parentNode.insertBefore(card,first); else host.appendChild(card); }
+}catch(e){}
+}
+inject();setTimeout(inject,1000);setTimeout(inject,2500);
+if(typeof window.showSection==='function'&&!window.__fbHook){window.__fbHook=1;var os=window.showSection;window.showSection=function(id){var r=os.apply(this,arguments);if(id==='gamification'||id==='points')setTimeout(inject,150);return r;};}
 })();
 </script>
 </body>

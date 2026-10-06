@@ -662,6 +662,8 @@ history.replaceState(null,'',location.pathname+(p.toString()?'?'+p.toString():''
 <script src="js/data-service.js"></script>
 <script src="js/operations-service.js"></script>
 <script src="js/ledger-ui.js"></script>
+<script src="js/student-utils.js"></script>
+<script src="js/ui-loading.js"></script>
 <script src="js/ui-helpers.js"></script>
 <script src="js/drive-service.js"></script>
 <script src="js/theme-manager.js"></script>
@@ -1335,6 +1337,7 @@ ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${g?'�
 <div class="card" style="background:var(--info-bg);border-color:var(--info-border);padding:12px;margin-bottom:12px;">سعر الحصة: <strong id="autoSessionPrice">0</strong> ج.م</div>
 <button class="btn btn-primary w-full">💾 حفظ</button></form></div>`,'modal-lg');
 existingSchedules.forEach(s=>window.addScheduleRow(s.day,s.time));window.calcSP();
+
 /* 🧠 منع تكرار المجموعات: مسح حي أثناء كتابة الاسم */
 setTimeout(function(){
 var gn=document.getElementById('gName');
@@ -1598,6 +1601,37 @@ const grades=EduFlowConfig?.educationLevels?.[lvl]?.grades||[];
 const el=document.getElementById('asGrade');
 if(el) el.innerHTML='<option value="">--</option>'+grades.map(g=>`<option>${g}</option>`).join('');
 }catch(e){}
+};
+
+window.loadStudents=function(){
+try{
+const q=(document.getElementById('stuSearch')?.value||'').toLowerCase();
+const centerFilter=(document.getElementById('stuCenterFilter')?.value||'');
+let list=(typeof Ops?.studentsInScope==='function'&&currentUser)?Ops.studentsInScope(currentUser.id):[];
+if(!list||!list.length) list=(DataService?.getUsers?DataService.getUsers():[]).filter(u=>u.role==='student');
+if(q) list=list.filter(s=>(s.name||'').toLowerCase().includes(q)||(s.code||'').toLowerCase().includes(q)||(s.phone||'').toLowerCase().includes(q));
+/* ✅ فلتر السنتر (النسخة السليمة بالأقواس كاملة) */
+if(centerFilter){
+list=list.filter(function(s){
+var ts=(DataService.getStudentTeachers?DataService.getStudentTeachers(s.id):[]);
+return ts.some(function(t){ return t.group && t.group.center===centerFilter; });
+});
+}
+const el=document.getElementById('studentsList');
+if(!el) return;
+if(!list.length){ el.innerHTML='<p class="text-muted" style="text-align:center;padding:20px;">لا طلاب مطابقين</p>'; return; }
+el.innerHTML=list.map(function(s){
+const points=(typeof Ops?.getStudentPoints==='function')?Ops.getStudentPoints(s.id,null,'all'):0;
+const gs=(DataService.getStudentTeachers?DataService.getStudentTeachers(s.id):[]).map(function(t){return t.group?t.group.name:'';}).filter(Boolean).join('، ');
+return '<div class="sub-row" style="padding:10px;margin-bottom:8px;">'+
+'<div style="flex:1;min-width:0;"><strong>'+s.name+'</strong> <span class="text-xs text-muted">'+(s.code||'')+' · '+(s.grade||'-')+'</span>'+
+'<div class="text-xs text-muted" style="margin-top:2px;">👥 '+(gs||'لا مجموعات')+' · 📱 '+(s.parentPhone||'-')+'</div></div>'+
+'<span class="badge badge-primary">🏆 '+points+'</span>'+
+'<button class="btn btn-ghost btn-sm" title="عرض" onclick="window.openStudentProfile&&window.openStudentProfile(\''+s.id+'\')">👁</button>'+
+'<button class="btn btn-secondary btn-sm" title="تعديل" onclick="window.openEditExistingPlatform&&window.openEditExistingPlatform(\''+s.id+'\')">✏️</button>'+
+'</div>';
+}).join('');
+}catch(e){ console.error('loadStudents error',e); }
 };
 
 window.renderAssistantGroups=function(){
@@ -3834,7 +3868,6 @@ window.loadMakeups();
 } else window.safeToast(r.message||'فشل','error');
 }catch(e){ window.safeToast('خطأ','error'); }
 };
-// ==================== 🚀 الميزات الجديدة (Gamification & AI) ====================
 // ⚡ 1. التقييم السريع (التسميع والتفاعل)
 window.loadQuickEval = function() {
 try {
@@ -3894,24 +3927,9 @@ ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">⚙️
 </div>`,'modal-sm');
 };
 
-window.saveEvalSettings = async function() {
-const d = db();
-d.gamification = d.gamification || {};
-d.gamification.evalPoints = {
-  interaction: parseInt(document.getElementById('setIntPts').value)||5,
-  recitation: parseInt(document.getElementById('setRecPts').value)||10,
-  attendance: parseInt(document.getElementById('setAttPts').value)||5
-};
-DataService._saveData(d);
-try{ if(window.FirebaseService&&FirebaseService._db) FirebaseService.saveDoc('gamification','evalPoints',d.gamification.evalPoints); }catch(e){}
-ThemeManager.closeModal();
-safeToast('✅ تم حفظ إعدادات النقاط','success');
-};
-
 window.saveEvalSettings = function() {
 const d = db();
 d.gamification = d.gamification || {};
-d.gamification.evalPoints = d.gamification.evalPoints || {};
 d.gamification.evalPoints.interaction = parseInt(document.getElementById('setIntPts').value) || 5;
 d.gamification.evalPoints.recitation = parseInt(document.getElementById('setRecPts').value) || 10;
 save(d);
@@ -5668,31 +5686,99 @@ el.innerHTML=list.length?list.map(function(g){ return '<label style="display:fle
 }catch(e){}
 };
 window.rsCheckAll=function(on){ document.querySelectorAll('.rsChk').forEach(function(c){ c.checked=on; }); };
-window.runResetGroups=async function(){
-try{
-var ids=[]; document.querySelectorAll('.rsChk:checked').forEach(function(c){ ids.push(c.value); });
-if(!ids.length){ window.safeToast('اختار مجموعة واحدة على الأقل','error'); return; }
-var all=(document.getElementById('rsScope')||{}).value==='all';
-var months=monthsScope(all);
-var doMan=(document.getElementById('rsManual')||{}).checked;
-var doNow=(document.getElementById('rsNow')||{}).checked;
-var doCanc=(document.getElementById('rsCanc')||{}).checked;
-var doAtt=(document.getElementById('rsAtt')||{}).checked;
-if(!confirm('تصفير '+ids.length+' مجموعة على '+months.length+' شهر ('+months.join(', ')+')؟')) return;
-if(doAtt&&!confirm('⚠️ تأكيد تاني: سجلات الحضور في النطاق ده هتتمسح نهائياً — متأكد؟')) return;
-var d=dbx(); var del={manualSessions:[],cancelledSessions:[],attendance:[]};
-if(doMan){ d.manualSessions=(d.manualSessions||[]).filter(function(ms){ if(ids.indexOf(ms.groupId)>=0&&months.indexOf(ms.month||'')>=0&&(!ms.type||ms.type==='counter')){ del.manualSessions.push(ms.id); return false; } return true; }); }
-if(doCanc){ d.cancelledSessions=(d.cancelledSessions||[]).filter(function(c){ if(ids.indexOf(c.groupId)>=0&&months.indexOf((c.date||'').slice(0,7))>=0){ del.cancelledSessions.push(c.id); return false; } return true; }); }
-if(doAtt){ d.attendance=(d.attendance||[]).filter(function(a){ if(ids.indexOf(a.groupId)>=0&&months.indexOf((a.date||'').slice(0,7))>=0){ del.attendance.push(a.id); return false; } return true; }); }
-savex(d);
-del.manualSessions.forEach(function(id){ fbDel('manualSessions',id); });
-del.cancelledSessions.forEach(function(id){ fbDel('cancelledSessions',id); });
-del.attendance.forEach(function(id){ fbDel('attendance',id); });
-if(doNow){ for(var i=0;i<ids.length;i++){ try{ await DataService.updateGroup(ids[i],{sessionNow:0,sessionNowMonth:curMonth()}); }catch(e){} } }
-ThemeManager.closeModal();
-window.safeToast('✅ تم التصفير — العدادات بدأت من صفر','success');
-refreshAll();
-}catch(e){ console.error(e); window.safeToast('خطأ في التصفير: '+e.message,'error'); }
+
+
+window.runResetSquares = async function() {
+  try {
+    const ids = [];
+    document.querySelectorAll('.rsChk:checked').forEach(c => ids.push(c.value));
+    if (!ids.length) { if (window.safeToast) window.safeToast('اختار مجموعة واحدة على الأقل', 'error'); return; }
+    
+    const scope = document.getElementById('rsScope')?.value;
+    const doManual = document.getElementById('rsManual')?.checked;
+    const doAtt = document.getElementById('rsAtt')?.checked;
+    const doCanc = document.getElementById('rsCanc')?.checked;
+    
+    if (!confirm(`تصفير ${ids.length} مجموعة؟\nالنطاق: ${scope === 'all' ? 'كل الشهور' : 'الشهر الحالي'}\n\n⚠️ هيتعمل backup تلقائي قبل التصفير`)) return;
+    
+    // إنشاء backup
+    const d = (window.DataService && DataService._getData) ? DataService._getData() : {};
+    const backup = {
+      id: 'backup_' + Date.now(),
+      createdAt: new Date().toISOString(),
+      createdBy: ((window.AuthService && AuthService.getCurrentUser) ? AuthService.getCurrentUser() : {})?.id || '',
+      type: 'reset_squares',
+      data: {
+        manualSessions: JSON.parse(JSON.stringify(d.manualSessions || [])),
+        attendance: JSON.parse(JSON.stringify(d.attendance || [])),
+        cancelledSessions: JSON.parse(JSON.stringify(d.cancelledSessions || []))
+      }
+    };
+    
+    d.backups = d.backups || [];
+    d.backups.push(backup);
+    DataService._saveData(d);
+    
+    try { if (window.FirebaseService && FirebaseService._db) FirebaseService.saveDoc('backups', backup.id, backup); } catch(e) {}
+    
+    if (window.safeToast) window.safeToast('💾 تم إنشاء backup — جاري التصفير...', 'info');
+    
+    // التصفير الفعلي
+    const curM = curMonth();
+    const start = startM();
+    const del = {manualSessions: [], attendance: [], cancelledSessions: []};
+    
+    if (doManual) {
+      d.manualSessions = (d.manualSessions || []).filter(ms => {
+        if (ids.indexOf(ms.groupId) >= 0 && (scope === 'all' || ms.month === curM) && ms.month >= start) {
+          del.manualSessions.push(ms.id);
+          return false;
+        }
+        return true;
+      });
+    }
+    
+    if (doAtt) {
+      d.attendance = (d.attendance || []).filter(a => {
+        if (ids.indexOf(a.groupId) >= 0 && (scope === 'all' || a.date.startsWith(curM)) && a.date >= start) {
+          del.attendance.push(a.id);
+          return false;
+        }
+        return true;
+      });
+    }
+    
+    if (doCanc) {
+      d.cancelledSessions = (d.cancelledSessions || []).filter(c => {
+        if (ids.indexOf(c.groupId) >= 0 && (scope === 'all' || c.date.startsWith(curM)) && c.date >= start) {
+          del.cancelledSessions.push(c.id);
+          return false;
+        }
+        return true;
+      });
+    }
+    
+    DataService._saveData(d);
+    
+    // حذف من Firebase
+    del.manualSessions.forEach(id => { try { if (window.FirebaseService && FirebaseService._db) FirebaseService.deleteDoc('manualSessions', id); } catch(e) {} });
+    del.attendance.forEach(id => { try { if (window.FirebaseService && FirebaseService._db) FirebaseService.deleteDoc('attendance', id); } catch(e) {} });
+    del.cancelledSessions.forEach(id => { try { if (window.FirebaseService && FirebaseService._db) FirebaseService.deleteDoc('cancelledSessions', id); } catch(e) {} });
+    
+    // تصفير العدادات
+    if (scope === 'current') {
+      for (const id of ids) {
+        try { await DataService.updateGroup(id, {sessionNow: 0, sessionNowMonth: curM}); } catch(e) {}
+      }
+    }
+    
+    ThemeManager.closeModal();
+    if (window.safeToast) window.safeToast('✅ تم التصفير — تم حفظ backup للاسترجاع لو احتجت', 'success');
+    if (window.refreshAll) window.refreshAll();
+  } catch(e) {
+    console.error(e);
+    if (window.safeToast) window.safeToast('خطأ في التصفير: ' + e.message, 'error');
+  }
 };
 })();
 
@@ -5792,64 +5878,7 @@ window.__gAddRow=function(){ window.addScheduleRow('','10:00'); };
 </script>
 <script src="js/fun-center.js"></script>
 <script>
-window.editStudentPoints=function(sid){
-try{
-var u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null;
-if(!u||(u.role!=='assistant'&&u.role!=='admin'&&u.role!=='super_admin')){if(window.safeToast)window.safeToast('صلاحية مساعد/أدمن فقط','error');return;}
-var s=DataService.getUserById?DataService.getUserById(sid):null;if(!s)return;
-var d=(window.DataService&&DataService._getData)?DataService._getData():{};
-var rows=[];
-(s.pointsHistory||[]).forEach(function(h,i){rows.push({src:'user',idx:i,pts:(h.points!=null?h.points:(h.amount||0)),reason:h.reason||h.note||'نقطة مسجلة',date:h.awardedAt||h.at||''});});
-(d.manualPoints||[]).forEach(function(m,i){if(m.studentId===sid)rows.push({src:'manualPoints',idx:i,pts:m.points||0,reason:m.reason||'نقاط يدوية',date:m.awardedAt||m.createdAt||''});});
-['interactionPoints','interactions'].forEach(function(key){(d[key]||[]).forEach(function(m,i){if(m.studentId===sid)rows.push({src:key,idx:i,pts:m.points||0,reason:m.note||'تفاعل حصة',date:m.awardedAt||m.createdAt||''});});});
-rows.sort(function(a,b){return String(b.date||'').localeCompare(String(a.date||''));});
-var total=rows.reduce(function(a,r){return a+(r.pts||0);},0);
-var html='<div class="modal-header"><h3 class="modal-title">✏️ تعديل نقاط: '+s.name+'</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">';
-html+='<div class="filter-info">💡 الإجمالي من كل المصادر: <strong style="font-family:var(--font-en);">'+total+'</strong> نقطة — عدّل أو احذف أي سطر وهيتحدث فوراً</div>';
-html+=rows.length?rows.map(function(r,i){
-return '<div class="sub-row" style="padding:6px 8px;margin-bottom:4px;"><div style="flex:1;"><strong>'+r.reason+'</strong><div class="text-xs text-muted">'+(r.date?new Date(r.date).toLocaleDateString('ar-EG'):'-')+' · المصدر: '+({user:'سجل الطالب',manualPoints:'يدوي',interactionPoints:'تفاعل',interactions:'تفاعل'}[r.src]||r.src)+'</div></div><input type="number" class="form-input"style="width:80px;" id="ptsRow'+i+'" value="'+r.pts+'"><button class="btn btn-ghost btn-sm" onclick="window.savePtsRow(\''+sid+'\',\''+r.src+'\','+r.idx+','+i+')">💾</button><button class="btn btn-danger btn-sm" onclick="window.delPtsRow(\''+sid+'\',\''+r.src+'\','+r.idx+')">🗑</button></div>';
-}).join(''):'<p class="text-muted">مفيش نقاط مسجلة — ضيف أول نقطة من تحت</p>';
-html+='<div class="card" style="padding:10px;margin-top:10px;"><strong class="text-sm">➕ إضافة نقاط</strong><div style="display:flex;gap:6px;margin-top:8px;"><input type="number" id="ptsAddVal" class="form-input" style="width:90px;" value="5"><input type="text" id="ptsAddReason" class="form-input" placeholder="السبب" style="flex:1;"><button class="btn btn-success btn-sm" onclick="window.addPtsRow(\''+sid+'\')">➕</button></div></div>';
-html+='</div>';
-ThemeManager.openModal(html,'modal-md');
-}catch(e){console.error(e);}
-};
-window.savePtsRow=async function(sid,src,idx,inputIdx){
-try{
-var val=parseInt((document.getElementById('ptsRow'+inputIdx)||{}).value)||0;
-if(src==='user'){
-var s=DataService.getUserById?DataService.getUserById(sid):null;if(!s||!s.pointsHistory||!s.pointsHistory[idx])return;
-s.pointsHistory[idx].points=val;
-if(DataService.updateUser)await DataService.updateUser(sid,{pointsHistory:s.pointsHistory});
-}else{
-var d=(window.DataService&&DataService._getData)?DataService._getData():{};
-var rec=(d[src]||[])[idx];if(!rec)return;
-rec.points=val;
-DataService._saveData(d);
-try{if(window.FirebaseService&&FirebaseService._db)FirebaseService.saveDoc(src,rec.id,rec);}catch(e){}
-}
-if(window.safeToast)window.safeToast('✅ تم التعديل','success');
-window.editStudentPoints(sid);
-}catch(e){if(window.safeToast)window.safeToast('خطأ','error');}
-};
-window.delPtsRow=async function(sid,src,idx){
-try{
-if(!confirm('حذف النقطة دي؟'))return;
-if(src==='user'){
-var s=DataService.getUserById?DataService.getUserById(sid):null;if(!s||!s.pointsHistory)return;
-s.pointsHistory.splice(idx,1);
-if(DataService.updateUser)await DataService.updateUser(sid,{pointsHistory:s.pointsHistory});
-}else{
-var d=(window.DataService&&DataService._getData)?DataService._getData():{};
-var rec=(d[src]||[])[idx];
-d[src]=(d[src]||[]).filter(function(_,j){return j!==idx;});
-DataService._saveData(d);
-try{if(rec&&window.FirebaseService&&FirebaseService._db)FirebaseService.deleteDoc(src,rec.id);}catch(e){}
-}
-if(window.safeToast)window.safeToast('🗑 تم الحذف','success');
-window.editStudentPoints(sid);
-}catch(e){}
-};
+
 window.addPtsRow=async function(sid){
 try{
 var pts=parseInt((document.getElementById('ptsAddVal')||{}).value)||0;
@@ -5901,34 +5930,7 @@ s.streaks=s.streaks||{};s.streaks.attendance=parseInt(v)||0;
 if(DataService.updateUser)DataService.updateUser(sid,{streaks:s.streaks});
 if(window.safeToast)window.safeToast('✅ الستريك بقى '+s.streaks.attendance,'success');
 };
-window.addPtsManual=function(sid){
-var amt=prompt('عدد النقاط المضافة (سالب للخصم):','5');
-if(amt===null)return;
-var n=parseInt(amt);if(!n)return;
-var reason=prompt('السبب:','تعديل يدوي');
-if(typeof Ops!=='undefined'&&Ops.addManualPoints)Ops.addManualPoints(sid,n,reason||'تعديل يدوي',(cur()||{}).id||'');
-if(window.safeToast)window.safeToast('✅ تم تعديل النقاط ('+(n>0?'+':'')+n+')','success');
-};
-window.openPointsPicker=function(){
-var sts=(DataService.getStudents?DataService.getStudents():[]);
-ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">✏️ تعديل نقاط / ستريك طالب</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">'+
-'<div class="form-group"><label>🎓 الطالب</label><select id="ppSid" class="form-select">'+sts.map(function(s){return '<option value="'+s.id+'">'+s.name+' ('+(s.code||'')+')</option>';}).join('')+'</select></div>'+
-'<div style="display:flex;gap:6px;flex-wrap:wrap;"><button class="btn btn-warning btn-sm" onclick="var s=document.getElementById(\'ppSid\').value;ThemeManager.closeModal();window.editStudentPoints(s)">✏️ النقاط</button>'+
-'<button class="btn btn-secondary btn-sm" onclick="var s=document.getElementById(\'ppSid\').value;ThemeManager.closeModal();window.editStreak(s)">🔥 الستريك</button>'+
-'<button class="btn btn-success btn-sm" onclick="var s=document.getElementById(\'ppSid\').value;ThemeManager.closeModal();window.addPtsManual(s)">➕ إضافة نقاط</button></div></div>','modal-sm');
-};
-function injectPointsTool(){
-try{
-var u=cur();
-if(!u||(u.role!=='assistant'&&u.role!=='admin'&&u.role!=='super_admin'))return;
-var sec=document.getElementById('section-students');if(!sec)return;
-if(document.getElementById('ptsToolBtn'))return;
-var hdr=sec.querySelector('.section-header');
-var btn=document.createElement('button');btn.id='ptsToolBtn';btn.type='button';btn.className='btn btn-warning btn-sm';btn.textContent='✏️ تعديل نقاط طالب';
-btn.onclick=function(){window.openPointsPicker();};
-if(hdr)hdr.appendChild(btn);else sec.insertBefore(btn,sec.firstChild);
-}catch(e){}
-}
+
 function dedupe(){
 try{
 var seen={};
@@ -6256,6 +6258,416 @@ return r;
 };
 }
 setInterval(autoLoadQuickEval,4000);
+})();
+</script>
+<script>
+/* ============ ⚔️ المعارك V2 (المساعد): فلاتر + أساس احتساب + معاينة + بطاقة متحركة ============ */
+(function(){
+"use strict";
+function dbx(){ try{ return (window.DataService&&DataService._getData)?DataService._getData():{}; }catch(e){ return {}; } }
+function savex(d){ if(DataService._saveData) DataService._saveData(d); }
+function groupsScope(){ try{ if(typeof Ops!=='undefined'&&Ops.groupsInScope&&window.currentUser) return Ops.groupsInScope(currentUser.id); if(window.myGroups) return myGroups(); return (DataService.getGroups?DataService.getGroups():[]); }catch(e){ return []; } }
+function scoreOf(gid,basis){ return window.BT?BT.teamScore({scoreBasis:basis},gid):0; }
+function injectBattleTools(){
+  var sec=document.getElementById('section-battles'); if(!sec) return;
+  var form=sec.querySelector('.card'); if(!form) return;
+  if(!document.getElementById('btTools')){
+    var tools=document.createElement('div'); tools.id='btTools'; tools.className='card'; tools.style.marginBottom='12px';
+    tools.innerHTML='<div class="card-header"><h3 class="card-title">🔍 فلاتر وتدقيق إعدادات المعركة</h3></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:10px;">'+
+    '<input type="text" id="btSearch" class="form-input" placeholder="بحث باسم المجموعة..." oninput="window.btRefreshOptions()">'+
+    '<select id="btCenter" class="form-select" onchange="window.btRefreshOptions()"><option value="">كل السناتر</option></select>'+
+    '<select id="btGrade" class="form-select" onchange="window.btRefreshOptions()"><option value="">كل الصفوف</option></select></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 10px 10px;">'+
+    '<div class="form-group" style="margin:0;"><label>🎯 أساس احتساب النقاط</label><select id="btBasis" class="form-select"><option value="all">كل النقاط</option><option value="month">نقاط هذا الشهر</option><option value="week">نقاط هذا الأسبوع</option></select></div>'+
+    '<div class="form-group" style="margin:0;"><label>🔬 معاينة النتيجة الحالية</label><div id="btPreview" class="filter-info" style="margin:0;">اختار المجموعتين الأول</div></div></div>';
+    form.parentNode.insertBefore(tools,form);
+  }
+  var cs={},gr={};
+  groupsScope().forEach(function(g){ if(g.center)cs[g.center]=1; if(g.grade)gr[g.grade]=1; });
+  var cSel=document.getElementById('btCenter'),gSel=document.getElementById('btGrade');
+  if(cSel&&cSel.options.length<=1) cSel.innerHTML='<option value="">كل السناتر</option>'+Object.keys(cs).map(function(c){return '<option>'+c+'</option>';}).join('');
+  if(gSel&&gSel.options.length<=1) gSel.innerHTML='<option value="">كل الصفوف</option>'+Object.keys(gr).map(function(x){return '<option>'+x+'</option>';}).join('');
+  ['battleGroup1','battleGroup2'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el&&!el.dataset.btHook){ el.dataset.btHook='1'; el.addEventListener('change',window.btPreview); }
+  });
+  var bs=document.getElementById('btBasis');
+  if(bs&&!bs.dataset.btHook){ bs.dataset.btHook='1'; bs.addEventListener('change',function(){ window.btRefreshOptions(); }); }
+}
+window.btRefreshOptions=function(){
+  try{
+    var q=((document.getElementById('btSearch')||{}).value||'').toLowerCase();
+    var c=(document.getElementById('btCenter')||{}).value||'';
+    var g=(document.getElementById('btGrade')||{}).value||'';
+    var basis=(document.getElementById('btBasis')||{}).value||'all';
+    var list=groupsScope().filter(function(x){ return (!q||(x.name||'').toLowerCase().indexOf(q)>=0)&&(!c||x.center===c)&&(!g||x.grade===g); });
+    ['battleGroup1','battleGroup2'].forEach(function(id){
+      var sel=document.getElementById(id); if(!sel) return;
+      var curV=sel.value;
+      sel.innerHTML='<option value="">-- اختار --</option>'+list.map(function(x){ return '<option value="'+x.id+'">'+x.name+' · 👥 '+(DataService.getStudentsByGroup?DataService.getStudentsByGroup(x.id).length:0)+' · 🏆 '+scoreOf(x.id,basis)+'</option>'; }).join('');
+      if(list.some(function(x){return x.id===curV;})) sel.value=curV;
+    });
+    window.btPreview();
+  }catch(e){}
+};
+window.btPreview=function(){
+  try{
+    var el=document.getElementById('btPreview'); if(!el) return;
+    var g1=(document.getElementById('battleGroup1')||{}).value, g2=(document.getElementById('battleGroup2')||{}).value;
+    var basis=(document.getElementById('btBasis')||{}).value||'all';
+    if(!g1||!g2){ el.innerHTML='اختار المجموعتين الأول'; return; }
+    if(g1===g2){ el.innerHTML='⚠️ لازم مجموعتين مختلفتين'; return; }
+    var s1=scoreOf(g1,basis), s2=scoreOf(g2,basis);
+    el.innerHTML='⚔️ حالياً: <strong>'+s1+'</strong> ضد <strong>'+s2+'</strong> — الفرق '+Math.abs(s1-s2)+' نقطة (أساس: '+BT.basisLabel(basis)+')';
+  }catch(e){}
+};
+window.startBattle=async function(){
+  try{
+    var g1=(document.getElementById('battleGroup1')||{}).value;
+    var g2=(document.getElementById('battleGroup2')||{}).value;
+    var name=(document.getElementById('battleName')||{}).value||'معركة الأسبوع';
+    var reward=parseInt((document.getElementById('battleReward')||{}).value)||50;
+    var start=(document.getElementById('battleStart')||{}).value;
+    var end=(document.getElementById('battleEnd')||{}).value;
+    var basis=(document.getElementById('btBasis')||{}).value||'all';
+    if(!g1||!g2){ window.safeToast('اختار المجموعتين','error'); return; }
+    if(g1===g2){ window.safeToast('لازم مجموعتين مختلفتين','error'); return; }
+    if(start&&end&&start>end){ window.safeToast('تاريخ البداية بعد النهاية!','error'); return; }
+    var n1=(DataService.getStudentsByGroup?DataService.getStudentsByGroup(g1).length:0);
+    var n2=(DataService.getStudentsByGroup?DataService.getStudentsByGroup(g2).length:0);
+    if(!n1||!n2){ window.safeToast('⚠️ فيه مجموعة فاضية — سجّل طلاب الأول','error'); return; }
+    if(!confirm('⚔️ بدء معركة "'+name+'"\n'+n1+' ضد '+n2+' طالب · أساس الاحتساب: '+BT.basisLabel(basis)+' · المكافأة: '+reward+' نقطة\nتأكيد؟')) return;
+    var d=dbx(); d.battles=d.battles||[];
+    var b={id:'battle_'+Date.now(),team1:g1,team2:g2,title:name,reward:reward,startDate:start,endDate:end,scoreBasis:basis,status:'active',createdAt:new Date().toISOString(),createdBy:(window.currentUser||{}).id||''};
+    d.battles.push(b); savex(d);
+    if(window.FirebaseService&&FirebaseService.connected){ try{ FirebaseService.saveDoc('battles',b.id,b); }catch(e){} }
+    try{ if(window.notifyGroup){ await notifyGroup(g1,'⚔️ معركة بدأت: '+name,'مجموعتك في معركة الآن — كل نقطة بتجمعها بتفرق!','challenge'); await notifyGroup(g2,'⚔️ معركة بدأت: '+name,'مجموعتك في معركة الآن — كل نقطة بتجمعها بتفرق!','challenge'); } }catch(e){}
+    window.safeToast('⚔️ تم بدء المعركة — وصلت للطلاب بأنيميشن السيوف','success');
+    window.renderBattles();
+  }catch(e){ window.safeToast('خطأ: '+e.message,'error'); }
+};
+window.calcBattleScore=function(students,basis){
+  try{ var t=0; students.forEach(function(s){ t+=(window.Ops&&Ops.getStudentPoints)?(Ops.getStudentPoints(s.id,null,basis||'all')||0):0; }); return t; }catch(e){ return 0; }
+};
+window.endBattle=async function(id){
+  try{
+    var d=dbx(); var b=(d.battles||[]).find(function(x){return x.id===id;}); if(!b) return;
+    var g1s=(DataService.getStudentsByGroup?DataService.getStudentsByGroup(b.team1):[]);
+    var g2s=(DataService.getStudentsByGroup?DataService.getStudentsByGroup(b.team2):[]);
+    var s1=window.calcBattleScore(g1s,b.scoreBasis), s2=window.calcBattleScore(g2s,b.scoreBasis);
+    var G=(DataService.getGroups?DataService.getGroups():[]);
+    var wn=null, wname='تعادل';
+    if(s1>s2){ wn=b.team1; wname=(G.find(function(x){return x.id===b.team1;})||{}).name||'مجموعة 1'; }
+    else if(s2>s1){ wn=b.team2; wname=(G.find(function(x){return x.id===b.team2;})||{}).name||'مجموعة 2'; }
+    if(!confirm('🏁 إنهاء المعركة؟\nالنتيجة النهائية: '+s1+' ضد '+s2+(wn?(' — الفائز: '+wname):' — تعادل'))) return;
+    b.status='finished'; b.winner=wn; b.winnerName=wname; b.finalScore1=s1; b.finalScore2=s2; b.endedAt=new Date().toISOString();
+    savex(d);
+    if(window.FirebaseService&&FirebaseService.connected){ try{ FirebaseService.saveDoc('battles',id,b); }catch(e){} }
+    if(wn&&typeof Ops!=='undefined'&&Ops.addManualPoints){ (wn===b.team1?g1s:g2s).forEach(function(s){ try{ Ops.addManualPoints(s.id,b.reward||50,'⚔️ فوز في معركة: '+b.title,(window.currentUser||{}).id||''); }catch(e){} }); }
+    window.safeToast('🏁 انتهت المعركة'+(wn?(' — فازت '+wname+' واتوزعت '+(b.reward||50)+' نقطة لكل طالب'):' — تعادل'),'success');
+    window.renderBattles();
+  }catch(e){ window.safeToast('خطأ','error'); }
+};
+window.renderBattles=function(){
+  try{
+    var el=document.getElementById('battlesList'); if(!el) return;
+    var list=(dbx().battles||[]).slice().sort(function(a,b){ return (a.status===b.status)?String(b.createdAt||'').localeCompare(String(a.createdAt||'')):(a.status==='active'?-1:1); });
+    if(!list.length){ el.innerHTML='<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">⚔️</div><strong>مفيش معارك — ابدأ أول معركة من الفورم فوق</strong></div>'; return; }
+    el.innerHTML=list.map(function(b){ return window.renderBattleCard(b,null); }).join('');
+  }catch(e){ console.error(e); }
+};
+function boot(){ injectBattleTools(); window.btRefreshOptions(); window.renderBattles(); }
+boot(); setTimeout(boot,800); setTimeout(boot,2000);
+if(typeof window.showSection==='function'&&!window.__btHook){
+  window.__btHook=1;
+  var os=window.showSection;
+  window.showSection=function(id){ var r=os.apply(this,arguments); if(id==='battles') setTimeout(boot,150); return r; };
+}
+setInterval(function(){ try{ var s=document.getElementById('section-battles'); if(s&&s.classList.contains('active')) window.renderBattles(); }catch(e){} },30000);
+})();
+/* ============ 🎁 إعدادات الصندوق اليومي — كارت موحّد (أدمن + مساعد) ============ */
+(function(){
+"use strict";
+var DAYEN=['Saturday','Sunday','Monday','Tuesday','Wednesday','Thursday','Friday'];
+var DAYAR={Saturday:'السبت',Sunday:'الأحد',Monday:'الإثنين',Tuesday:'الثلاثاء',Wednesday:'الأربعاء',Thursday:'الخميس',Friday:'الجمعة'};
+function dbx(){ try{ return (window.DataService&&DataService._getData)?DataService._getData():{}; }catch(e){ return {}; } }
+function savex(d){ try{ if(DataService._saveData) DataService._saveData(d); }catch(e){} try{ if(window.FirebaseService&&FirebaseService.connected) FirebaseService.saveDoc('settings','gamification',d.gamification); }catch(e){} }
+function getBox(){
+var g=dbx().gamification||{}; var c=g.floatBox||{}; var lb=g.lootbox||{};
+return {
+enabled:c.enabled!==undefined?c.enabled:(lb.enabled!==false),
+minPts:c.minPts||lb.pointsMin||1, maxPts:c.maxPts||lb.pointsMax||5,
+startHour:c.startHour!=null?c.startHour:(parseInt((lb.openHour||'17:00').split(':')[0])||17),
+endHour:c.endHour!=null?c.endHour:23,
+showSec:c.showSec||20, everyMin:c.everyMin||45, days:c.days||[]
+};
+}
+function cardHtml(){
+var b=getBox();
+var chips=DAYEN.map(function(d){ var on=b.days.indexOf(d)>=0;
+return '<label style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid '+(on?'var(--primary)':'var(--border)')+';border-radius:999px;font-size:11px;font-weight:700;cursor:pointer;background:'+(on?'var(--primary-bg)':'var(--surface)')+';"><input type="checkbox" class="fbDay" value="'+d+'" '+(on?'checked':'')+' style="width:14px;height:14px;">'+DAYAR[d]+'</label>'; }).join('');
+return '<div class="card" id="fbSettingsCard" style="margin-bottom:16px;border:2px solid var(--primary-border,#6366f1);">'+
+'<h3 class="card-title" style="margin-bottom:12px;">🎁 إعدادات الصندوق اليومي (صندوق الحظ العائم)</h3>'+
+'<div class="filter-info">💡 الصندوق بيظهر للطلاب في الأيام وساعات النفاذ المختارة، وبيدي نقاط عشوائية عند الفتح. أي حفظ هنا بيتطبق فوراً على كل الأجهزة ولوح الطالب.</div>'+
+'<label style="display:flex;gap:8px;align-items:center;margin-bottom:10px;cursor:pointer;font-weight:800;"><input type="checkbox" id="fbEnabled" style="width:18px;height:18px;" '+(b.enabled?'checked':'')+'> تفعيل الصندوق اليومي</label>'+
+'<div class="form-group"><label>📅 أيام الظهور (فاضي = كل الأيام)</label><div style="display:flex;gap:6px;flex-wrap:wrap;">'+chips+'</div></div>'+
+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'+
+'<div class="form-group"><label>⏰ بداية نافذة الظهور (ساعة 0-23)</label><input type="number" id="fbStart" class="form-input" min="0" max="23" value="'+b.startHour+'"></div>'+
+'<div class="form-group"><label>⏰ نهاية نافذة الظهور (ساعة 0-23)</label><input type="number" id="fbEnd" class="form-input" min="0" max="23" value="'+b.endHour+'"></div>'+
+'<div class="form-group"><label>🎯 أقل نقاط</label><input type="number" id="fbMin" class="form-input" min="1" value="'+b.minPts+'"></div>'+
+'<div class="form-group"><label>🎯 أقصى نقاط</label><input type="number" id="fbMax" class="form-input" min="1" value="'+b.maxPts+'"></div>'+
+'<div class="form-group"><label>⏳ مدة ظهور الصندوق (ثواني)</label><input type="number" id="fbShow" class="form-input" min="5" value="'+b.showSec+'"></div>'+
+'<div class="form-group"><label>🔁 يظهر تاني كل (دقائق)</label><input type="number" id="fbEvery" class="form-input" min="5" value="'+b.everyMin+'"></div>'+
+'</div>'+
+'<button class="btn btn-primary w-full" onclick="window.saveFloatBoxSettings()">💾 حفظ إعدادات الصندوق</button></div>';
+}
+window.saveFloatBoxSettings=function(){
+var days=[];document.querySelectorAll('.fbDay:checked').forEach(function(c){days.push(c.value);});
+var fb={enabled:document.getElementById('fbEnabled').checked,
+startHour:parseInt(document.getElementById('fbStart').value)||0,
+endHour:parseInt(document.getElementById('fbEnd').value)||23,
+minPts:parseInt(document.getElementById('fbMin').value)||1,
+maxPts:parseInt(document.getElementById('fbMax').value)||5,
+showSec:parseInt(document.getElementById('fbShow').value)||20,
+everyMin:parseInt(document.getElementById('fbEvery').value)||45,
+days:days};
+if(fb.maxPts<fb.minPts)fb.maxPts=fb.minPts;
+var d=dbx();d.gamification=d.gamification||{};
+d.gamification.floatBox=fb;
+d.gamification.lootbox=Object.assign({},d.gamification.lootbox,{enabled:fb.enabled,openHour:(fb.startHour<10?'0':'')+fb.startHour+':00',pointsMin:fb.minPts,pointsMax:fb.maxPts});
+savex(d);
+try{localStorage.setItem('floatBoxCfg',JSON.stringify(fb));}catch(e){}
+if(window.safeToast)window.safeToast('✅ اتحفظت إعدادات الصندوق واتطبقت فوراً','success');
+};
+function inject(){
+try{
+var u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():(typeof currentUser!=='undefined'?currentUser:null);
+if(!u||(u.role!=='admin'&&u.role!=='super_admin'&&u.role!=='assistant'))return;
+if(document.getElementById('fbSettingsCard'))return;
+var host=(u.role==='assistant')?document.getElementById('section-points'):document.getElementById('section-gamification');
+if(!host)return;
+var div=document.createElement('div');div.innerHTML=cardHtml();var card=div.firstChild;
+if(u.role==='assistant'){ var hdr=host.querySelector('.section-header'); if(hdr&&hdr.parentNode)hdr.parentNode.insertBefore(card,hdr.nextSibling); else host.appendChild(card); }
+else { var first=host.querySelector('.gam-card')||host.querySelector('.card'); if(first&&first.parentNode)first.parentNode.insertBefore(card,first); else host.appendChild(card); }
+}catch(e){}
+}
+inject();setTimeout(inject,1000);setTimeout(inject,2500);
+if(typeof window.showSection==='function'&&!window.__fbHook){window.__fbHook=1;var os=window.showSection;window.showSection=function(id){var r=os.apply(this,arguments);if(id==='gamification'||id==='points')setTimeout(inject,150);return r;};}
+})();
+</script>
+<script>
+/* ============ ⚔️ معارك V2.1: أساس "احتساب نقاط فترة المعركة فقط" ============ */
+(function(){
+"use strict";
+function dbx(){ try{ return (window.DataService&&DataService._getData)?DataService._getData():{}; }catch(e){ return {}; } }
+function savex(d){ if(DataService._saveData) DataService._saveData(d); }
+function fbsave(col,id,o){ try{ if(window.FirebaseService&&FirebaseService.connected) FirebaseService.saveDoc(col,id,o); }catch(e){} }
+function groupsScope(){ try{ if(typeof Ops!=='undefined'&&Ops.groupsInScope&&window.currentUser) return Ops.groupsInScope(currentUser.id); if(window.myGroups) return myGroups(); return []; }catch(e){ return []; } }
+function ready(){
+if(!window.BT||!window.BT.pointsInWindow){ setTimeout(ready,400); return; }
+var sel=document.getElementById('btBasis');
+if(sel && !sel.querySelector('option[value="battle"]')){
+var o=document.createElement('option');o.value='battle';o.textContent='⏱️ نقاط فترة المعركة فقط (العدّ من الصفر)';sel.appendChild(o);
+}
+function tempBattle(){
+var basis=(document.getElementById('btBasis')||{}).value||'all';
+var start=(document.getElementById('battleStart')||{}).value||'';
+var end=(document.getElementById('battleEnd')||{}).value||'';
+return {scoreBasis:basis,startDate:start,endDate:end,startAt:basis==='battle'?(start?new Date(start+'T00:00:00').toISOString():new Date().toISOString()):null};
+}
+function scoreOf(gid){ return BT.teamScore(tempBattle(),gid); }
+window.btRefreshOptions=function(){
+try{
+var q=((document.getElementById('btSearch')||{}).value||'').toLowerCase();
+var c=(document.getElementById('btCenter')||{}).value||'';
+var g=(document.getElementById('btGrade')||{}).value||'';
+var basis=(document.getElementById('btBasis')||{}).value||'all';
+var list=groupsScope().filter(function(x){ return (!q||(x.name||'').toLowerCase().indexOf(q)>=0)&&(!c||x.center===c)&&(!g||x.grade===g); });
+['battleGroup1','battleGroup2'].forEach(function(id){
+var s=document.getElementById(id); if(!s) return;
+var curV=s.value;
+s.innerHTML='<option value="">-- اختار --</option>'+list.map(function(x){
+var sc=(basis==='battle')?'يبدأ من 0':scoreOf(x.id);
+return '<option value="'+x.id+'">'+x.name+' · 👥 '+(DataService.getStudentsByGroup?DataService.getStudentsByGroup(x.id).length:0)+' · 🏆 '+sc+'</option>';
+}).join('');
+if(list.some(function(x){return x.id===curV;}))s.value=curV;
+});
+window.btPreview();
+}catch(e){}
+};
+window.btPreview=function(){
+try{
+var el=document.getElementById('btPreview'); if(!el) return;
+var g1=(document.getElementById('battleGroup1')||{}).value, g2=(document.getElementById('battleGroup2')||{}).value;
+var basis=(document.getElementById('btBasis')||{}).value||'all';
+if(!g1||!g2){ el.innerHTML='اختار المجموعتين الأول'; return; }
+if(g1===g2){ el.innerHTML='⚠️ لازم مجموعتين مختلفتين'; return; }
+if(basis==='battle'){ el.innerHTML='⏱️ أساس المعركة: العدّ هيبدأ من <strong>صفر</strong> لحظة الضغط على "ابدأ المعركة" لحد نهايتها — النقاط القديمة مش هتتحسب.'; return; }
+var s1=scoreOf(g1), s2=scoreOf(g2);
+el.innerHTML='⚔️ حالياً: <strong>'+s1+'</strong> ضد <strong>'+s2+'</strong> — الفرق '+Math.abs(s1-s2)+' نقطة (أساس: '+BT.basisLabel(basis)+')';
+}catch(e){}
+};
+window.startBattle=async function(){
+try{
+var g1=(document.getElementById('battleGroup1')||{}).value;
+var g2=(document.getElementById('battleGroup2')||{}).value;
+var name=(document.getElementById('battleName')||{}).value||'معركة الأسبوع';
+var reward=parseInt((document.getElementById('battleReward')||{}).value)||50;
+var start=(document.getElementById('battleStart')||{}).value;
+var end=(document.getElementById('battleEnd')||{}).value;
+var basis=(document.getElementById('btBasis')||{}).value||'all';
+if(!g1||!g2){ window.safeToast('اختار المجموعتين','error'); return; }
+if(g1===g2){ window.safeToast('لازم مجموعتين مختلفتين','error'); return; }
+if(start&&end&&start>end){ window.safeToast('تاريخ البداية بعد النهاية!','error'); return; }
+var n1=(DataService.getStudentsByGroup?DataService.getStudentsByGroup(g1).length:0);
+var n2=(DataService.getStudentsByGroup?DataService.getStudentsByGroup(g2).length:0);
+if(!n1||!n2){ window.safeToast('⚠️ فيه مجموعة فاضية — سجّل طلاب الأول','error'); return; }
+if(!confirm('️ بدء معركة "'+name+'"\n'+n1+' ضد '+n2+' طالب\nأساس الاحتساب: '+BT.basisLabel(basis)+(basis==='battle'?'\n(العدّ هيبدأ من الصفر لحظة البدء!)':'')+'\nالمكافأة: '+reward+' نقطة\nتأكيد؟')) return;
+var d=dbx(); d.battles=d.battles||[];
+var nowIso=new Date().toISOString();
+var b={id:'battle_'+Date.now(),team1:g1,team2:g2,title:name,reward:reward,startDate:start||nowIso.slice(0,10),endDate:end,scoreBasis:basis,startAt:nowIso,status:'active',createdAt:nowIso,createdBy:(window.currentUser||{}).id||''};
+d.battles.push(b); savex(d); fbsave('battles',b.id,b);
+try{ if(window.notifyGroup){ await notifyGroup(g1,'⚔️ معركة بدأت: '+name,'مجموعتك في معركة الآن — كل نقطة بتجمعها من اللحظة دي بترفع مجموعتك!','challenge'); await notifyGroup(g2,'⚔️ معركة بدأت: '+name,'مجموعتك في معركة الآن — كل نقطة بتجمعها من اللحظة دي بترفع مجموعتك!','challenge'); } }catch(e){}
+window.safeToast('⚔️ تم بدء المعركة — الأساس: '+BT.basisLabel(basis),'success');
+if(window.renderBattles)window.renderBattles();
+}catch(e){ window.safeToast('خطأ: '+e.message,'error'); }
+};
+window.calcBattleScore=function(students,basis,battle){
+try{
+var t=0;
+if(basis==='battle'&&battle&&window.BT){ students.forEach(function(s){ t+=BT.pointsInWindow(s.id,battle); }); return t; }
+students.forEach(function(s){ t+=(window.Ops&&Ops.getStudentPoints)?(Ops.getStudentPoints(s.id,null,basis||'all')||0):0; });
+return t;
+}catch(e){ return 0; }
+};
+window.endBattle=async function(id){
+try{
+var d=dbx(); var b=(d.battles||[]).find(function(x){return x.id===id;}); if(!b) return;
+var g1s=(DataService.getStudentsByGroup?DataService.getStudentsByGroup(b.team1):[]);
+var g2s=(DataService.getStudentsByGroup?DataService.getStudentsByGroup(b.team2):[]);
+var s1=window.calcBattleScore(g1s,b.scoreBasis,b), s2=window.calcBattleScore(g2s,b.scoreBasis,b);
+var G=(DataService.getGroups?DataService.getGroups():[]);
+var wn=null, wname='تعادل';
+if(s1>s2){ wn=b.team1; wname=(G.find(function(x){return x.id===b.team1;})||{}).name||'مجموعة 1'; }
+else if(s2>s1){ wn=b.team2; wname=(G.find(function(x){return x.id===b.team2;})||{}).name||'مجموعة 2'; }
+if(!confirm('🏁 إنهاء المعركة؟\nالنتيجة النهائية: '+s1+' ضد '+s2+(wn?(' — الفائز: '+wname):' — تعادل'))) return;
+b.status='finished'; b.winner=wn; b.winnerName=wname; b.score1=s1; b.score2=s2; b.endedAt=new Date().toISOString();
+savex(d); fbsave('battles',id,b);
+if(wn&&typeof Ops!=='undefined'&&Ops.addManualPoints){ (wn===b.team1?g1s:g2s).forEach(function(s){ try{ Ops.addManualPoints(s.id,b.reward||50,'⚔️ فوز في معركة: '+b.title,(window.currentUser||{}).id||''); }catch(e){} }); }
+window.safeToast('🏁 انتهت المعركة'+(wn?(' — فازت '+wname+' واتوزعت '+(b.reward||50)+' نقطة لكل طالب'):' — تعادل'),'success');
+if(window.renderBattles)window.renderBattles();
+}catch(e){ window.safeToast('خطأ','error'); }
+};
+var bsel=document.getElementById('btBasis');
+if(bsel&&!bsel.dataset.v21){ bsel.dataset.v21='1'; bsel.addEventListener('change',function(){ window.btRefreshOptions(); }); }
+window.btRefreshOptions();
+}
+ready();
+})();
+</script>
+<script>
+/* ============ 🏆 متجر تبديل النقاط — إدارة كاملة للمساعد (نسخة آمنة موحّدة V2) ============ */
+(function(){
+"use strict";
+function dbx(){ try{ return (window.DataService&&DataService._getData)?DataService._getData():{}; }catch(e){ return {}; } }
+function store(){
+var d=dbx();
+d.gamification=d.gamification||{};
+d.gamification.store=d.gamification.store||{enabled:true,items:[]};
+d.gamification.store.items=d.gamification.store.items||[];
+return d.gamification.store;
+}
+function savex(){
+var d=dbx();
+d.gamification=d.gamification||{};
+d.gamification.store=store();
+try{ if(DataService._saveData) DataService._saveData(d); }catch(e){}
+try{ if(window.FirebaseService&&FirebaseService.connected) FirebaseService.saveDoc('settings','gamification',d.gamification); }catch(e){}
+try{ localStorage.setItem('ptsStoreCache',JSON.stringify(d.gamification.store)); }catch(e){}
+}
+function me(){ try{ return (window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null; }catch(e){ return null; } }
+/* بيدعم المجموعتين: aps* (هنا) و ps* (footer-injector) */
+function E(a,b){ return document.getElementById(a)||(b?document.getElementById(b):null); }
+function ensureNav(){
+try{
+var nav=document.getElementById('sidebarNav');if(!nav)return;
+if(nav.querySelector('[data-section="pointsStore"]'))return;
+var anchor=nav.querySelector('[data-section="store"]')||nav.querySelector('[data-section="points"]');
+var html='<div class="sidebar-item" data-section="pointsStore" onclick="window.showSection(\'pointsStore\')"><span class="sidebar-item-icon">🏆</span><span class="sidebar-item-label">متجر تبديل النقاط</span></div>';
+if(anchor)anchor.insertAdjacentHTML('afterend',html);else nav.insertAdjacentHTML('beforeend',html);
+}catch(e){}
+}
+function build(){
+try{
+var u=me(); if(!u||u.role!=='assistant')return;
+ensureNav();
+if(!document.getElementById('section-pointsStore')){
+var sec=document.createElement('section');sec.className='section';sec.id='section-pointsStore';
+sec.innerHTML='<div class="section-header"><div><h2 class="section-title">🏆 متجر تبديل النقاط</h2><p class="text-sm text-muted">المكافآت اللي بيستبدلها الطلاب بنقاطهم — نفس متجر الأدمن بالضبط</p></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><span id="apsBadge"></span><button class="btn btn-ghost btn-sm" id="apsToggle"></button><button class="btn btn-primary btn-sm" onclick="window.apsOpenItem()">➕ منتج نقاط</button></div></div>'+
+'<div id="apsItems" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:14px;"></div>'+
+'<div class="card"><div class="card-header"><h3 class="card-title">📦 سجل الاستبدالات</h3></div><div id="apsOrders" style="padding:10px;"></div></div>';
+var host=document.querySelector('.content-area');if(host)host.appendChild(sec);
+}
+window.apsRender();
+}catch(e){ console.error('aps build',e); }
+}
+window.apsRender=function(){
+try{
+var sec=document.getElementById('section-pointsStore');if(!sec)return;
+var s=store();
+var badge=E('apsBadge','psEnabledBadge');var btn=E('apsToggle','psToggleBtn');
+if(badge)badge.innerHTML=(s.enabled!==false)?'<span class="badge badge-success">مفعّل للطلاب</span>':'<span class="badge badge-danger">موقوف</span>';
+if(btn){btn.textContent=(s.enabled!==false)?'إيقاف المتجر':'تفعيل المتجر';btn.onclick=function(){try{var st=store();st.enabled=(st.enabled===false);savex();window.apsRender();if(window.psRender)window.psRender();}catch(e){}};}
+var itemsHost=E('apsItems','psItems');
+if(itemsHost)itemsHost.innerHTML=(s.items||[]).length?s.items.map(function(i){
+return '<div class="card" style="margin:0;padding:12px;text-align:center;">'+(i.imageUrl?'<img src="'+i.imageUrl+'" style="width:100%;height:90px;object-fit:cover;border-radius:10px;margin-bottom:8px;" onerror="this.style.display=\'none\'">':'<div style="height:90px;display:flex;align-items:center;justify-content:center;font-size:34px;background:var(--surface-hover);border-radius:10px;margin-bottom:8px;">'+(i.icon||'🎁')+'</div>')+
+'<strong style="font-size:13px;">'+i.name+'</strong><div class="text-xs text-muted" style="margin:4px 0;">'+(i.cost||0)+' نقطة · مخزون '+(i.stock!=null?i.stock:'∞')+'</div>'+(i.active===false?'<span class="badge badge-muted">موقوف</span>':'')+
+'<div style="display:flex;gap:4px;justify-content:center;margin-top:8px;"><button class="btn btn-ghost btn-sm" onclick="window.apsOpenItem(\''+i.id+'\')">✏️</button><button class="btn btn-'+(i.active===false?'success':'danger')+' btn-sm" onclick="window.apsToggleItem(\''+i.id+'\')">'+(i.active===false?'تفعيل':'إيقاف')+'</button><button class="btn btn-danger btn-sm" onclick="window.apsDelItem(\''+i.id+'\')">🗑</button></div></div>';
+}).join(''):'<div class="card" style="grid-column:1/-1;text-align:center;padding:24px;"><div style="font-size:44px;">🏆</div><strong>مفيش منتجات نقاط</strong><div class="text-xs text-muted">ضيف أول مكافأة والطلاب هيشوفوها فوراً في "استبدال النقاط"</div></div>';
+var ordersHost=E('apsOrders','psOrders');
+if(ordersHost){
+var d=dbx();var orders=[];
+['storePurchases','storeOrders','purchases','orders'].forEach(function(k){(d[k]||[]).forEach(function(o){if(o.cost||o.points||o.type==='points')orders.push(Object.assign({__src:k},o));});});
+orders.sort(function(a,b){return String(b.purchasedAt||b.at||b.createdAt||'').localeCompare(String(a.purchasedAt||a.at||a.createdAt||''));});
+ordersHost.innerHTML=orders.length?orders.slice(0,40).map(function(o){
+var st=DataService.getUserById?DataService.getUserById(o.studentId):null;
+var status=o.status||'جديد';
+return '<div class="sub-row" style="padding:8px;"><div style="flex:1;"><strong>'+(st?st.name:'-')+'</strong> <span class="badge badge-primary">🏆 '+(o.cost||o.points||0)+' نقطة</span><div class="text-xs text-muted">'+(o.itemName||'')+' · '+new Date(o.purchasedAt||o.at||o.createdAt||Date.now()).toLocaleDateString('ar-EG')+'</div></div><div style="display:flex;gap:4px;align-items:center;"><span class="badge '+(status==='delivered'||status==='fulfilled'?'badge-success':status==='cancelled'?'badge-danger':'badge-warning')+'">'+status+'</span>'+((status!=='delivered'&&status!=='fulfilled'&&status!=='cancelled')?'<button class="btn btn-success btn-sm" onclick="window.apsOrder(\''+o.__src+'\',\''+o.id+'\',\'delivered\')">✓ تسليم</button>':'')+'</div></div>';
+}).join(''):'<p class="text-muted" style="text-align:center;padding:14px;">مفيش استبدالات بعد</p>';
+}
+}catch(e){ console.error('apsRender',e); }
+};
+window.apsToggleItem=function(id){try{var s=store();var i=s.items.find(function(x){return x.id===id;});if(!i)return;i.active=(i.active===false);savex();window.apsRender();if(window.psRender)window.psRender();}catch(e){}};
+window.apsDelItem=function(id){try{if(!confirm('حذف المكافأة؟'))return;var s=store();s.items=s.items.filter(function(x){return x.id!==id;});savex();window.apsRender();if(window.psRender)window.psRender();}catch(e){}};
+window.apsOrder=function(src,id,status){try{var d=dbx();var o=(d[src]||[]).find(function(x){return x.id===id;});if(!o)return;o.status=status;if(status==='delivered')o.deliveredAt=new Date().toISOString();try{ if(DataService._saveData) DataService._saveData(d); }catch(e){} try{ if(window.FirebaseService&&FirebaseService.connected) FirebaseService.saveDoc(src,id,o); }catch(e){} window.apsRender();if(window.psRender)window.psRender();}catch(e){}};
+window.apsOpenItem=function(editId){
+try{
+var s=store();var i=editId?s.items.find(function(x){return x.id===editId;}):null;
+ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">🏆 '+(i?'تعديل':'إضافة')+' منتج نقاط</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">'+
+'<div class="form-group"><label>الاسم *</label><input type="text" id="apsName" class="form-input" value="'+(i?i.name:'')+'"></div>'+
+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="form-group"><label>التكلفة بالنقاط *</label><input type="number" id="apsCost" class="form-input" value="'+(i?i.cost:50)+'" min="1"></div><div class="form-group"><label>المخزون</label><input type="number" id="apsStock" class="form-input" value="'+((i&&i.stock!=null)?i.stock:99)+'" min="0"></div></div>'+
+'<div class="form-group"><label>أيقونة</label><input type="text" id="apsIcon" class="form-input" value="'+(i?(i.icon||''):'🎁')+'"></div>'+
+'<div class="form-group"><label>🔗 صورة (اختياري)</label><input type="text" id="apsImg" class="form-input" value="'+(i?(i.imageUrl||''):'')+'"></div>'+
+'<button class="btn btn-primary w-full" onclick="window.apsSave(\''+(editId||'')+'\')">💾 حفظ</button></div>','modal-sm');
+}catch(e){ console.error(e); }
+};
+window.apsSave=function(editId){
+try{
+var s=store();
+var name=(document.getElementById('apsName')||{}).value||'';
+if(!name){if(window.safeToast)window.safeToast('اكتب الاسم','error');return;}
+var i=editId?s.items.find(function(x){return x.id===editId;}):null;
+if(!i){i={id:'pit_'+Date.now()};s.items.push(i);}
+i.name=name;i.cost=parseInt((document.getElementById('apsCost')||{}).value)||1;i.stock=parseInt((document.getElementById('apsStock')||{}).value)||99;i.icon=(document.getElementById('apsIcon')||{}).value||'🎁';i.imageUrl=(document.getElementById('apsImg')||{}).value||'';if(i.active===undefined)i.active=true;
+savex();
+if(window.ThemeManager)ThemeManager.closeModal();
+window.apsRender();if(window.psRender)window.psRender();
+if(window.safeToast)window.safeToast('✅ اتحفظ — الطلاب هيشفوه فوراً في استبدال النقاط','success');
+}catch(e){ if(window.safeToast)window.safeToast('خطأ في الحفظ: '+e.message,'error'); }
+};
+build();setTimeout(build,1000);setTimeout(build,2500);
+if(typeof window.showSection==='function'&&!window.__apsHook){window.__apsHook=1;var os=window.showSection;window.showSection=function(id){var r=os.apply(this,arguments);if(id==='pointsStore')setTimeout(window.apsRender,120);return r;};}
 })();
 </script>
 </body>

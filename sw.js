@@ -101,3 +101,33 @@ self.addEventListener('message', e => {
       .then(() => e.source.postMessage({ type: 'CACHE_CLEARED' }));
   }
 });
+/* ============ 📲 FCM background push ============ */
+importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
+try{
+  firebase.initializeApp({
+    apiKey:"نفس_القيم_من_js/config.js",
+    authDomain:"...", projectId:"...", storageBucket:"...",
+    messagingSenderId:"...", appId:"..."
+  });
+  firebase.messaging().onBackgroundMessage(function(payload){
+    var n=payload.notification||{}, d=payload.data||{};
+    self.registration.showNotification(n.title||d.title||'🔔 إشعار جديد',{
+      body:n.body||d.body||'',
+      icon:d.icon||n.icon||'/icon-192.png',
+      badge:'/icon-192.png',
+      tag:d.tag||'eduflow-push',
+      data:{url:d.url||'/'}
+    });
+  });
+}catch(e){ console.error('FCM SW init failed',e); }
+self.addEventListener('notificationclick',function(ev){
+  try{
+    ev.notification.close();
+    var url=(ev.notification.data&&ev.notification.data.url)||'/';
+    ev.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(function(list){
+      for(var i=0;i<list.length;i++){ if(list[i].url.indexOf(url)!==-1) return list[i].focus(); }
+      return clients.openWindow(url);
+    }));
+  }catch(e){}
+});
