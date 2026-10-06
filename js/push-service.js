@@ -3,16 +3,17 @@
 ================================================================ */
 (function(){
 "use strict";
-var VAPID='حط_هنا_الـ_PUBLIC_VAPID_KEY';   /* ← من Firebase Console */
+var VAPID='الصق_هنا_الـ_VAPID_PUBLIC_KEY';   /* مثال شكله: BEl62iUYgUv7F... (سطر واحد طويل) */
 function toast(m,t){ try{ if(window.safeToast) window.safeToast(m,t||'info'); else if(typeof ThemeManager!=='undefined'&&ThemeManager.toast) ThemeManager.toast(m,t||'info'); }catch(e){} }
 function supported(){ return ('Notification' in window)&&('serviceWorker' in navigator)&&window.firebase&&firebase.messaging; }
 function me(){ try{ return (window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null; }catch(e){ return null; } }
 function pageFor(role){ return {student:'student-dashboard.html',teacher:'teacher-dashboard.html',assistant:'assistant-dashboard.html',admin:'admin-dashboard.html',super_admin:'admin-dashboard.html',parent:'parent-dashboard.html'}[role]||'index.html'; }
 function hash(s){ var h=0; for(var i=0;i<String(s).length;i++){ h=(h*31+s.charCodeAt(i))|0; } return Math.abs(h).toString(36); }
-async function reg(){ await navigator.serviceWorker.ready; return navigator.serviceWorker.getRegistration(); }
+function vapidOk(){ try{ return !!VAPID && VAPID.indexOf('حط_هنا')===-1 && VAPID.length>60; }catch(e){ return false; } }
 async function getToken(){
-  var r=await reg(); var m=firebase.messaging();
-  try{ m.useServiceWorker(r); }catch(e){}
+  if(!vapidOk()){ throw new Error('حط الـ VAPID key في أول js/push-service.js (Firebase Console → Project settings → Cloud Messaging → Web Push certificates)'); }
+  /* Firebase هيسجل firebase-messaging-sw.js من جذر الموقع تلقائياً */
+  var m=firebase.messaging();
   return await m.getToken({vapidKey:VAPID});
 }
 async function saveToken(t){
@@ -65,7 +66,15 @@ window.PushService={
       foreground(); hidePrompt();
       toast('✅ إشعارات الهاتف اتفعت — هتوصلك حتى والتطبيق مقفول','success');
       return true;
-    }catch(e){ console.error(e); toast('❌ خطأ: '+e.message,'error'); return false; }
+    }catch(e){
+      console.error(e);
+      var msg=(e&&e.message)||'خطأ غير معروف';
+      if(e&&e.code==='messaging/failed-service-worker-registration') msg='ملف firebase-messaging-sw.js مش موجود على السيرفر — ارفعه في جذر الموقع واعمل Deploy';
+      else if(e&&e.code==='messaging/unsupported-browser') msg='المتصفح ده مش داعم إشعارات الويب';
+      else if(e&&e.code==='messaging/permission-blocked') msg='الإشعارات متقفلة من إعدادات المتصفح/النظام';
+      toast('❌ '+msg,'error');
+      return false;
+    }
   },
   async disable(){
     try{ var t=await getToken(); await dropToken(t); localStorage.removeItem('pushEnabled'); toast('🔕 اتوقفت إشعارات الهاتف','info'); }catch(e){}
