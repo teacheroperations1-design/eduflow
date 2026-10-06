@@ -670,6 +670,8 @@ history.replaceState(null,'',location.pathname+(p.toString()?'?'+p.toString():''
 <script src="js/pwa-injector.js"></script>
 <script src="js/auth-service.js"></script>
 <script src="js/notify-service.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
+<script src="js/push-service.js"></script>
 <script src="js/billing/core.js"></script>
 <script src="js/billing/notify-rules.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
@@ -6670,5 +6672,6 @@ build();setTimeout(build,1000);setTimeout(build,2500);
 if(typeof window.showSection==='function'&&!window.__apsHook){window.__apsHook=1;var os=window.showSection;window.showSection=function(id){var r=os.apply(this,arguments);if(id==='pointsStore')setTimeout(window.apsRender,120);return r;};}
 })();
 </script>
+<script src="js/push-service.js"></script>
 </body>
 </html>
