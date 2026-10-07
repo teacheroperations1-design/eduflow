@@ -1,15 +1,16 @@
 // ================================================================
 // 📤 api/send-push.js — محرك إرسال إشعارات Push عبر FCM
-// Vercel Serverless Function (شغال على الخطة المجانية)
+// Vercel Serverless Function
 // ----------------------------------------------------------------
 // • GET  → تقرير صحي شامل (افتح الرابط في المتصفح لتشخيص أي مشكلة)
-// • POST → إرسال إشعار لمستخدم: { to, title, body, tag, url, page }
+// • POST → إرسال إشعار لمستخدم: { to, title, body, tag, url, page, purge }
 // • يقبل متغير البيئة FIREBASE_SERVICE_ACCOUNT_BASE64 كـ Base64 أو JSON خام
 // ================================================================
 
-/* 🔒 تحميل firebase-admin بأمان — لو مش متثبت مش هنكسر الفانكشن كلها */
 let admin = null;
 let adminLoadError = null;
+
+/* 🔒 تحميل firebase-admin بأمان */
 try {
   admin = require('firebase-admin');
 } catch (e) {
@@ -17,7 +18,7 @@ try {
 }
 
 const BASE = 'https://eduflow-nine-dusky.vercel.app';
-const VERSION = 5;
+const VERSION = '5.1.0';
 
 let ready = false;
 let initError = null;
@@ -28,7 +29,7 @@ function envRaw() {
   return String(process.env.FIREBASE_SERVICE_ACCOUNT_BASE64 || '').trim();
 }
 
-/* 🧹 تنظيف المفاتيح والقيم من أي مسافات زائدة (بتحصل لما النسخ من محرر نصوص) */
+/* 🧹 تنظيف المفاتيح والقيم من أي مسافات زائدة */
 function normalizeCred(o) {
   if (!o || typeof o !== 'object') return null;
   const out = {};
@@ -37,11 +38,13 @@ function normalizeCred(o) {
     if (typeof v === 'string') v = v.trim();
     out[k.trim()] = v;
   });
-  if (out.private_key) out.private_key = String(out.private_key).replace(/\\n/g, '\n');
+  if (out.private_key) {
+    out.private_key = String(out.private_key).replace(/\\n/g, '\n');
+  }
   return out;
 }
 
-/* 📥 يقبل القيمة JSON خام أو Base64 — الاتنين شغالين */
+/* 📥 يقبل القيمة JSON خام أو Base64 */
 function readCred() {
   const raw = envRaw();
   if (!raw) return null;
@@ -56,13 +59,27 @@ function readCred() {
 function initAdmin() {
   if (ready) return true;
   if (initError) return false;
-  if (!admin) { initError = 'admin-not-loaded: ' + adminLoadError; return false; }
+  if (!admin) { 
+    initError = 'admin-not-loaded: ' + adminLoadError; 
+    return false; 
+  }
+  
+  // 🛡️ إصلاح حيوي لبيئة Vercel: منع إعادة التهيئة في الـ Warm Starts
+  if (admin.apps.length > 0) {
+    ready = true;
+    return true;
+  }
+
   const cred = readCred();
-  if (!cred) { initError = 'env-unreadable (القيمة مش JSON سليم ولا Base64 سليم)'; return false; }
+  if (!cred) { 
+    initError = 'env-unreadable (القيمة مش JSON سليم ولا Base64 سليم)'; 
+    return false; 
+  }
   if (!cred.project_id || !cred.client_email || !cred.private_key) {
     initError = 'env-json-incomplete (ناقص project_id / client_email / private_key)';
     return false;
   }
+  
   try {
     admin.initializeApp({ credential: admin.credential.cert(cred) });
     ready = true;
@@ -73,7 +90,7 @@ function initAdmin() {
   }
 }
 
-/* 🩺 التقرير الصحي — بيظهر لما تفتح الرابط في المتصفح */
+/* 🩺 التقرير الصحي */
 function diag() {
   const raw = envRaw();
   try { initAdmin(); } catch (e) {}
@@ -89,30 +106,37 @@ function diag() {
     envHasSpacesOrNewLines: /\s/.test(raw) && raw.charAt(0) !== '{',
     adminInitialized: ready,
     adminInitError: initError,
-    hint: 'POST body: {to, title, body, tag, url, page}'
+    firebaseApps: admin ? admin.apps.length : 0,
+    hint: 'POST body: {to, title, body, tag, url, page, purge}'
   };
 }
 
-function cors(req, res) {
+function setCors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
 
 /* ---------- الفانكشن الرئيسية ---------- */
 
 module.exports = async (req, res) => {
-  cors(req, res);
+  setCors(res);
 
-  /*preflight*/
-  if (req.method === 'OPTIONS') return res.status(204).end();
+  /* Preflight */
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
 
   /* 🩺 GET = تقرير صحي */
-  if (req.method === 'GET') return res.status(200).json(diag());
+  if (req.method === 'GET') {
+    return res.status(200).json(diag());
+  }
 
-  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only', diag: diag() });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'POST only', diag: diag() });
+  }
 
-  /* 🧱 فحص الاعتماديات قبل أي حاجة */
+  /* 🧱 فحص الاعتماديات */
   if (!admin) {
     return res.status(500).json({
       error: 'firebase-admin مش متثبتة على Vercel',
@@ -120,6 +144,7 @@ module.exports = async (req, res) => {
       fix: 'اتأكد إن package.json (اللي فيه firebase-admin) موجود في جذر الريبو على GitHub واستنى Deploy جديد يخلص Ready'
     });
   }
+
   if (!initAdmin()) {
     return res.status(500).json({
       error: 'مشكلة في مفتاح الخدمة',
@@ -130,12 +155,33 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { to, title, body, tag, url, page } = req.body || {};
-    if (!to) return res.status(400).json({ error: 'missing "to" (userId)' });
+    const { to, title, body, tag, url, page, purge } = req.body || {};
+    
+    if (!to) {
+      return res.status(400).json({ error: 'missing "to" (userId)' });
+    }
+
+    const db = admin.firestore();
+    const userIdStr = String(to);
+
+    /* 🧹 وضع التطهير: امسح كل توكينات المستخدم (الميتة والقديمة) */
+    if (purge) {
+      const snapP = await db.collection('pushTokens').where('userId', '==', userIdStr).get();
+      if (snapP.empty) {
+        return res.status(200).json({ purged: 0, note: 'no tokens to purge' });
+      }
+      const batch = db.batch();
+      let n = 0;
+      snapP.forEach(d => { 
+        batch.delete(d.ref); 
+        n++; 
+      });
+      await batch.commit();
+      return res.status(200).json({ purged: n });
+    }
 
     /* 🔎 جلب كل توكينات المستخدم */
-    const snap = await admin.firestore().collection('pushTokens')
-      .where('userId', '==', String(to)).get();
+    const snap = await db.collection('pushTokens').where('userId', '==', userIdStr).get();
 
     if (snap.empty) {
       return res.status(200).json({ sent: 0, note: 'no tokens for this user yet (المستخدم لسه مفعّلش الإشعارات)' });
@@ -145,9 +191,15 @@ module.exports = async (req, res) => {
     const metas = [];
     snap.forEach(d => {
       const t = d.data();
-      if (t && t.token) { tokens.push(t.token); metas.push(Object.assign({ docId: d.id }, t)); }
+      if (t && t.token) { 
+        tokens.push(t.token); 
+        metas.push(Object.assign({ docId: d.id }, t)); 
+      }
     });
-    if (!tokens.length) return res.status(200).json({ sent: 0, note: 'tokens empty' });
+    
+    if (!tokens.length) {
+      return res.status(200).json({ sent: 0, note: 'tokens empty' });
+    }
 
     /* 🔗 رابط الفتح عند الضغط على الإشعار */
     const link = url || (BASE + '/' + (page || metas[0].page || 'index.html'));
@@ -177,29 +229,49 @@ module.exports = async (req, res) => {
     const resp = await admin.messaging().sendEachForMulticast(payload);
 
     /* 🧹 تنظيف التوكينات الميتة تلقائياً */
+    const DEAD_CODES = [
+      'messaging/registration-token-not-registered',
+      'messaging/invalid-registration-token',
+      'messaging/third-party-notification-error',
+      'messaging/mismatched-credential',
+      'messaging/invalid-argument'
+    ];
+    
     const dead = [];
+    const errCodes = {};
+    
     resp.responses.forEach((r, i) => {
-      const code = r.error && r.error.code;
-      if (!r.success && (code === 'messaging/registration-token-not-registered' || code === 'messaging/invalid-registration-token')) {
-        dead.push(metas[i].docId);
+      const code = (r.error && r.error.code) || 'unknown';
+      if (!r.success) {
+        errCodes[code] = (errCodes[code] || 0) + 1;
+        if (DEAD_CODES.indexOf(code) >= 0) {
+          dead.push(metas[i].docId);
+        }
       }
     });
+
     if (dead.length) {
       try {
-        const batch = admin.firestore().batch();
-        dead.forEach(id => batch.delete(admin.firestore().collection('pushTokens').doc(id)));
+        const batch = db.batch();
+        dead.forEach(id => batch.delete(db.collection('pushTokens').doc(id)));
         await batch.commit();
-      } catch (e) { console.error('prune failed:', e); }
+      } catch (e) { 
+        console.error('prune failed:', e); 
+      }
     }
 
     return res.status(200).json({
       sent: resp.successCount,
       failed: resp.failureCount,
-      pruned: dead.length
+      pruned: dead.length,
+      errors: errCodes
     });
 
   } catch (e) {
     console.error('send-push error:', e);
-    return res.status(500).json({ error: String((e && e.message) || e) });
+    return res.status(500).json({ 
+      error: String((e && e.message) || e),
+      stack: process.env.NODE_ENV === 'development' ? e.stack : undefined
+    });
   }
 };

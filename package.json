@@ -1,8 +1,33 @@
 {
   "name": "eduflow-push",
-  "version": "1.0.0",
+  "version": "1.1.0",
+  "description": "EduFlow Push Notifications & Backend Services - Habbash Group",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "eduflow",
+    "firebase",
+    "fcm",
+    "push-notifications",
+    "habbash-group"
+  ],
+  "author": "Habbash Group",
+  "license": "UNLICENSED",
   "private": true,
   "dependencies": {
-    "firebase-admin": "^12.7.0"
+    "firebase-admin": "^12.7.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
