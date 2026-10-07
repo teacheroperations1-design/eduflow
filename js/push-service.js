@@ -12,9 +12,26 @@ function pageFor(role){ return {student:'student-dashboard.html',teacher:'teache
 function hash(s){ var h=0; for(var i=0;i<String(s).length;i++){ h=(h*31+s.charCodeAt(i))|0; } return Math.abs(h).toString(36); }
 function vapidOk(){ try{ return !!VAPID && VAPID.indexOf('حط_هنا')===-1 && VAPID.length>60; }catch(e){ return false; } }
 
+async function ensureSw(){
+  var scope='/firebase-cloud-messaging-push-scope/';
+  var reg=await navigator.serviceWorker.getRegistration(scope).catch(function(){return null;});
+  /* تسجيل ميت/معلّق → شيله */
+  if(reg && !reg.active && !reg.installing && !reg.waiting){ try{ await reg.unregister(); reg=null; }catch(e){} }
+  if(!reg){ reg=await navigator.serviceWorker.register('/firebase-messaging-sw.js',{scope:scope}); }
+  /* استنى لحد ما يبقى فيه Worker نشط (10 ثواني كحد أقصى) */
+  var t0=Date.now();
+  while(!reg.active && Date.now()-t0<10000){
+    await new Promise(function(r){ setTimeout(r,300); });
+    reg=(await navigator.serviceWorker.getRegistration(scope).catch(function(){return null;}))||reg;
+  }
+  return reg;
+}
 async function getToken(){
   if(!vapidOk()){ throw new Error('حط الـ VAPID key في أول js/push-service.js'); }
+  var reg=null;
+  try{ reg=await ensureSw(); }catch(e){ console.warn('SW ensure failed:',e); }
   var m=firebase.messaging();
+  if(reg&&reg.active){ try{ m.useServiceWorker(reg); }catch(e){} }
   return await m.getToken({vapidKey:VAPID});
 }
 
