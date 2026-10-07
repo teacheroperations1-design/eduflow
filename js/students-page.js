@@ -132,7 +132,7 @@ function filtersHtml(){
     
     if(isAdmin()){
         h += '<div id="stuMultiTeacherWrap" class="form-group" style="margin:0;position:relative;overflow:visible!important;">' +
-             '<label>👨‍🏫 فلتر الأساتذة (المشتركين)</label>' +
+             '<label> فلتر  المشتركين </label>' +
              '<input type="text" class="form-input" readonly style="cursor:pointer;" placeholder="اختر للمقارنة..." value="'+(SP.t.length ? SP.t.length+' أستاذ' : 'الكل')+'" onclick="window.spDrop()">' +
              '<div id="spTDrop" class="sp-drop-menu" style="display:none;position:fixed;">' +
              (DataService.getTeachers?DataService.getTeachers():[]).map(function(t){

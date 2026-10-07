@@ -6,711 +6,281 @@
 <title>طباعة وتصدير باركودات الطلاب | EduFlow</title>
 <link rel="stylesheet" href="css/eduflow-theme.css">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Fira+Code:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-:root {
-    --primary: #6366f1;
-    --primary-light: #818cf8;
-    --primary-dark: #4f46e5;
-    --success: #10b981;
-    --warning: #f59e0b;
-    --danger: #ef4444;
-    --bg: #f8fafc;
-    --surface: #ffffff;
-    --surface-hover: #f1f5f9;
-    --border: #e2e8f0;
-    --text: #0f172a;
-    --text-secondary: #475569;
-    --text-muted: #94a3b8;
-    --font-en: 'Fira Code', 'Courier New', monospace;
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05);
-}
-
-[data-theme="dark"] {
-    --bg: #0b1120;
-    --surface: #1e293b;
-    --surface-hover: #334155;
-    --border: #334155;
-    --text: #f8fafc;
-    --text-secondary: #cbd5e1;
-    --text-muted: #64748b;
-}
-
-body {
-    font-family: 'Cairo', sans-serif;
-    background-color: var(--bg);
-    background-image: radial-gradient(var(--border) 1px, transparent 1px);
-    background-size: 24px 24px;
-    color: var(--text);
-    margin: 0;
-    padding: 0;
-    min-height: 100vh;
-    transition: background-color 0.3s, color 0.3s;
-}
-
-.page-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 24px;
-}
-
-.toolbar {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 24px;
-    padding: 28px;
-    margin-bottom: 40px;
-    box-shadow: var(--shadow-lg);
-    position: relative;
-    overflow: hidden;
-}
-
-.toolbar::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--primary), #8b5cf6, #ec4899);
-}
-
-.toolbar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 28px;
-    flex-wrap: wrap;
-    gap: 16px;
-}
-
-.toolbar-title {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.toolbar-icon {
-    width: 56px;
-    height: 56px;
-    background: linear-gradient(135deg, var(--primary), #8b5cf6);
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 28px;
-    color: white;
-    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.25);
-}
-
-.toolbar-title h1 {
-    margin: 0;
-    font-size: 22px;
-    font-weight: 800;
-    color: var(--text);
-}
-
-.toolbar-title p {
-    margin: 4px 0 0;
-    font-size: 13px;
-    color: var(--text-muted);
-}
-
-.filters-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
-}
-
-.filter-box {
-    background: var(--surface-hover);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 16px;
-    transition: all 0.2s;
-}
-
-.filter-box:focus-within {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-.filter-box label {
-    display: block;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--text-secondary);
-    margin-bottom: 8px;
-    letter-spacing: 0.5px;
-}
-
-.size-selector {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-bottom: 24px;
-    align-items: center;
-    background: var(--surface-hover);
-    padding: 12px;
-    border-radius: 16px;
-    border: 1px solid var(--border);
-}
-
-.size-label {
-    font-weight: 800;
-    font-size: 14px;
-    color: var(--text-secondary);
-    margin-left: 8px;
-}
-
-.size-btn {
-    padding: 10px 18px;
-    background: var(--surface);
-    border: 2px solid var(--border);
-    border-radius: 12px;
-    cursor: pointer;
-    font-weight: 700;
-    font-size: 13px;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--text-secondary);
-}
-
-.size-btn:hover {
-    border-color: var(--primary);
-    color: var(--primary);
-    transform: translateY(-2px);
-}
-
-.size-btn.active {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: white;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-}
-
-.stats-row {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-bottom: 24px;
-}
-
-.stat-pill {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 10px 18px;
-    border-radius: 14px;
-    font-size: 13px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    box-shadow: var(--shadow-sm);
-    transition: all 0.2s;
-}
-
-.stat-pill:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-}
-
-.stat-pill strong {
-    color: var(--primary);
-    font-family: var(--font-en);
-    font-size: 16px;
-    font-weight: 800;
-}
-
-.stat-pill.highlight {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
-    border-color: var(--primary-light);
-    color: var(--primary-dark);
-}
-
-[data-theme="dark"] .stat-pill.highlight {
-    color: var(--primary-light);
-}
-
-.actions-row {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.btn-action {
-    padding: 12px 24px;
-    border-radius: 12px;
-    font-weight: 700;
-    font-size: 14px;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.2s;
-    box-shadow: var(--shadow-sm);
-}
-
-.btn-action:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-}
-
-.btn-action:active {
-    transform: translateY(0);
-}
-
-.btn-primary-action {
-    background: linear-gradient(135deg, var(--primary), #8b5cf6);
-    color: white;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
-}
-
-.btn-success-action {
-    background: linear-gradient(135deg, #10b981, #059669);
-    color: white;
-}
-
-.btn-warning-action {
-    background: linear-gradient(135deg, #f59e0b, #d97706);
-    color: white;
-}
-
-.btn-ghost-action {
-    background: var(--surface);
-    color: var(--text-secondary);
-    border: 1px solid var(--border);
-}
-
-.btn-ghost-action:hover {
-    background: var(--surface-hover);
-    color: var(--text);
-    border-color: var(--text-muted);
-}
-
-/* Cards Grid */
-.qr-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 24px;
-    perspective: 1000px;
-}
-
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.qr-card {
-    background: var(--surface);
-    border: 2px solid var(--border);
-    border-radius: 24px;
-    overflow: hidden;
-    position: relative;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: var(--shadow-md);
-    display: flex;
-    flex-direction: column;
-    animation: fadeInUp 0.5s ease forwards;
-}
-
-.qr-card:hover {
-    transform: translateY(-8px);
-    box-shadow: var(--shadow-xl);
-    border-color: var(--primary-light);
-}
-
-.qr-card.selected {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15), var(--shadow-lg);
-    background: linear-gradient(to bottom right, var(--surface), rgba(99, 102, 241, 0.02));
-}
-
-.card-accent {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 6px;
-    z-index: 2;
-}
-
-.qr-card.student .card-accent { background: linear-gradient(90deg, #6366f1, #8b5cf6); }
-.qr-card.teacher .card-accent { background: linear-gradient(90deg, #f59e0b, #d97706); }
-.qr-card.group .card-accent { background: linear-gradient(90deg, #10b981, #059669); }
-
-.card-header {
-    padding: 20px 20px 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: relative;
-    z-index: 2;
-}
-
-.card-badge {
-    font-size: 11px;
-    font-weight: 800;
-    padding: 6px 12px;
-    border-radius: 10px;
-    color: white;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    box-shadow: var(--shadow-sm);
-}
-
-.badge-student { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
-.badge-teacher { background: linear-gradient(135deg, #f59e0b, #d97706); }
-.badge-group { background: linear-gradient(135deg, #10b981, #059669); }
-
-/* Custom Checkbox */
-.custom-checkbox {
-    position: relative;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.custom-checkbox input {
-    position: absolute;
-    opacity: 0;
-    cursor: pointer;
-    height: 0;
-    width: 0;
-}
-
-.checkmark {
-    width: 26px;
-    height: 26px;
-    background: var(--surface-hover);
-    border: 2px solid var(--border);
-    border-radius: 8px;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.custom-checkbox input:checked ~ .checkmark {
-    background: var(--primary);
-    border-color: var(--primary);
-    box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
-}
-
-.checkmark::after {
-    content: '✓';
-    color: white;
-    font-size: 16px;
-    font-weight: bold;
-    opacity: 0;
-    transform: scale(0);
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.custom-checkbox input:checked ~ .checkmark::after {
-    opacity: 1;
-    transform: scale(1);
-}
-
-.card-body {
-    padding: 24px;
-    text-align: center;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.qr-wrapper {
-    background: white;
-    padding: 16px;
-    border-radius: 20px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-    margin-bottom: 20px;
-    border: 1px solid #f1f5f9;
-    position: relative;
-    transition: transform 0.3s;
-}
-
-.qr-card:hover .qr-wrapper {
-    transform: scale(1.02);
-}
-
-.qr-wrapper::before {
-    content: '';
-    position: absolute;
-    inset: -6px;
-    border-radius: 24px;
-    background: linear-gradient(135deg, var(--primary-light), transparent);
-    opacity: 0.2;
-    z-index: -1;
-}
-
-.card-img {
-    width: 160px;
-    height: 160px;
-    display: block;
-    object-fit: contain;
-}
-
-.card-name {
-    font-size: 20px;
-    font-weight: 800;
-    margin: 0 0 12px;
-    color: var(--text);
-    line-height: 1.3;
-}
-
-.card-code-wrapper {
-    background: var(--surface-hover);
-    padding: 8px 20px;
-    border-radius: 99px;
-    margin-bottom: 12px;
-    border: 1px dashed var(--border);
-    display: inline-block;
-}
-
-.card-code {
-    font-family: var(--font-en);
-    font-size: 16px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    color: var(--primary);
-}
-
-.card-meta {
-    font-size: 13px;
-    color: var(--text-muted);
-    margin: 0;
-    font-weight: 500;
-    line-height: 1.8;
-}
-
-.card-footer {
-    padding: 16px 20px;
-    border-top: 1px solid var(--border);
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    background: var(--surface-hover);
-}
-
-.flex-1 { flex: 1; }
-
-/* Modal */
-.modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.6);
-    backdrop-filter: blur(8px);
-    z-index: 9999;
-    padding: 24px;
-    overflow-y: auto;
-}
-
-.modal-content {
-    max-width: 1000px;
-    margin: 40px auto;
-    background: var(--surface);
-    border-radius: 24px;
-    padding: 32px;
-    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-    border: 1px solid var(--border);
-}
-
-.preview-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 16px;
-    max-height: 60vh;
-    overflow-y: auto;
-    padding: 16px;
-    background: var(--surface-hover);
-    border-radius: 16px;
-    border: 1px solid var(--border);
-}
-
-/* Empty State */
-.empty-state {
-    text-align: center;
-    padding: 80px 20px;
-    grid-column: 1 / -1;
-}
-.empty-state-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
-.empty-state-title { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
-.empty-state-text { font-size: 14px; color: var(--text-muted); }
-
-/* Form Elements Enhancement */
-.form-select, .form-input {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px 14px;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text);
-    width: 100%;
-    transition: all 0.2s;
-}
-
-.form-select:focus, .form-input:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-.btn {
-    padding: 8px 16px;
-    border-radius: 10px;
-    font-weight: 700;
-    font-size: 13px;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.btn-sm { padding: 8px 12px; font-size: 12px; }
-.btn-primary { background: var(--primary); color: white; }
-.btn-primary:hover { background: var(--primary-dark); }
-.btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
-.btn-secondary:hover { background: var(--surface-hover); }
-.btn-ghost { background: transparent; color: var(--text-secondary); }
-.btn-ghost:hover { background: var(--surface-hover); }
-.btn-icon { padding: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
-
-/* Print Styles */
-@media print {
-    body { background: white; padding: 0; margin: 0; color: black; }
-    .no-print { display: none !important; }
-    .page-container { max-width: 100%; padding: 0; }
-    .qr-grid { 
-        grid-template-columns: repeat(4, 1fr); 
-        gap: 12px; 
-        padding: 12px;
-    }
-    .qr-card { 
-        border: 1px solid #ddd; 
-        page-break-inside: avoid; 
-        padding: 0; 
-        box-shadow: none; 
-        transform: none; 
-        border-radius: 8px;
-        background: white;
-        animation: none;
-    }
-    .qr-card:hover { transform: none; }
-    .card-accent { display: none; }
-    .qr-wrapper { box-shadow: none; border: 1px solid #eee; padding: 8px; border-radius: 8px; }
-    .card-img { width: 100%; height: auto; max-width: 3.5cm; }
-    .card-name { font-size: 12pt; margin: 6px 0; color: black; }
-    .card-code-wrapper { background: none; border: none; padding: 0; }
-    .card-code { font-size: 14pt; margin: 6px 0; color: #4f46e5; }
-    .card-meta { font-size: 9pt; margin-bottom: 6px; color: #555; line-height: 1.8; }
-    .card-badge, .card-check, .card-actions, .custom-checkbox { display: none; }
-    @page { margin: 1cm; }
-    
-    body.print-small .qr-grid { grid-template-columns: repeat(6, 1fr); }
-    body.print-small .card-img { max-width: 2.5cm; }
-    body.print-large .qr-grid { grid-template-columns: repeat(3, 1fr); }
-    body.print-large .card-img { max-width: 5cm; }
-    body.print-pocket .qr-grid { grid-template-columns: repeat(2, 1fr); }
-    body.print-pocket .card-img { max-width: 6cm; }
+:root{
+  --primary:#6366f1;--primary-light:#818cf8;--primary-dark:#4f46e5;
+  --success:#10b981;--warning:#f59e0b;--danger:#ef4444;
+  --bg:#f8fafc;--surface:#ffffff;--surface-hover:#f1f5f9;--border:#e2e8f0;
+  --text:#0f172a;--text-secondary:#475569;--text-muted:#94a3b8;
+  --font-en:'Fira Code','Courier New',monospace;
+  --shadow-sm:0 1px 2px 0 rgb(0 0 0/.05);
+  --shadow-md:0 4px 6px -1px rgb(0 0 0/.05),0 2px 4px -2px rgb(0 0 0/.05);
+  --shadow-lg:0 10px 15px -3px rgb(0 0 0/.05),0 4px 6px -4px rgb(0 0 0/.05);
+  --cols:4; --qr-size:30mm; --sheet-gap:10px;
+}
+[data-theme="dark"]{--bg:#0b1120;--surface:#1e293b;--surface-hover:#334155;--border:#334155;--text:#f8fafc;--text-secondary:#cbd5e1;--text-muted:#64748b;}
+body{font-family:'Cairo',sans-serif;background:var(--bg);background-image:radial-gradient(var(--border) 1px,transparent 1px);background-size:24px 24px;color:var(--text);margin:0;min-height:100vh;}
+body[data-shape="vertical"]{--qr-size:30mm;}
+body[data-shape="square"]{--qr-size:34mm;}
+body[data-shape="landscape"]{--qr-size:26mm;}
+.page-container{max-width:1400px;margin:0 auto;padding:24px;}
+.toolbar{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:24px;margin-bottom:30px;box-shadow:var(--shadow-lg);position:relative;overflow:hidden;}
+.toolbar::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--primary),#8b5cf6,#ec4899);}
+.toolbar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:14px;}
+.toolbar-title{display:flex;align-items:center;gap:14px;}
+.toolbar-icon{width:52px;height:52px;background:linear-gradient(135deg,var(--primary),#8b5cf6);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;}
+.toolbar-title h1{margin:0;font-size:20px;font-weight:800;}
+.toolbar-title p{margin:3px 0 0;font-size:12px;color:var(--text-muted);}
+.filters-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px;}
+.filter-box{background:var(--surface-hover);border:1px solid var(--border);border-radius:14px;padding:12px;}
+.filter-box label{display:block;font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;}
+.print-settings{background:linear-gradient(135deg,rgba(99,102,241,.06),rgba(139,92,246,.06));border:1px solid var(--primary-light);border-radius:18px;padding:18px;margin-bottom:16px;}
+.print-settings-title{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px;margin-bottom:14px;color:var(--primary-dark);}
+[data-theme="dark"] .print-settings-title{color:var(--primary-light);}
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;}
+.setting-group{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;}
+.setting-label{font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.shape-options,.size-options{display:flex;gap:6px;flex-wrap:wrap;}
+.shape-btn,.size-btn{padding:8px 12px;background:var(--surface-hover);border:2px solid var(--border);border-radius:10px;cursor:pointer;font-weight:700;font-size:12px;color:var(--text-secondary);flex:1;min-width:60px;font-family:inherit;transition:all .2s;}
+.shape-btn:hover,.size-btn:hover{border-color:var(--primary);color:var(--primary);}
+.shape-btn.active,.size-btn.active{background:var(--primary);border-color:var(--primary);color:#fff;}
+.slider-container{display:flex;align-items:center;gap:10px;}
+.slider-container input[type="range"]{flex:1;height:6px;background:var(--surface-hover);border-radius:3px;outline:none;-webkit-appearance:none;}
+.slider-container input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;background:var(--primary);border-radius:50%;cursor:pointer;}
+.slider-container input[type="range"]:disabled{opacity:.4;}
+.slider-value{background:var(--primary);color:#fff;padding:3px 10px;border-radius:8px;font-weight:800;font-family:var(--font-en);font-size:13px;min-width:36px;text-align:center;}
+.switch-label{display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;font-size:12px;margin-bottom:7px;}
+.switch-input{position:absolute;opacity:0;width:0;height:0;}
+.switch{position:relative;width:40px;height:22px;background:var(--surface-hover);border:2px solid var(--border);border-radius:11px;transition:all .2s;flex-shrink:0;}
+.switch::after{content:'';position:absolute;top:2px;right:2px;width:14px;height:14px;background:var(--text-muted);border-radius:50%;transition:all .2s;}
+.switch-input:checked + .switch{background:var(--primary);border-color:var(--primary);}
+.switch-input:checked + .switch::after{right:20px;background:#fff;}
+.stats-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.stat-pill{background:var(--surface);border:1px solid var(--border);padding:8px 14px;border-radius:12px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;}
+.stat-pill strong{color:var(--primary);font-family:var(--font-en);font-size:15px;font-weight:800;}
+.stat-pill.highlight{background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(139,92,246,.12));border-color:var(--primary-light);}
+.actions-row{display:flex;gap:10px;flex-wrap:wrap;}
+.btn-action{padding:11px 20px;border-radius:12px;font-weight:700;font-size:13px;border:none;cursor:pointer;display:flex;align-items:center;gap:7px;font-family:inherit;transition:all .2s;}
+.btn-action:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
+.btn-primary-action{background:linear-gradient(135deg,var(--primary),#8b5cf6);color:#fff;}
+.btn-success-action{background:linear-gradient(135deg,#10b981,#059669);color:#fff;}
+.btn-warning-action{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;}
+.btn-pdf-action{background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;}
+.btn-ghost-action{background:var(--surface);color:var(--text-secondary);border:1px solid var(--border);}
+/* 📄 الأوراق */
+.sheet{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;margin:0 auto 22px;box-shadow:var(--shadow-lg);}
+.sheet-hidden{display:none!important;}
+.sheet-label{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;font-weight:800;color:var(--text-secondary);background:var(--surface-hover);border:1px dashed var(--border);border-radius:8px;padding:5px 10px;margin-bottom:10px;flex-wrap:wrap;}
+.sheet-grid{display:grid;grid-template-columns:repeat(var(--cols),1fr);gap:var(--sheet-gap);align-content:start;}
+body.compact-print .sheet-grid{gap:6px;}
+.qr-card{position:relative;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;height:auto;color:var(--text);}
+.qr-card.selected{border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,.2);}
+body[data-shape="landscape"] .qr-card{flex-direction:row;text-align:right;gap:10px;padding:8px 10px;align-items:center;}
+.qr-wrap{background:#fff;border:1px solid var(--border);border-radius:8px;padding:4px;flex-shrink:0;line-height:0;}
+.qr-wrap img{display:block;width:var(--qr-size);height:var(--qr-size);}
+.card-txt{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;}
+body[data-shape="landscape"] .card-txt{align-items:flex-start;}
+.card-name{font-size:12px;font-weight:800;line-height:1.3;margin:0;color:var(--text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.card-code{font-family:var(--font-en);font-size:11px;font-weight:800;letter-spacing:1px;color:var(--primary);background:var(--surface-hover);border:1px dashed var(--border);border-radius:99px;padding:1px 10px;}
+.card-meta{font-size:9px;color:var(--text-muted);margin:0;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.card-brand{font-size:8px;color:var(--text-muted);opacity:.85;margin:0;}
+.card-checkwrap{position:absolute;top:4px;left:4px;z-index:3;}
+body[data-shape="landscape"] .card-checkwrap{top:4px;left:auto;right:4px;}
+.card-checkwrap input{width:16px;height:16px;accent-color:var(--primary);cursor:pointer;}
+.cm{position:absolute;width:9px;height:9px;pointer-events:none;display:none;z-index:4;}
+body.show-cut-marks .cm{display:block;}
+.cm-tl{top:-1px;left:-1px;border-top:2px dashed var(--text-muted);border-left:2px dashed var(--text-muted);}
+.cm-tr{top:-1px;right:-1px;border-top:2px dashed var(--text-muted);border-right:2px dashed var(--text-muted);}
+.cm-bl{bottom:-1px;left:-1px;border-bottom:2px dashed var(--text-muted);border-left:2px dashed var(--text-muted);}
+.cm-br{bottom:-1px;right:-1px;border-bottom:2px dashed var(--text-muted);border-right:2px dashed var(--text-muted);}
+/* 📥 وضع التقاط PDF */
+body.pdf-capture .sheet-label,body.pdf-capture .card-checkwrap,body.pdf-capture .pager-bar,body.pdf-capture .toolbar{display:none!important;}
+body.pdf-capture .sheet{box-shadow:none!important;border:none!important;margin:0!important;padding:0!important;background:#fff!important;border-radius:0!important;}
+body.pdf-capture .sheet-hidden{display:block!important;}
+body.pdf-capture .sheet-grid{gap:2.5mm!important;}
+body.pdf-capture .qr-card{background:#fff!important;border:0.4pt solid #aaa!important;color:#000!important;border-radius:2.5mm!important;}
+body.pdf-capture .card-name{color:#000!important;}
+body.pdf-capture .card-code{color:#000!important;background:none!important;border:none!important;}
+body.pdf-capture .card-meta{color:#444!important;}
+body.pdf-capture .card-brand{color:#888!important;}
+body.pdf-capture .qr-wrap{border:none!important;padding:0!important;}
+body.pdf-capture .cm{display:block!important;border-style:solid!important;border-color:#000!important;}
+/* 📄 ترقيم الصفحات */
+.pager-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px 12px;margin-bottom:14px;position:sticky;top:8px;z-index:60;box-shadow:var(--shadow-md);}
+.pg-btn{padding:7px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface-hover);color:var(--text);cursor:pointer;font-weight:800;font-size:12px;font-family:inherit;}
+.pg-btn:disabled{opacity:.4;cursor:not-allowed;}
+.pg-num{min-width:34px;height:34px;border-radius:10px;border:1px solid var(--border);background:var(--surface-hover);cursor:pointer;font-weight:800;font-family:var(--font-en);font-size:12px;color:var(--text);}
+.pg-num.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.pg-dot{opacity:.55;font-weight:900;}
+#pgInfo{font-size:11px;color:var(--text-muted);font-weight:700;margin-inline-start:auto;}
+.empty-state{text-align:center;padding:60px 20px;background:var(--surface);border:1px dashed var(--border);border-radius:16px;}
+.empty-state-icon{font-size:56px;margin-bottom:12px;opacity:.5;}
+.form-select,.form-input{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:13px;font-weight:600;color:var(--text);width:100%;font-family:inherit;}
+.form-select:focus,.form-input:focus{outline:none;border-color:var(--primary);}
+.btn{padding:8px 14px;border-radius:10px;font-weight:700;font-size:12px;border:none;cursor:pointer;font-family:inherit;}
+.btn-sm{padding:6px 10px;font-size:11px;}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--border);}
+.btn-ghost{background:transparent;color:var(--text-secondary);}
+.btn-icon{padding:7px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);z-index:9999;padding:24px;overflow-y:auto;}
+.modal-content{max-width:900px;margin:36px auto;background:var(--surface);border-radius:22px;padding:28px;border:1px solid var(--border);}
+.preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;max-height:60vh;overflow-y:auto;padding:12px;background:var(--surface-hover);border-radius:14px;}
+/* 🖨️ PRINT */
+@media print{
+  @page{margin:6mm;}
+  body{background:#fff!important;background-image:none!important;color:#000!important;margin:0;padding:0;}
+  .no-print,.toolbar,.sheet-label,.card-checkwrap,.pager-bar{display:none!important;}
+  .page-container{max-width:100%!important;padding:0!important;margin:0!important;}
+  .sheet{display:block!important;border:none!important;box-shadow:none!important;padding:0!important;margin:0!important;background:#fff!important;border-radius:0!important;break-after:page;page-break-after:always;color:#000!important;}
+  .sheet:last-of-type{break-after:auto;page-break-after:auto;}
+  .sheet-grid{gap:2.5mm!important;}
+  body.compact-print .sheet-grid{gap:1.5mm!important;}
+  .qr-card{background:#fff!important;border:0.4pt solid #aaa!important;border-radius:2.5mm!important;padding:1.6mm 1.2mm!important;height:auto!important;break-inside:avoid;page-break-inside:avoid;color:#000!important;box-shadow:none!important;transform:none!important;}
+  .qr-wrap{border:none!important;padding:0!important;background:#fff!important;}
+  .card-name{color:#000!important;font-size:9.5pt!important;}
+  .card-code{color:#000!important;background:none!important;border:none!important;padding:0!important;font-size:8.5pt!important;}
+  .card-meta{color:#444!important;font-size:6.8pt!important;}
+  .card-brand{color:#888!important;font-size:5.8pt!important;margin-top:1mm!important;font-weight:600;}
+  .cm{width:4.5mm;height:4.5mm;}
+  body.show-cut-marks .cm{display:block!important;border-style:solid!important;border-color:#000!important;}
+  .cm-tl{top:-2.2mm;left:-2.2mm;border-top:0.5pt solid #000;border-left:0.5pt solid #000;border-bottom:none;border-right:none;}
+  .cm-tr{top:-2.2mm;right:-2.2mm;border-top:0.5pt solid #000;border-right:0.5pt solid #000;border-bottom:none;border-left:none;}
+  .cm-bl{bottom:-2.2mm;left:-2.2mm;border-bottom:0.5pt solid #000;border-left:0.5pt solid #000;border-top:none;border-right:none;}
+  .cm-br{bottom:-2.2mm;right:-2.2mm;border-bottom:0.5pt solid #000;border-right:0.5pt solid #000;border-top:none;border-left:none;}
 }
 </style>
 </head>
-<body data-theme="light">
+<body data-theme="dark" data-shape="vertical" data-page="a4">
 
 <div class="page-container">
-    <div class="toolbar no-print">
-        <div class="toolbar-header">
-            <div class="toolbar-title">
-                <div class="toolbar-icon">🖨️</div>
-                <div>
-                    <h1>طباعة وتصدير الباركودات</h1>
-                    <p>قم بطباعة باركودات الطلاب، المدرسين، أو مجموعات الواتساب بجودة عالية</p>
-                </div>
-            </div>
-            <div class="toolbar-actions" style="display:flex; gap:8px;">
-                <button class="btn btn-ghost" onclick="window.goBack()">← رجوع</button>
-                <button class="btn btn-secondary" id="themeToggle">🌓</button>
-            </div>
-        </div>
-        
-        <div class="filters-grid">
-            <div class="filter-box">
-                <label>👥 المجموعة</label>
-                <select id="prGroup" class="form-select" onchange="window.renderGrid()">
-                    <option value="all">🌍 كل الطلاب</option>
-                </select>
-            </div>
-            <div class="filter-box">
-                <label>🔍 بحث</label>
-                <input type="text" id="prSearch" class="form-input" placeholder="ابحث بالاسم أو الكود..." onkeyup="window.renderGrid()">
-            </div>
-            <div class="filter-box">
-                <label>🎯 نوع البطاقات</label>
-                <select id="prType" class="form-select" onchange="window.renderGrid()">
-                    <option value="students">🎓 طلاب فقط</option>
-                    <option value="all">🎓 طلاب + 👨‍🏫 مدرس + 💬 واتساب</option>
-                    <option value="teachers">👨‍🏫 مدرس فقط</option>
-                    <option value="groups">💬 واتساب جروبات</option>
-                </select>
-            </div>
-        </div>
-        
-        <div class="size-selector">
-            <span class="size-label">📏 حجم الطباعة:</span>
-            <button class="size-btn active" data-size="a4" onclick="window.setPrintSize('a4',this)">📄 A4 قياسي</button>
-            <button class="size-btn" data-size="small" onclick="window.setPrintSize('small',this)">🏷️ صغيرة</button>
-            <button class="size-btn" data-size="large" onclick="window.setPrintSize('large',this)">📋 كبيرة</button>
-            <button class="size-btn" data-size="pocket" onclick="window.setPrintSize('pocket',this)">💳 جيب</button>
-        </div>
-        
-        <div class="stats-row" id="statsBar">
-            <div class="stat-pill">📊 الإجمالي: <strong id="totalCount">0</strong></div>
-            <div class="stat-pill">🎓 طلاب: <strong id="studentsCount">0</strong></div>
-            <div class="stat-pill">👨‍🏫 مدرسين: <strong id="teachersCount">0</strong></div>
-            <div class="stat-pill">💬 جروبات: <strong id="groupsCount">0</strong></div>
-            <div class="stat-pill highlight" style="margin-inline-start:auto;">✅ مختار: <strong id="selectedCount">0</strong></div>
-        </div>
-        
-        <div class="actions-row">
-            <button class="btn-action btn-primary-action" onclick="window.printSelected()">🖨️ طباعة المختارة</button>
-            <button class="btn-action btn-primary-action" onclick="window.printAll()">🖨️ طباعة الكل</button>
-            <button class="btn-action btn-ghost-action" onclick="window.showPreview()">👁️ معاينة</button>
-            <button class="btn-action btn-warning-action" onclick="window.downloadAllAsZip()">📦 تحميل ZIP</button>
-            <button class="btn-action btn-success-action" onclick="window.exportCSV()">📊 تصدير CSV</button>
-            <button class="btn-action btn-ghost-action" onclick="window.selectAll()">✅ تحديد الكل</button>
-            <button class="btn-action btn-ghost-action" onclick="window.deselectAll()">❌ إلغاء</button>
-        </div>
+  <div class="toolbar no-print">
+    <div class="toolbar-header">
+      <div class="toolbar-title">
+        <div class="toolbar-icon">🖨️</div>
+        <div><h1>الطباعة الذكية للباركودات</h1><p>فلاتر متتابعة ذكية + تعبئة تلقائية + تصدير PDF</p></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" onclick="window.goBack()">← رجوع</button>
+        <button class="btn btn-secondary" id="themeToggle">🌓</button>
+      </div>
     </div>
 
-    <div class="qr-grid" id="qrGrid"></div>
+    <div class="filters-grid">
+      <div class="filter-box"><label>🏢 السنتر</label>
+        <select id="prCenter" class="form-select" onchange="window.onFilterChange()"><option value="">كل السناتر</option></select>
+      </div>
+      <div class="filter-box"><label>🎓 المرحلة</label>
+        <select id="prStage" class="form-select" onchange="window.onFilterChange()"><option value="">كل المراحل</option></select>
+      </div>
+      <div class="filter-box"><label>📚 الصف</label>
+        <select id="prGrade" class="form-select" onchange="window.onFilterChange()"><option value="">كل الصفوف</option></select>
+      </div>
+      <div class="filter-box"><label>👥 المجموعة</label>
+        <select id="prGroup" class="form-select" onchange="window.onFilterChange()"><option value="all">🌍 كل الطلاب</option></select>
+        <input type="text" id="prGroupSearch" class="form-input" style="margin-top:6px;padding:6px 10px;font-size:11px;" placeholder="🔍 ابحث داخل المجموعات..." oninput="window.onGroupSearch()">
+      </div>
+      <div class="filter-box"><label>🎯 نوع البطاقات</label>
+        <select id="prType" class="form-select" onchange="window.onFilterChange()">
+          <option value="students">🎓 طلاب فقط</option>
+          <option value="all">الكل + واتساب</option>
+          <option value="groups">💬 واتساب جروبات</option>
+        </select>
+      </div>
+      <div class="filter-box"><label>🔍 بحث طالب</label>
+        <input type="text" id="prSearch" class="form-input" placeholder="اسم أو كود..." oninput="window.onSearchChange()">
+      </div>
+    </div>
+
+    <div class="print-settings">
+      <div class="print-settings-title"><span>⚙️</span><span>محرك الطباعة الذكي</span></div>
+      <div class="settings-grid">
+        <div class="setting-group">
+          <div class="setting-label">📐 شكل الكارت</div>
+          <div class="shape-options">
+            <button class="shape-btn active" data-shape="vertical" onclick="window.setShape('vertical',this)">📄 عمودي</button>
+            <button class="shape-btn" data-shape="square" onclick="window.setShape('square',this)">⬛ مربع</button>
+            <button class="shape-btn" data-shape="landscape" onclick="window.setShape('landscape',this)">💳 بطاقة</button>
+          </div>
+        </div>
+        <div class="setting-group">
+          <div class="setting-label">🤖 التعبئة الذكية <span class="slider-value" id="cardsPerPageValue">-</span></div>
+          <label class="switch-label"><input type="checkbox" class="switch-input" id="autoFillToggle" checked onchange="window.toggleAutoFill(this.checked)"><span class="switch"></span><span>ملء الورقة تلقائياً</span></label>
+          <div class="slider-container">
+            <span style="font-size:11px;">2</span>
+            <input type="range" id="cardsPerPageSlider" min="2" max="40" value="12" oninput="window.updateCardsPerPage(this.value)">
+            <span style="font-size:11px;">40</span>
+          </div>
+        </div>
+        <div class="setting-group">
+          <div class="setting-label">📃 حجم الورقة</div>
+          <div class="size-options">
+            <button class="size-btn active" data-size="a4" onclick="window.setPageSize('a4',this)">A4</button>
+            <button class="size-btn" data-size="a5" onclick="window.setPageSize('a5',this)">A5</button>
+            <button class="size-btn" data-size="a3" onclick="window.setPageSize('a3',this)">A3</button>
+            <button class="size-btn" data-size="letter" onclick="window.setPageSize('letter',this)">Letter</button>
+          </div>
+        </div>
+        <div class="setting-group">
+          <div class="setting-label">✨ خيارات</div>
+          <label class="switch-label"><input type="checkbox" class="switch-input" id="cutMarksToggle" checked onchange="window.toggleCutMarks(this.checked)"><span class="switch"></span><span>✂️ علامات القص</span></label>
+          <label class="switch-label"><input type="checkbox" class="switch-input" id="compactPrintToggle" onchange="window.toggleCompact(this.checked)"><span class="switch"></span><span>🗜️ طباعة مضغوطة</span></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-pill">📊 الإجمالي: <strong id="totalCount">0</strong></div>
+      <div class="stat-pill">🎓 طلاب: <strong id="studentsCount">0</strong></div>
+      <div class="stat-pill">💬 جروبات: <strong id="groupsCount">0</strong></div>
+      <div class="stat-pill highlight">📄 صفحات: <strong id="pagesCount">0</strong></div>
+      <div class="stat-pill highlight">🤖 كارت/صفحة: <strong id="perPageCount">0</strong></div>
+      <div class="stat-pill highlight" style="margin-inline-start:auto;">✅ مختار: <strong id="selectedCount">0</strong></div>
+    </div>
+
+    <div class="actions-row">
+      <button class="btn-action btn-primary-action" onclick="window.printAll()">🖨️ طباعة الكل</button>
+      <button class="btn-action btn-primary-action" onclick="window.printSelected()">🎯 طباعة المختارة</button>
+      <button class="btn-action btn-pdf-action" onclick="window.downloadPDF()">📥 تحميل PDF</button>
+      <button class="btn-action btn-ghost-action" onclick="window.showPreview()">👁️ معاينة</button>
+      <button class="btn-action btn-warning-action" onclick="window.downloadAllAsZip()">📦 ZIP</button>
+      <button class="btn-action btn-success-action" onclick="window.exportCSV()">📊 CSV</button>
+      <button class="btn-action btn-ghost-action" onclick="window.selectAll()">✅ تحديد الكل</button>
+      <button class="btn-action btn-ghost-action" onclick="window.deselectAll()">❌ إلغاء</button>
+    </div>
+  </div>
+
+  <div class="pager-bar no-print" id="pagerBar">
+    <button class="pg-btn" id="pgPrev" onclick="window.pgGo(window._curPage-1)">السابق ›</button>
+    <div id="pgNums" style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;"></div>
+    <button class="pg-btn" id="pgNext" onclick="window.pgGo(window._curPage+1)">‹ التالي</button>
+    <label class="switch-label" style="margin:0;"><input type="checkbox" class="switch-input" id="pgAll" onchange="window.pgSetViewAll(this.checked)"><span class="switch"></span><span>عرض الكل</span></label>
+    <span id="pgInfo"></span>
+  </div>
+
+  <div id="sheetsHost"></div>
 </div>
 
-<!-- Preview Modal -->
 <div class="modal-overlay" id="previewModal">
-    <div class="modal-content">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-            <h2 style="margin:0; font-weight:800;">👁️ معاينة الطباعة</h2>
-            <button class="btn btn-ghost btn-icon" onclick="window.closePreview()">✕</button>
-        </div>
-        <div class="preview-grid" id="previewContainer"></div>
-        <div style="display:flex; gap:12px; margin-top:24px; justify-content:flex-end;">
-            <button class="btn btn-ghost" onclick="window.closePreview()">إلغاء</button>
-            <button class="btn btn-primary" onclick="window.printFromPreview()">🖨️ طباعة الآن</button>
-        </div>
+  <div class="modal-content">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+      <h2 style="margin:0;font-weight:800;">👁️ معاينة سريعة</h2>
+      <button class="btn btn-ghost btn-icon" onclick="window.closePreview()">✕</button>
     </div>
+    <div class="preview-grid" id="previewContainer"></div>
+    <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="window.closePreview()">إلغاء</button>
+      <button class="btn btn-primary" onclick="window.printFromPreview()">🖨️ طباعة الآن</button>
+    </div>
+  </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/firebase-service.js"></script>
 <script src="js/data-service.js"></script>
@@ -718,484 +288,450 @@ body {
 <script src="js/ui-helpers.js"></script>
 <script src="js/drive-service.js"></script>
 <script src="js/theme-manager.js"></script>
-<script src="js/pwa-injector.js"></script>
 <script src="js/auth-service.js"></script>
 
 <script>
-const SITE_BASE = 'https://eduflow-nine-dusky.vercel.app/';
-
-const qrData = (code, type='student') => {
-  if(type === 'teacher') return SITE_BASE + 'teacher-dashboard.html';
-  if(type === 'group') return SITE_BASE; 
-  return SITE_BASE + 'student-qr.html?code=' + encodeURIComponent(code);
+const SITE_BASE='https://eduflow-nine-dusky.vercel.app/';
+const qrData=(code,type='student')=>{
+  if(type==='teacher')return SITE_BASE+'teacher-dashboard.html';
+  if(type==='group')return SITE_BASE;
+  return SITE_BASE+'student-qr.html?code='+encodeURIComponent(code);
 };
-
-const qrImg = (code, size, type='student') => {
-  const url = type === 'group' ? (allCards.find(c=>c.code===code)?.whatsappLink || SITE_BASE) : qrData(code, type);
-  return 'https://api.qrserver.com/v1/create-qr-code/?size=' + size + 'x' + size + 
-         '&data=' + encodeURIComponent(url) +
-         '&bgcolor=ffffff&color=0f172a&margin=12';
+const qrImg=(code,size,type='student')=>{
+  const url=type==='group'?(allCards.find(c=>c.code===code)?.whatsappLink||SITE_BASE):qrData(code,type);
+  return 'https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data='+encodeURIComponent(url)+'&bgcolor=ffffff&color=0f172a&margin=12';
 };
-
-let currentUser = null;
-let currentPrintSize = 'a4';
-let selectedCards = new Set();
-let allCards = [];
-let branding = {};
-
-// 🆕 دالة لجلب معلومات الطالب (السنتر والصف)
-function getStudentInfo(studentId) {
-    try {
-        const ts = typeof DataService?.getStudentTeachers === 'function' 
-            ? DataService.getStudentTeachers(studentId) 
-            : [];
-        
-        if (!ts.length) return { center: '', grade: '', groupName: '' };
-        
-        const first = ts[0];
-        return {
-            center: first.group?.center || '',
-            grade: first.group?.grade || '',
-            groupName: first.group?.name || ''
-        };
-    } catch (e) {
-        return { center: '', grade: '', groupName: '' };
-    }
+let currentUser=null,currentShape='vertical',currentPageSize='a4',autoFill=true,manualPerPage=12,cardsPerPage=12;
+let selectedCards=new Set(),allCards=[],sheetsCount=0,branding={};
+window._curPage=1; window._viewAll=false; window._overrideList=null; window.__tmpAll=0;
+function toast(m,t){ if(typeof ThemeManager?.toast==='function') ThemeManager.toast(m,t||'info'); }
+function val(id){ var e=document.getElementById(id); return e?e.value:''; }
+function norm(s){ return String(s==null?'':s).toLowerCase().replace(/[\u064B-\u0652]/g,'').replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/\s+/g,' ').trim(); }
+function uniq(a){ return a.filter(function(x,i){ return a.indexOf(x)===i; }); }
+function stageLabel(k){ try{ return ((typeof EduFlowConfig!=='undefined'?EduFlowConfig.educationLevels:{})[k]||{}).nameAr||k; }catch(e){ return k; } }
+function brandLine(){
+  try{
+    var b=null;
+    try{ if(window.DataService&&DataService.getBranding) b=DataService.getBranding(); }catch(e){}
+    if(!b||!b.name){ try{ b=JSON.parse(localStorage.getItem('eduflow_branding')||'null'); }catch(e){} }
+    return '🎓 '+((b&&b.name)||'EduFlow')+' · by Habbash Group';
+  }catch(e){ return '🎓 EduFlow · by Habbash Group'; }
 }
-
-(async function boot(){
+function paperDims(){ return {a4:[198,285],a5:[136,198],a3:[285,408],letter:[204,267]}[currentPageSize]||[198,285]; }
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+function colsAuto(){
+  var W=paperDims()[0];
+  if(currentShape==='landscape') return clamp(Math.round(W/72),1,4);
+  if(currentShape==='square') return clamp(Math.round(W/52),2,5);
+  return clamp(Math.round(W/48),2,5);
+}
+function colsManual(n){
+  if(currentShape==='landscape') return n<=6?2:(n<=12?3:4);
+  if(currentShape==='square') return n<=9?3:(n<=16?4:5);
+  return n<=6?3:(n<=16?4:(n<=25?5:6));
+}
+function setCols(c){ document.documentElement.style.setProperty('--cols',c); }
+function gapMM(){ return document.body.classList.contains('compact-print')?1.5:2.5; }
+function measureCardMM(){
+  var el=document.querySelector('#sheetsHost .sheet:not(.sheet-hidden) .qr-card')||document.querySelector('#sheetsHost .qr-card');
+  if(!el) return 60;
+  return el.offsetHeight*(25.4/96);
+}
+function chunk(list,n){ var out=[]; for(var i=0;i<list.length;i+=n) out.push(list.slice(i,i+n)); return out; }
+function scopeGroups(){
+  var gs=(DataService.getGroups?DataService.getGroups():[]);
   try{
-    if(typeof DataService?.init === 'function') await DataService.init();
-    currentUser = AuthService?.getCurrentUser ? AuthService.getCurrentUser() : null;
-    if(!currentUser){ window.location.href='login.html'; return; }
-    
-    // 🆕 تحميل البراندنج
-    try {
-        branding = typeof DataService?.getBranding === 'function' 
-            ? DataService.getBranding() 
-            : {};
-    } catch (e) {}
-    
-    window.buildGroupSelect();
-    const s = new URLSearchParams(location.search).get('search');
-    if(s){ const el = document.getElementById('prSearch'); if(el) el.value = s; }
-    window.renderGrid();
-  }catch(err){
-    console.error('Boot error', err);
-  }
-})();
-
-window.goBack = function(){
-  if(document.referrer && document.referrer.includes(location.origin)) history.back();
-  else window.location.href = currentUser?.role === 'teacher' ? 'teacher-dashboard.html' : 'assistant-dashboard.html';
-};
-
-window.buildGroupSelect = function(){
-  try{
-    const sel = document.getElementById('prGroup');
-    if(!sel) return;
-    let groups = [];
-    if(currentUser && typeof Ops?.groupsInScope === 'function') groups = Ops.groupsInScope(currentUser.id) || [];
-    if(!groups.length) groups = typeof DataService?.getGroups === 'function' ? DataService.getGroups() : [];
-    sel.innerHTML = '<option value="all">🌍 كل الطلاب</option>' + 
-      groups.map(g => '<option value="' + g.id + '">' + g.name + '</option>').join('');
+    if(currentUser&&window.Ops&&Ops.groupsInScope&&(currentUser.role==='assistant'||currentUser.role==='teacher')) gs=Ops.groupsInScope(currentUser.id)||gs;
   }catch(e){}
-};
-
-window.setPrintSize = function(size, btn){
-  currentPrintSize = size;
-  document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
-  btn?.classList.add('active');
-  document.body.classList.remove('print-small','print-large','print-pocket','print-a3');
-  if(size !== 'a4') document.body.classList.add('print-' + size);
-  if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('تم تغيير حجم الطباعة', 'info');
-};
-
-window.renderGrid = function(){
-  try{
-    const sel = document.getElementById('prGroup');
-    const q = (document.getElementById('prSearch')?.value || '').toLowerCase();
-    const gid = sel ? sel.value : 'all';
-    const type = document.getElementById('prType')?.value || 'students';
-    
-    let students = gid === 'all' ? (DataService?.getStudents ? DataService.getStudents() : []) : (DataService?.getStudentsByGroup ? DataService.getStudentsByGroup(gid) : []);
-    if(currentUser && typeof Ops?.studentsInScope === 'function'){
-      const scopedIds = Ops.studentsInScope(currentUser.id).map(s => s.id);
-      students = students.filter(s => scopedIds.includes(s.id));
-    }
-    if(q) students = students.filter(s => (s.name||'').toLowerCase().includes(q) || (s.code||'').toLowerCase().includes(q));
-    students = students.filter(s => s.code);
-    
-    allCards = [];
-    if(type === 'students' || type === 'all'){
-      students.forEach(s => {
-        // 🆕 جلب معلومات السنتر والصف
-        const info = getStudentInfo(s.id);
-        const stageLabel = (typeof EduFlowConfig !== 'undefined' && EduFlowConfig?.educationLevels?.[s.stage]?.nameAr) || '';
-        
-        // 🆕 بناء meta بدون رقم الهاتف - فقط الصف والسنتر
-        let meta = '';
-        if (stageLabel || s.grade) {
-            meta = '🎓 ' + stageLabel + (s.grade ? ' - ' + s.grade : '');
-        }
-        if (info.center) {
-            meta += (meta ? '<br>' : '') + '🏢 ' + info.center;
-        }
-        
-        allCards.push({ 
-            type: 'student', 
-            id: s.id, 
-            code: s.code, 
-            name: s.name, 
-            meta: meta,
-            center: info.center,
-            grade: s.grade || info.grade,
-            stageLabel: stageLabel,
-            groupName: info.groupName
-        });
-      });
-    }
-    if(type === 'teachers' || type === 'all'){
-      if(currentUser && currentUser.role === 'teacher'){
-        allCards.push({ type: 'teacher', id: currentUser.id, code: currentUser.code || currentUser.id, name: currentUser.name, meta: 'مدرس · ' + (currentUser.subject || '') });
-      }
-    }
-    if(type === 'groups' || type === 'all'){
-      let groups = gid === 'all' ? (DataService?.getGroups ? DataService.getGroups() : []) : (DataService?.getGroups ? DataService.getGroups().filter(g => g.id === gid) : []);
-      if(currentUser && typeof Ops?.groupsInScope === 'function'){
-        const scopedGroupIds = Ops.groupsInScope(currentUser.id).map(g => g.id);
-        groups = groups.filter(g => scopedGroupIds.includes(g.id));
-      }
-      groups.filter(g => g.whatsappLink).forEach(g => {
-        allCards.push({ type: 'group', id: g.id, code: g.id, name: g.name, meta: '💬 واتساب جروب', whatsappLink: g.whatsappLink, center: g.center });
-      });
-    }
-    
-    document.getElementById('totalCount').textContent = allCards.length;
-    document.getElementById('studentsCount').textContent = allCards.filter(c => c.type === 'student').length;
-    document.getElementById('teachersCount').textContent = allCards.filter(c => c.type === 'teacher').length;
-    document.getElementById('groupsCount').textContent = allCards.filter(c => c.type === 'group').length;
-    updateSelectedCount();
-    
-    const grid = document.getElementById('qrGrid');
-    if(!grid) return;
-    if(!allCards.length){
-      grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-title">لا توجد بطاقات</div><div class="empty-state-text">جرب تغيير الفلتر أو البحث</div></div>';
-      return;
-    }
-    
-    grid.innerHTML = allCards.map((card, index) => {
-      const safeName = (card.name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
-      const imgSrc = qrImg(card.code, 300, card.type);
-      const cardClass = card.type;
-      const badgeClass = 'badge-' + card.type;
-      const typeLabel = card.type === 'teacher' ? 'مدرس' : card.type === 'group' ? 'واتساب' : 'طالب';
-      const isSelected = selectedCards.has(card.id);
-      
-      return `
-      <div class="qr-card ${cardClass} ${isSelected ? 'selected' : ''}" data-id="${card.id}" data-type="${card.type}" style="animation-delay: ${index * 0.03}s">
-        <div class="card-accent"></div>
-        <div class="card-header">
-          <span class="card-badge ${badgeClass}">${typeLabel}</span>
-          <label class="custom-checkbox no-print">
-            <input type="checkbox" class="card-check" ${isSelected ? 'checked' : ''} onchange="window.toggleSelection('${card.id}', this.checked)">
-            <span class="checkmark"></span>
-          </label>
-        </div>
-        <div class="card-body">
-          <div class="qr-wrapper">
-            <img src="${imgSrc}" class="card-img" alt="${card.code}" loading="lazy">
-          </div>
-          <h3 class="card-name">${safeName}</h3>
-          <div class="card-code-wrapper">
-            <span class="card-code">${card.code}</span>
-          </div>
-          <p class="card-meta">${card.meta || ''}</p>
-        </div>
-        <div class="card-footer no-print">
-          <button class="btn btn-secondary btn-sm flex-1" onclick="window.printSingleCard('${card.id}')" title="طباعة">🖨️ طباعة</button>
-          <button class="btn btn-primary btn-sm flex-1" onclick="window.downloadSingleCard('${card.id}')" title="تحميل كصورة">⬇️ صورة</button>
-        </div>
-      </div>`;
-    }).join('');
-  }catch(e){
-    console.error('renderGrid error', e);
-  }
-};
-
-window.toggleSelection = function(id, checked){
-  if(checked) selectedCards.add(id); else selectedCards.delete(id);
-  const cardEl = document.querySelector(`.qr-card[data-id="${id}"]`);
-  if(cardEl) {
-    if(checked) cardEl.classList.add('selected');
-    else cardEl.classList.remove('selected');
-  }
-  updateSelectedCount();
-};
-
-window.updateSelectedCount = function(){
-  const el = document.getElementById('selectedCount');
-  if(el) el.textContent = selectedCards.size;
-};
-
-window.selectAll = function(){
-  allCards.forEach(c => selectedCards.add(c.id));
-  document.querySelectorAll('.card-check').forEach(cb => cb.checked = true);
-  document.querySelectorAll('.qr-card').forEach(card => card.classList.add('selected'));
-  updateSelectedCount();
-  if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('✅ تم تحديد الكل', 'success');
-};
-
-window.deselectAll = function(){
-  selectedCards.clear();
-  document.querySelectorAll('.card-check').forEach(cb => cb.checked = false);
-  document.querySelectorAll('.qr-card').forEach(card => card.classList.remove('selected'));
-  updateSelectedCount();
-};
-
-// Helper for Canvas RoundRect (Fixes the bug in older browsers)
-function drawRoundRect(ctx, x, y, w, h, r) {
-    if (w < 2 * r) r = w / 2;
-    if (h < 2 * r) r = h / 2;
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
-    ctx.fill();
+  return gs;
 }
-
-async function generateCardImage(card) {
-    return new Promise((resolve, reject) => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const width = 800;
-        const height = 1100;
-        canvas.width = width;
-        canvas.height = height;
-
-        ctx.direction = 'rtl';
-        ctx.textAlign = 'center';
-
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, width, height);
-        
-        const gradient = ctx.createLinearGradient(0, 0, width, 0);
-        if(card.type === 'group') { gradient.addColorStop(0, '#25d366'); gradient.addColorStop(1, '#128c7e'); }
-        else if(card.type === 'teacher') { gradient.addColorStop(0, '#f59e0b'); gradient.addColorStop(1, '#d97706'); }
-        else { gradient.addColorStop(0, '#6366f1'); gradient.addColorStop(1, '#8b5cf6'); }
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, width, 25);
-
-        // 🆕 اسم المنصة من البراندنج
-        const brandName = branding?.name || 'EduFlow';
-        ctx.fillStyle = '#64748b';
-        ctx.font = 'bold 28px "Cairo", "Tahoma", "Arial", sans-serif';
-        ctx.fillText('🎓 ' + brandName + ' by Habbash Group', width / 2, 80);
-
-        const typeLabels = {student:'طالب',teacher:'مدرس',group:'واتساب جروب'};
-        ctx.fillStyle = gradient;
-        const badgeW = 180, badgeH = 50, badgeX = (width - badgeW) / 2, badgeY = 120;
-        
-        drawRoundRect(ctx, badgeX, badgeY, badgeW, badgeH, 25);
-        
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 26px "Cairo", "Tahoma", sans-serif';
-        ctx.fillText(typeLabels[card.type] || 'بطاقة', width / 2, badgeY + 35);
-
-        ctx.fillStyle = '#0f172a';
-        ctx.font = 'bold 52px "Cairo", "Tahoma", sans-serif';
-        ctx.fillText(card.name || '-', width / 2, 250);
-
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        const qrUrl = card.type === 'group' ? (card.whatsappLink || qrData(card.code, card.type)) : qrData(card.code, card.type);
-        img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=' + encodeURIComponent(qrUrl) + '&bgcolor=ffffff&color=0f172a&margin=16';
-        
-        img.onload = () => {
-            const qrS = 450, qrX = (width - qrS) / 2, qrY = 300;
-            ctx.fillStyle = '#f8fafc'; 
-            ctx.fillRect(qrX - 20, qrY - 20, qrS + 40, qrS + 40);
-            ctx.strokeStyle = '#e2e8f0'; 
-            ctx.lineWidth = 2; 
-            ctx.strokeRect(qrX - 20, qrY - 20, qrS + 40, qrS + 40);
-            ctx.drawImage(img, qrX, qrY, qrS, qrS);
-
-            ctx.fillStyle = '#4f46e5'; 
-            ctx.font = 'bold 60px monospace, "Courier New", sans-serif';
-            ctx.fillText(card.code, width / 2, 850);
-
-            // 🆕 عرض المرحلة والصف والسنتر كنص بسيط
-            ctx.fillStyle = '#64748b'; 
-            ctx.font = '30px "Cairo", "Tahoma", sans-serif';
-            
-            let metaLine = '';
-            if (card.type === 'student') {
-                if (card.stageLabel || card.grade) {
-                    metaLine = '🎓 ' + (card.stageLabel || '') + (card.grade ? ' - ' + card.grade : '');
-                }
-            } else {
-                metaLine = card.meta || '';
-            }
-            ctx.fillText(metaLine, width / 2, 900);
-            
-            // 🆕 عرض السنتر تحت المرحلة والصف (كـ text عادي بدون box)
-            if (card.center) {
-                ctx.fillStyle = '#475569';
-                ctx.font = '28px "Cairo", "Tahoma", sans-serif';
-                ctx.fillText('🏢 ' + card.center, width / 2, 940);
-            }
-
-            ctx.fillStyle = '#334155'; 
-            ctx.font = 'bold 26px "Cairo", "Tahoma", sans-serif';
-            ctx.fillText(card.type === 'group' ? '💬 امسح الباركود للانضمام للجروب' : '📱 امسح الباركود للدخول السريع', width / 2, 990);
-
-            ctx.fillStyle = '#f1f5f9'; 
-            ctx.fillRect(0, height - 90, width, 90);
-            ctx.fillStyle = '#94a3b8'; 
-            ctx.font = '24px "Cairo", "Tahoma", sans-serif';
-            ctx.fillText('© Habbash Group · ' + new Date().getFullYear(), width / 2, height - 35);
-
-            canvas.toBlob(blob => resolve(blob), 'image/png');
-        };
-        img.onerror = () => reject(new Error('فشل تحميل صورة الباركود'));
+function stuCount(gid){ try{ return (DataService.getStudentsByGroup?DataService.getStudentsByGroup(gid):[]).length; }catch(e){ return 0; } }
+function centersOfStudent(sid){
+  try{
+    var ts=(DataService.getStudentTeachers?DataService.getStudentTeachers(sid):[])||[];
+    var out=[]; ts.forEach(function(t){ if(t.group&&t.group.center&&out.indexOf(t.group.center)<0) out.push(t.group.center); });
+    return out;
+  }catch(e){ return []; }
+}
+/* ============ 🧠 الفلاتر المتتابعة الذكية ============ */
+function fillSel(id,items,cur,allLabel){
+  var sel=document.getElementById(id); if(!sel) return cur;
+  var h=(allLabel!=null)?'<option value="">'+allLabel+'</option>':'';
+  h+=items.map(function(it){ return '<option value="'+it.v+'">'+it.l+'</option>'; }).join('');
+  sel.innerHTML=h;
+  var ok=items.some(function(it){ return String(it.v)===String(cur); });
+  var nv;
+  if(id==='prGroup') nv=(cur==='all'||!ok)?'all':cur;
+  else nv=ok?cur:(allLabel!=null?'':(items[0]?items[0].v:''));
+  sel.value=nv;
+  return nv;
+}
+window.refreshSmartFilters=function(){
+  var gs=scopeGroups();
+  var fc=val('prCenter'),fs=val('prStage'),fg=val('prGrade'),fq=norm(val('prGroupSearch')),fgid=val('prGroup');
+  /* 1) السنتر المتاح حسب المرحلة+الصف */
+  var gSG=gs.filter(function(g){ return (!fs||(g.stage||'')===fs)&&(!fg||(g.grade||'')===fg); });
+  var centers=uniq(gSG.map(function(g){return g.center||'';}).filter(Boolean));
+  fc=fillSel('prCenter',centers.map(function(c){ return {v:c,l:'🏢 '+c+' · '+gSG.filter(function(g){return g.center===c;}).length+' مجموعة'}; }),fc,'كل السناتر');
+  /* 2) المرحلة المتاحة حسب السنتر */
+  var gC=gs.filter(function(g){ return !fc||(g.center||'')===fc; });
+  var stages=uniq(gC.map(function(g){return g.stage||'';}).filter(Boolean));
+  fs=fillSel('prStage',stages.map(function(s){ return {v:s,l:'🎓 '+stageLabel(s)+' · '+gC.filter(function(g){return g.stage===s;}).length+' مجموعة'}; }),fs,'كل المراحل');
+  /* 3) الصف: لو مرحلة مختارة → صفوفها من إعدادات المنصة، غير كده → الموجود فعلياً */
+  var gCS=gC.filter(function(g){ return !fs||(g.stage||'')===fs; });
+  var existing=uniq(gCS.map(function(g){return g.grade||'';}).filter(Boolean));
+  var grades=existing;
+  if(fs){
+    try{
+      var cfg=((typeof EduFlowConfig!=='undefined'?EduFlowConfig.educationLevels:{})[fs]||{}).grades||[];
+      if(cfg.length) grades=cfg.filter(function(gr){ return !existing.length||existing.indexOf(gr)>=0; });
+    }catch(e){}
+  }
+  fg=fillSel('prGrade',grades.map(function(gr){ return {v:gr,l:'📚 '+gr+' · '+gCS.filter(function(g){return g.grade===gr;}).length+' مجموعة'}; }),fg,'كل الصفوف');
+  /* 4) المجموعات حسب الكل + بحث الاسم */
+  var gCSG=gCS.filter(function(g){ return !fg||(g.grade||'')===fg; });
+  var gQ=gCSG.filter(function(g){ return !fq||norm(g.name).indexOf(fq)>=0||norm(g.center||'').indexOf(fq)>=0; });
+  var totalStu=gCSG.reduce(function(a,g){ return a+stuCount(g.id); },0);
+  var items=[{v:'all',l:'🌍 كل الطلاب ('+totalStu+')'}].concat(gQ.map(function(g){
+    return {v:g.id,l:g.name+' · 👥 '+stuCount(g.id)+(g.center?' · 🏢 '+g.center:'')+(g.grade?' · 📚 '+g.grade:'')};
+  }));
+  fillSel('prGroup',items,fgid,null);
+};
+window.onFilterChange=function(){ window.refreshSmartFilters(); refresh(true); };
+window.onGroupSearch=function(){ window.refreshSmartFilters(); };
+var _qT=null;
+window.onSearchChange=function(){ clearTimeout(_qT); _qT=setTimeout(function(){ refresh(true); },250); };
+/* ============ 📦 بناء البطاقات ============ */
+function buildCards(){
+  if(window._overrideList) return window._overrideList;
+  var gid=val('prGroup')||'all', fc=val('prCenter'), fs=val('prStage'), fg=val('prGrade');
+  var q=norm(val('prSearch')), type=val('prType')||'students';
+  var cards=[];
+  if(type==='students'||type==='all'){
+    var list;
+    if(gid!=='all') list=(DataService.getStudentsByGroup?DataService.getStudentsByGroup(gid):[]);
+    else list=(DataService.getStudents?DataService.getStudents():[]);
+    if(fs) list=list.filter(function(s){ return (s.stage||'')===fs; });
+    if(fg) list=list.filter(function(s){ return (s.grade||'')===fg; });
+    if(fc) list=list.filter(function(s){ return centersOfStudent(s.id).indexOf(fc)>=0; });
+    if(q) list=list.filter(function(s){ return norm(s.name).indexOf(q)>=0||norm(s.code).indexOf(q)>=0; });
+    list=list.filter(function(s){ return s.code; });
+    list.forEach(function(s){
+      var cs=centersOfStudent(s.id);
+      var sl=stageLabel(s.stage);
+      var meta='';
+      if(sl||s.grade) meta='🎓 '+sl+(s.grade?' - '+s.grade:'');
+      if(cs[0]) meta+=(meta?' · ':'')+'🏢 '+cs[0];
+      cards.push({type:'student',id:s.id,code:s.code,name:s.name,meta:meta});
     });
+  }
+  if(type==='groups'||type==='all'){
+    scopeGroups().filter(function(g){ return g.whatsappLink&&(!fc||(g.center||'')===fc)&&(!fs||(g.stage||'')===fs)&&(!fg||(g.grade||'')===fg); }).forEach(function(g){
+      cards.push({type:'group',id:g.id,code:g.id,name:g.name,meta:'💬 جروب واتساب'+(g.center?' · 🏢 '+g.center:''),whatsappLink:g.whatsappLink});
+    });
+  }
+  return cards;
 }
-
-window.downloadSingleCard = async function(id){
-  const card = allCards.find(c => c.id === id);
-  if(!card) return;
+function cardHtml(card){
+  var safe=(card.name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  var sel=selectedCards.has(card.id);
+  return '<div class="qr-card'+(sel?' selected':'')+'" data-id="'+card.id+'">'+
+    '<span class="cm cm-tl"></span><span class="cm cm-tr"></span><span class="cm cm-bl"></span><span class="cm cm-br"></span>'+
+    '<span class="card-checkwrap no-print"><input type="checkbox" '+(sel?'checked':'')+' onchange="window.toggleSelection(\''+card.id+'\',this.checked)" title="تحديد"></span>'+
+    '<div class="qr-wrap"><img src="'+qrImg(card.code,300,card.type)+'" crossorigin="anonymous" alt="'+card.code+'"></div>'+
+    '<div class="card-txt"><div class="card-name">'+safe+'</div><span class="card-code">'+card.code+'</span>'+
+    (card.meta?'<div class="card-meta">'+card.meta+'</div>':'')+
+    '<div class="card-brand">'+brandLine()+'</div></div></div>';
+}
+function sheetHtml(sh,i,total){
+  var shapeLabel={vertical:'عمودي',square:'مربع',landscape:'بطاقة'}[currentShape];
+  return '<div class="sheet" data-sheet="'+(i+1)+'">'+
+    '<div class="sheet-label no-print"><span>📄 صفحة '+(i+1)+' من '+total+'</span><span>'+currentPageSize.toUpperCase()+' · '+sh.length+' كارت · '+shapeLabel+(autoFill?' · 🤖 ذكي':'')+'</span></div>'+
+    '<div class="sheet-grid">'+sh.map(cardHtml).join('')+'</div></div>';
+}
+function paint(sheets){
+  var host=document.getElementById('sheetsHost'); if(!host) return;
+  sheetsCount=sheets.length;
+  if(!sheets.length||!sheets[0].length){ host.innerHTML='<div class="empty-state"><div class="empty-state-icon">📭</div><strong>لا توجد بطاقات مطابقة</strong><div style="font-size:13px;color:var(--text-muted);margin-top:6px;">وسّع الفلاتر أو امسح البحث</div></div>'; return; }
+  host.innerHTML=sheets.map(function(sh,i){ return sheetHtml(sh,i,sheets.length); }).join('');
+}
+/* ============ 🧠 المحرك: يدوي أو ذكي ============ */
+function refresh(resetPage){
   try{
-    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('🎨 جاري تجهيز الصورة...','info');
-    const blob = await generateCardImage(card);
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'QR_' + card.type + '_' + card.code + '_' + (card.name||'').replace(/\s+/g,'_') + '.png';
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('✅ تم تحميل البطاقة كصورة','success');
-  }catch(e){
-    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('خطأ في تحميل الصورة','error');
-  }
-};
-
-window.printSingleCard = function(id){
-  const card = allCards.find(c => c.id === id);
-  if(!card) return;
-  const w = window.open('', '_blank', 'width=500,height=700');
-  if(!w){ if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('اسمح بالنوافذ المنبثقة','warning'); return; }
-  const d = w.document;
-  d.documentElement.setAttribute('dir','rtl');
-  d.title = card.name;
-  const st = d.createElement('style');
-  st.textContent = `body{font-family:Cairo,Tahoma,Arial,sans-serif;text-align:center;padding:24px;color:#000;background:#fff;margin:0;} img{width:260px;height:260px;margin:12px auto;display:block;background:#fff;padding:12px;border-radius:12px;border:2px solid #e5e7eb;} .n{font-weight:800;font-size:24px;margin-top:12px;} .c{font-family:monospace;font-size:26px;letter-spacing:3px;margin-top:8px;color:#6366f1;font-weight:800;} .info{margin-top:12px;font-size:14px;color:#555;line-height:1.8;}`;
-  d.head.appendChild(st);
-  
-  // 🆕 معلومات بسيطة بدون box
-  let infoHtml = '';
-  if (card.stageLabel || card.grade) {
-      infoHtml += `<div class="info" style="color:#555;font-size:13px;">🎓 ${card.stageLabel || ''}${card.grade ? ' - ' + card.grade : ''}</div>`;
-  }
-  if (card.center) {
-      infoHtml += `<div class="info" style="color:#333;font-weight:600;font-size:13px;">🏢 ${card.center}</div>`;
-  }
-  
-  d.body.innerHTML = `<h2>${card.name}</h2><img src="${qrImg(card.code, 300, card.type)}"><div class="c">${card.code}</div>${infoHtml}`;
-  setTimeout(() => { w.focus(); w.print(); }, 1000);
-};
-
-window.printAll = function(){
-  if(!allCards.length) return;
-  selectedCards.clear();
-  allCards.forEach(c => selectedCards.add(c.id));
-  document.querySelectorAll('.card-check').forEach(cb => cb.checked = true);
-  document.querySelectorAll('.qr-card').forEach(card => card.classList.add('selected'));
-  updateSelectedCount();
-  setTimeout(() => window.print(), 100);
-};
-
-window.printSelected = function(){
-  if(!selectedCards.size){ if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('حدد بطاقات أولاً','warning'); return; }
-  document.querySelectorAll('.qr-card').forEach(card => { card.style.display = selectedCards.has(card.dataset.id) ? '' : 'none'; });
-  setTimeout(() => { window.print(); setTimeout(() => { document.querySelectorAll('.qr-card').forEach(card => card.style.display = ''); }, 500); }, 100);
-};
-
-window.showPreview = function(){
-  const cards = selectedCards.size ? allCards.filter(c => selectedCards.has(c.id)) : allCards;
-  if(!cards.length) return;
-  const container = document.getElementById('previewContainer');
-  container.innerHTML = cards.map(card => {
-    // 🆕 معلومات إضافية في المعاينة
-    let extraInfo = '';
-    if (card.type === 'student') {
-        if (card.stageLabel || card.grade) {
-            extraInfo += `<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">🎓 ${card.stageLabel || ''}${card.grade ? ' - ' + card.grade : ''}</div>`;
-        }
-        if (card.center) {
-            extraInfo += `<div style="font-size:11px;color:var(--text-secondary);font-weight:600;margin-top:4px;">🏢 ${card.center}</div>`;
-        }
+    allCards=buildCards();
+    var sheets;
+    if(autoFill){
+      var cols=colsAuto(); setCols(cols);
+      paint(chunk(allCards,cols));
+      applyPager();
+      var mm=measureCardMM();
+      var g=gapMM(), H=paperDims()[1];
+      var rows=Math.max(1,Math.floor((H+g)/(mm+g+1.2)));
+      cardsPerPage=cols*rows;
+      sheets=chunk(allCards,cardsPerPage);
+    }else{
+      cardsPerPage=manualPerPage;
+      setCols(colsManual(cardsPerPage));
+      sheets=chunk(allCards,cardsPerPage);
     }
-    
-    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;">' +
-      '<div style="font-weight:800;margin-bottom:8px;">' + card.name + '</div>' +
-      '<img src="' + qrImg(card.code, 150, card.type) + '" style="width:120px;height:120px;margin:8px auto;display:block;border-radius:8px;">' +
-      '<div style="font-family:monospace;font-weight:800;color:var(--primary);font-size:14px;">' + card.code + '</div>' +
-      extraInfo +
-    '</div>';
-  }).join('');
-  document.getElementById('previewModal').style.display = 'block';
+    paint(sheets);
+    if(resetPage!==false) window._curPage=1;
+    if(window._curPage>sheets.length) window._curPage=1;
+    updateStats(); applyPager();
+  }catch(e){ console.error('refresh',e); }
+}
+function updateStats(){
+  document.getElementById('totalCount').textContent=allCards.length;
+  document.getElementById('studentsCount').textContent=allCards.filter(function(c){return c.type==='student';}).length;
+  document.getElementById('groupsCount').textContent=allCards.filter(function(c){return c.type==='group';}).length;
+  document.getElementById('pagesCount').textContent=sheetsCount;
+  document.getElementById('perPageCount').textContent=cardsPerPage;
+  document.getElementById('cardsPerPageValue').textContent=(autoFill?'🤖':'')+cardsPerPage;
+  document.getElementById('selectedCount').textContent=selectedCards.size;
+  var sl=document.getElementById('cardsPerPageSlider');
+  if(sl){ sl.disabled=autoFill; sl.value=Math.min(40,cardsPerPage); }
+}
+/* ============ 📄 الترقيم ============ */
+function pgNumsHtml(cur,total){
+  if(total<=7){ var h=''; for(var i=1;i<=total;i++) h+='<button class="pg-num '+(i===cur?'active':'')+'" onclick="window.pgGo('+i+')">'+i+'</button>'; return h; }
+  var items=[1];
+  if(cur>3) items.push('…');
+  for(var j=cur-1;j<=cur+1;j++){ if(j>1&&j<total) items.push(j); }
+  if(cur<total-2) items.push('…');
+  items.push(total);
+  return items.map(function(it){ return it==='…'?'<span class="pg-dot">…</span>':'<button class="pg-num '+(it===cur?'active':'')+'" onclick="window.pgGo('+it+')">'+it+'</button>'; }).join('');
+}
+function applyPager(){
+  var host=document.getElementById('sheetsHost'); if(!host) return;
+  var els=Array.prototype.slice.call(host.querySelectorAll('.sheet'));
+  var total=els.length;
+  if(window._curPage>total) window._curPage=1;
+  var showAll=window._viewAll||window.__tmpAll;
+  els.forEach(function(el,i){ el.classList.toggle('sheet-hidden',!showAll&&i!==window._curPage-1); });
+  var nums=document.getElementById('pgNums'); if(nums) nums.innerHTML=pgNumsHtml(window._curPage,total);
+  var prev=document.getElementById('pgPrev'),next=document.getElementById('pgNext');
+  if(prev) prev.disabled=(window._curPage<=1)||showAll;
+  if(next) next.disabled=(window._curPage>=total)||showAll;
+  var info=document.getElementById('pgInfo');
+  if(info) info.textContent=total?('📄 صفحة '+window._curPage+' من '+total+' · '+allCards.length+' كارت'):'📄 0 صفحة';
+  var all=document.getElementById('pgAll'); if(all) all.checked=!!window._viewAll;
+}
+window.pgGo=function(n){ window._curPage=clamp(n,1,Math.max(1,sheetsCount)); applyPager(); var bar=document.getElementById('pagerBar'); if(bar) bar.scrollIntoView({behavior:'smooth',block:'start'}); };
+window.pgSetViewAll=function(on){ window._viewAll=!!on; applyPager(); };
+/* ============ ⚙️ التحكم ============ */
+window.setShape=function(s,btn){
+  currentShape=s; document.body.setAttribute('data-shape',s);
+  document.querySelectorAll('.shape-btn').forEach(function(b){b.classList.toggle('active',b.dataset.shape===s);});
+  try{localStorage.setItem('qrPrintShape',s);}catch(e){}
+  refresh(false);
 };
-window.closePreview = function(){ document.getElementById('previewModal').style.display = 'none'; };
-window.printFromPreview = function(){ window.closePreview(); selectedCards.size ? window.printSelected() : window.printAll(); };
-
-window.exportCSV = function(){
+window.setPageSize=function(p,btn){
+  currentPageSize=p; document.body.setAttribute('data-page',p);
+  document.querySelectorAll('.size-btn').forEach(function(b){b.classList.toggle('active',b.dataset.size===p);});
+  try{localStorage.setItem('qrPrintSize',p);}catch(e){}
+  refresh(false);
+};
+window.toggleAutoFill=function(on){
+  autoFill=!!on;
+  try{localStorage.setItem('qrPrintAuto',autoFill?'1':'0');}catch(e){}
+  refresh(false);
+  toast(autoFill?'🤖 التعبئة الذكية شغالة':'✋ وضع يدوي','info');
+};
+window.updateCardsPerPage=function(v){
+  manualPerPage=parseInt(v)||12;
+  try{localStorage.setItem('qrPrintCards',manualPerPage);}catch(e){}
+  if(!autoFill) refresh(false);
+};
+window.toggleCutMarks=function(on){ document.body.classList.toggle('show-cut-marks',!!on); try{localStorage.setItem('qrPrintCut',on?'1':'0');}catch(e){} };
+window.toggleCompact=function(on){ document.body.classList.toggle('compact-print',!!on); try{localStorage.setItem('qrPrintCompact',on?'1':'0');}catch(e){} refresh(false); };
+window.toggleSelection=function(id,on){ if(on)selectedCards.add(id);else selectedCards.delete(id); var el=document.querySelector('.qr-card[data-id="'+id+'"]'); if(el)el.classList.toggle('selected',on); updateStats(); };
+window.selectAll=function(){ allCards.forEach(function(c){selectedCards.add(c.id);}); document.querySelectorAll('.card-checkwrap input').forEach(function(i){i.checked=true;}); document.querySelectorAll('.qr-card').forEach(function(c){c.classList.add('selected');}); updateStats(); };
+window.deselectAll=function(){ selectedCards.clear(); document.querySelectorAll('.card-checkwrap input').forEach(function(i){i.checked=false;}); document.querySelectorAll('.qr-card').forEach(function(c){c.classList.remove('selected');}); updateStats(); };
+window.goBack=function(){ if(document.referrer&&document.referrer.includes(location.origin))history.back(); else location.href=(currentUser?.role==='teacher'?'teacher-dashboard.html':'assistant-dashboard.html'); };
+document.getElementById('themeToggle').onclick=function(){
+  var cur=document.body.getAttribute('data-theme')==='dark'?'light':'dark';
+  document.body.setAttribute('data-theme',cur);
+  try{localStorage.setItem('qrPrintTheme',cur);}catch(e){}
+};
+/* ============ 🖨️ الطباعة ============ */
+window.waitForImages=function(){
+  return new Promise(function(res){
+    var imgs=document.querySelectorAll('.qr-card img'), loaded=0, total=imgs.length;
+    if(!total){ res(); return; }
+    imgs.forEach(function(im){
+      var done=function(){ loaded++; if(loaded>=total) res(); };
+      if(im.complete) done(); else { im.addEventListener('load',done,{once:true}); im.addEventListener('error',done,{once:true}); }
+    });
+    setTimeout(res,6000);
+  });
+};
+window.printAll=async function(){
   if(!allCards.length) return;
-  // 🆕 إضافة السنتر والصف في CSV
-  const headers = ['النوع','الاسم','الكود','المرحلة','الصف','السنتر','الرابط'];
-  const rows = allCards.map(c => [
-      c.type, 
-      c.name, 
-      c.code, 
-      c.stageLabel || '',
-      c.grade || '',
-      c.center || '',
-      qrData(c.code, c.type)
-  ]);
-  const csv = '\uFEFF' + [headers, ...rows].map(row => row.map(cell => '"' + String(cell).replace(/"/g,'""') + '"').join(',')).join('\n');
-  const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = 'EduFlow_Codes_' + new Date().toISOString().split('T')[0] + '.csv';
+  toast('⏳ جاري تجهيز الأوراق...','info');
+  window.__tmpAll=1; applyPager();
+  await window.waitForImages();
+  var restore=function(){ window.__tmpAll=0; applyPager(); window.removeEventListener('afterprint',restore); };
+  window.addEventListener('afterprint',restore);
+  setTimeout(function(){ window.print(); setTimeout(restore,1200); },250);
+};
+window.printSelected=async function(){
+  if(!selectedCards.size){ toast('حدد بطاقات أولاً','warning'); return; }
+  var list=allCards.filter(function(c){return selectedCards.has(c.id);});
+  window._overrideList=list; refresh(true);
+  window.__tmpAll=1; applyPager();
+  await window.waitForImages();
+  var restore=function(){ window._overrideList=null; window.__tmpAll=0; refresh(true); window.removeEventListener('afterprint',restore); };
+  window.addEventListener('afterprint',restore);
+  setTimeout(function(){ window.print(); setTimeout(restore,1200); },250);
+};
+window.printFromPreview=function(){ window.closePreview(); selectedCards.size?window.printSelected():window.printAll(); };
+/* ============ 📥 تحميل PDF ============ */
+window.downloadPDF=async function(){
+  if(typeof window.html2canvas==='undefined'||typeof window.jspdf==='undefined'){ toast('❌ مكتبات PDF مش محملة — اتأكد من الإنترنت','error'); return; }
+  var host=document.getElementById('sheetsHost');
+  var sheets=Array.prototype.slice.call(host.querySelectorAll('.sheet'));
+  if(!sheets.length){ toast('مفيش بطاقات للتصدير','warning'); return; }
+  toast('📥 جاري تجهيز '+sheets.length+' صفحة PDF...','info');
+  var prevTheme=document.body.getAttribute('data-theme');
+  var prevViewAll=window._viewAll;
+  document.body.setAttribute('data-theme','light');
+  window._viewAll=true; applyPager();
+  document.body.classList.add('pdf-capture');
+  await window.waitForImages();
+  try{
+    var fmt={a4:'a4',a5:'a5',a3:'a3',letter:'letter'}[currentPageSize]||'a4';
+    var pdf=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:fmt});
+    var pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight();
+    var m=6;
+    for(var i=0;i<sheets.length;i++){
+      var canvas=await html2canvas(sheets[i],{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false});
+      var img=canvas.toDataURL('image/png');
+      if(i>0) pdf.addPage(fmt,'portrait');
+      var iw=pw-2*m, ih=canvas.height*iw/canvas.width;
+      var maxH=ph-2*m;
+      if(ih>maxH){ ih=maxH; iw=canvas.width*ih/canvas.height; }
+      pdf.addImage(img,'PNG',(pw-iw)/2,m,iw,ih);
+      toast('⏳ PDF: صفحة '+(i+1)+' من '+sheets.length,'info');
+    }
+    pdf.save('EduFlow_Barcodes_'+new Date().toISOString().split('T')[0]+'.pdf');
+    toast('✅ تم تحميل PDF بنجاح','success');
+  }catch(e){ console.error(e); toast('❌ خطأ في PDF: '+e.message,'error'); }
+  document.body.classList.remove('pdf-capture');
+  document.body.setAttribute('data-theme',prevTheme||'dark');
+  window._viewAll=prevViewAll; applyPager();
+};
+/* ============ 👁️ معاينة + ZIP + CSV ============ */
+window.showPreview=function(){
+  var cards=selectedCards.size?allCards.filter(function(c){return selectedCards.has(c.id);}):allCards;
+  if(!cards.length) return;
+  document.getElementById('previewContainer').innerHTML=cards.map(function(c){
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">'+
+      '<div style="font-weight:800;font-size:12px;margin-bottom:6px;">'+c.name+'</div>'+
+      '<img src="'+qrImg(c.code,150,c.type)+'" crossorigin="anonymous" style="width:100px;height:100px;margin:4px auto;display:block;border-radius:6px;">'+
+      '<div style="font-family:var(--font-en);font-weight:800;color:var(--primary);font-size:12px;">'+c.code+'</div>'+
+      (c.meta?'<div style="font-size:9px;color:var(--text-muted);margin-top:3px;">'+c.meta+'</div>':'')+'</div>';
+  }).join('');
+  document.getElementById('previewModal').style.display='block';
+};
+window.closePreview=function(){ document.getElementById('previewModal').style.display='none'; };
+document.getElementById('previewModal')?.addEventListener('click',function(e){ if(e.target===this) window.closePreview(); });
+window.downloadAllAsZip=async function(){
+  if(!allCards.length||typeof JSZip==='undefined') return;
+  toast('📦 جاري تجهيز '+allCards.length+' صورة...','info');
+  try{
+    var zip=new JSZip(), folder=zip.folder('EduFlow_QR_Cards');
+    for(var i=0;i<allCards.length;i++){
+      var c=allCards[i];
+      try{
+        var blob=await generateCardImage(c);
+        folder.file(c.type+'_'+c.code+'_'+(c.name||'').replace(/[^a-zA-Z0-9\u0600-\u06FF]/g,'_')+'.png',blob);
+      }catch(e){}
+    }
+    var content=await zip.generateAsync({type:'blob'});
+    var a=document.createElement('a'); a.href=URL.createObjectURL(content);
+    a.download='EduFlow_Cards_'+new Date().toISOString().split('T')[0]+'.zip';
+    document.body.appendChild(a); a.click(); a.remove();
+    toast('✅ تم تحميل ZIP','success');
+  }catch(e){ toast('خطأ في ZIP','error'); }
+};
+async function generateCardImage(card){
+  return new Promise(function(resolve,reject){
+    var W,H;
+    if(currentShape==='landscape'){W=1000;H=631;} else if(currentShape==='square'){W=820;H=820;} else {W=760;H=1000;}
+    var cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+    var x=cv.getContext('2d');
+    x.fillStyle='#fff'; x.fillRect(0,0,W,H);
+    x.strokeStyle='#e2e8f0'; x.lineWidth=6; x.strokeRect(3,3,W-6,H-6);
+    x.direction='rtl'; x.textAlign='center';
+    var img=new Image(); img.crossOrigin='anonymous';
+    img.src=qrImg(card.code,500,card.type);
+    img.onload=function(){
+      if(currentShape==='landscape'){
+        var qs=420; x.drawImage(img,60,(H-qs)/2,qs,qs);
+        x.textAlign='right';
+        x.fillStyle='#0f172a'; x.font='800 52px Cairo,Tahoma'; x.fillText(card.name||'-',W-70,240);
+        x.fillStyle='#4f46e5'; x.font='800 46px "Fira Code",monospace'; x.fillText(card.code,W-70,320);
+        x.fillStyle='#64748b'; x.font='30px Cairo,Tahoma'; x.fillText((card.meta||'').replace(/<br>/g,' · '),W-70,390);
+        x.fillStyle='#94a3b8'; x.font='22px Cairo,Tahoma'; x.fillText(brandLine(),W-70,H-50);
+      }else{
+        var qs2=currentShape==='square'?430:460, top=currentShape==='square'?70:60;
+        x.fillStyle='#f8fafc'; x.fillRect((W-qs2)/2-16,top-16,qs2+32,qs2+32);
+        x.drawImage(img,(W-qs2)/2,top,qs2,qs2);
+        var y=top+qs2+80;
+        x.fillStyle='#0f172a'; x.font='800 50px Cairo,Tahoma'; x.fillText(card.name||'-',W/2,y); y+=70;
+        x.fillStyle='#4f46e5'; x.font='800 44px "Fira Code",monospace'; x.fillText(card.code,W/2,y); y+=58;
+        x.fillStyle='#64748b'; x.font='28px Cairo,Tahoma'; x.fillText((card.meta||'').replace(/<br>/g,' · '),W/2,y);
+        x.fillStyle='#94a3b8'; x.font='22px Cairo,Tahoma'; x.fillText(brandLine(),W/2,H-40);
+      }
+      cv.toBlob(function(b){resolve(b);},'image/png');
+    };
+    img.onerror=function(){reject(new Error('فشل تحميل الباركود'));};
+  });
+}
+window.exportCSV=function(){
+  if(!allCards.length) return;
+  var headers=['النوع','الاسم','الكود','البيانات','الرابط'];
+  var rows=allCards.map(function(c){return [c.type,c.name,c.code,(c.meta||'').replace(/<br>/g,' '),qrData(c.code,c.type)];});
+  var csv='\uFEFF'+[headers].concat(rows).map(function(r){return r.map(function(cell){return '"'+String(cell).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='EduFlow_Codes_'+new Date().toISOString().split('T')[0]+'.csv';
   document.body.appendChild(a); a.click(); a.remove();
 };
-
-window.downloadAllAsZip = async function(){
-  if(!allCards.length || typeof JSZip === 'undefined') return;
-  if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('📦 جاري تجهيز ' + allCards.length + ' صورة...','info');
+/* ============ 🚀 الإقلاع ============ */
+(async function boot(){
   try{
-    const zip = new JSZip();
-    const folder = zip.folder('EduFlow_QR_Cards');
-    for(let i = 0; i < allCards.length; i++){
-      const card = allCards[i];
-      try{
-        const blob = await generateCardImage(card);
-        const fileName = card.type + '_' + card.code + '_' + (card.name||'').replace(/[^a-zA-Z0-9\u0600-\u06FF]/g,'_') + '.png';
-        folder.file(fileName, blob);
-        if((i+1) % 5 === 0 && typeof ThemeManager?.toast === 'function') ThemeManager.toast('⏳ ' + (i+1) + '/' + allCards.length, 'info');
-      }catch(e){ console.error(e); }
-    }
-    const content = await zip.generateAsync({type: 'blob'});
-    const a = document.createElement('a'); a.href = URL.createObjectURL(content);
-    a.download = 'EduFlow_Cards_' + new Date().toISOString().split('T')[0] + '.zip';
-    document.body.appendChild(a); a.click(); a.remove();
-    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('✅ تم تحميل ملف ZIP بنجاح','success');
-  }catch(e){
-    if(typeof ThemeManager?.toast === 'function') ThemeManager.toast('خطأ في إنشاء ZIP','error');
-  }
-};
-
-document.getElementById('previewModal')?.addEventListener('click', function(e){ if(e.target === this) window.closePreview(); });
+    if(typeof DataService?.init==='function') await DataService.init();
+    currentUser=AuthService?.getCurrentUser?AuthService.getCurrentUser():null;
+    if(!currentUser){ location.href='login.html'; return; }
+    try{ branding=typeof DataService?.getBranding==='function'?DataService.getBranding():{}; }catch(e){}
+    var ss,sp,sc,sa,scm,scp,th;
+    try{
+      ss=localStorage.getItem('qrPrintShape'); sp=localStorage.getItem('qrPrintSize');
+      sc=localStorage.getItem('qrPrintCards'); sa=localStorage.getItem('qrPrintAuto');
+      scm=localStorage.getItem('qrPrintCut'); scp=localStorage.getItem('qrPrintCompact'); th=localStorage.getItem('qrPrintTheme');
+    }catch(e){}
+    if(ss) currentShape=ss;
+    if(sp) currentPageSize=sp;
+    if(sc) manualPerPage=parseInt(sc)||12;
+    if(sa==='0') autoFill=false;
+    document.body.setAttribute('data-shape',currentShape);
+    document.body.setAttribute('data-page',currentPageSize);
+    document.getElementById('autoFillToggle').checked=autoFill;
+    document.getElementById('cardsPerPageSlider').value=manualPerPage;
+    document.getElementById('cutMarksToggle').checked=(scm!=='0');
+    if(scm!=='0') document.body.classList.add('show-cut-marks');
+    document.getElementById('compactPrintToggle').checked=(scp==='1');
+    if(scp==='1') document.body.classList.add('compact-print');
+    if(th) document.body.setAttribute('data-theme',th);
+    document.querySelectorAll('.shape-btn').forEach(function(b){b.classList.toggle('active',b.dataset.shape===currentShape);});
+    document.querySelectorAll('.size-btn').forEach(function(b){b.classList.toggle('active',b.dataset.size===currentPageSize);});
+    var q=new URLSearchParams(location.search).get('search');
+    if(q){ var el=document.getElementById('prSearch'); if(el) el.value=q; }
+    window.refreshSmartFilters();
+    refresh(true);
+  }catch(e){ console.error('boot',e); }
+})();
 </script>
 </body>
 </html>

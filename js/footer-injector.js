@@ -199,7 +199,7 @@ if(!img){img=document.createElement('img');img.className='brandInjected';img.sty
 if(img.getAttribute('src')!==url)img.setAttribute('src',url);
 });
 try{
-var man={name:(document.title||'EduFlow'),short_name:'EduFlow',start_url:location.pathname,display:'standalone',background_color:'#0a0f1e',theme_color:'#6366f1',icons:[{src:url,sizes:'any',type:'image/png',purpose:'any'},{src:url,sizes:'any',type:'image/png',purpose:'maskable'}]};
+var man={name:(document.title||'EduFlow'),short_name:'EduFlow',start_url:location.origin+location.pathname,display:'standalone',background_color:'#0a0f1e',theme_color:'#6366f1',icons:[{src:url,sizes:'any',type:'image/png',purpose:'any'},{src:url,sizes:'any',type:'image/png',purpose:'maskable'}]};
 var blob=new Blob([JSON.stringify(man)],{type:'application/manifest+json'});
 var murl=URL.createObjectURL(blob);
 var ml=document.querySelector('link[rel="manifest"]');

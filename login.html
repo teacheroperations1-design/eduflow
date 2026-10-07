@@ -533,5 +533,46 @@ document.getElementById('themeToggle')?.addEventListener('click', function() {
   } catch (e) {}
 })();
 </script>
+<script>
+/* ============ 🧠 تذكر آخر دخول + متابعة الجلسة القائمة ============ */
+(function(){
+"use strict";
+function dashFor(role){ return {student:'student-dashboard.html',teacher:'teacher-dashboard.html',assistant:'assistant-dashboard.html',admin:'admin-dashboard.html',super_admin:'admin-dashboard.html',parent:'parent-dashboard.html'}[role]||'student-dashboard.html'; }
+/* 1) لو الجلسة لسه موجودة → كمّل بيها عادي من غير ما تسأل */
+try{
+  var raw=sessionStorage.getItem('eduflow_user')||localStorage.getItem('eduflow_user');
+  if(raw){ var u=JSON.parse(raw); if(u&&u.role){ location.replace(dashFor(u.role)); return; } }
+}catch(e){}
+/* 2) املأ آخر معرف + كارت "آخر دخول" */
+try{
+  var last=JSON.parse(localStorage.getItem('eduflow_last_login')||'null');
+  if(last){
+    ['loginCode','username','code','email','phone','loginUser','user'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el&&!el.value) el.value=last.identifier||'';
+    });
+    if(!document.getElementById('lastLoginChip')){
+      var chip=document.createElement('div'); chip.id='lastLoginChip';
+      chip.style.cssText='display:flex;gap:8px;align-items:center;background:rgba(99,102,241,.08);border:1px dashed rgba(99,102,241,.5);border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:12px;font-weight:700;';
+      chip.innerHTML='<span style="font-size:20px;">👋</span><div style="flex:1;">آخر دخول: <strong>'+(last.name||last.identifier||'')+'</strong><div style="font-size:10px;opacity:.7;font-weight:500;">'+new Date(last.at).toLocaleString('ar-EG')+' · البيانات متعبّية تلقائياً</div></div>';
+      var form=document.querySelector('form')||document.querySelector('.card');
+      if(form&&form.parentNode) form.parentNode.insertBefore(chip,form);
+    }
+  }
+}catch(e){}
+/* 3) احفظ آخر دخول لحظة نجاح اللوجين */
+var saved=0, iv=setInterval(function(){
+  try{
+    var raw=sessionStorage.getItem('eduflow_user')||localStorage.getItem('eduflow_user');
+    if(!raw||saved) return;
+    var u=JSON.parse(raw); if(!u||!u.id) return;
+    saved=1;
+    localStorage.setItem('eduflow_last_login',JSON.stringify({identifier:u.code||u.phone||u.email||u.name||u.id,name:u.name,role:u.role,at:Date.now()}));
+    clearInterval(iv);
+  }catch(e){}
+},800);
+setTimeout(function(){ clearInterval(iv); },60000);
+})();
+</script>
 </body>
 </html>
