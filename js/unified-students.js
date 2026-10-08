@@ -142,6 +142,7 @@ try{if(DataService.updateUser)await DataService.updateUser(sid,{name:u.name,pare
 }
 window.openEditExistingPlatform=function(sid){
 if(isAdminRole()){if(window.openStudentModal)return window.openStudentModal(sid);}
+if(isAssistant()){window.openUnifiedAddStudent();setTimeout(function(){UST.fillSingle(sid);},200);return;}
 if(window.openEditStudentProfile)return window.openEditStudentProfile(sid);
 if(window.openStudentModal)return window.openStudentModal(sid);
 };
@@ -1044,3 +1045,4 @@ window.openEditStudentProfile=function(id){window.openUnifiedAddStudent();if(id)
 }
 },2500);
 })();
+
