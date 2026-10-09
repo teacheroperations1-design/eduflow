@@ -1,11 +1,10 @@
 /* ================================================================
-📦 Billing Core V2 — المصدر الوحيد لحقيقة الحصص والشهرية
-القواعد:
-• العداد = حضور فعلي + يدوي - ملغي
-• المربع الأخضر = حصة فعلية (attendance approved)
-• المربع الأحمر = حصة ملغية (cancelledSessions)
-• الشفافية = حصة محذوفة (اختفت تماماً)
+📦 Billing Core V3 — مصدر واحد لحقيقة الحصص والشهرية (دورة-واعي + بدون اختطاف)
+• العداد/المربعات/المدفوع = من محرك الدفتر (LedgerUI) بمفاتيح دورات موحّدة cycle-NN
+• تحويل تلقائي: أي شهر ميلادي بيدخل يتحول لمفتاح الدورة بتاعته قبل الحساب
 • 7/8 = إنذار، 8/8 = مطالبة، شهر فات مش مدفوع = متأخر مرحّل
+• 🆕 V3: مفيش setInterval بيكتب فوق دوال الصفحات — التعريف مرة واحدة لو ناقص بس
+• 🆕 V3: بيسمع نبضة ledger-sync ويعيد رسم نفسه فوراً (مزامنة لحظية بين التبويبات)
 ================================================================ */
 (function(){
 "use strict";
@@ -22,84 +21,84 @@ function reqOf(g){return (g&&g.sessionsPerMonth)||((window.EduFlowConfig&&EduFlo
 function feeOf(g){return (g&&g.monthlyFee)||0;}
 function cur(){try{return (window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null;}catch(e){return null;}}
 
-/* الحصص اللي اتعملت فعلاً في شهر m */
-function heldDates(gid,m){
-var d=db(),canc={};
-(d.cancelledSessions||[]).forEach(function(c){if(c.groupId===gid&&(c.date||'').startsWith(m))canc[c.date]=(c.makeupStatus==='done');});
+/* 🆕 V3: تحويل أي مفتاح (ميلادي أو دورة) لمفتاح الدورة الصحيح */
+function cycleKeyFor(g,m){
+if(!m) return localMonth();
+if(String(m).indexOf('cycle-')===0) return m;
+var rs=(g&&g.cycleRanges)||[];
+for(var i=0;i<rs.length;i++){ var f=(rs[i].from||'').slice(0,7), t=rs[i].to?rs[i].to.slice(0,7):'9999-12'; if(m>=f&&m<=t) return 'cycle-'+pad(rs[i].n); }
+return rs.length?('cycle-'+pad(rs[rs.length-1].n)):m;
+}
+/* 🆕 V3: قائمة دورات المجموعة من المحرك الواحد */
+function cyclesOfGroup(g){
+if(window.LedgerUI&&LedgerUI.cyclesOf){ try{ return LedgerUI.cyclesOf(g); }catch(e){} }
+var rs=(g&&g.cycleRanges)||[];
+if(rs.length) return rs.map(function(r){ return {n:r.n, ck:'cycle-'+pad(r.n), ym:(r.from||'').slice(0,7), range:r}; });
+return monthsUpTo(localMonth()).map(function(m,i){ return {n:i+1, ck:m, ym:m, range:{from:m+'-01',to:null}}; });
+}
+
+/* الحصص الفعلية في دورة (fallback محلي بنفس قواعد المحرك) */
+function heldDates(gid,ck){
+var g=gById(gid), d=db(), canc={}, rs=(g&&g.cycleRanges)||[], n=parseInt(String(ck).replace('cycle-',''))||1, rng=null;
+rs.forEach(function(r){ if(r.n===n) rng=r; }); if(!rng) rng=rs[rs.length-1]||null;
+(d.cancelledSessions||[]).forEach(function(c){ if(c.groupId===gid) canc[c.date]=(c.makeupStatus==='done'); });
+function inR(ds){ if(!rng) return (ds||'').slice(0,7)===String(ck).slice(0,7); return ds>=rng.from&&(!rng.to||ds<=rng.to); }
 var set={};
 (DataService.getAttendance?DataService.getAttendance():[]).forEach(function(a){
-if(a.groupId!==gid||a.status!=='approved'||!(a.date||'').startsWith(m))return;
+if(a.groupId!==gid||a.status!=='approved'||!inR(a.date||''))return;
 if(canc[a.date]===false)return;
 set[a.date]=canc[a.date]?'madeup':'done';
 });
 return set;
 }
+function manualSumMax(gid,ck){ var per={}; (db().manualSessions||[]).forEach(function(ms){ if(ms.groupId===gid&&(ms.month===ck)&&(!ms.type||ms.type==='counter')) per[ms.studentId]=(per[ms.studentId]||0)+(ms.sessionsCount||0); }); var mx=0; Object.keys(per).forEach(function(k){ if(per[k]>mx) mx=per[k]; }); return mx; }
+function manualSum(sid,gid,ck){ var s=0; (db().manualSessions||[]).forEach(function(ms){ if(ms.groupId===gid&&ms.studentId===sid&&ms.month===ck&&(!ms.type||ms.type==='counter')) s+=(ms.sessionsCount||0); }); return s; }
 
-/* الحصص اليدوية/المرحّلة للطالب */
-function manualSum(sid,gid,m){
-var s=0;
-(db().manualSessions||[]).forEach(function(ms){
-if(ms.groupId===gid&&ms.studentId===sid&&(ms.month||'')===m&&(!ms.type||ms.type==='counter'))
-s+=(ms.sessionsCount||0);
-});
-return s;
-}
-
-/* العداد = حضور فعلي + يدوي */
 function sessionsOf(sid,gid,m){
-if(window.LedgerUI&&LedgerUI.groupSessions){ var s=LedgerUI.groupSessions(gid,m); return s?s.done:0; }
-var g=gById(gid);
-var held=Object.keys(heldDates(gid,m)).length;
-var man=manualSum(sid,gid,m);
-return held+man;
+var g=gById(gid), ck=cycleKeyFor(g,m);
+if(window.LedgerUI&&LedgerUI.groupSessions){ var s=LedgerUI.groupSessions(gid,ck); return s?s.done:0; }
+return Object.keys(heldDates(gid,ck)).length+manualSum(sid,gid,ck);
 }
+/* 🆕 V3: المدفوع بقواعد المحرك حرفياً */
+function paidOf(sid,gid,m){
+var g=gById(gid), ck=cycleKeyFor(g,m);
+if(window.LedgerUI&&LedgerUI.paidForCycle){ try{ return LedgerUI.paidForCycle(sid,gid,ck); }catch(e){} }
+var tot=0; (db().payments||[]).forEach(function(p){ if(!p||p.studentId!==sid||p.groupId!==gid) return; var pm=String(p.month||''); if(pm===ck||pm===m||pm.slice(0,7)===String(m).slice(0,7)) tot+=(p.paidAmount||0); }); return tot;
+}
+function payRec(sid,gid,m){ var g=gById(gid), ck=cycleKeyFor(g,m), p=null; (db().payments||[]).forEach(function(x){ if(x.studentId===sid&&x.groupId===gid&&(x.month===ck||x.month===m)) p=x; }); return p; }
 
-/* سجل الدفع */
-function payRec(sid,gid,m){var p=null;(db().payments||[]).forEach(function(x){if(x.studentId===sid&&x.groupId===gid&&(x.month||'')===m)p=x;});return p;}
-
-/* صف الشهر */
 function monthRow(sid,g,m){
 if(!g)return{month:m,done:0,req:8,fee:0,paid:0,completed:false,rem:0};
-var req=reqOf(g),fee=feeOf(g),done=sessionsOf(sid,g.id,m);
-var p=payRec(sid,g.id,m),paid=p?(p.paidAmount||0):0;
-var completed=done>=req;
+var req=reqOf(g),fee=feeOf(g),done=sessionsOf(sid,g.id,m),paid=paidOf(sid,g.id,m),completed=done>=req;
 return{month:m,done:done,req:req,fee:fee,paid:paid,completed:completed,rem:completed?Math.max(0,fee-paid):0};
 }
-
-/* الحالة: active / warning(7/8) / due(8/8) / paid / overdue */
 function statusOf(sid,g){
-var c=monthRow(sid,g,localMonth());
+var cyc=cyclesOfGroup(g), curC=cyc[cyc.length-1]||{ck:localMonth()};
+var c=monthRow(sid,g,curC.ck);
 var warnAt=(g&&g.warnAt!=null&&g.warnAt!=='')?+g.warnAt:(c.req-1);
-var past=monthsUpTo(localMonth()).slice(0,-1).map(function(m){return monthRow(sid,g,m);});
-var hasOverdue=past.some(function(r){return r.completed&&r.rem>0;});
-if(hasOverdue)return'overdue';
+var past=cyc.slice(0,-1).map(function(x){return monthRow(sid,g,x.ck);});
+if(past.some(function(r){return r.completed&&r.rem>0;}))return'overdue';
 if(c.completed&&c.rem>0)return'due';
 if(c.completed&&c.rem===0)return'paid';
 if(c.done>=warnAt&&!c.completed)return'warning';
 return'active';
 }
-
-/* المربعات — مصدر واحد لكل الصفحات */
 function squaresOf(gid,m){
+var g=gById(gid), ck=cycleKeyFor(g,m);
 if(window.LedgerUI&&LedgerUI.groupSessions){
-var s=LedgerUI.groupSessions(gid,m);
-var ev=s.events.map(function(e){ return {t:e.t,d:e.d||''}; });
+var s=LedgerUI.groupSessions(gid,ck);
+var ev=(s.events||[]).map(function(e){ return {t:e.t,d:e.d||''}; });
 var done=ev.filter(function(e){return e.t!=='cancelled';}).length;
 for(var i=done;i<s.required;i++) ev.push({t:'empty',d:''});
 return {ev:ev,done:done,req:s.required,warnAt:s.warnAt};
 }
-var g=gById(gid),req=reqOf(g);
-var held=heldDates(gid,m);
-var ev=[];Object.keys(held).sort().forEach(function(d){ev.push({t:held[d],d:d});});
-var man=manualSumMax(gid,m);
-while(ev.length<man)ev.unshift({t:'manual',d:''});
-var done=ev.length;
-for(var i2=done;i2<req;i2++)ev.push({t:'empty',d:''});
-return {ev:ev,done:done,req:req};
+var req=reqOf(g), held=heldDates(gid,ck), ev2=[];
+Object.keys(held).sort().forEach(function(d){ev2.push({t:held[d],d:d});});
+var man=manualSumMax(gid,ck);
+while(ev2.length<man)ev2.unshift({t:'manual',d:''});
+for(var j=ev2.length;j<req;j++)ev2.push({t:'empty',d:''});
+return {ev:ev2,done:ev2.filter(function(e){return e.t!=='cancelled';}).length,req:req};
 }
-function manualSumMax(gid,m){ var per={}; (db().manualSessions||[]).forEach(function(ms){ if(ms.groupId===gid&&(ms.month||'')===m&&(!ms.type||ms.type==='counter')) per[ms.studentId]=(per[ms.studentId]||0)+(ms.sessionsCount||0); }); var mx=0; Object.keys(per).forEach(function(k){ if(per[k]>mx) mx=per[k]; }); return mx; }
-
-/* رسم المربعات */
 function sqHtml(sq){
 return sq.ev.map(function(e){
 if(e.t==='empty')return'<span class="bsq" style="background:var(--surface-hover);border:1px solid var(--border);"></span>';
@@ -110,7 +109,6 @@ if(e.t==='madeup')return'<span class="bsq" style="background:var(--info);" title
 return'<span class="bsq" style="background:var(--success);" title="'+e.d+' حصة فعلية">'+day+'</span>';
 }).join('');
 }
-
 function getMyPendingCancels(){
   var u=cur(); if(!u) return [];
   var d=db();
@@ -119,15 +117,13 @@ function getMyPendingCancels(){
     return myGroups.indexOf(pc.groupId)>=0 && pc.date>new Date().toISOString().slice(0,10);
   });
 }
-window.BC=window.BC||{};
-window.BC.getMyPendingCancels=getMyPendingCancels;
 
-/* دوال عامة */
 window.BC={
 startMonth:startMonth,monthsUpTo:monthsUpTo,monthName:monthName,localMonth:localMonth,
+cycleKeyFor:cycleKeyFor,cyclesOfGroup:cyclesOfGroup,paidOf:paidOf,
 heldDates:heldDates,sessionsOf:sessionsOf,payRec:payRec,monthRow:monthRow,
 statusOf:statusOf,squaresOf:squaresOf,sqHtml:sqHtml,reqOf:reqOf,feeOf:feeOf,
-/* دوال حذف/إضافة */
+getMyPendingCancels:getMyPendingCancels,
 deleteHeldSession:function(gid,attId){
 var d=db();
 d.attendance=(d.attendance||[]).filter(function(x){return x.id!==attId;});
@@ -141,16 +137,18 @@ if(DataService._saveData)DataService._saveData(d);
 if(window.FirebaseService&&FirebaseService.connected){try{FirebaseService.deleteDoc('cancelledSessions',cid);}catch(e){}}
 },
 addManualSession:function(gid,sid,month,reason){
+var g=gById(gid), ck=cycleKeyFor(g,month);
 var d=db();d.manualSessions=d.manualSessions||[];
-var rec={id:'ms_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),groupId:gid,studentId:sid,month:month,sessionsCount:1,type:'counter',reason:reason||'إضافة يدوية',addedAt:new Date().toISOString()};
+var rec={id:'ms_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),groupId:gid,studentId:sid,month:ck,sessionsCount:1,type:'counter',reason:reason||'إضافة يدوية',addedAt:new Date().toISOString()};
 d.manualSessions.push(rec);
 if(DataService._saveData)DataService._saveData(d);
 if(window.FirebaseService&&FirebaseService.connected){try{FirebaseService.saveDoc('manualSessions',rec.id,rec);}catch(e){}}
 return rec;
 },
 removeManualSession:function(gid,sid,month){
+var g=gById(gid), ck=cycleKeyFor(g,month);
 var d=db();
-var list=(d.manualSessions||[]).filter(function(ms){return ms.groupId===gid&&ms.studentId===sid&&(ms.month||'')===month&&(!ms.type||ms.type==='counter');});
+var list=(d.manualSessions||[]).filter(function(ms){return ms.groupId===gid&&ms.studentId===sid&&ms.month===ck&&(!ms.type||ms.type==='counter');});
 if(!list.length)return false;
 list.sort(function(a,b){return String(a.addedAt||'').localeCompare(String(b.addedAt||''));});
 var last=list[list.length-1];
@@ -160,23 +158,18 @@ return true;
 },
 resetGroup:function(gid,month,options){
 options=options||{};
+var g=gById(gid), ck=cycleKeyFor(g,month);
 var d=db();
-var months=options.allMonths?monthsUpTo(localMonth()):[month];
+var months=options.allMonths?cyclesOfGroup(g).map(function(c){return c.ck;}):[ck];
 if(options.clearManual){d.manualSessions=(d.manualSessions||[]).filter(function(ms){return !(ms.groupId===gid&&months.indexOf(ms.month||'')>=0);});}
-if(options.clearCancelled){d.cancelledSessions=(d.cancelledSessions||[]).filter(function(c){return !(c.groupId===gid&&months.indexOf((c.date||'').slice(0,7))>=0);});}
-if(options.clearAttendance){d.attendance=(d.attendance||[]).filter(function(a){return !(a.groupId===gid&&months.indexOf((a.date||'').slice(0,7))>=0);});}
-if(options.resetNow){var g=gById(gid);if(g){g.sessionNow=0;g.sessionNowMonth=localMonth();}}
+if(options.clearCancelled){d.cancelledSessions=(d.cancelledSessions||[]).filter(function(c){return !(c.groupId===gid&&months.indexOf(cycleKeyFor(g,(c.date||'').slice(0,7)))>=0);});}
+if(options.clearAttendance){d.attendance=(d.attendance||[]).filter(function(a){return !(a.groupId===gid&&months.indexOf(cycleKeyFor(g,(a.date||'').slice(0,7)))>=0);});}
+if(options.resetNow){var gg=gById(gid);if(gg){gg.sessionNow=0;gg.sessionNowMonth=ck;}}
 if(DataService._saveData)DataService._saveData(d);
-if(window.FirebaseService&&FirebaseService.connected){
-if(options.clearManual){(d.manualSessions||[]).forEach(function(ms){if(ms.groupId===gid&&months.indexOf(ms.month||'')>=0){try{FirebaseService.deleteDoc('manualSessions',ms.id);}catch(e){}}});}
-if(options.clearCancelled){(d.cancelledSessions||[]).forEach(function(c){if(c.groupId===gid&&months.indexOf((c.date||'').slice(0,7))>=0){try{FirebaseService.deleteDoc('cancelledSessions',c.id);}catch(e){}}});}
-if(options.clearAttendance){(d.attendance||[]).forEach(function(a){if(a.groupId===gid&&months.indexOf((a.date||'').slice(0,7))>=0){try{FirebaseService.deleteDoc('attendance',a.id);}catch(e){}}});}
-if(options.resetNow){try{FirebaseService.saveDoc('groups',gid,gById(gid));}catch(e){}}
-}
 }
 };
 
-/* توحيد Ops.buildStudentBilling */
+/* توحيد Ops.buildStudentBilling (دورة-واعي) */
 function wrapBilling(){
 if(typeof Ops==='undefined'||!Ops)return;
 if(Ops.buildStudentBilling===window.__bcBillingFn)return;
@@ -186,7 +179,7 @@ var rows=prev.call(Ops,studentId,month);
 try{(rows||[]).forEach(function(row){
 var g=row.group;if(!g)return;
 var c=BC.monthRow(studentId,g,month||localMonth());
-var past=BC.monthsUpTo(month||localMonth()).slice(0,-1).map(function(m){return BC.monthRow(studentId,g,m);});
+var past=BC.cyclesOfGroup(g).slice(0,-1).map(function(x){return BC.monthRow(studentId,g,x.ck);});
 var pastDebt=past.reduce(function(s,r){return s+(r.completed?r.rem:0);},0);
 row.billing=row.billing||{};row.payment=row.payment||{};
 row.billing.actualSessions=c.done;
@@ -269,42 +262,49 @@ window.loadAsCycles=renderCycles;window.loadStudentCycles=renderCycles;
 window.loadAsCycles.__bc=1;window.loadStudentCycles.__bc=1;
 }
 
-/* صفحة المدفوعات (طالب + ولي أمر) */
+/* 🆕 V3: كروت الفاتورة الموحّدة (طالب + ولي أمر) — بنفس أرقام المحرك */
 function billingCards(sid,el){
 var ts=(DataService.getStudentTeachers?DataService.getStudentTeachers(sid):[]);
 if(!ts.length){el.innerHTML='<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">💰</div><strong>لا توجد مستحقات</strong></div>';return;}
 var gDue=0,gPaid=0,gRem=0,html='';
 ts.forEach(function(t){
 var g=t.group;if(!g)return;
-var months=BC.monthsUpTo(localMonth()).map(function(m){return BC.monthRow(sid,g,m);}).slice().reverse();
-var due=months.filter(function(r){return r.completed;}).reduce(function(s,r){return s+r.fee;},0);
-var paid=months.filter(function(r){return r.completed;}).reduce(function(s,r){return s+Math.min(r.paid,r.fee);},0);
-var rem=months.filter(function(r){return r.completed;}).reduce(function(s,r){return s+r.rem;},0);
+var cyc=BC.cyclesOfGroup(g);
+var rows=cyc.map(function(c){ var r=BC.monthRow(sid,g,c.ck); r.ym=c.ym; r.n=c.n; return r; }).slice().reverse();
+var done=rows.filter(function(r){return r.completed;});
+var due=done.reduce(function(s,r){return s+r.fee;},0);
+var paid=done.reduce(function(s,r){return s+Math.min(r.paid,r.fee);},0);
+var rem=done.reduce(function(s,r){return s+r.rem;},0);
 gDue+=due;gPaid+=paid;gRem+=rem;
-html+='<div class="card" style="margin-bottom:14px;"><div class="card-header"><h3 class="card-title">👥 '+g.name+'</h3><span class="text-xs text-muted">👨‍ '+(t.teacher?t.teacher.name:'-')+' · شهرية الشهر: '+BC.feeOf(g)+' ج.م · النصاب: '+BC.reqOf(g)+' حصة</span></div><div style="padding:12px;">';
-months.forEach(function(r){
+html+='<div class="card" style="margin-bottom:14px;"><div class="card-header"><h3 class="card-title">👥 '+g.name+'</h3><span class="text-xs text-muted">👨‍ '+(t.teacher?t.teacher.name:'-')+' · شهرية: '+BC.feeOf(g)+' ج.م · النصاب: '+BC.reqOf(g)+' حصة</span></div><div style="padding:12px;">';
+if(g.frozen) html+='<div class="filter-info" style="background:var(--warning-bg);color:var(--warning);border-color:var(--warning);margin-bottom:8px;">🧊 العد موقوف من '+(g.frozenSince||'-')+' — حصص فترة الوقف مش محسوبة</div>';
+rows.forEach(function(r){
 var sq=BC.squaresOf(g.id,r.month);
 var badge;
 if(r.completed&&r.rem===0)badge='<span class="badge badge-success">✓ مسدد بالكامل</span>';
 else if(r.completed&&r.paid>0)badge='<span class="badge badge-warning">جزئي — متبقي '+r.rem+' ج.م</span>';
 else if(r.completed)badge='<span class="badge badge-danger">💰 مستحقة: '+r.fee+' ج.م</span>';
-else if(r.month<localMonth())badge=r.paid>0?'<span class="badge badge-info">💵 مقدم '+r.paid+' ج.م</span>':'<span class="badge badge-muted">📴 انتهى — مش مستحق</span>';
 else badge=r.paid>0?'<span class="badge badge-info">💵 مقدم '+r.paid+' ج.م</span>':'<span class="badge badge-info">🔄 جاري — '+r.done+'/'+r.req+'</span>';
-html+='<div class="sub-row" style="display:block;"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;"><div><strong>📅 '+BC.monthName(r.month)+'</strong><div class="text-xs text-muted">المدفوع: '+r.paid+'/'+r.fee+'</div></div><div>'+badge+'</div></div><div style="display:flex;gap:3px;flex-wrap:wrap;align-items:center;margin-top:8px;">'+BC.sqHtml(sq)+'<b style="font-family:var(--font-en);font-size:11px;margin-inline-start:6px;">'+sq.done+'/'+sq.req+'</b></div></div>';
+html+='<div class="sub-row" style="display:block;"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;"><div><strong>📅 '+BC.monthName(r.ym||r.month)+'</strong> <span class="text-xs text-muted">دورة '+r.n+'</span><div class="text-xs text-muted">المدفوع: '+r.paid+'/'+r.fee+'</div></div><div>'+badge+'</div></div><div style="display:flex;gap:3px;flex-wrap:wrap;align-items:center;margin-top:8px;">'+BC.sqHtml(sq)+'<b style="font-family:var(--font-en);font-size:11px;margin-inline-start:6px;">'+sq.done+'/'+sq.req+'</b></div></div>';
 });
 html+='</div></div>';
 });
-var summary='<div class="card" style="margin-bottom:14px;border-color:var(--primary-border);"><div style="padding:14px;display:flex;gap:14px;flex-wrap:wrap;justify-content:space-between;"><div><div class="text-xs text-muted">إجمالي المستحق (شهور مكتملة)</div><div style="font-size:22px;font-weight:900;font-family:var(--font-en);">'+gDue+' ج.م</div></div><div><div class="text-xs text-muted">المدفوع</div><div style="font-size:22px;font-weight:900;font-family:var(--font-en);color:var(--success);">'+gPaid+' ج.م</div></div><div><div class="text-xs text-muted">المتبقي</div><div style="font-size:22px;font-weight:900;font-family:var(--font-en);color:'+(gRem>0?'var(--danger)':'var(--success)')+';">'+gRem+' ج.م</div></div></div></div>';
+var summary='<div class="card" style="margin-bottom:14px;border-color:var(--primary-border);"><div style="padding:14px;display:flex;gap:14px;flex-wrap:wrap;justify-content:space-between;"><div><div class="text-xs text-muted">إجمالي المستحق (دورات مكتملة)</div><div style="font-size:22px;font-weight:900;font-family:var(--font-en);">'+gDue+' ج.م</div></div><div><div class="text-xs text-muted">المدفوع</div><div style="font-size:22px;font-weight:900;font-family:var(--font-en);color:var(--success);">'+gPaid+' ج.م</div></div><div><div class="text-xs text-muted">المتبقي</div><div style="font-size:22px;font-weight:900;font-family:var(--font-en);color:'+(gRem>0?'var(--danger)':'var(--success)')+';">'+gRem+' ج.م</div></div></div></div>';
 el.innerHTML=summary+html;
 }
-
+function resolveSid(){
+var u=cur();
+if(window.activeStudentId) return window.activeStudentId;
+if(window.activeChild&&window.activeChild.id) return window.activeChild.id;
+if(u&&u.role==='student') return u.id;
+if(u&&u.studentIds&&u.studentIds.length) return u.studentIds[0];
+return u?u.id:null;
+}
 function paymentsPages(){
 window.loadPayments=function(){
 try{
-var el=document.getElementById('paymentsList');if(!el)return;
-var u=cur();
-var sid=window.activeStudentId||(window.activeChild&&window.activeChild.id)||(u?u.id:null);
-if(!sid)return;
+var el=document.getElementById('paymentsList')||document.getElementById('pPayList');if(!el)return;
+var sid=resolveSid(); if(!sid)return;
 billingCards(sid,el);
 }catch(e){console.error(e);}
 };
@@ -312,8 +312,7 @@ window.loadPayments.__bc=1;
 window.renderLedger=function(){
 try{
 var el=document.getElementById('ledgerContent');if(!el)return;
-var u=cur();
-var sid=(window.activeChild&&window.activeChild.id)||(u&&u.studentIds?u.studentIds[0]:null)||(u?u.id:null);
+var sid=resolveSid();
 if(!sid){el.innerHTML='<p class="text-muted">اختار ابنك الأول</p>';return;}
 billingCards(sid,el);
 }catch(e){console.error(e);}
@@ -321,7 +320,7 @@ billingCards(sid,el);
 window.renderLedger.__bc=1;
 }
 
-/* تطبيق + إعادة تطبيق */
+/* 🆕 V3: تعريف مرة واحدة لو ناقص — مفيش اختطاف دوري */
 function applyAll(){
 wrapBilling();
 if(!window.renderMyCycle||!window.renderMyCycle.__bc)myCycle();
@@ -330,9 +329,19 @@ if(!window.loadPayments||!window.loadPayments.__bc)paymentsPages();
 if(!window.renderLedger||!window.renderLedger.__bc)paymentsPages();
 }
 applyAll();
-setTimeout(applyAll,600);setTimeout(applyAll,1500);setTimeout(applyAll,3000);
-setInterval(applyAll,1500);
+setTimeout(applyAll,600);
+setTimeout(applyAll,1500);
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){ setTimeout(applyAll,300); });
 setInterval(function(){try{var el=document.getElementById('myCycleCard');if(el&&window.renderMyCycle&&window.renderMyCycle.__bc)window.renderMyCycle();}catch(e){}},6000);
+/* 📡 مزامنة لحظية: أي نبضة من محرك الدفتر → إعادة رسم فورية */
+window.addEventListener('ledger-sync',function(){
+try{
+if(window.renderMyCycle&&window.renderMyCycle.__bc) window.renderMyCycle();
+var act=document.querySelector('.section.active'); if(!act) return;
+var id=act.id.replace('section-','');
+if(id==='payments'||id==='ledger'||id==='cycles'||id==='overview'){ if(window.showSection) window.showSection(id); }
+}catch(e){}
+});
 (function(){
 if(typeof window.showSection==='function'&&!window.__bcShowHook){
 window.__bcShowHook=1;
@@ -340,8 +349,8 @@ var os=window.showSection;
 window.showSection=function(id){
 var r=os.apply(this,arguments);
 try{
-if(id==='dashboard'||id==='overview'){setTimeout(function(){if(window.renderMyCycle&&window.renderMyCycle.__bc)window.renderMyCycle();},120);setTimeout(function(){if(window.renderMyCycle&&window.renderMyCycle.__bc)window.renderMyCycle();},1000);}
-if(id==='payments'||id==='ledger'||id==='cycles'){setTimeout(function(){applyAll();},120);}
+if(id==='dashboard'||id==='overview'){setTimeout(function(){if(window.renderMyCycle&&window.renderMyCycle.__bc)window.renderMyCycle();},120);}
+if(id==='payments'||id==='ledger'||id==='cycles'){setTimeout(function(){wrapBilling();},120);}
 }catch(e){}
 return r;
 };

@@ -25,6 +25,9 @@ async function cloudAtt(a,del){ try{ if(window.FirebaseService&&FirebaseService.
 async function cloudCanc(c,del){ try{ if(window.FirebaseService&&FirebaseService._db){ if(del) await FirebaseService.deleteDoc('cancelledSessions',c.id); else await FirebaseService.saveDoc('cancelledSessions',c.id,c); } }catch(e){} }
 function cur(){ try{ return (typeof currentUser!=='undefined'&&currentUser)?currentUser:((window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null); }catch(e){ return null; } }
 function isAdmin(){ var u=cur(); return u&&(u.role==='admin'||u.role==='super_admin'); }
+/* 🛡️ V12: صفحات الطالب/ولي الأمر قراءة فقط — مفيش هجرة ولا قفل دورات ولا إشعارات منها */
+function canWrite(){ var u=cur(); return !!u&&(u.role==='admin'||u.role==='super_admin'||u.role==='assistant'); }
+function readOnly(){ return !canWrite(); }
 function localToday(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function pad2(n){return String(n).padStart(2,'0');}
 function cycKey(n){return 'cycle-'+pad2(n);}
@@ -114,6 +117,8 @@ return out;
 function migrateCycles(){
 var d=db();
 if(d.cycleMigrated)return;
+if(readOnly())return; /* 🛡️ طالب/ولي أمر ميعملوش migration أبدًا */
+if(!(d.groups&&d.groups.length))return; /* 🛡️ مش قبل ما البيانات تتحمل كاملة */
 var gs=groups();
 gs.forEach(function(g){
 if(g.cycleRanges&&g.cycleRanges.length)return;
@@ -1055,6 +1060,7 @@ delM.forEach(function(ms){ cloudMS(ms,true); });
 delC.forEach(function(c){ cloudCanc(c,true); });
 for(var i=0;i<ids.length;i++){ try{ var gg=gById(ids[i]); var rs=gg?rangesOf(gg).slice():[{n:1,from:localToday(),to:null}]; var openR=null; rs.forEach(function(r){if(r.to==null)openR=r;}); if(openR){openR.from=localToday();} else {rs.push({n:rs[rs.length-1].n+1,from:localToday(),to:null});} if(DataService.updateGroup) await DataService.updateGroup(ids[i],{sessionNow:0,sessionNowMonth:localMonth(),cycleRanges:rs}); }catch(e){} }
 LU._sesCache={};
+try{ localStorage.setItem('ledgerResetAt',String(Date.now())); window.dispatchEvent(new CustomEvent('ledger-reset',{detail:{ids:ids}})); }catch(e){}
 return {att:delA.length,man:delM.length,canc:delC.length};
 }
 /* 🧹 مودال التصفير القديم (قائمة 체크) */
@@ -1213,6 +1219,7 @@ else{ var from=g.frozenSince||localToday(); g.freezePeriods=g.freezePeriods||[];
 var d=db(); saveD(d);
 try{ if(DataService.updateGroup) await DataService.updateGroup(gid,{frozen:g.frozen,frozenSince:g.frozenSince||null,freezePeriods:g.freezePeriods||[]}); }catch(e){}
 try{ if(window.FirebaseService&&FirebaseService._db) FirebaseService.saveDoc('groups',gid,g); }catch(e){}
+try{ localStorage.setItem('ledgerResetAt',String(Date.now())); window.dispatchEvent(new CustomEvent('ledger-freeze',{detail:{gid:gid,on:on}})); }catch(e){}
 return true;
 }
 LU.setGroupFrozen=async function(gid,on){
@@ -1702,6 +1709,7 @@ Object.keys(d.sessionFlags||{}).forEach(function(k){if(k.indexOf(gid+'__')===0){
 return Object.keys(out).sort();
 }
 function autoCloseCycles(){
+if(readOnly())return; /* 🛡️ قفل الدورات عملية كتابة — إدارة فقط */
 var d=db();var m=d.platformMeta||{};var f=m.freeze||{};
 if(m.ledgerFrozen===true||f.ledger===true||f.full===true)return;
 var changed=false;
@@ -1727,6 +1735,7 @@ LU.refresh=function(){
 try{
 autoCloseCycles();
 LU._sesCache={};
+try{ localStorage.setItem('eduflowLedgerPing', String(Date.now())); }catch(e){} /* 📡 نبضة لكل التبويبات المفتوحة */
 var act=document.querySelector('.section.active');
 if(act){
 if(act.id==='section-monthly'&&document.getElementById('monthlyLedgerHost')) LU.renderAssistantMonthly();
@@ -1797,6 +1806,49 @@ LU.page=function(){ var r=_origPage.apply(this,arguments); try{ var host=documen
 var _origOpen=LU.openModal;
 LU.openModal=function(){ var r=_origOpen.apply(this,arguments); try{ var mc=document.getElementById('ldgModalContent'); if(mc) mc.insertAdjacentHTML('beforeend',logHtml()); }catch(e){} return r; };
 
+/* ========== 🆕 V12: API قراءة موحّد لكل الصفحات (محرك واحد) ========== */
+LU.paidForCycle=function(sid,gid,ck){
+try{
+var tot=0;
+(db().payments||[]).forEach(function(p){
+if(!p||p.studentId!==sid||p.groupId!==gid) return;
+if(payInMonth(p,gid,ck)) tot+=(p.paidAmount||0);
+});
+return tot;
+}catch(e){ return 0; }
+};
+LU.cyclesOf=function(g){
+var rs=(g&&g.cycleRanges)||[];
+if(rs.length) return rs.map(function(r){ return {n:r.n, ck:cycKey(r.n), ym:(r.from||'').slice(0,7), range:r}; });
+var out=[], start=((db().platformMeta||{}).countingSince||'').slice(0,7)||startMonth(), now=new Date(), curYm=now.getFullYear()+'-'+pad2(now.getMonth()+1), ym=start;
+while(ym<=curYm){ out.push({n:out.length+1, ck:cycKey(out.length+1), ym:ym, range:{from:ym+'-01',to:null}}); var y=+ym.slice(0,4), m=+ym.slice(5,7)+1; if(m>12){m=1;y++;} ym=y+'-'+pad2(m); }
+return out;
+};
+LU.studentBilling=function(sid){
+var out=[];
+try{
+var ts=(DataService.getStudentTeachers?DataService.getStudentTeachers(sid):[])||[];
+ts.forEach(function(t){
+var g=t.group; if(!g) return;
+var fee=feeOf(g);
+var cycles=LU.cyclesOf(g).map(function(c){
+var st=LU.groupSessions(g.id,c.ck);
+var paid=LU.paidForCycle(sid,g.id,c.ck);
+var rem=(st.complete&&fee>0)?Math.max(0,fee-paid):0;
+return {ck:c.ck,ym:c.ym,n:c.n,done:st.done,required:st.required,complete:st.complete,remaining:st.remaining,events:st.events||[],frozen:!!g.frozen,paid:paid,rem:rem,fee:fee};
+});
+out.push({group:g,teacher:t.teacher||null,fee:fee,cycles:cycles});
+});
+}catch(e){}
+return out;
+};
+/* 📡 أي نبضة من تبويب تاني → نظّف الكاش وبلّغ الصفحة تعيد رسم نفسها */
+window.addEventListener('storage', function(e){
+if(!e.key||e.key!=='eduflowLedgerPing') return;
+LU._sesCache={};
+try{ window.dispatchEvent(new CustomEvent('ledger-sync')); }catch(err){}
+});
+
 /* ========== توصيل ========== */
 if(typeof window.getMyTeacherId!=='function'){
 window.getMyTeacherId=function(){
@@ -1859,7 +1911,13 @@ DataService.__cycWrapped=1;
 })();
 
 function init(){
-try{migrateCycles();}catch(e){console.error(e);}
+(function waitData(n){
+try{
+var ready=window.DataService&&DataService.getGroups&&DataService.getStudents&&(DataService.getGroups().length||DataService.getStudents().length);
+if(ready){ migrateCycles(); }
+else if((n||0)<30){ setTimeout(function(){waitData((n||0)+1);},500); return; }
+}catch(e){}
+})(0);
 try{ LU.pullPlatformMeta(true).then(function(){ LU.refresh(); }); }catch(e){}
 setInterval(function(){ try{ LU.pullPlatformMeta(false).then(function(){ LU.refresh(); }); }catch(e){} },60000);
 tickClock(); setInterval(tickClock,1000);

@@ -487,7 +487,6 @@ box-shadow:0 4px 12px rgba(220,38,38,.4);
 <script src="js/operations-service.js"></script>
 <script src="js/ui-helpers.js"></script>
 <script src="js/drive-service.js"></script>
-<script src="js/ledger-ui.js"></script>
 <script src="js/theme-manager.js"></script>
 <script src="js/pwa-injector.js"></script>
 <script src="js/auth-service.js"></script>
@@ -1960,30 +1959,7 @@ ${it.audioUrl ? `<audio controls src="${it.audioUrl}"></audio>` : ''}
 </div>`;
 }).join('');
 };
-window.loadPayments=function(){
-const billing = typeof Ops?.buildStudentBilling === 'function' ? Ops.buildStudentBilling(activeStudentId) : [];
-const el = document.getElementById('paymentsList');
-if (!el) return;
-if (!billing.length) { el.innerHTML = '<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">💰</div><strong>لا توجد مستحقات</strong></div>'; return; }
-el.innerHTML = billing.map(b => {
-const rem = Math.max(0, (b.billing?.total || 0) - (b.payment?.paidAmount || 0));
-const status = rem > 0 ? 'due' : 'graded';
-const photo=b.teacher?.photoUrl?`<img src="${window.driveThumb(b.teacher.photoUrl)}" class="teacher-photo-sm" loading="lazy" onerror="this.style.display='none'">`:'';
-return `<div class="sub-row ${status}">
-<div style="display:flex;align-items:center;gap:8px;">
-${photo}
-<div>
-<strong>${b.group?.name || '-'}</strong>
-<div class="text-xs text-muted">👨‍🏫 ${b.teacher?.name || '-'} · شهر ${b.billing?.month || '-'}</div>
-</div>
-</div>
-<div style="text-align:left;">
-<strong>${b.payment?.paidAmount || 0} / ${b.billing?.total || 0}</strong>
-${rem > 0 ? `<div class="text-xs" style="color:var(--danger)">متبقي ${rem} ج.م</div>` : '<div class="text-xs" style="color:var(--success)">✓ مسدد</div>'}
-</div>
-</div>`;
-}).join('');
-};
+
 window.loadFollowups=function(){
 const followups = typeof Ops?.getFollowUps === 'function' ? Ops.getFollowUps({studentId: activeStudentId}) : [];
 const el = document.getElementById('followupsList');
@@ -2664,86 +2640,9 @@ if(t) setTimeout(render,120);
 });
 })();
 </script>
-<script>
-/* ============ 💰 صفحة مدفوعات الطالب — تفصيل كامل لكل شهر ============ */
-(function(){
-"use strict";
-function pad(n){return String(n).padStart(2,'0');}
-function localMonth(){var d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1);}
-function startMonth(){try{return localStorage.getItem('ldgStartMonth')||'2026-08';}catch(e){return '2026-08';}}
-function monthsList(){var out=[],m=startMonth(),cur=localMonth(),g=0;while(m<=cur&&g<36){out.push(m);var d=new Date(m+'-01T12:00:00');d.setMonth(d.getMonth()+1);m=d.getFullYear()+'-'+pad(d.getMonth()+1);g++;}if(out.indexOf(cur)<0)out.push(cur);return out;}
-function monthName(m){try{return new Date(m+'-01T12:00:00').toLocaleDateString('ar-EG',{month:'long',year:'numeric'});}catch(e){return m;}}
-function dbx(){return (window.DataService&&DataService._getData)?DataService._getData():{};}
-function sessionsOf(gid,month){
-var d=dbx();
-var att=(DataService.getAttendance?DataService.getAttendance():[]).filter(function(a){return a.groupId===gid&&a.status==='approved'&&(a.date||'').startsWith(month);});
-var canc=(DataService.getCancelledSessions?DataService.getCancelledSessions():[]).filter(function(c){return c.groupId===gid&&(c.date||'').startsWith(month);});
-var madeup={};canc.forEach(function(c){if(c.makeupStatus==='done'&&c.makeupDate)madeup[c.makeupDate]=1;});
-var greens={};
-att.forEach(function(a){var c=canc.find(function(x){return x.date===a.date;});if(c&&c.makeupStatus!=='done')return;greens[a.date]=madeup[a.date]?'madeup':'done';});
-var M=0;(d.manualSessions||[]).forEach(function(ms){if(ms.groupId===gid&&(ms.month||'')===month&&(!ms.type||ms.type==='counter'))M=Math.max(M,ms.sessionsCount||0);});
-var g=(DataService.getGroups?DataService.getGroups():[]).find(function(x){return x.id===gid;});
-if(g&&g.sessionNow>0&&(g.sessionNowMonth||'')===month&&+g.sessionNow>M)M=+g.sessionNow;
-var ev=[];Object.keys(greens).sort().forEach(function(dt){ev.push({t:greens[dt],d:dt});});
-while(ev.length<M)ev.unshift({t:'manual',d:''});
-canc.forEach(function(c){if(c.makeupStatus!=='done')ev.push({t:'cancelled',d:c.date});});
-ev.sort(function(a,b){return String(a.d||'0').localeCompare(String(b.d||'0'));});
-var done=ev.filter(function(e){return e.t!=='cancelled';}).length;
-var req=(g&&g.sessionsPerMonth)||((window.EduFlowConfig&&EduFlowConfig.billing&&EduFlowConfig.billing.sessionsBeforePayment)||8);
-return {ev:ev,done:done,req:req,complete:done>=req};
-}
-function sqHtml(s){
-var h=s.ev.map(function(e){
-if(e.t==='manual')return '<span class="psq" style="background:var(--success);" title="حصة مرحّلة">📥</span>';
-var day=String(e.d).slice(8,10);
-if(e.t==='cancelled')return '<span class="psq" style="background:var(--danger);" title="'+e.d+' — ملغاة مش محسوبة">✗</span>';
-if(e.t==='madeup')return '<span class="psq" style="background:var(--success);box-shadow:0 0 0 2px var(--info);" title="'+e.d+' — حصة تعويض">↺</span>';
-return '<span class="psq" style="background:var(--success);" title="'+e.d+' — حصة محسوبة">'+day+'</span>';
-}).join('');
-for(var i=0;i<Math.max(0,s.req-s.done);i++)h+='<span class="psq" style="background:var(--surface-hover);color:var(--text-muted);"></span>';
-return '<div style="display:flex;gap:3px;flex-wrap:wrap;align-items:center;">'+h+'<b style="font-family:var(--font-en);font-size:11px;margin-inline-start:6px;">'+s.done+'/'+s.req+'</b></div>';
-}
-window.loadPayments=function(){
-try{
-var u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null;
-var sid=u?u.id:null;
-var el=document.getElementById('paymentsList');if(!el||!sid)return;
-var ts=(DataService.getStudentTeachers?DataService.getStudentTeachers(sid):[]);
-if(!ts.length){el.innerHTML='<div class="card" style="text-align:center;padding:24px;"><div style="font-size:48px;">💰</div><strong>لا توجد مستحقات</strong></div>';return;}
-if(!document.getElementById('payCss')){var st=document.createElement('style');st.id='payCss';st.textContent='.psq{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:20px;border-radius:5px;font-size:9px;font-weight:800;font-family:var(--font-en);color:#fff;border:1px solid var(--border);}.pmonth{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;}.pmonth-head{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;font-weight:800;font-size:13px;}';document.head.appendChild(st);}
-var d=dbx();var months=monthsList();var grandPaid=0,grandDue=0;
-var html='';
-ts.forEach(function(t){
-var g=t.group,teacher=t.teacher;var fee=g.monthlyFee||0;
-html+='<div class="card" style="margin-bottom:16px;"><div class="card-header"><h3 class="card-title">👥 '+g.name+'</h3><span class="text-xs text-muted">👨‍🏫 '+(teacher?teacher.name:'-')+' · 💰 شهرية '+fee+' ج.م · '+(g.sessionsPerMonth||8)+' حصص/شهر</span></div><div style="padding:12px;">';
-months.slice().reverse().forEach(function(m){
-var s=sessionsOf(g.id,m);
-var p=null;(d.payments||[]).forEach(function(x){if(x.studentId===sid&&x.groupId===g.id&&(x.month||'')===m)p=x;});
-var paid=p?(p.paidAmount||0):0;
-var rem=s.complete?Math.max(0,fee-paid):0;
-grandPaid+=paid; if(rem>0)grandDue+=rem;
-var status='';
-if(fee&&paid>=fee)status='<span class="badge badge-success">✓ مسدد بالكامل</span>';
-else if(paid>0&&s.complete)status='<span class="badge badge-warning">جزئي — متبقي '+rem+'</span>';
-else if(s.complete)status='<span class="badge badge-danger">💰 مستحقة — '+fee+' ج.م</span>';
-else if(paid>0)status='<span class="badge badge-info">مقدم '+paid+' ج.م</span>';
-else status='<span class="text-xs text-muted">جاري — '+s.done+'/'+s.req+'</span>';
-var hist=(p&&p.history&&p.history.length)?p.history.map(function(h){return '<span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface-hover);border:1px solid var(--border);border-radius:9999px;padding:2px 8px;font-size:10px;margin:2px;">💵 '+String(h.date||'').slice(5,10)+' : '+h.amount+' ج.م</span>';}).join(''):'';
-html+='<div class="pmonth"><div class="pmonth-head"><div>📅 '+monthName(m)+'</div><div>'+status+'</div></div>'+sqHtml(s)+(hist?'<div style="margin-top:8px;">'+hist+'</div>':'')+(rem>0?'<div class="text-xs" style="color:var(--danger);margin-top:6px;font-weight:800;">متبقي الشهر ده: '+rem+' ج.م</div>':'')+'</div>';
-});
-html+='</div></div>';
-});
-var summary='<div class="card" style="margin-bottom:16px;border-color:var(--primary-border);"><div style="padding:14px;display:flex;gap:14px;flex-wrap:wrap;justify-content:space-between;align-items:center;"><div><div class="text-xs text-muted">إجمالي المدفوع (كل الشهور)</div><div style="font-size:22px;font-weight:900;font-family:var(--font-en);color:var(--success);">'+grandPaid+' ج.م</div></div><div><div class="text-xs text-muted">مستحقات عليه (شهور مكتملة)</div><div style="font-size:22px;font-weight:900;font-family:var(--font-en);color:'+(grandDue>0?'var(--danger)':'var(--success)')+';">'+grandDue+' ج.م</div></div><div class="text-xs text-muted" style="max-width:240px;">💡 الشهرية بتستحق لما مربعات مجموعتك تكمل ('+( (window.EduFlowConfig&&EduFlowConfig.billing&&EduFlowConfig.billing.sessionsBeforePayment)||8 )+'/8) في الشهر — وأي متأخرات بتترحلك للشهر اللي بعده.</div></div></div>';
-el.innerHTML=summary+html;
-}catch(e){console.error('loadPayments v2',e);}
-};
-setTimeout(function(){try{var act=document.querySelector('.section.active');if(act&&act.id==='section-payments')window.loadPayments();}catch(e){}},600);
-})();
-</script>
 <script src="js/billing/core.js"></script>
 <script src="js/billing/notify-rules.js"></script>
 <script src="js/fun-center.js"></script>
-
 <script>
 /* 🔔 فحص الإشعارات العاجلة عند الدخول */
 (function(){
@@ -2778,7 +2677,8 @@ checkUrgentNotifs();
 setTimeout(checkUrgentNotifs,2000);
 setTimeout(checkUrgentNotifs,5000);
 })();
-</script>
 
+</script>
+<script src="js/ledger-ui.js"></script>
 </body>
 </html>

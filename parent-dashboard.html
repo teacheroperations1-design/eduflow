@@ -510,7 +510,6 @@
 <script src="js/config.js"></script>
 <script src="js/firebase-service.js"></script>
 <script src="js/data-service.js"></script>
-<script src="js/operations-service.js"></script>
 <script src="js/ui-helpers.js"></script>
 <script src="js/drive-service.js"></script>
 <script src="js/theme-manager.js"></script>
@@ -630,6 +629,18 @@ const DAYS = [
 const dayAr = en => (DAYS.find(d => d.en === en) || {}).ar || en;
 const T = tm => DataService?.formatTime12 ? DataService.formatTime12(tm) : tm;
 const db = () => DataService?._getData() || {};
+
+/* 🧠 مساعدات دورة-واعية — وفدات رفيعة للمحرك الواحد (LedgerUI V12) */
+function inFreezeP(g,ds){ if(!g||!ds) return false; if(g.frozen&&g.frozenSince&&ds>=g.frozenSince) return true; var ps=g.freezePeriods||[]; for(var i=0;i<ps.length;i++){ if(ds>=ps[i].from&&(!ps[i].to||ds<=ps[i].to)) return true; } return false; }
+function curCycle(g){ var rs=(g&&g.cycleRanges)||[]; for(var i=rs.length-1;i>=0;i--){ if(rs[i].to==null) return rs[i]; } return rs[rs.length-1]||null; }
+function cycleKeyOf(g,n){ return 'cycle-'+String(n).padStart(2,'0'); }
+function ledState(gid,ck){
+  if(window.LedgerUI&&typeof LedgerUI.groupSessions==='function'){ try{ var s=LedgerUI.groupSessions(gid,ck); if(s&&typeof s.done==='number') return s; }catch(e){} }
+  return {done:0,required:8,complete:false,remaining:8,events:[],frozen:false};
+}
+function paidForCycle(sid,gid,ck,ym){ if(window.LedgerUI&&LedgerUI.paidForCycle){ try{ return LedgerUI.paidForCycle(sid,gid,ck); }catch(e){} } return 0; }
+function cyclesList(g){ if(window.LedgerUI&&LedgerUI.cyclesOf){ try{ return LedgerUI.cyclesOf(g); }catch(e){} } return []; }
+
 
 window.driveThumb = function(url){
   try{
@@ -1145,25 +1156,29 @@ window.renderLedger = function(){
     const el = document.getElementById('ledgerContent'); if(!el) return;
     const id = activeChild ? activeChild.id : null;
     if(!id){ el.innerHTML = '<p class="text-muted">اختار ابنك الأول</p>'; return; }
-    if(!window.MC){ el.innerHTML = '<p class="text-muted">⚠️ حمّل js/month-cycle.js</p>'; return; }
     const ts = (DataService.getStudentTeachers ? DataService.getStudentTeachers(id) : []);
     if(!ts.length){ el.innerHTML = '<div class="card" style="text-align:center;padding:24px"><div style="font-size:40px">📒</div><strong>لا مجموعات</strong></div>'; return; }
     let html = '';
     ts.forEach(t => {
       const g = t.group; if(!g) return;
-      const agg = MC.aggregate(id, g);
-      const months = agg.months.slice().reverse();
-      html += '<div class="card" style="margin-bottom:14px"><div class="card-header"><h3 class="card-title">👥 ' + g.name + '</h3><span class="text-xs text-muted">👨‍🏫 ' + (t.teacher ? t.teacher.name : '-') + ' · شهرية الشهر: ' + MC.feeOf(g) + ' ج.م</span></div><div style="padding:12px">';
-      html += '<div class="stat-mini" style="margin-bottom:10px"><div class="stat-mini-box"><div class="stat-mini-value">' + agg.cur.done + '/' + agg.cur.req + '</div><div class="stat-mini-label">حصص الشهر الحالي</div></div><div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--success)">' + agg.paidTotal + '</div><div class="stat-mini-label">إجمالي المدفوع</div></div><div class="stat-mini-box"><div class="stat-mini-value" style="color:' + (agg.rem > 0 ? 'var(--danger)' : 'var(--success)') + '">' + agg.rem + '</div><div class="stat-mini-label">المتبقي (شهور مكتملة)</div></div></div>';
-      months.forEach(r => {
+      const fee = g.monthlyFee||0;
+      html += '<div class="card" style="margin-bottom:14px"><div class="card-header"><h3 class="card-title">👥 '+g.name+'</h3><span class="text-xs text-muted">👨‍🏫 '+(t.teacher?t.teacher.name:'-')+' · شهرية: '+fee+' ج.م</span></div><div style="padding:12px">';
+      if(g.frozen) html += '<div class="filter-info" style="background:var(--warning-bg);border-color:var(--warning);color:var(--warning)">🧊 العد موقوف مؤقتاً من '+(g.frozenSince||'-')+' — حصص فترة الوقف مش محسوبة</div>';
+      let paidTotal=0, remTotal=0;
+      cyclesList(g).slice().reverse().forEach(c => {
+        const st = ledState(g.id, c.ck); if(!st) return;
+        const paid = paidForCycle(id, g.id, c.ck, c.ym); paidTotal+=paid;
+        const rem = (st.complete && fee>0) ? Math.max(0, fee-paid) : 0; remTotal+=rem;
         let badge;
-        if(r.completed){ badge = r.rem === 0 ? '<span class="badge badge-success">✓ مسدد</span>' : (r.paid > 0 ? '<span class="badge badge-warning">جزئي — متبقي ' + r.rem + '</span>' : '<span class="badge badge-danger">💰 مستحقة ' + r.fee + ' ج.م</span>'); }
-        else if(r.month < MC.localMonth()){ badge = r.paid > 0 ? '<span class="badge badge-info">💵 مقدم ' + r.paid + ' ج.م</span>' : '<span class="badge badge-muted">📴 انتهى — مش مستحق</span>'; }
-        else { badge = r.paid > 0 ? '<span class="badge badge-info">مقدم ' + r.paid + ' ج.م</span>' : '<span class="badge badge-info">🔄 جاري ' + r.done + '/' + r.req + '</span>'; }
-        html += '<div class="sub-row"><div><strong>📅 ' + MC.monthName(r.month) + '</strong><div class="text-xs text-muted">الحصص: ' + r.done + '/' + r.req + ' · المدفوع: ' + r.paid + '/' + r.fee + '</div></div><div>' + badge + '</div></div>';
+        if(fee>0 && paid>=fee) badge='<span class="badge badge-success">✓ مسدد</span>';
+        else if(st.complete && fee>0) badge='<span class="badge badge-danger">💰 مستحقة '+rem+' ج.م</span>';
+        else if(fee>0 && paid>0) badge='<span class="badge badge-info">مقدم '+paid+'/'+fee+'</span>';
+        else badge='<span class="badge badge-muted">🔄 جاري '+st.done+'/'+st.required+'</span>';
+        let sq=''; (st.events||[]).forEach(function(e){ if(e.t==='cancelled') sq+='<span class="ledger-sq red">'+String(e.d||'').slice(8,10)+'</span>'; else if(e.d) sq+='<span class="ledger-sq green">'+String(e.d).slice(8,10)+'</span>'; else sq+='<span class="ledger-sq green">📥</span>'; });
+        for(let i=0;i<Math.max(0,st.remaining);i++) sq+='<span class="ledger-sq gray"></span>';
+        html += '<div class="sub-row"><div style="flex:1"><strong>📅 '+c.ym+'</strong> <span class="text-xs text-muted">('+st.done+'/'+st.required+' حصة)</span><div class="ledger-sq-strip">'+sq+'</div></div><div style="text-align:left">'+badge+'<div class="text-xs text-muted" style="margin-top:4px">مدفوع '+paid+'/'+fee+'</div></div></div>';
       });
-      if(agg.pastDebt > 0) html += '<div class="filter-info" style="background:var(--danger-bg);border-color:var(--danger);color:var(--danger)">🚨 متأخرات مرحّلة من شهور سابقة: ' + agg.pastDebt + ' ج.م — بتفضل ظاهرة لحد ما تتسد</div>';
-      html += '</div></div>';
+      html += '<div class="stat-mini" style="margin-top:10px"><div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--success)">'+paidTotal+'</div><div class="stat-mini-label">إجمالي المدفوع</div></div><div class="stat-mini-box"><div class="stat-mini-value" style="color:'+(remTotal>0?'var(--danger)':'var(--success)')+'">'+remTotal+'</div><div class="stat-mini-label">متبقي مستحق</div></div></div></div></div>';
     });
     el.innerHTML = html;
   }catch(e){ console.error(e); }
@@ -1218,44 +1233,64 @@ window.renderTeachersCards = function(){
   const el = document.getElementById('teachersCardsList'); if(!el) return;
   const ts = window.myTeachers();
   if(!ts.length){ el.innerHTML = '<p class="text-muted" style="text-align:center;padding:20px">لا يوجد أساتذة مسجلين بعد</p>'; return; }
-  const statsByTeacher = (typeof Ops?.getStudentStatsByTeacher === 'function') ? Ops.getStudentStatsByTeacher(activeChild.id) : [];
-  el.innerHTML = statsByTeacher.map(st => {
-    const photo = st.teacher?.photoUrl ? window.driveThumb(st.teacher.photoUrl) : '';
-    const attRate = st.stats.attendance.total ? Math.round((st.stats.attendance.present / st.stats.attendance.total) * 100) : 0;
-    const fb = st.teacher?.socials?.facebook || st.teacher?.facebook;
-    const yt = st.teacher?.socials?.youtube || st.teacher?.youtube;
-    const tt = st.teacher?.socials?.tiktok || st.teacher?.tiktok;
-    const ig = st.teacher?.socials?.instagram || st.teacher?.instagram;
-    const web = st.teacher?.socials?.website || st.teacher?.website;
-    const waGroup = st.group?.whatsappLink;
+  
+  el.innerHTML = ts.map(t => {
+    const g = t.group; if(!g) return '';
+    const fee = g.monthlyFee || 0;
+    const cc = curCycle(g);
+    const ck = cc ? cycleKeyOf(g, cc.n) : 'cycle-01';
+    const st = ledState(g.id, ck) || {done:0, required:g.sessionsPerMonth||8, complete:false, remaining:g.sessionsPerMonth||8};
+    const ym = cc ? (cc.from||'').slice(0,7) : new Date().toISOString().slice(0,7);
+    const paid = paidForCycle(activeChild.id, g.id, ck, ym);
+    const rem = (st.complete && fee>0) ? Math.max(0, fee-paid) : 0;
+    
+    const photo = t.teacher?.photoUrl ? window.driveThumb(t.teacher.photoUrl) : '';
+    const fb = t.teacher?.socials?.facebook || t.teacher?.facebook;
+    const yt = t.teacher?.socials?.youtube || t.teacher?.youtube;
+    const tt = t.teacher?.socials?.tiktok || t.teacher?.tiktok;
+    const ig = t.teacher?.socials?.instagram || t.teacher?.instagram;
+    const web = t.teacher?.socials?.website || t.teacher?.website;
+    const waGroup = g?.whatsappLink;
+    
     let socialsHtml = '<div class="teacher-socials">';
     let hasSocials = false;
-    if(fb){ socialsHtml += '<a href="' + fb + '" target="_blank" class="teacher-social-link social-fb" title="فيسبوك">📘</a>'; hasSocials = true; }
-    if(yt){ socialsHtml += '<a href="' + yt + '" target="_blank" class="teacher-social-link social-yt" title="يوتيوب">📺</a>'; hasSocials = true; }
-    if(tt){ socialsHtml += '<a href="' + tt + '" target="_blank" class="teacher-social-link social-tt" title="تيك توك">🎵</a>'; hasSocials = true; }
-    if(ig){ socialsHtml += '<a href="' + ig + '" target="_blank" class="teacher-social-link social-ig" title="انستجرام">📷</a>'; hasSocials = true; }
-    if(web){ socialsHtml += '<a href="' + web + '" target="_blank" class="teacher-social-link social-web" title="الموقع">🌐</a>'; hasSocials = true; }
-    if(waGroup){ socialsHtml += '<a href="' + waGroup + '" target="_blank" class="teacher-social-link social-wa" title="جروب الواتساب">💬</a>'; hasSocials = true; }
+    if(fb){ socialsHtml += '<a href="'+fb+'" target="_blank" class="teacher-social-link social-fb" title="فيسبوك">📘</a>'; hasSocials = true; }
+    if(yt){ socialsHtml += '<a href="'+yt+'" target="_blank" class="teacher-social-link social-yt" title="يوتيوب">📺</a>'; hasSocials = true; }
+    if(tt){ socialsHtml += '<a href="'+tt+'" target="_blank" class="teacher-social-link social-tt" title="تيك توك">🎵</a>'; hasSocials = true; }
+    if(ig){ socialsHtml += '<a href="'+ig+'" target="_blank" class="teacher-social-link social-ig" title="انستجرام">📷</a>'; hasSocials = true; }
+    if(web){ socialsHtml += '<a href="'+web+'" target="_blank" class="teacher-social-link social-web" title="الموقع">🌐</a>'; hasSocials = true; }
+    if(waGroup){ socialsHtml += '<a href="'+waGroup+'" target="_blank" class="teacher-social-link social-wa" title="جروب الواتساب">💬</a>'; hasSocials = true; }
     socialsHtml += '</div>';
     if(!hasSocials) socialsHtml = '';
+    
+    /* 💰 Billing cycle-aware من محرك الدفتر */
     let billingHtml = '';
-    if(st.billing){
-      if(st.billing.remaining > 0){ billingHtml = '<div class="billing-alert"><div><div class="title" style="font-weight:700;color:var(--danger);font-size:12px">💰 مستحقات متأخرة</div><div>متبقي: <span class="amount">' + st.billing.remaining + ' ' + (EduFlowConfig?.billing?.currency || 'ج.م') + '</span></div></div></div>'; }
-      else if(st.billing.total > 0){ billingHtml = '<div class="billing-ok"><div class="icon">✅</div><div style="font-weight:700;color:var(--success);font-size:13px">كل المستحقات مسددة</div></div>'; }
+    if(fee > 0){
+      if(rem > 0 && st.complete){ 
+        billingHtml = '<div class="billing-alert"><div><div class="title" style="font-weight:700;color:var(--danger);font-size:12px">💰 مستحقات الدورة الحالية</div><div>متبقي: <span class="amount">'+rem+' '+(EduFlowConfig?.billing?.currency || 'ج.م')+'</span></div></div></div>'; 
+      } else if(paid >= fee && fee > 0){ 
+        billingHtml = '<div class="billing-ok"><div class="icon">✅</div><div style="font-weight:700;color:var(--success);font-size:13px">الدورة الحالية مسددة بالكامل</div></div>'; 
+      } else if(st.complete){
+        billingHtml = '<div class="billing-alert" style="background:linear-gradient(135deg,#fef3c7,#fde68a);border-color:var(--warning)"><div><div class="title" style="font-weight:700;color:var(--warning);font-size:12px">💰 مطلوب '+fee+' '+(EduFlowConfig?.billing?.currency || 'ج.م')+'</div><div>الدورة اكتملت ('+st.done+'/'+st.required+')</div></div></div>';
+      }
     }
+    if(g.frozen){
+      billingHtml = '<div class="billing-alert" style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);border-color:var(--info)"><div><div class="title" style="font-weight:700;color:var(--info);font-size:12px">🧊 العد موقوف من '+(g.frozenSince||'-')+'</div><div>حصص فترة الوقف مش بتتحسب</div></div></div>' + billingHtml;
+    }
+    
     return '<div class="teacher-card float-in">' +
       '<div class="teacher-head">' +
-      (photo ? '<img src="' + photo + '" class="teacher-photo" onerror="this.outerHTML=\'<div class=\\\'user-avatar\\\' style=\\\'width:64px;height:64px;border-radius:16px;font-size:22px\\\'>' + (st.teacher?.name?.charAt(0) || '?') + '</div>\'">' : '<div class="user-avatar" style="width:64px;height:64px;border-radius:16px;font-size:22px">' + (st.teacher?.name?.charAt(0) || '?') + '</div>') +
-      '<div class="teacher-info"><div class="teacher-name">' + (st.teacher?.name || '-') + '</div><div class="teacher-subject">📚 ' + (st.teacher?.subject || '-') + '</div><div class="teacher-group">👥 ' + (st.group?.name || '-') + ' · ' + (dayAr(st.group?.day) || '') + ' ' + (T(st.group?.time) || '') + '</div>' + socialsHtml + '</div>' +
+      (photo ? '<img src="'+photo+'" class="teacher-photo" onerror="this.outerHTML=\'<div class=\\\'user-avatar\\\' style=\\\'width:64px;height:64px;border-radius:16px;font-size:22px\\\'>'+(t.teacher?.name?.charAt(0) || '?')+'</div>\'">' : '<div class="user-avatar" style="width:64px;height:64px;border-radius:16px;font-size:22px">'+(t.teacher?.name?.charAt(0) || '?')+'</div>') +
+      '<div class="teacher-info"><div class="teacher-name">'+(t.teacher?.name || '-')+'</div><div class="teacher-subject">📚 '+(t.teacher?.subject || '-')+'</div><div class="teacher-group">👥 '+(g?.name || '-')+' · '+(dayAr(g?.day) || '')+' '+(T(g?.time) || '')+'</div>'+socialsHtml+'</div>' +
       '</div>' +
       billingHtml +
-      '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(139,92,246,.08));border-radius:10px;margin-bottom:12px"><div style="font-size:12px;color:var(--text-secondary)">🏆 نقاط ابنك مع ' + (st.teacher?.name || 'الأستاذ') + '</div><div style="font-size:24px;font-weight:900;font-family:var(--font-en);color:var(--primary)">' + st.stats.points + '</div></div>' +
-      '<div class="stats-grid"><div class="stat-box"><div class="stat-value">' + attRate + '%</div><div class="stat-label">📋 الحضور</div></div><div class="stat-box"><div class="stat-value">' + st.stats.homework.avg + '%</div><div class="stat-label">📝 الواجبات</div></div><div class="stat-box"><div class="stat-value">' + st.stats.exams.avg + '%</div><div class="stat-label">🎓 الامتحانات</div></div><div class="stat-box"><div class="stat-value">' + (st.billing?.remaining || 0) + '</div><div class="stat-label">💰 متبقي</div></div></div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(139,92,246,.08));border-radius:10px;margin-bottom:12px"><div style="font-size:12px;color:var(--text-secondary)">📊 تقدم الدورة الحالية (دورة '+((cc&&cc.n)||1)+')</div><div style="font-size:24px;font-weight:900;font-family:var(--font-en);color:var(--primary)">'+st.done+'/'+st.required+'</div></div>' +
+      '<div class="stats-grid"><div class="stat-box"><div class="stat-value">'+st.done+'</div><div class="stat-label">✓ حصة محسوبة</div></div><div class="stat-box"><div class="stat-value">'+st.remaining+'</div><div class="stat-label">⏳ متبقي</div></div><div class="stat-box"><div class="stat-value" style="color:var(--success)">'+paid+'</div><div class="stat-label">💵 مدفوع</div></div><div class="stat-box"><div class="stat-value" style="color:'+(rem>0?'var(--danger)':'var(--success)')+'">'+rem+'</div><div class="stat-label">'+(rem>0?'متبقي':'مسدد')+'</div></div></div>' +
       '<div class="teacher-actions">' +
-      '<button class="btn btn-primary btn-sm" onclick="window.selectTeacher(\'' + st.teacher.id + '\');window.showSection(\'grades\')">📝 الدرجات</button>' +
-      '<button class="btn btn-primary btn-sm" onclick="window.selectTeacher(\'' + st.teacher.id + '\');window.showSection(\'attendance\')">📋 الحضور</button>' +
-      '<button class="btn btn-secondary btn-sm" onclick="window.selectTeacher(\'' + st.teacher.id + '\');window.showSection(\'payments\')">💰 الدفعات</button>' +
-      (waGroup ? '<a href="' + waGroup + '" target="_blank" class="wa-btn" style="background:#25d366;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;text-decoration:none">💬 الواتساب</a>' : '') +
+      '<button class="btn btn-primary btn-sm" onclick="window.selectTeacher(\''+t.teacher.id+'\');window.showSection(\'grades\')">📝 الدرجات</button>' +
+      '<button class="btn btn-primary btn-sm" onclick="window.selectTeacher(\''+t.teacher.id+'\');window.showSection(\'attendance\')">📋 الحضور</button>' +
+      '<button class="btn btn-secondary btn-sm" onclick="window.selectTeacher(\''+t.teacher.id+'\');window.showSection(\'payments\')">💰 الدفعات</button>' +
+      (waGroup ? '<a href="'+waGroup+'" target="_blank" class="wa-btn" style="background:#25d366;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;text-decoration:none">💬 الواتساب</a>' : '') +
       '</div></div>';
   }).join('');
 };
@@ -1267,32 +1302,58 @@ window.renderActionItems = function(){
   if(!activeChild) return;
   const el = document.getElementById('actionItemsBanner'); if(!el) return;
   const ts = window.myTeachers();
-  const gids = ts.map(t => t.group.id);
   const alerts = [];
+  
+  /* 🧮 غياب أمس (دورة-واعي: لو امبارح كان في فترة تجميد، مش نحسبه) */
   const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
   const yStr = yesterday.toISOString().split('T')[0];
   const allAtt = DataService?.getAttendance ? DataService.getAttendance() : [];
-  const yesterdayAtt = allAtt.filter(a => a.date === yStr && gids.includes(a.groupId) && a.status === 'approved');
-  const absentYesterday = yesterdayAtt.filter(a => a.records.some(r => r.studentId === activeChild?.id && r.status === 'absent'));
-  if(absentYesterday.length > 0) alerts.push({icon:'⚠️', text:'ابنك غاب ' + absentYesterday.length + ' حصة أمس', type:'danger'});
+  let absentYesterday = 0;
+  ts.forEach(t => {
+    const g = t.group; if(!g) return;
+    if(inFreezeP(g, yStr)) return;
+    const a = allAtt.find(x => x.groupId===g.id && x.date===yStr && x.status==='approved');
+    if(a && (a.records||[]).some(r => r.studentId===activeChild?.id && r.status==='absent')) absentYesterday++;
+  });
+  if(absentYesterday > 0) alerts.push({icon:'⚠️', text:'ابنك غاب '+absentYesterday+' حصة أمس', type:'danger'});
+  
+  /* 📝 واجبات ناقصة */
+  const gids = ts.map(t => t.group?.id).filter(Boolean);
   const allHw = DataService?.getHomework ? DataService.getHomework() : [];
   const allSubs = DataService?.getSubmissions ? DataService.getSubmissions({studentId:activeChild.id}) : [];
   const activeHw = allHw.filter(h => gids.includes(h.groupId) && !h.paper);
   const missingHw = activeHw.filter(h => !allSubs.some(s => s.homeworkId === h.id));
-  if(missingHw.length > 0) alerts.push({icon:'📝', text:'لديه ' + missingHw.length + ' واجب لم يتم تسليمهما', type:'warning'});
-  const billing = (typeof Ops?.buildStudentBilling === 'function') ? Ops.buildStudentBilling(activeChild.id) : [];
-  const currentMonth = new Date().toISOString().slice(0, 7);
-  const overdue = billing.filter(b => { const rem = Math.max(0, (b.billing?.total || 0) - (b.payment?.paidAmount || 0)); return rem > 0 && b.billing?.month < currentMonth; });
-  if(overdue.length > 0){
-    const totalOverdue = overdue.reduce((sum, b) => sum + Math.max(0, (b.billing?.total || 0) - (b.payment?.paidAmount || 0)), 0);
-    alerts.push({icon:'💰', text:'دفعات متأخرة بقيمة ' + totalOverdue + ' ' + (EduFlowConfig?.billing?.currency || 'ج.م'), type:'danger'});
+  if(missingHw.length > 0) alerts.push({icon:'📝', text:'لديه '+missingHw.length+' واجب لم يتم تسليمهما', type:'warning'});
+  
+  /* 💰 دفعات متأخرة — دورة-واعية من محرك الدفتر */
+  let totalOverdue = 0;
+  ts.forEach(t => {
+    const g = t.group; if(!g) return;
+    const fee = g.monthlyFee || 0; if(!fee) return;
+    cyclesList(g).forEach(c => {
+      const st = ledState(g.id, c.ck); if(!st) return;
+      if(!st.complete) return;
+      const paid = paidForCycle(activeChild.id, g.id, c.ck, c.ym);
+      const rem = Math.max(0, fee - paid);
+      if(rem > 0) totalOverdue += rem;
+    });
+  });
+  if(totalOverdue > 0){
+    alerts.push({icon:'💰', text:'دفعات مستحقة بقيمة '+totalOverdue+' '+(EduFlowConfig?.billing?.currency || 'ج.م'), type:'danger'});
   }
+  
+  /* 🧊 مجموعات مجمدة — تنبيه مهم */
+  const frozenGroups = ts.filter(t => t.group && t.group.frozen);
+  if(frozenGroups.length > 0){
+    alerts.push({icon:'🧊', text:frozenGroups.length+' مجموعة (مجمدة مؤقتاً — حصصها مش بتتحسب)', type:'warning'});
+  }
+  
   if(alerts.length === 0){
     el.innerHTML = '<div class="billing-ok" style="margin-bottom:0"><div class="icon">✅</div><div style="font-weight:700;color:var(--success);font-size:13px">كل شيء على ما يرام، لا توجد تنبيهات عاجلة</div></div>';
   } else {
-    el.innerHTML = '<div class="action-banner"><div class="action-banner-title">🔔 يحتاج انتباهك</div>' + alerts.map(a => '<div class="action-item action-' + a.type + '"><span class="action-icon">' + a.icon + '</span><span class="action-text">' + a.text + '</span></div>').join('') + '</div>';
+    el.innerHTML = '<div class="action-banner"><div class="action-banner-title">🔔 يحتاج انتباهك</div>' + alerts.map(a => '<div class="action-item action-'+a.type+'"><span class="action-icon">'+a.icon+'</span><span class="action-text">'+a.text+'</span></div>').join('') + '</div>';
   }
-};
+};;
 
 /* ==========================================================
    📅 Upcoming
@@ -1324,9 +1385,21 @@ window.renderOverview = function(){
     const allAtt = DataService?.getAttendance ? DataService.getAttendance() : [];
     const groupIds = ts.map(t => t.group.id);
     const month = new Date().toISOString().slice(0, 7);
-    const monthAtt = allAtt.filter(a => a.status === 'approved' && groupIds.includes(a.groupId) && (a.date || '').startsWith(month) && a.records.some(r => r.studentId === activeChild.id));
-    const attended = monthAtt.filter(a => a.records.find(r => r.studentId === activeChild.id)?.status === 'present').length;
-    const attRate = monthAtt.length ? Math.round((attended / monthAtt.length) * 100) : 0;
+    /* 🧮 حضور دورة-واعي (متزامن مع الدفتر: التصفير والتجميد بيأثروا فوراً) */
+    let attended=0, absent=0, late=0, attTotal=0, cancelledCount=0, sessionsRequired=0;
+    ts.forEach(t => {
+      const g=t.group; if(!g) return;
+      const cc=curCycle(g); if(!cc) return;
+      const inR=ds=>!!ds&&ds>=cc.from&&(!cc.to||ds<=cc.to);
+      allAtt.filter(a=>a.groupId===g.id&&a.status==='approved'&&inR(a.date||'')&&!inFreezeP(g,a.date||'')&&(a.records||[]).some(r=>r.studentId===activeChild.id)).forEach(a=>{
+        const r=(a.records||[]).find(x=>x.studentId===activeChild.id); if(!r) return;
+        attTotal++; if(r.status==='present') attended++; else if(r.status==='absent') absent++; else if(r.status==='late') late++;
+      });
+      cancelledCount += (DataService?.getCancelledSessions?DataService.getCancelledSessions():[]).filter(c=>c.groupId===g.id&&inR(c.date||'')&&c.makeupStatus!=='done'&&!inFreezeP(g,c.date||'')).length;
+      const st=ledState(g.id, cycleKeyOf(g, cc.n));
+      sessionsRequired += st ? st.required : (g.sessionsPerMonth || window.EduFlowConfig?.billing?.sessionsBeforePayment || 8);
+    });
+    const attRate = attTotal ? Math.round((attended / attTotal) * 100) : 0;
     const totalPoints = (typeof Ops?.getStudentPoints === 'function') ? Ops.getStudentPoints(activeChild.id, null, 'all') : 0;
     const heroHtml =
       '<div class="child-hero-content">' +
@@ -1352,10 +1425,7 @@ window.renderOverview = function(){
     window.renderWeekSchedule();
     window.renderStorePreview();
 
-    const sessionsRequired = window.EduFlowConfig?.billing?.sessionsBeforePayment || 8;
-    const absent = monthAtt.filter(a => a.records.find(r => r.studentId === activeChild.id)?.status === 'absent').length;
-    const late = monthAtt.filter(a => a.records.find(r => r.studentId === activeChild.id)?.status === 'late').length;
-    const cancelled = (DataService?.getCancelledSessions ? DataService.getCancelledSessions() : []).filter(c => groupIds.includes(c.groupId) && (c.date || '').startsWith(month));
+    const cancelled = { length: cancelledCount };
     const scEl = document.getElementById('sessionCounter');
     if(scEl){
       const progress = Math.min(100, Math.round((attended / sessionsRequired) * 100));
@@ -1519,27 +1589,41 @@ window.loadAttendance = function(){
     window.renderTeacherPicker('attTeacherPicker');
     const ts = window.myTeachers();
     const filteredTs = selectedTeacherId ? ts.filter(t => t.teacher?.id === selectedTeacherId) : ts;
-    const gids = filteredTs.map(t => t.group.id);
-    const month = new Date().toISOString().slice(0, 7);
-    const att = (DataService?.getAttendance ? DataService.getAttendance() : []).filter(a => a.status === 'approved' && gids.includes(a.groupId) && a.records.some(r => r.studentId === activeChild.id));
-    const monthAtt = att.filter(a => (a.date || '').startsWith(month));
-    const present = monthAtt.filter(a => a.records.find(r => r.studentId === activeChild.id)?.status === 'present').length;
-    const absent = monthAtt.filter(a => a.records.find(r => r.studentId === activeChild.id)?.status === 'absent').length;
-    const late = monthAtt.filter(a => a.records.find(r => r.studentId === activeChild.id)?.status === 'late').length;
-    const rate = monthAtt.length ? Math.round((present / monthAtt.length) * 100) : 0;
+    const gids = filteredTs.map(t => t.group?.id).filter(Boolean);
+    
+    /* 🧮 سجل الحضور حسب الدورة الحالية (مش الشهر الميلادي) */
+    const allAtt = (DataService?.getAttendance ? DataService.getAttendance() : []).filter(a => a.status === 'approved' && gids.includes(a.groupId));
+    const cycleAtt = allAtt.filter(a => {
+      const g = (DataService.getGroups ? DataService.getGroups() : []).find(x => x.id === a.groupId);
+      if(!g) return false;
+      if(inFreezeP(g, a.date||'')) return false;
+      const cc = curCycle(g); if(!cc) return false;
+      return (a.date||'') >= cc.from && (!cc.to || (a.date||'') <= cc.to);
+    });
+    const myAtt = cycleAtt.filter(a => (a.records||[]).some(r => r.studentId === activeChild.id));
+    
+    const present = myAtt.filter(a => (a.records||[]).find(r => r.studentId === activeChild.id)?.status === 'present').length;
+    const absent = myAtt.filter(a => (a.records||[]).find(r => r.studentId === activeChild.id)?.status === 'absent').length;
+    const late = myAtt.filter(a => (a.records||[]).find(r => r.studentId === activeChild.id)?.status === 'late').length;
+    const rate = myAtt.length ? Math.round((present / myAtt.length) * 100) : 0;
+    
     const asEl = document.getElementById('attStats');
-    if(asEl) asEl.innerHTML = '<div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--success)">' + present + '</div><div class="stat-mini-label">✓ حاضر</div></div><div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--danger)">' + absent + '</div><div class="stat-mini-label">✗ غائب</div></div><div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--warning)">' + late + '</div><div class="stat-mini-label">⏰ متأخر</div></div><div class="stat-mini-box"><div class="stat-mini-value">' + rate + '%</div><div class="stat-mini-label">نسبة الحضور</div></div>';
+    if(asEl) asEl.innerHTML = 
+      '<div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--success)">'+present+'</div><div class="stat-mini-label">✓ حاضر</div></div>' +
+      '<div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--danger)">'+absent+'</div><div class="stat-mini-label">✗ غائب</div></div>' +
+      '<div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--warning)">'+late+'</div><div class="stat-mini-label">⏰ متأخر</div></div>' +
+      '<div class="stat-mini-box"><div class="stat-mini-value">'+rate+'%</div><div class="stat-mini-label">نسبة الحضور</div></div>';
+    
     const el = document.getElementById('pAttList');
-    if(el) el.innerHTML = att.length ? att.slice().reverse().map(a => {
-      const r = a.records.find(r => r.studentId === activeChild.id);
-      const teacherForAtt = ts.find(t => t.group.id === a.groupId);
+    if(el) el.innerHTML = myAtt.length ? myAtt.slice().reverse().map(a => {
+      const r = (a.records||[]).find(r => r.studentId === activeChild.id);
+      const teacherForAtt = ts.find(t => t.group?.id === a.groupId);
       const photo = teacherForAtt?.teacher?.photoUrl ? window.driveThumb(teacherForAtt.teacher.photoUrl) : '';
       const statusClass = r?.status === 'present' ? 'graded' : r?.status === 'late' ? 'pending' : 'missing';
-      return '<div class="sub-row ' + statusClass + '"><div><strong>' + a.groupName + '</strong><div class="text-xs text-muted" style="margin-top:4px">' + (photo ? '<img src="' + photo + '" style="width:16px;height:16px;border-radius:50%" onerror="this.style.display=\'none\'">' : '') + ' ' + (teacherForAtt?.teacher?.name || '-') + ' · 📅 ' + a.date + '</div></div><span class="badge ' + (r?.status === 'present' ? 'badge-success' : r?.status === 'late' ? 'badge-warning' : 'badge-danger') + '">' + (r?.status === 'present' ? '✓ حاضر' : r?.status === 'late' ? '⏰ متأخر' : '✗ غائب') + '</span></div>';
-    }).join('') : '<p class="text-muted" style="text-align:center;padding:20px">لا سجلات حضور</p>';
+      return '<div class="sub-row '+statusClass+'"><div><strong>'+a.groupName+'</strong><div class="text-xs text-muted" style="margin-top:4px">'+(photo?'<img src="'+photo+'" style="width:16px;height:16px;border-radius:50%" onerror="this.style.display=\'none\'"> ':'')+(teacherForAtt?.teacher?.name || '-')+' · 📅 '+a.date+'</div></div><span class="badge '+(r?.status === 'present' ? 'badge-success' : r?.status === 'late' ? 'badge-warning' : 'badge-danger')+'">'+(r?.status === 'present' ? '✓ حاضر' : r?.status === 'late' ? '⏰ متأخر' : '✗ غائب')+'</span></div>';
+    }).join('') : '<p class="text-muted" style="text-align:center;padding:20px">لا سجلات حضور في الدورة الحالية</p>';
   }catch(e){ console.error('loadAttendance error', e); }
 };
-
 /* ==========================================================
    💰 Payments
    ========================================================== */
@@ -1548,23 +1632,23 @@ window.loadPayments = function(){
     if(!activeChild) return;
     window.renderTeacherPicker('payTeacherPicker');
     const ts = window.myTeachers();
-    const currentMonth = new Date().toISOString().slice(0, 7);
-    const billing = (typeof Ops?.buildStudentBilling === 'function') ? Ops.buildStudentBilling(activeChild.id) : [];
-    let filteredBilling = billing;
-    if(selectedTeacherId) filteredBilling = billing.filter(b => b.teacher?.id === selectedTeacherId);
-    const el = document.getElementById('pPayList');
-    if(el){
-      if(!filteredBilling.length){ el.innerHTML = '<p class="text-muted" style="text-align:center;padding:20px">لا مستحقات</p>'; return; }
-      el.innerHTML = filteredBilling.map(({group, teacher, billing:b, payment:p}) => {
-        const photo = teacher?.photoUrl ? window.driveThumb(teacher.photoUrl) : '';
-        const rem = Math.max(0, (b?.total || 0) - (p?.paidAmount || 0));
-        const sessionsRequired = window.EduFlowConfig?.billing?.sessionsBeforePayment || 8;
-        return '<div class="modern-card"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div style="flex:1"><strong>' + (group?.name || '-') + '</strong><div class="text-xs text-muted" style="margin-top:4px">' + (photo ? '<img src="' + photo + '" style="width:16px;height:16px;border-radius:50%" onerror="this.style.display=\'none\'">' : '') + ' ' + (teacher?.name || '-') + ' · شهر ' + (b?.month || currentMonth) + '</div><div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;font-size:11px"><span class="badge badge-info">✓ ' + (b?.actualSessions || 0) + ' حصة فعلية</span>' + (b?.cancelledSessions > 0 ? '<span class="badge badge-warning">🚫 ' + b.cancelledSessions + ' ملغية</span>' : '') + '<span class="badge ' + (b?.shouldCharge ? 'badge-success' : 'badge-muted') + '">' + (b?.shouldCharge ? 'مطلوب الدفع' : 'لم يكمل ' + sessionsRequired + ' حصة') + '</span></div></div><div style="text-align:left;min-width:100px"><div style="font-family:var(--font-en);font-weight:900;font-size:18px">' + (p?.paidAmount || 0) + '/' + (b?.total || 0) + '</div><div class="text-xs text-muted">' + (EduFlowConfig?.billing?.currency || 'ج.م') + '</div>' + (rem > 0 ? '<div class="progress-bar" style="margin-top:6px"><div class="progress-bar-fill" style="width:' + Math.round(((p?.paidAmount || 0) / (b?.total || 1)) * 100) + '%"></div></div><div class="text-xs" style="color:var(--danger);margin-top:4px">متبقي ' + rem + '</div>' : '<span class="badge badge-success" style="margin-top:6px">✓ مسدد</span>') + '</div></div></div>';
-      }).join('');
-    }
+    const filteredTs = selectedTeacherId ? ts.filter(t => t.teacher?.id === selectedTeacherId) : ts;
+    const el = document.getElementById('pPayList'); if(!el) return;
+    if(!filteredTs.length){ el.innerHTML = '<p class="text-muted" style="text-align:center;padding:20px">لا مستحقات</p>'; return; }
+    el.innerHTML = filteredTs.map(t => {
+      const g = t.group; if(!g) return '';
+      const fee = g.monthlyFee||0;
+      const cc = curCycle(g); const ck = cc ? cycleKeyOf(g, cc.n) : 'cycle-01';
+      const st = ledState(g.id, ck) || {done:0, required:g.sessionsPerMonth||8, complete:false, remaining:g.sessionsPerMonth||8};
+      const ym = cc ? (cc.from||'').slice(0,7) : new Date().toISOString().slice(0,7);
+      const paid = paidForCycle(activeChild.id, g.id, ck, ym);
+      const rem = (st.complete && fee>0) ? Math.max(0, fee-paid) : 0;
+      const photo = t.teacher?.photoUrl ? window.driveThumb(t.teacher.photoUrl) : '';
+      const badge = (fee>0&&paid>=fee) ? '<span class="badge badge-success">✓ مسدد</span>' : (st.complete&&fee>0) ? '<span class="badge badge-danger">💰 مطلوب '+rem+' ج.م</span>' : (paid>0 ? '<span class="badge badge-info">مقدم '+paid+'/'+fee+'</span>' : '<span class="badge badge-muted">لسه مكملش الحصص ('+st.done+'/'+st.required+')</span>');
+      return '<div class="modern-card"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div style="flex:1"><strong>'+(g.name||'-')+'</strong><div class="text-xs text-muted" style="margin-top:4px">'+(photo?'<img src="'+photo+'" style="width:16px;height:16px;border-radius:50%" onerror="this.style.display=\'none\'"> ':'')+(t.teacher?.name||'-')+' · دورة '+(cc?cc.n:1)+' من '+(cc?cc.from:'-')+'</div><div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;font-size:11px"><span class="badge badge-info">✓ '+st.done+' حصة محسوبة</span><span class="badge '+(st.complete?'badge-success':'badge-muted')+'">'+(st.complete?'مطلوب الدفع':'لسه مكملش')+'</span>'+(g.frozen?'<span class="badge badge-warning">🧊 موقوف</span>':'')+'</div></div><div style="text-align:left;min-width:100px"><div style="font-family:var(--font-en);font-weight:900;font-size:18px">'+paid+'/'+fee+'</div><div class="text-xs text-muted">ج.م</div>'+(rem>0?'<div class="progress-bar" style="margin-top:6px"><div class="progress-bar-fill" style="width:'+Math.round((paid/(fee||1))*100)+'%"></div></div><div class="text-xs" style="color:var(--danger);margin-top:4px">متبقي '+rem+'</div>':'<span class="badge badge-success" style="margin-top:6px">✓ مسدد</span>')+'</div></div><div style="margin-top:8px">'+badge+'</div></div>';
+    }).join('');
   }catch(e){ console.error('loadPayments error', e); }
 };
-
 /* ==========================================================
    🚪 Logout
    ========================================================== */
@@ -1615,5 +1699,17 @@ setInterval(()=>{
 <script src="js/footer-injector.js"></script>
 <script src="js/billing/core.js"></script>
 <script src="js/billing/notify-rules.js"></script>
+<script src="js/operations-service.js"></script>
+<script>
+/* ============ 🔄 محرك واحد: اسمع نبضة المزامنة وأعد رسم الصفحة النشطة ============ */
+window.addEventListener('ledger-sync', function(){
+  try{
+    var act=document.querySelector('.section.active'); if(!act) return;
+    var id=act.id.replace('section-','');
+    if(window.showSection) window.showSection(id);
+    if(window.renderOverview) window.renderOverview();
+  }catch(e){}
+});
+</script>
 </body>
 </html>
