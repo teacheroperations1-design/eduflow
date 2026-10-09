@@ -6,6 +6,11 @@
 <title>برج التحكم - EduFlow</title>
 <link rel="stylesheet" href="css/eduflow-theme.css">
 <style>
+/* 🛡️ حماية قطعية: مفيش أي سكشن يظهر إلا اللي عليه active — بيغلب أي inline display من أي ملف تاني */
+section.section{display:none !important;}
+section.section.active{display:block !important;}
+</style>
+<style>
 /* ========================================
    🎨 Core Layout & Responsive
    ======================================== */
@@ -613,8 +618,67 @@
 <div class="card" style="margin-top:12px;"><div class="card-header"><h3 class="card-title">📜 سجل تغييرات المواعيد</h3></div><div id="sbLog"></div></div>
 </section>
 
-<!-- 🛒 المتجر (أدمن) --><section class="section" id="section-store"><div class="section-header"><div><h2 class="section-title">🏪 إدارة المتجر</h2><p class="text-sm text-muted">إدارة المذكرات والكتب والهدايا</p></div><button class="btn btn-primary" onclick="window.openStoreItemModal()">➕ إضافة منتج</button></div><div class="card" style="margin-bottom:12px;"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;"><div class="form-group" style="margin:0;"><label>🔍 بحث</label><input type="text" id="storeSearch" class="form-input" placeholder="اسم المنتج..." onkeyup="window.loadStoreCatalog()"></div><div class="form-group" style="margin:0;"><label>📂 الفئة</label><select id="storeCategoryFilter" class="form-select" onchange="window.loadStoreCatalog()"><option value="">كل الفئات</option><option value="مذكرة">مذكرة</option><option value="كتاب">كتاب</option><option value="هدايا">هدايا</option></select></div><div class="form-group" style="margin:0;"><label>🎯 المرحلة</label><select id="storeStageFilter" class="form-select" onchange="window.loadStoreCatalog()"><option value="">كل المراحل</option></select></div><div class="form-group" style="margin:0;"><label>🎓 الصف</label><select id="storeGradeFilter" class="form-select" onchange="window.loadStoreCatalog()"><option value="">كل الصفوف</option></select></div><div class="form-group" style="margin:0;"><label>🏢 السنتر</label><select id="storeCenterFilter" class="form-select" onchange="window.loadStoreCatalog()"><option value="">كل السناتر</option></select></div><div class="form-group" style="margin:0;"><label>📦 التوفر</label><select id="storeAvailFilter" class="form-select" onchange="window.loadStoreCatalog()"><option value="">الكل</option><option value="available">متاح</option><option value="unavailable">غير متاح</option><option value="coming_soon">قادم</option></select></div><div class="form-group" style="margin:0;"><label>👨‍ الأستاذ</label><select id="storeTeacherFilter" class="form-select" onchange="window.loadStoreCatalog()"><option value="">كل الأساتذة</option></select></div></div></div><div id="storeCatalogList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;"></div></section><!-- 📦 طلبات المتجر (أدمن) --><section class="section" id="section-storeOrders"><div class="section-header"><div><h2 class="section-title">📦 طلبات المتجر</h2><p class="text-sm text-muted">موافقة وتسليم الطلبات</p></div><button class="btn btn-ghost btn-sm" onclick="window.loadStoreOrders()">🔄 تحديث</button></div><div class="filter-bar" style="margin-bottom:12px;"><button class="filter-btn active" onclick="window.setStoreOrderFilter('pending',this)">⏳ معلقة</button><button class="filter-btn" onclick="window.setStoreOrderFilter('approved',this)">✅ موافق عليها</button><button class="filter-btn" onclick="window.setStoreOrderFilter('delivered',this)">📬 مسلّمة</button><button class="filter-btn" onclick="window.setStoreOrderFilter('cancelled',this)">❌ ملغية</button><button class="filter-btn" onclick="window.setStoreOrderFilter('all',this)">الكل</button></div><div class="card" style="margin-bottom:12px;"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;"><div class="form-group" style="margin:0;"><label>🔍 بحث (طالب/منتج)</label><input type="text" id="orderSearch" class="form-input" placeholder="اسم الطالب أو المنتج..." onkeyup="window.loadStoreOrders()"></div><div class="form-group" style="margin:0;"><label>🎯 الحالة</label><select id="orderStatusFilter" class="form-select" onchange="window.loadStoreOrders()"><option value="">كل الحالات</option><option value="pending_payment">⏳ بانتظار الدفع</option><option value="pending_reserve">⏳ بانتظار الحجز</option><option value="approved">✅ موافق عليه</option><option value="delivered">📬 مسلّم</option><option value="cancelled">❌ ملغي</option></select></div><div class="form-group" style="margin:0;"><label>👥 المجموعة</label><select id="orderGroupFilter" class="form-select" onchange="window.loadStoreOrders()"><option value="">كل المجموعات</option></select></div><div class="form-group" style="margin:0;"><label>🏢 السنتر</label><select id="orderCenterFilter" class="form-select" onchange="window.loadStoreOrders()"><option value="">كل السناتر</option></select></div><div class="form-group" style="margin:0;"><label>🎓 المرحلة</label><select id="orderStageFilter" class="form-select" onchange="window.loadStoreOrders()"><option value="">كل المراحل</option></select></div><div class="form-group" style="margin:0;"><label>👨‍🏫 الأستاذ</label><select id="orderTeacherFilter" class="form-select" onchange="window.loadStoreOrders()"><option value="">كل الأساتذة</option></select></div></div></div><div id="storeOrdersList"></div></section>
-<!-- 📒 دفتر التحصيل (أدمن) --><section class="section" id="section-ledger"><div class="section-header"><div><h2 class="section-title">📒 دفتر التحصيل</h2><p class="text-sm text-muted">كشف الشهرية الفعلي: مربعات الحصص + حالة الدفع + المتأخرات — دوس على أي مجموعة تفلترها</p></div><div style="display:flex;gap:8px;align-items:center;"><input type="month" id="ledgerMonth" class="form-input" style="width:170px;" onchange="LedgerUI.setMonth()"></div></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><button class="btn btn-ghost btn-sm" onclick="LedgerUI.refreshBtn()">🔄 تحديث</button></div></div><div id="ledgerBody"></div></section>
+<!-- 🛍️ المتجر والجرد (موحد: كتب + نقاط + طلبات) -->
+<section class="section" id="section-store">
+<div class="section-header">
+<div>
+<h2 class="section-title">🛍️ المتجر والجرد</h2>
+<p class="text-sm text-muted">كتب ومذكرات الأساتذة + متجر النقاط + الطلبات — مكان واحد</p>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;">
+<button class="btn btn-primary btn-sm" onclick="window.openStoreItemModal()">➕ كتاب/مذكرة</button>
+<button class="btn btn-success btn-sm" onclick="window.openPointsItemModal()">🏆 منتج نقاط</button>
+<button class="btn btn-ghost btn-sm" onclick="window.renderStoreCenter()">🔄 تحديث</button>
+</div>
+</div>
+<div class="section-tabs">
+<button class="section-tab active" onclick="window.setStoreTab('catalog',this)">📚 كتب ومذكرات</button>
+<button class="section-tab" onclick="window.setStoreTab('points',this)">🏆 متجر النقاط</button>
+<button class="section-tab" onclick="window.setStoreTab('orders',this)">📦 الطلبات</button>
+</div>
+
+<!-- تبويب الكتب والمذكرات -->
+<div id="storeTab-catalog" class="tab-content active">
+<div class="card" style="margin-bottom:12px;">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;">
+<div class="form-group" style="margin:0;"><label>🔍 بحث</label><input type="text" id="storeSearch" class="form-input" placeholder="اسم المنتج..." onkeyup="window.loadStoreCatalog()"></div>
+<div class="form-group" style="margin:0;"><label>📂 الفئة</label><select id="storeCategoryFilter" class="form-select" onchange="window.loadStoreCatalog()"><option value="">الكل</option><option value="مذكرة">مذكرة</option><option value="كتاب">كتاب</option><option value="هدايا">هدايا</option></select></div>
+<div class="form-group" style="margin:0;"><label>🎯 المرحلة</label><select id="storeStageFilter" class="form-select" onchange="window.loadStoreCatalog()"><option value="">الكل</option></select></div>
+<div class="form-group" style="margin:0;"><label>🏢 السنتر</label><select id="storeCenterFilter" class="form-select" onchange="window.loadStoreCatalog()"><option value="">الكل</option></select></div>
+<div class="form-group" style="margin:0;"><label>👨‍🏫 الأستاذ</label><select id="storeTeacherFilter" class="form-select" onchange="window.loadStoreCatalog()"><option value="">الكل</option></select></div>
+</div>
+</div>
+<div id="storeCatalogList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;"></div>
+</div>
+
+<!-- تبويب متجر النقاط -->
+<div id="storeTab-points" class="tab-content">
+<div class="card" style="margin-bottom:16px; border-color:var(--primary-border);">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+<div>
+<strong style="font-size:15px;">🏆 حالة متجر النقاط</strong>
+<div class="text-xs text-muted">المنتجات دي بيستبدلها الطلاب بنقاطهم من صفحة "استبدال النقاط" في لوحة الطالب.</div>
+</div>
+<button class="btn btn-ghost btn-sm" id="togglePointsStoreBtn" onclick="window.togglePointsStore()">تفعيل/إيقاف</button>
+</div>
+</div>
+<div id="storePointsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;"></div>
+</div>
+
+<!-- تبويب الطلبات -->
+<div id="storeTab-orders" class="tab-content">
+<div class="filter-bar" style="margin-bottom:12px;">
+<button class="filter-btn active" onclick="window.setStoreOrderFilter('pending',this)">⏳ معلقة</button>
+<button class="filter-btn" onclick="window.setStoreOrderFilter('approved',this)">✅ موافق عليها</button>
+<button class="filter-btn" onclick="window.setStoreOrderFilter('delivered',this)">📬 مسلّمة</button>
+<button class="filter-btn" onclick="window.setStoreOrderFilter('cancelled',this)">❌ ملغية</button>
+<button class="filter-btn" onclick="window.setStoreOrderFilter('all',this)">الكل</button>
+</div>
+<div id="storeOrdersList"></div>
+</div>
+</section>
+ <!-- 📦 طلبات المتجر (أدمن) --><section class="section" id="section-storeOrders"><div class="section-header"><div><h2 class="section-title">📦 طلبات المتجر</h2><p class="text-sm text-muted">موافقة وتسليم الطلبات</p></div><button class="btn btn-ghost btn-sm" onclick="window.loadStoreOrders()">🔄 تحديث</button></div><div class="filter-bar" style="margin-bottom:12px;"><button class="filter-btn active" onclick="window.setStoreOrderFilter('pending',this)">⏳ معلقة</button><button class="filter-btn" onclick="window.setStoreOrderFilter('approved',this)">✅ موافق عليها</button><button class="filter-btn" onclick="window.setStoreOrderFilter('delivered',this)">📬 مسلّمة</button><button class="filter-btn" onclick="window.setStoreOrderFilter('cancelled',this)">❌ ملغية</button><button class="filter-btn" onclick="window.setStoreOrderFilter('all',this)">الكل</button></div><div class="card" style="margin-bottom:12px;"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;"><div class="form-group" style="margin:0;"><label>🔍 بحث (طالب/منتج)</label><input type="text" id="orderSearch" class="form-input" placeholder="اسم الطالب أو المنتج..." onkeyup="window.loadStoreOrders()"></div><div class="form-group" style="margin:0;"><label>🎯 الحالة</label><select id="orderStatusFilter" class="form-select" onchange="window.loadStoreOrders()"><option value="">كل الحالات</option><option value="pending_payment">⏳ بانتظار الدفع</option><option value="pending_reserve">⏳ بانتظار الحجز</option><option value="approved">✅ موافق عليه</option><option value="delivered">📬 مسلّم</option><option value="cancelled">❌ ملغي</option></select></div><div class="form-group" style="margin:0;"><label>👥 المجموعة</label><select id="orderGroupFilter" class="form-select" onchange="window.loadStoreOrders()"><option value="">كل المجموعات</option></select></div><div class="form-group" style="margin:0;"><label>🏢 السنتر</label><select id="orderCenterFilter" class="form-select" onchange="window.loadStoreOrders()"><option value="">كل السناتر</option></select></div><div class="form-group" style="margin:0;"><label>🎓 المرحلة</label><select id="orderStageFilter" class="form-select" onchange="window.loadStoreOrders()"><option value="">كل المراحل</option></select></div><div class="form-group" style="margin:0;"><label>👨‍🏫 الأستاذ</label><select id="orderTeacherFilter" class="form-select" onchange="window.loadStoreOrders()"><option value="">كل الأساتذة</option></select></div></div></div><div id="storeOrdersList"></div></section>
+<!-- 📒 دفتر التحصيل (أدمن) --><section class="section" id="section-ledger"><div class="section-header"><div><h2 class="section-title">📒 دفتر التحصيل</h2><p class="text-sm text-muted">كشف الشهرية الفعلي: مربعات الحصص + حالة الدفع + المتأخرات — دوس على أي مجموعة تفلترها</p></div><div style="display:flex;gap:8px;align-items:center;"><input type="month" id="ledgerMonth" class="form-input" style="width:170px;" onchange="LedgerUI.setMonth()"></div></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;"><button class="btn btn-ghost btn-sm" onclick="LedgerUI.refreshBtn()">🔄 تحديث</button></div><div id="ledgerBody"></div></section>
 <section class="section" id="section-cycles"><div class="section-header"><div><h2 class="section-title">🔄 دورات الطلاب</h2><p class="text-sm text-muted">متابعة العدادات والفواتير لكل طالب</p></div><div style="display:flex;gap:8px;"><button class="btn btn-success btn-sm" onclick="window.openEmergencySessionModal()">⚡ حصة طوارئ</button><button class="btn btn-ghost btn-sm" onclick="window.loadStudentCycles()">🔄 تحديث</button></div></div><div class="card" style="margin-bottom:12px;"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;"><div class="form-group" style="margin:0;"><label>🔍 بحث</label><input type="text" id="cycleSearch" class="form-input" placeholder="اسم الطالب..." onkeyup="window.loadStudentCycles()"></div><div class="form-group" style="margin:0;"><label>🎯 الحالة</label><select id="cycleStatusFilter" class="form-select" onchange="window.loadStudentCycles()"><option value="">كل الحالات</option><option value="active">نشط</option><option value="warning">إنذار (7/8)</option><option value="due">مستحق الدفع</option><option value="overdue">متأخر</option></select></div></div></div><div id="studentCyclesList"></div></section>
 <!-- ✅ مهامي (أدمن) -->
 <section class="section" id="section-tasks">
@@ -814,7 +878,27 @@
 </div>
 </section>
 
-
+<!-- 🔔 سياسة الإشعارات (مصوفة الأدوار × الأحداث — من notify-service) -->
+<section class="section" id="section-notifyPolicy">
+<div class="section-header"><div><h2 class="section-title">🔔 سياسة الإشعارات</h2><p class="text-sm text-muted">تحكم كامل: أي حدث يوصل لأي دور — يسري فوراً على كل المستخدمين والأجهزة</p></div><div style="display:flex;gap:8px;"><button class="btn btn-ghost btn-sm" onclick="window.NotifyPolicy&&NotifyPolicy.reset()">♻️ افتراضي</button><button class="btn btn-primary btn-sm" onclick="window.NotifyPolicy&&NotifyPolicy.saveUI()">💾 حفظ السياسة</button></div></div>
+<div id="notifyPolicyHost"><div class="card" style="text-align:center;padding:30px;"><div style="font-size:48px;">🔔</div><strong>جاري تحميل سياسة الإشعارات...</strong></div></div>
+</section>
+<!-- 🔔 سياسة وقواعد الإشعارات -->
+<section class="section" id="section-notifyRules">
+<div class="section-header">
+<div>
+<h2 class="section-title">🔔 سياسة وقواعد الإشعارات</h2>
+<p class="text-sm text-muted">التحكم في توقيتات وقواعد إرسال إشعارات واتساب والتذكيرات</p>
+</div>
+<button class="btn btn-ghost btn-sm" onclick="window.loadNotifyRules()">🔄 تحديث</button>
+</div>
+<div id="notifyRulesBody">
+<div class="card" style="text-align:center;padding:30px;">
+<div style="font-size:48px;">🔔</div>
+<strong>جاري تحميل إعدادات الإشعارات...</strong>
+</div>
+</div>
+</section>
 
 <!-- ⚙️ الإعدادات والبراندنج -->
 <section class="section" id="section-settings">
@@ -899,20 +983,6 @@
 </div>
 </div>
 
-<div class="gam-card">
-<div class="gam-card-header"><div class="gam-card-title">🛒 متجر النقاط</div><label class="switch"><input type="checkbox" id="gamStoreEnabled"><span class="slider"></span></label></div>
-<div id="storeItemsList"></div>
-<div style="background:var(--surface-hover);border:1px dashed var(--border);border-radius:10px;padding:12px;margin-top:10px;">
-<div style="font-size:13px;font-weight:800;margin-bottom:10px;">➕ إضافة مكافأة جديدة</div>
-<div style="display:grid;grid-template-columns:auto 1fr auto auto auto;gap:8px;align-items:end;">
-<div class="form-group" style="margin:0;"><label>أيقونة</label><input type="text" id="newItemIcon" class="form-input" style="width:60px;" value="🎁"></div>
-<div class="form-group" style="margin:0;"><label>اسم المكافأة</label><input type="text" id="newItemName" class="form-input" placeholder="مثال: إعفاء من واجب"></div>
-<div class="form-group" style="margin:0;"><label>التكلفة</label><input type="number" id="newItemCost" class="form-input" style="width:90px;" min="1" value="50"></div>
-<div class="form-group" style="margin:0;"><label>النوع</label><select id="newItemType" class="form-select"><option value="real">حقيقية</option><option value="virtual">افتراضية</option></select></div>
-<button class="btn btn-primary" onclick="window.addStoreItem()">➕</button>
-</div>
-</div>
-</div>
 
 <div class="gam-card">
 <div class="gam-card-header"><div class="gam-card-title">⭐ نقاط التسميع والتفاعل (اللي بيضيفها الأستاذ/المساعد)</div></div>
@@ -1343,14 +1413,16 @@ localStorage.setItem('sbSidebarCollapsed',layout.classList.contains('sb-collapse
 window.buildMenu=function(){
 const menu=[
 {s:'🏛️ برج التحكم',items:[{id:'tower',l:'نظرة عامة',i:'📊'}]},
-    {s:'👥 إدارة الأشخاص',items:[{id:'students',l:'الطلاب',i:'🎓'},{id:'teachers',l:'المدرسون',i:'👨‍🏫'},{id:'assistants',l:'المساعدون',i:'🧑‍🏫'},{id:'pending',l:'طلبات التسجيل',i:'⏳'},{id:'barcode-requests',l:'طلبات الباركود',i:'🎟️'}]},
-    {s:'🚀 التشغيل والعمليات',items:[{id:'ops', l:'إدارة وتشغيل الأساتذة', i:'⚙️', href:'teachers-operations.html'}]},
-    {s:'🏢 البنية',items:[{id:'groups',l:'المجموعات',i:'👥'},{id:'centers',l:'السناتر',i:'🏢'},{id:'scheduleBoard',l:'جدول الأساتذة',i:'🗓️'}]},{s:'🛒 المتجر',items:[{id:'store',l:'إدارة المتجر',i:'🏪'},{id:'storeOrders',l:'طلبات المتجر',i:'📦'}]},
-    {s:'🎁 التحفيز',items:[{id:'points',l:'نظام النقاط',i:'🏆'},{id:'gamification',l:'تحكم التحفيز',i:'🎁'},{id:'battles',l:'معارك المجموعات',i:'⚔️'},{id:'templates',l:'القوالب الجاهزة',i:'📄'}]},
-    {s:'📊 التحليلات',items:[{id:'reports',l:'التقارير الإدارية',i:'📈'}]},
-    {s:'المتابعة',items:[{id:'followups',l:'المتابعات',i:'📌'},{id:'churn',l:'تنبيهات التسرب',i:'🚨'},{id:'cycles',l:'دورات الطلاب',i:'🔄'},{id:'tasks',l:'مهامي',i:'✅'},{id:'calendar',l:'التقويم',i:'📅'}]},
-    {s:'🔐 النظام',items:[{id:'ai',l:'تحكم الذكاء الاصطناعي',i:'🤖'},{id:'viewas',l:'View As',i:'👁️'},{id:'monitor',l:'غرفة المتابعة',i:'🖥️'},{id:'settings',l:'الإعدادات',i:'⚙️'},{id:'backup',l:'النسخ الاحتياطي',i:'💾'},{id:'logs',l:'سجل النشاط',i:'📜'}]}
-  ];
+{s:'👥 إدارة الأشخاص',items:[{id:'students',l:'الطلاب',i:'🎓'},{id:'teachers',l:'المدرسون',i:'👨‍🏫'},{id:'assistants',l:'المساعدون',i:'🧑‍🏫'},{id:'pending',l:'طلبات التسجيل',i:'⏳'},{id:'barcode-requests',l:'طلبات الباركود',i:'🎟️'}]},
+{s:'🚀 التشغيل والعمليات',items:[{id:'ops', l:'إدارة وتشغيل الأساتذة', i:'⚙️', href:'teachers-operations.html'}]},
+{s:'🏢 البنية',items:[{id:'groups',l:'المجموعات',i:'👥'},{id:'centers',l:'السناتر',i:'🏢'},{id:'scheduleBoard',l:'جدول الأساتذة',i:'🗓️'}]},
+{s:'🛒 المتجر',items:[{id:'store',l:'إدارة المتجر',i:'🏪'},{id:'storeOrders',l:'طلبات المتجر',i:'📦'}]},
+{s:'💰 المالية',items:[{id:'ledger',l:'دفتر التحصيل',i:'📒'},{id:'cycles',l:'دورات الطلاب',i:'🔄'}]},
+{s:'🎁 التحفيز',items:[{id:'points',l:'نظام النقاط',i:'🏆'},{id:'gamification',l:'تحكم التحفيز',i:'🎁'},{id:'battles',l:'معارك المجموعات',i:'⚔️'},{id:'templates',l:'القوالب الجاهزة',i:'📄'}]},
+{s:'📊 التحليلات',items:[{id:'reports',l:'التقارير الإدارية',i:'📈'}]},
+{s:'المتابعة',items:[{id:'followups',l:'المتابعات',i:'📌'},{id:'churn',l:'تنبيهات التسرب',i:'🚨'},{id:'tasks',l:'مهامي',i:'✅'},{id:'calendar',l:'التقويم',i:'📅'},{id:'notifyPolicy',l:'سياسة الإشعارات',i:'🔔'},{id:'notifyRules',l:'قواعد وتوقيتات الإشعارات',i:'⏰'}]},
+{s:'🔐 النظام',items:[{id:'ai',l:'تحكم الذكاء الاصطناعي',i:'🤖'},{id:'viewas',l:'View As',i:'👁️'},{id:'monitor',l:'غرفة المتابعة',i:'🖥️'},{id:'settings',l:'الإعدادات',i:'⚙️'},{id:'backup',l:'النسخ الاحتياطي',i:'💾'},{id:'logs',l:'سجل النشاط',i:'📜'}]}
+];
   const nav=document.getElementById('sidebarNav');
   if(nav){
     nav.innerHTML=menu.map(sec=>`<div class="sidebar-section"><div class="sidebar-section-title">${sec.s}</div>${sec.items.map(it=>`<div class="sidebar-item" data-section="${it.id}" onclick="${it.href ? `window.open('${it.href}', '_blank')` : `window.showSection('${it.id}')`}"><span class="sidebar-item-icon">${it.i}</span><span class="sidebar-item-label">${it.l}</span></div>`).join('')}</div>`).join('');
@@ -1361,19 +1433,27 @@ window.showSection=function(id){
 try{
   /* 🖥️ غرفة المتابعة — تفتح في تبويب جديد */
 if(id==='monitor'){ window.open('monitor.html','_blank'); return; }
-document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-document.getElementById('section-'+id)?.classList.add('active');
+const _tgt=document.getElementById('section-'+id);
+document.querySelectorAll('section.section').forEach(s=>{
+  s.classList.toggle('active', s===_tgt);
+  s.style.removeProperty('display'); /* الـ CSS بـ !important هو اللي يحكم دلوقتي */
+});
 document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.toggle('active',i.dataset.section===id));
 const L={
 tower:window.loadTower, students:()=>{window.fillStudentFilters();window.loadStudents();},
 assistants:window.loadAssistants, pending:window.loadPending, groups:window.loadGroups,
 centers:window.loadCenters, points:()=>{window.loadPointsOverview();window.loadPointsRules();window.loadPointsHistory();window.loadPointsRanking();},
+ledger: function(){
+if(window.LedgerUI && typeof LedgerUI.page==='function'){ LedgerUI.page(); }
+else { document.getElementById('ledgerBody').innerHTML = '<div class="card" style="text-align:center;padding:30px;"><div style="font-size:48px;">⏳</div><strong>جاري تحميل الدفتر...</strong></div>'; }
+},
 churn:window.loadChurnAlerts,
 followups:window.loadFollowups,
 templates:window.loadTemplates, reports:()=>window.renderReport(currentReport),
 viewas:window.loadViewAs, settings:window.loadSettings, backup:()=>{}, logs:window.loadLogs,
 'barcode-requests':window.loadBarcodeRequests,
-gamification:window.loadGamification, battles:window.loadBattles, ai:window.loadAiSettings,
+gamification:window.loadGamification, battles:window.loadBattles, ai:window.loadAiSettings, notifyRules:window.loadNotifyRules,
+notifyPolicy:function(){ if(window.NotifyPolicy&&typeof NotifyPolicy.render==='function'){ NotifyPolicy.render(); } },
 scheduleBoard:()=>{if(window.loadScheduleBoardAdmin)window.loadScheduleBoardAdmin();},
 mySchedule:()=>{if(window.loadMyScheduleBoard)window.loadMyScheduleBoard();}
 };
@@ -7833,6 +7913,183 @@ setInterval(injectSupportTiles,8000);
   const observer = new MutationObserver(bindUnifiedButtons);
   observer.observe(document.body, { childList: true, subtree: true });
 })();
+
+/* ================================================================
+🛍️ المتجر الموحد (كتب + نقاط + طلبات)
+================================================================ */
+let currentStoreTab = 'catalog';
+window.setStoreTab = function(tab, btn) {
+    currentStoreTab = tab;
+    document.querySelectorAll('#section-store .section-tab').forEach(b => b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    document.querySelectorAll('#section-store .tab-content').forEach(c => c.classList.remove('active'));
+    document.getElementById('storeTab-' + tab)?.classList.add('active');
+    window.renderStoreCenter();
+};
+
+window.renderStoreCenter = function() {
+    if(currentStoreTab === 'catalog') window.loadStoreCatalog();
+    else if(currentStoreTab === 'points') window.loadPointsStore();
+    else if(currentStoreTab === 'orders') window.loadStoreOrders();
+};
+
+window.loadPointsStore = function() {
+    const d = db();
+    const g = d.gamification || {};
+    const store = g.store || { enabled: true, items: [] };
+    const items = store.items || [];
+    const el = document.getElementById('storePointsList');
+    const btn = document.getElementById('togglePointsStoreBtn');
+
+    if(btn) {
+        btn.className = store.enabled !== false ? 'btn btn-danger btn-sm' : 'btn btn-success btn-sm';
+        btn.textContent = store.enabled !== false ? '⛔ إيقاف المتجر' : '✅ تفعيل المتجر';
+    }
+
+    if(!el) return;
+    el.innerHTML = items.length ? items.map(i => `
+        <div class="user-card" style="${i.active===false?'opacity:.6':''}">
+            <div class="user-card-header">
+                <div class="user-avatar" style="font-size:24px;">${i.icon || '🎁'}</div>
+                <div>
+                    <div class="user-name">${i.name}</div>
+                    <div class="user-meta">
+                        <span>🏆 ${i.cost || 0} نقطة</span>
+                        <span>📦 ${i.stock != null ? i.stock : '∞'}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="user-actions" style="margin-top:10px;">
+                <button class="btn btn-ghost btn-sm" onclick="window.openPointsItemModal('${i.id}')">✏️ تعديل</button>
+                <button class="btn btn-${i.active===false?'success':'warning'} btn-sm" onclick="window.togglePointsItem('${i.id}')">${i.active===false?'تفعيل':'إيقاف'}</button>
+                <button class="btn btn-danger btn-sm" onclick="window.deletePointsItem('${i.id}')">🗑️</button>
+            </div>
+        </div>
+    `).join('') : '<div class="card" style="text-align:center;padding:30px;grid-column:1/-1;"><div style="font-size:44px;">🏆</div><strong>لا توجد منتجات نقاط</strong></div>';
+};
+
+window.togglePointsStore = function() {
+    const d = db();
+    d.gamification = d.gamification || {};
+    d.gamification.store = d.gamification.store || { enabled: true, items: [] };
+    d.gamification.store.enabled = d.gamification.store.enabled === false;
+    save(d);
+    window.safeToast('✅ تم تحديث حالة المتجر', 'success');
+    window.loadPointsStore();
+};
+
+window.togglePointsItem = function(id) {
+    const d = db();
+    d.gamification = d.gamification || {};
+    d.gamification.store = d.gamification.store || { enabled: true, items: [] };
+    const i = (d.gamification.store.items || []).find(x => x.id === id);
+    if(i) { i.active = i.active === false; save(d); window.loadPointsStore(); }
+};
+
+window.deletePointsItem = function(id) {
+    if(!confirm('حذف منتج النقاط؟')) return;
+    const d = db();
+    d.gamification = d.gamification || {};
+    d.gamification.store = d.gamification.store || { enabled: true, items: [] };
+    d.gamification.store.items = (d.gamification.store.items || []).filter(x => x.id !== id);
+    save(d);
+    window.loadPointsStore();
+};
+
+window.openPointsItemModal = function(editId) {
+    const d = db();
+    const st = (d.gamification && d.gamification.store) || { items: [] };
+    const i = editId ? (st.items || []).find(x => x.id === editId) : null;
+    ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🏆 ${i?'✏️ تعديل':'➕ إضافة'} منتج نقاط</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">
+    <div class="form-group"><label>الاسم *</label><input type="text" id="piName" class="form-input" value="${i?i.name:''}"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <div class="form-group"><label>التكلفة بالنقاط *</label><input type="number" id="piCost" class="form-input" value="${i?i.cost:50}" min="1"></div>
+    <div class="form-group"><label>المخزون</label><input type="number" id="piStock" class="form-input" value="${(i&&i.stock!=null)?i.stock:99}" min="0"></div>
+    </div>
+    <div class="form-group"><label>أيقونة (إيموجي)</label><input type="text" id="piIcon" class="form-input" value="${i?i.icon||'':'🎁'}"></div>
+    <button class="btn btn-primary w-full" onclick="window.savePointsItem('${editId||''}')">💾 حفظ</button>
+    </div>`, 'modal-sm');
+};
+
+window.savePointsItem = async function(editId) {
+    const d = db();
+    d.gamification = d.gamification || {};
+    d.gamification.store = d.gamification.store || { enabled: true, items: [] };
+    const name = (document.getElementById('piName') || {}).value || '';
+    if(!name) { window.safeToast('اكتب الاسم', 'error'); return; }
+    let i = editId ? d.gamification.store.items.find(x => x.id === editId) : null;
+    if(!i) { i = { id: 'pit_' + Date.now(), active: true }; d.gamification.store.items.push(i); }
+    i.name = name;
+    i.cost = parseInt((document.getElementById('piCost') || {}).value) || 1;
+    i.stock = parseInt((document.getElementById('piStock') || {}).value) || 99;
+    i.icon = (document.getElementById('piIcon') || {}).value || '🎁';
+    save(d);
+    ThemeManager.closeModal();
+    window.safeToast('✅ تم الحفظ', 'success');
+    window.loadPointsStore();
+};
+
+/* ================================================================
+🔔 سياسة الإشعارات (Notify Rules)
+================================================================ */
+window.loadNotifyRules = function() {
+    const el = document.getElementById('notifyRulesBody');
+    if(!el) return;
+    
+    // إذا كانت الدالة معرفة في notify-rules.js ستعمل، وإلا نعرض واجهة أساسية
+    if(typeof window.renderNotifyRulesUI === 'function') {
+        window.renderNotifyRulesUI();
+        return;
+    }
+
+    el.innerHTML = `
+    <div class="card" style="padding:20px;">
+        <h3 class="card-title" style="margin-bottom:16px;">⚙️ القواعد الأساسية للإشعارات</h3>
+        <div class="filter-info" style="margin-bottom:16px;">
+            💡 هنا يمكنك التحكم في توقيتات إرسال رسائل واتساب التلقائية للطلاب وأولياء الأمور.
+        </div>
+        <div class="form-group">
+            <label>🕐 وقت إرسال إشعارات الغياب (بعد الحصة بـ كم ساعة؟)</label>
+            <input type="number" id="notifyAbsenceDelay" class="form-input" value="2" min="0" style="max-width:200px;">
+        </div>
+        <div class="form-group">
+            <label>💰 وقت إرسال تذكير الدفعات المتأخرة</label>
+            <select id="notifyPaymentDay" class="form-select" style="max-width:300px;">
+                <option value="1">أول يوم في الشهر</option>
+                <option value="5">يوم 5 من الشهر</option>
+                <option value="10">يوم 10 من الشهر</option>
+                <option value="15">يوم 15 من الشهر</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>🔔 تفعيل الإشعارات العاجلة (تنبيهات التسرب/الخطر)</label>
+            <select id="notifyUrgentEnabled" class="form-select" style="max-width:200px;">
+                <option value="true">✅ مفعّل</option>
+                <option value="false">⛔ موقوف</option>
+            </select>
+        </div>
+        <button class="btn btn-primary" onclick="window.saveNotifyRules()">💾 حفظ الإعدادات</button>
+    </div>
+    `;
+
+    const d = db();
+    const rules = d.notifyRules || {};
+    if(document.getElementById('notifyAbsenceDelay')) document.getElementById('notifyAbsenceDelay').value = rules.absenceDelay || 2;
+    if(document.getElementById('notifyPaymentDay')) document.getElementById('notifyPaymentDay').value = rules.paymentDay || '1';
+    if(document.getElementById('notifyUrgentEnabled')) document.getElementById('notifyUrgentEnabled').value = rules.urgentEnabled !== false ? 'true' : 'false';
+};
+
+window.saveNotifyRules = function() {
+    const d = db();
+    d.notifyRules = {
+        absenceDelay: parseInt(document.getElementById('notifyAbsenceDelay')?.value) || 2,
+        paymentDay: document.getElementById('notifyPaymentDay')?.value || '1',
+        urgentEnabled: document.getElementById('notifyUrgentEnabled')?.value === 'true'
+    };
+    save(d);
+    window.safeToast('✅ تم حفظ سياسة الإشعارات', 'success');
+};
 </script>
+
 </body>
 </html>

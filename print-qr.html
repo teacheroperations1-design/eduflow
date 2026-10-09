@@ -20,12 +20,18 @@
   --shadow-md:0 4px 6px -1px rgb(0 0 0/.05),0 2px 4px -2px rgb(0 0 0/.05);
   --shadow-lg:0 10px 15px -3px rgb(0 0 0/.05),0 4px 6px -4px rgb(0 0 0/.05);
   --cols:4; --qr-size:30mm; --sheet-gap:10px;
+  /* 🆕 متغيرات حجم الكارت المخصص */
+  --card-w:52mm; --card-h:72mm; --qr-custom:30mm;
 }
 [data-theme="dark"]{--bg:#0b1120;--surface:#1e293b;--surface-hover:#334155;--border:#334155;--text:#f8fafc;--text-secondary:#cbd5e1;--text-muted:#64748b;}
 body{font-family:'Cairo',sans-serif;background:var(--bg);background-image:radial-gradient(var(--border) 1px,transparent 1px);background-size:24px 24px;color:var(--text);margin:0;min-height:100vh;}
 body[data-shape="vertical"]{--qr-size:30mm;}
 body[data-shape="square"]{--qr-size:34mm;}
 body[data-shape="landscape"]{--qr-size:26mm;}
+/* 🆕 وضع الحجم المخصص */
+body[data-shape="custom"]{--qr-size:var(--qr-custom);}
+body[data-shape="custom"] .qr-card{width:var(--card-w);min-height:var(--card-h);}
+body[data-shape="custom"] .qr-wrap img{width:var(--qr-custom);height:var(--qr-custom);}
 .page-container{max-width:1400px;margin:0 auto;padding:24px;}
 .toolbar{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:24px;margin-bottom:30px;box-shadow:var(--shadow-lg);position:relative;overflow:hidden;}
 .toolbar::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--primary),#8b5cf6,#ec4899);}
@@ -70,6 +76,124 @@ body[data-shape="landscape"]{--qr-size:26mm;}
 .btn-warning-action{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;}
 .btn-pdf-action{background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;}
 .btn-ghost-action{background:var(--surface);color:var(--text-secondary);border:1px solid var(--border);}
+
+/* 🆕🆕🆕 لوحة تحكم حجم الكارت مع معاينة حية */
+.size-control-panel{
+  background:linear-gradient(135deg,rgba(16,185,129,.04),rgba(99,102,241,.04));
+  border:1.5px solid var(--border);
+  border-radius:18px;
+  padding:18px;
+  margin-top:14px;
+  display:none; /* يظهر فقط عند اختيار custom */
+  animation:fadeIn .3s ease;
+}
+.size-control-panel.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+.size-control-header{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:14px;flex-wrap:wrap;gap:10px;
+}
+.size-control-title{
+  font-weight:800;font-size:14px;color:var(--primary-dark);
+  display:flex;align-items:center;gap:8px;
+}
+[data-theme="dark"] .size-control-title{color:var(--primary-light);}
+.size-presets{display:flex;gap:6px;flex-wrap:wrap;}
+.size-preset-btn{
+  padding:6px 12px;background:var(--surface);border:1.5px solid var(--border);
+  border-radius:8px;cursor:pointer;font-weight:700;font-size:11px;
+  color:var(--text-secondary);font-family:inherit;transition:all .2s;
+  display:flex;align-items:center;gap:5px;
+}
+.size-preset-btn:hover{border-color:var(--primary);color:var(--primary);}
+.size-preset-btn.active{background:var(--primary);border-color:var(--primary);color:#fff;}
+.size-control-body{
+  display:grid;grid-template-columns:1fr 200px;gap:20px;align-items:start;
+}
+@media(max-width:720px){.size-control-body{grid-template-columns:1fr;}}
+.size-sliders{display:flex;flex-direction:column;gap:14px;}
+.size-slider-row{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:10px 12px;
+}
+.size-slider-row.disabled{opacity:.45;pointer-events:none;}
+.size-slider-label{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:12px;font-weight:700;margin-bottom:8px;color:var(--text);
+}
+.size-slider-label .unit{
+  font-family:var(--font-en);color:var(--primary);
+  background:var(--primary-bg,rgba(99,102,241,.1));
+  padding:2px 8px;border-radius:6px;font-size:12px;font-weight:800;
+}
+.size-slider-row input[type="range"]{
+  width:100%;height:6px;background:var(--surface-hover);
+  border-radius:3px;outline:none;-webkit-appearance:none;margin-top:4px;
+}
+.size-slider-row input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:20px;height:20px;background:var(--primary);
+  border-radius:50%;cursor:pointer;box-shadow:0 2px 6px rgba(99,102,241,.3);
+}
+.size-slider-row input[type="range"]::-moz-range-thumb{
+  width:20px;height:20px;background:var(--primary);
+  border-radius:50%;cursor:pointer;border:none;
+}
+.size-preview-wrap{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:14px;padding:14px;display:flex;flex-direction:column;
+  align-items:center;gap:10px;position:sticky;top:100px;
+}
+.size-preview-title{font-size:11px;font-weight:800;color:var(--text-secondary);}
+.size-preview-paper{
+  position:relative;background:#fff;border:1.5px solid var(--border);
+  border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.06);
+  display:flex;align-items:flex-start;justify-content:flex-start;
+  padding:6px;overflow:hidden;
+}
+.size-preview-paper::before{
+  content:attr(data-label);position:absolute;top:3px;left:5px;
+  font-size:8px;font-weight:800;color:var(--text-muted);
+  font-family:var(--font-en);letter-spacing:.5px;
+}
+.size-preview-card{
+  background:linear-gradient(135deg,var(--primary),#8b5cf6);
+  border-radius:3px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:2px;
+  color:#fff;font-size:8px;font-weight:700;
+  box-shadow:0 2px 4px rgba(0,0,0,.15);
+  transition:all .25s cubic-bezier(.4,0,.2,1);
+  position:relative;overflow:hidden;
+}
+.size-preview-card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(45deg,transparent 30%,rgba(255,255,255,.15) 50%,transparent 70%);
+}
+.size-preview-card-qr{
+  background:rgba(255,255,255,.95);border-radius:2px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--primary);font-weight:900;font-size:10px;
+}
+.size-preview-dims{
+  font-family:var(--font-en);font-size:11px;font-weight:800;
+  color:var(--primary);background:var(--primary-bg,rgba(99,102,241,.1));
+  padding:3px 10px;border-radius:6px;
+}
+.size-preview-meta{
+  font-size:10px;color:var(--text-muted);text-align:center;line-height:1.5;
+}
+.size-preview-meta strong{color:var(--primary);font-family:var(--font-en);}
+.size-fit-info{
+  display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;justify-content:center;
+}
+.size-fit-pill{
+  background:var(--surface-hover);border:1px solid var(--border);
+  padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700;
+  display:flex;align-items:center;gap:4px;
+}
+.size-fit-pill.ok{color:var(--success);border-color:var(--success);}
+.size-fit-pill.warn{color:var(--warning);border-color:var(--warning);}
+.size-fit-pill.bad{color:var(--danger);border-color:var(--danger);}
+
 /* 📄 الأوراق */
 .sheet{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;margin:0 auto 22px;box-shadow:var(--shadow-lg);}
 .sheet-hidden{display:none!important;}
@@ -140,6 +264,7 @@ body.pdf-capture .cm{display:block!important;border-style:solid!important;border
   .sheet-grid{gap:2.5mm!important;}
   body.compact-print .sheet-grid{gap:1.5mm!important;}
   .qr-card{background:#fff!important;border:0.4pt solid #aaa!important;border-radius:2.5mm!important;padding:1.6mm 1.2mm!important;height:auto!important;break-inside:avoid;page-break-inside:avoid;color:#000!important;box-shadow:none!important;transform:none!important;}
+  body[data-shape="custom"] .qr-card{width:var(--card-w)!important;min-height:var(--card-h)!important;}
   .qr-wrap{border:none!important;padding:0!important;background:#fff!important;}
   .card-name{color:#000!important;font-size:9.5pt!important;}
   .card-code{color:#000!important;background:none!important;border:none!important;padding:0!important;font-size:8.5pt!important;}
@@ -161,7 +286,7 @@ body.pdf-capture .cm{display:block!important;border-style:solid!important;border
     <div class="toolbar-header">
       <div class="toolbar-title">
         <div class="toolbar-icon">🖨️</div>
-        <div><h1>الطباعة الذكية للباركودات</h1><p>فلاتر متتابعة ذكية + تعبئة تلقائية + تصدير PDF</p></div>
+        <div><h1>الطباعة الذكية للباركودات</h1><p>فلاتر متتابعة ذكية + فلتر المدرس + تحكم كامل بالحجم + معاينة حية + تصدير PDF</p></div>
       </div>
       <div style="display:flex;gap:8px;">
         <button class="btn btn-ghost" onclick="window.goBack()">← رجوع</button>
@@ -170,6 +295,9 @@ body.pdf-capture .cm{display:block!important;border-style:solid!important;border
     </div>
 
     <div class="filters-grid">
+      <div class="filter-box"><label>👨‍ المدرس</label>
+        <select id="prTeacher" class="form-select" onchange="window.onFilterChange()"><option value="">كل المدرسين</option></select>
+      </div>
       <div class="filter-box"><label>🏢 السنتر</label>
         <select id="prCenter" class="form-select" onchange="window.onFilterChange()"><option value="">كل السناتر</option></select>
       </div>
@@ -204,6 +332,7 @@ body.pdf-capture .cm{display:block!important;border-style:solid!important;border
             <button class="shape-btn active" data-shape="vertical" onclick="window.setShape('vertical',this)">📄 عمودي</button>
             <button class="shape-btn" data-shape="square" onclick="window.setShape('square',this)">⬛ مربع</button>
             <button class="shape-btn" data-shape="landscape" onclick="window.setShape('landscape',this)">💳 بطاقة</button>
+            <button class="shape-btn" data-shape="custom" onclick="window.setShape('custom',this)">📏 مخصص</button>
           </div>
         </div>
         <div class="setting-group">
@@ -228,6 +357,76 @@ body.pdf-capture .cm{display:block!important;border-style:solid!important;border
           <div class="setting-label">✨ خيارات</div>
           <label class="switch-label"><input type="checkbox" class="switch-input" id="cutMarksToggle" checked onchange="window.toggleCutMarks(this.checked)"><span class="switch"></span><span>✂️ علامات القص</span></label>
           <label class="switch-label"><input type="checkbox" class="switch-input" id="compactPrintToggle" onchange="window.toggleCompact(this.checked)"><span class="switch"></span><span>🗜️ طباعة مضغوطة</span></label>
+        </div>
+      </div>
+
+      <!-- 🆕🆕🆕 لوحة التحكم المخصص في حجم الكارت مع معاينة حية -->
+      <div class="size-control-panel" id="sizeControlPanel">
+        <div class="size-control-header">
+          <div class="size-control-title">
+            <span>📏</span>
+            <span>التحكم في حجم الكارت (معاينة حية)</span>
+          </div>
+          <div class="size-presets">
+            <button class="size-preset-btn" onclick="window.applySizePreset('id',this)">🪪 بطاقة هوية<br><span style="font-size:9px;opacity:.7;">86×54mm</span></button>
+            <button class="size-preset-btn" onclick="window.applySizePreset('business',this)">💼 بيزنس<br><span style="font-size:9px;opacity:.7;">85×55mm</span></button>
+            <button class="size-preset-btn" onclick="window.applySizePreset('small',this)">🎟️ صغير<br><span style="font-size:9px;opacity:.7;">60×40mm</span></button>
+            <button class="size-preset-btn" onclick="window.applySizePreset('medium',this)">📋 متوسط<br><span style="font-size:9px;opacity:.7;">75×55mm</span></button>
+            <button class="size-preset-btn" onclick="window.applySizePreset('large',this)">📄 كبير<br><span style="font-size:9px;opacity:.7;">90×65mm</span></button>
+            <button class="size-preset-btn" onclick="window.applySizePreset('tag',this)">🏷️ تاق شنطة<br><span style="font-size:9px;opacity:.7;">70×35mm</span></button>
+          </div>
+        </div>
+        <div class="size-control-body">
+          <div class="size-sliders">
+            <div class="size-slider-row">
+              <div class="size-slider-label">
+                <span>↔️ عرض الكارت</span>
+                <span class="unit" id="cardWValue">52mm</span>
+              </div>
+              <input type="range" id="cardWSlider" min="30" max="120" value="52" oninput="window.updateCardSize()">
+            </div>
+            <div class="size-slider-row">
+              <div class="size-slider-label">
+                <span>↕️ ارتفاع الكارت</span>
+                <span class="unit" id="cardHValue">72mm</span>
+              </div>
+              <input type="range" id="cardHSlider" min="30" max="150" value="72" oninput="window.updateCardSize()">
+            </div>
+            <div class="size-slider-row">
+              <div class="size-slider-label">
+                <span>🔲 حجم الباركود (QR)</span>
+                <span class="unit" id="cardQRValue">30mm</span>
+              </div>
+              <input type="range" id="cardQRSlider" min="15" max="80" value="30" oninput="window.updateCardSize()">
+            </div>
+            <div class="size-slider-row">
+              <div class="size-slider-label">
+                <span>📐 عدد الأعمدة في الورقة</span>
+                <span class="unit" id="cardColsValue">auto</span>
+              </div>
+              <input type="range" id="cardColsSlider" min="1" max="8" value="4" oninput="window.updateCardSize()">
+              <label class="switch-label" style="margin-top:8px;margin-bottom:0;">
+                <input type="checkbox" class="switch-input" id="cardColsAuto" checked onchange="window.updateCardSize()">
+                <span class="switch"></span>
+                <span>🤖 تلقائي</span>
+              </label>
+            </div>
+          </div>
+          <div class="size-preview-wrap">
+            <div class="size-preview-title">👁️ معاينة الكارت في الورقة</div>
+            <div class="size-preview-paper" id="sizePreviewPaper" data-label="A4">
+              <div class="size-preview-card" id="sizePreviewCard">
+                <div class="size-preview-card-qr" id="sizePreviewQR">QR</div>
+                <div style="font-size:7px;margin-top:2px;">اسم الطالب</div>
+              </div>
+            </div>
+            <div class="size-preview-dims" id="sizePreviewDims">52 × 72 mm</div>
+            <div class="size-preview-meta">
+              <div>📊 كارت في الصفحة: <strong id="sizePreviewCount">-</strong></div>
+              <div>📄 عدد الصفحات: <strong id="sizePreviewPages">-</strong></div>
+            </div>
+            <div class="size-fit-info" id="sizeFitInfo"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -304,6 +503,10 @@ const qrImg=(code,size,type='student')=>{
 let currentUser=null,currentShape='vertical',currentPageSize='a4',autoFill=true,manualPerPage=12,cardsPerPage=12;
 let selectedCards=new Set(),allCards=[],sheetsCount=0,branding={};
 window._curPage=1; window._viewAll=false; window._overrideList=null; window.__tmpAll=0;
+
+/* 🆕 متغيرات الحجم المخصص */
+let customSize={w:52,h:72,qr:30,colsAuto:true,cols:4};
+
 function toast(m,t){ if(typeof ThemeManager?.toast==='function') ThemeManager.toast(m,t||'info'); }
 function val(id){ var e=document.getElementById(id); return e?e.value:''; }
 function norm(s){ return String(s==null?'':s).toLowerCase().replace(/[\u064B-\u0652]/g,'').replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/\s+/g,' ').trim(); }
@@ -323,11 +526,16 @@ function colsAuto(){
   var W=paperDims()[0];
   if(currentShape==='landscape') return clamp(Math.round(W/72),1,4);
   if(currentShape==='square') return clamp(Math.round(W/52),2,5);
+  if(currentShape==='custom'){
+    var cardW=customSize.w+6; // +gap
+    return clamp(Math.floor(W/cardW),1,8);
+  }
   return clamp(Math.round(W/48),2,5);
 }
 function colsManual(n){
   if(currentShape==='landscape') return n<=6?2:(n<=12?3:4);
   if(currentShape==='square') return n<=9?3:(n<=16?4:5);
+  if(currentShape==='custom') return customSize.cols;
   return n<=6?3:(n<=16?4:(n<=25?5:6));
 }
 function setCols(c){ document.documentElement.style.setProperty('--cols',c); }
@@ -338,11 +546,133 @@ function measureCardMM(){
   return el.offsetHeight*(25.4/96);
 }
 function chunk(list,n){ var out=[]; for(var i=0;i<list.length;i+=n) out.push(list.slice(i,i+n)); return out; }
+
+/* ============ 🆕 نظام التحكم في حجم الكارت + المعاينة الحية ============ */
+const SIZE_PRESETS={
+  id:{w:86,h:54,qr:38,name:'بطاقة هوية'},
+  business:{w:85,h:55,qr:38,name:'بيزنس'},
+  small:{w:60,h:40,qr:25,name:'صغير'},
+  medium:{w:75,h:55,qr:32,name:'متوسط'},
+  large:{w:90,h:65,qr:42,name:'كبير'},
+  tag:{w:70,h:35,qr:22,name:'تاق شنطة'}
+};
+
+window.applySizePreset=function(key,btn){
+  var p=SIZE_PRESETS[key]; if(!p) return;
+  customSize.w=p.w; customSize.h=p.h; customSize.qr=p.qr;
+  document.getElementById('cardWSlider').value=p.w;
+  document.getElementById('cardHSlider').value=p.h;
+  document.getElementById('cardQRSlider').value=p.qr;
+  document.querySelectorAll('.size-preset-btn').forEach(function(b){b.classList.remove('active');});
+  if(btn) btn.classList.add('active');
+  try{localStorage.setItem('qrPrintCustomSize',JSON.stringify(customSize));}catch(e){}
+  window.updateCardSize();
+  toast('✅ تم تطبيق قالب: '+p.name,'success');
+};
+
+window.updateCardSize=function(){
+  var w=parseInt(document.getElementById('cardWSlider').value)||52;
+  var h=parseInt(document.getElementById('cardHSlider').value)||72;
+  var qr=parseInt(document.getElementById('cardQRSlider').value)||30;
+  var colsAutoChk=document.getElementById('cardColsAuto').checked;
+  var cols=parseInt(document.getElementById('cardColsSlider').value)||4;
+
+  // حماية: الباركود لا يتجاوز أصغر بعد
+  var maxQR=Math.min(w,h)-8;
+  if(qr>maxQR){ qr=maxQR; document.getElementById('cardQRSlider').value=qr; }
+
+  customSize={w:w,h:h,qr:qr,colsAuto:colsAutoChk,cols:cols};
+
+  // تحديث القيم المعروضة
+  document.getElementById('cardWValue').textContent=w+'mm';
+  document.getElementById('cardHValue').textContent=h+'mm';
+  document.getElementById('cardQRValue').textContent=qr+'mm';
+  document.getElementById('cardColsValue').textContent=colsAutoChk?'auto':cols;
+  document.getElementById('cardColsSlider').disabled=colsAutoChk;
+
+  // تطبيق على CSS
+  document.documentElement.style.setProperty('--card-w',w+'mm');
+  document.documentElement.style.setProperty('--card-h',h+'mm');
+  document.documentElement.style.setProperty('--qr-custom',qr+'mm');
+
+  // حفظ
+  try{localStorage.setItem('qrPrintCustomSize',JSON.stringify(customSize));}catch(e){}
+
+  // تحديث المعاينة الحية
+  updateSizePreview();
+
+  // إعادة رسم البطاقات
+  if(currentShape==='custom') refresh(false);
+};
+
+function updateSizePreview(){
+  var W=paperDims()[0], H=paperDims()[1];
+  var w=customSize.w, h=customSize.h, qr=customSize.qr;
+
+  // حساب المقياس للمعاينة (الورقة = 160px عرض)
+  var paperPreviewW=160;
+  var scale=paperPreviewW/W;
+  var paperPreviewH=H*scale;
+
+  var paper=document.getElementById('sizePreviewPaper');
+  paper.style.width=paperPreviewW+'px';
+  paper.style.height=paperPreviewH+'px';
+  paper.setAttribute('data-label',currentPageSize.toUpperCase());
+
+  // رسم الكارت في المعاينة
+  var card=document.getElementById('sizePreviewCard');
+  var cardW=w*scale, cardH=h*scale;
+  card.style.width=cardW+'px';
+  card.style.height=cardH+'px';
+
+  var qrBox=document.getElementById('sizePreviewQR');
+  var qrSize=qr*scale;
+  qrBox.style.width=qrSize+'px';
+  qrBox.style.height=qrSize+'px';
+
+  // أبعاد
+  document.getElementById('sizePreviewDims').textContent=w+' × '+h+' mm';
+
+  // حساب عدد الكروت في الصفحة
+  var cols=customSize.colsAuto?colsAuto():customSize.cols;
+  var gap=gapMM();
+  var rows=Math.max(1,Math.floor((H+gap)/(h+gap)));
+  var perPage=cols*rows;
+  var pages=allCards.length?Math.ceil(allCards.length/perPage):0;
+
+  document.getElementById('sizePreviewCount').textContent=perPage;
+  document.getElementById('sizePreviewPages').textContent=pages;
+
+  // تحذيرات الذكاء
+  var fitInfo=document.getElementById('sizeFitInfo');
+  var pills=[];
+  if(w>W-gap){ pills.push({t:'bad',txt:'⚠️ العرض أكبر من الورقة!'}); }
+  else if(w*cols>W-gap*cols){ pills.push({t:'warn',txt:'⚠️ الأعمدة لا تتسع'}); }
+  else{ pills.push({t:'ok',txt:'✅ الأبعاد مناسبة'}); }
+
+  if(h>H-gap){ pills.push({t:'bad',txt:'⚠️ الارتفاع أكبر من الورقة!'}); }
+  else{ pills.push({t:'ok',txt:'✅ '+rows+' صفوف في الصفحة'}); }
+
+  if(qr>=Math.min(w,h)-4){ pills.push({t:'warn',txt:'⚠️ الباركود قريب من الحافة'}); }
+  else{ pills.push({t:'ok',txt:'✅ الباركود مناسب'}); }
+
+  fitInfo.innerHTML=pills.map(function(p){
+    return '<span class="size-fit-pill '+p.t+'">'+p.txt+'</span>';
+  }).join('');
+}
+
+/* نطاق المجموعات حسب الدور (أدمن/مساعد/مدرس) */
 function scopeGroups(){
   var gs=(DataService.getGroups?DataService.getGroups():[]);
   try{
     if(currentUser&&window.Ops&&Ops.groupsInScope&&(currentUser.role==='assistant'||currentUser.role==='teacher')) gs=Ops.groupsInScope(currentUser.id)||gs;
   }catch(e){}
+  return gs;
+}
+function teacherFilteredGroups(){
+  var gs=scopeGroups();
+  var ft=val('prTeacher');
+  if(ft) gs=gs.filter(function(g){ return g.teacherId===ft; });
   return gs;
 }
 function stuCount(gid){ try{ return (DataService.getStudentsByGroup?DataService.getStudentsByGroup(gid):[]).length; }catch(e){ return 0; } }
@@ -353,7 +683,6 @@ function centersOfStudent(sid){
     return out;
   }catch(e){ return []; }
 }
-/* ============ 🧠 الفلاتر المتتابعة الذكية ============ */
 function fillSel(id,items,cur,allLabel){
   var sel=document.getElementById(id); if(!sel) return cur;
   var h=(allLabel!=null)?'<option value="">'+allLabel+'</option>':'';
@@ -367,17 +696,21 @@ function fillSel(id,items,cur,allLabel){
   return nv;
 }
 window.refreshSmartFilters=function(){
-  var gs=scopeGroups();
+  var gsAll=scopeGroups();
+  var teachers=(DataService.getTeachers?DataService.getTeachers():[]);
+  var ft=val('prTeacher');
+  ft=fillSel('prTeacher', teachers.map(function(t){
+    return {v:t.id, l:'👨‍🏫 '+t.name+' · '+gsAll.filter(function(g){return g.teacherId===t.id;}).length+' مجموعة'};
+  }), ft, 'كل المدرسين');
+  var gs=ft?gsAll.filter(function(g){ return g.teacherId===ft; }):gsAll;
+
   var fc=val('prCenter'),fs=val('prStage'),fg=val('prGrade'),fq=norm(val('prGroupSearch')),fgid=val('prGroup');
-  /* 1) السنتر المتاح حسب المرحلة+الصف */
   var gSG=gs.filter(function(g){ return (!fs||(g.stage||'')===fs)&&(!fg||(g.grade||'')===fg); });
   var centers=uniq(gSG.map(function(g){return g.center||'';}).filter(Boolean));
   fc=fillSel('prCenter',centers.map(function(c){ return {v:c,l:'🏢 '+c+' · '+gSG.filter(function(g){return g.center===c;}).length+' مجموعة'}; }),fc,'كل السناتر');
-  /* 2) المرحلة المتاحة حسب السنتر */
   var gC=gs.filter(function(g){ return !fc||(g.center||'')===fc; });
   var stages=uniq(gC.map(function(g){return g.stage||'';}).filter(Boolean));
   fs=fillSel('prStage',stages.map(function(s){ return {v:s,l:'🎓 '+stageLabel(s)+' · '+gC.filter(function(g){return g.stage===s;}).length+' مجموعة'}; }),fs,'كل المراحل');
-  /* 3) الصف: لو مرحلة مختارة → صفوفها من إعدادات المنصة، غير كده → الموجود فعلياً */
   var gCS=gC.filter(function(g){ return !fs||(g.stage||'')===fs; });
   var existing=uniq(gCS.map(function(g){return g.grade||'';}).filter(Boolean));
   var grades=existing;
@@ -388,12 +721,13 @@ window.refreshSmartFilters=function(){
     }catch(e){}
   }
   fg=fillSel('prGrade',grades.map(function(gr){ return {v:gr,l:'📚 '+gr+' · '+gCS.filter(function(g){return g.grade===gr;}).length+' مجموعة'}; }),fg,'كل الصفوف');
-  /* 4) المجموعات حسب الكل + بحث الاسم */
   var gCSG=gCS.filter(function(g){ return !fg||(g.grade||'')===fg; });
   var gQ=gCSG.filter(function(g){ return !fq||norm(g.name).indexOf(fq)>=0||norm(g.center||'').indexOf(fq)>=0; });
   var totalStu=gCSG.reduce(function(a,g){ return a+stuCount(g.id); },0);
   var items=[{v:'all',l:'🌍 كل الطلاب ('+totalStu+')'}].concat(gQ.map(function(g){
-    return {v:g.id,l:g.name+' · 👥 '+stuCount(g.id)+(g.center?' · 🏢 '+g.center:'')+(g.grade?' · 📚 '+g.grade:'')};
+    var tName='';
+    try{ var t=(DataService.getUserById?DataService.getUserById(g.teacherId):null); tName=t?(' · 👨‍ '+t.name):''; }catch(e){}
+    return {v:g.id,l:g.name+' · 👥 '+stuCount(g.id)+(g.center?' · 🏢 '+g.center:'')+(g.grade?' · 📚 '+g.grade:'')+tName};
   }));
   fillSel('prGroup',items,fgid,null);
 };
@@ -401,37 +735,46 @@ window.onFilterChange=function(){ window.refreshSmartFilters(); refresh(true); }
 window.onGroupSearch=function(){ window.refreshSmartFilters(); };
 var _qT=null;
 window.onSearchChange=function(){ clearTimeout(_qT); _qT=setTimeout(function(){ refresh(true); },250); };
-/* ============ 📦 بناء البطاقات ============ */
+
 function buildCards(){
   if(window._overrideList) return window._overrideList;
-  var gid=val('prGroup')||'all', fc=val('prCenter'), fs=val('prStage'), fg=val('prGrade');
+  var gid=val('prGroup')||'all', fc=val('prCenter'), fs=val('prStage'), fg=val('prGrade'), ft=val('prTeacher');
   var q=norm(val('prSearch')), type=val('prType')||'students';
   var cards=[];
   if(type==='students'||type==='all'){
     var list;
     if(gid!=='all') list=(DataService.getStudentsByGroup?DataService.getStudentsByGroup(gid):[]);
     else list=(DataService.getStudents?DataService.getStudents():[]);
+    if(ft){
+      var tGroups={};
+      (DataService.getGroups?DataService.getGroups():[]).forEach(function(g){ if(g.teacherId===ft) tGroups[g.id]=1; });
+      list=list.filter(function(s){
+        var ts=(DataService.getStudentTeachers?DataService.getStudentTeachers(s.id):[])||[];
+        return ts.some(function(t){ return t.group && tGroups[t.group.id]; });
+      });
+    }
     if(fs) list=list.filter(function(s){ return (s.stage||'')===fs; });
     if(fg) list=list.filter(function(s){ return (s.grade||'')===fg; });
     if(fc) list=list.filter(function(s){ return centersOfStudent(s.id).indexOf(fc)>=0; });
     if(q) list=list.filter(function(s){ return norm(s.name).indexOf(q)>=0||norm(s.code).indexOf(q)>=0; });
     list=list.filter(function(s){ return s.code; });
     list.forEach(function(s){
-      var cs=centersOfStudent(s.id);
       var sl=stageLabel(s.stage);
       var meta='';
       if(sl||s.grade) meta='🎓 '+sl+(s.grade?' - '+s.grade:'');
-      if(cs[0]) meta+=(meta?' · ':'')+'🏢 '+cs[0];
       cards.push({type:'student',id:s.id,code:s.code,name:s.name,meta:meta});
     });
   }
   if(type==='groups'||type==='all'){
-    scopeGroups().filter(function(g){ return g.whatsappLink&&(!fc||(g.center||'')===fc)&&(!fs||(g.stage||'')===fs)&&(!fg||(g.grade||'')===fg); }).forEach(function(g){
-      cards.push({type:'group',id:g.id,code:g.id,name:g.name,meta:'💬 جروب واتساب'+(g.center?' · 🏢 '+g.center:''),whatsappLink:g.whatsappLink});
+    var gs=scopeGroups();
+    if(ft) gs=gs.filter(function(g){ return g.teacherId===ft; });
+    gs.filter(function(g){ return g.whatsappLink&&(!fc||(g.center||'')===fc)&&(!fs||(g.stage||'')===fs)&&(!fg||(g.grade||'')===fg); }).forEach(function(g){
+      cards.push({type:'group',id:g.id,code:g.id,name:g.name,meta:'💬 جروب واتساب',whatsappLink:g.whatsappLink});
     });
   }
   return cards;
 }
+
 function cardHtml(card){
   var safe=(card.name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
   var sel=selectedCards.has(card.id);
@@ -444,7 +787,7 @@ function cardHtml(card){
     '<div class="card-brand">'+brandLine()+'</div></div></div>';
 }
 function sheetHtml(sh,i,total){
-  var shapeLabel={vertical:'عمودي',square:'مربع',landscape:'بطاقة'}[currentShape];
+  var shapeLabel={vertical:'عمودي',square:'مربع',landscape:'بطاقة',custom:'مخصص ('+customSize.w+'×'+customSize.h+'mm)'}[currentShape];
   return '<div class="sheet" data-sheet="'+(i+1)+'">'+
     '<div class="sheet-label no-print"><span>📄 صفحة '+(i+1)+' من '+total+'</span><span>'+currentPageSize.toUpperCase()+' · '+sh.length+' كارت · '+shapeLabel+(autoFill?' · 🤖 ذكي':'')+'</span></div>'+
     '<div class="sheet-grid">'+sh.map(cardHtml).join('')+'</div></div>';
@@ -455,7 +798,6 @@ function paint(sheets){
   if(!sheets.length||!sheets[0].length){ host.innerHTML='<div class="empty-state"><div class="empty-state-icon">📭</div><strong>لا توجد بطاقات مطابقة</strong><div style="font-size:13px;color:var(--text-muted);margin-top:6px;">وسّع الفلاتر أو امسح البحث</div></div>'; return; }
   host.innerHTML=sheets.map(function(sh,i){ return sheetHtml(sh,i,sheets.length); }).join('');
 }
-/* ============ 🧠 المحرك: يدوي أو ذكي ============ */
 function refresh(resetPage){
   try{
     allCards=buildCards();
@@ -478,6 +820,7 @@ function refresh(resetPage){
     if(resetPage!==false) window._curPage=1;
     if(window._curPage>sheets.length) window._curPage=1;
     updateStats(); applyPager();
+    if(currentShape==='custom') updateSizePreview();
   }catch(e){ console.error('refresh',e); }
 }
 function updateStats(){
@@ -491,7 +834,6 @@ function updateStats(){
   var sl=document.getElementById('cardsPerPageSlider');
   if(sl){ sl.disabled=autoFill; sl.value=Math.min(40,cardsPerPage); }
 }
-/* ============ 📄 الترقيم ============ */
 function pgNumsHtml(cur,total){
   if(total<=7){ var h=''; for(var i=1;i<=total;i++) h+='<button class="pg-num '+(i===cur?'active':'')+'" onclick="window.pgGo('+i+')">'+i+'</button>'; return h; }
   var items=[1];
@@ -518,10 +860,23 @@ function applyPager(){
 }
 window.pgGo=function(n){ window._curPage=clamp(n,1,Math.max(1,sheetsCount)); applyPager(); var bar=document.getElementById('pagerBar'); if(bar) bar.scrollIntoView({behavior:'smooth',block:'start'}); };
 window.pgSetViewAll=function(on){ window._viewAll=!!on; applyPager(); };
-/* ============ ⚙️ التحكم ============ */
+
 window.setShape=function(s,btn){
   currentShape=s; document.body.setAttribute('data-shape',s);
   document.querySelectorAll('.shape-btn').forEach(function(b){b.classList.toggle('active',b.dataset.shape===s);});
+
+  // 🆕 إظهار/إخفاء لوحة التحكم المخصص
+  var panel=document.getElementById('sizeControlPanel');
+  if(s==='custom'){
+    panel.classList.add('active');
+    // تطبيق القيم المحفوظة
+    document.documentElement.style.setProperty('--card-w',customSize.w+'mm');
+    document.documentElement.style.setProperty('--card-h',customSize.h+'mm');
+    document.documentElement.style.setProperty('--qr-custom',customSize.qr+'mm');
+  }else{
+    panel.classList.remove('active');
+  }
+
   try{localStorage.setItem('qrPrintShape',s);}catch(e){}
   refresh(false);
 };
@@ -529,6 +884,7 @@ window.setPageSize=function(p,btn){
   currentPageSize=p; document.body.setAttribute('data-page',p);
   document.querySelectorAll('.size-btn').forEach(function(b){b.classList.toggle('active',b.dataset.size===p);});
   try{localStorage.setItem('qrPrintSize',p);}catch(e){}
+  if(currentShape==='custom') updateSizePreview();
   refresh(false);
 };
 window.toggleAutoFill=function(on){
@@ -553,7 +909,6 @@ document.getElementById('themeToggle').onclick=function(){
   document.body.setAttribute('data-theme',cur);
   try{localStorage.setItem('qrPrintTheme',cur);}catch(e){}
 };
-/* ============ 🖨️ الطباعة ============ */
 window.waitForImages=function(){
   return new Promise(function(res){
     var imgs=document.querySelectorAll('.qr-card img'), loaded=0, total=imgs.length;
@@ -585,42 +940,174 @@ window.printSelected=async function(){
   setTimeout(function(){ window.print(); setTimeout(restore,1200); },250);
 };
 window.printFromPreview=function(){ window.closePreview(); selectedCards.size?window.printSelected():window.printAll(); };
-/* ============ 📥 تحميل PDF ============ */
-window.downloadPDF=async function(){
-  if(typeof window.html2canvas==='undefined'||typeof window.jspdf==='undefined'){ toast('❌ مكتبات PDF مش محملة — اتأكد من الإنترنت','error'); return; }
-  var host=document.getElementById('sheetsHost');
-  var sheets=Array.prototype.slice.call(host.querySelectorAll('.sheet'));
-  if(!sheets.length){ toast('مفيش بطاقات للتصدير','warning'); return; }
-  toast('📥 جاري تجهيز '+sheets.length+' صفحة PDF...','info');
-  var prevTheme=document.body.getAttribute('data-theme');
-  var prevViewAll=window._viewAll;
-  document.body.setAttribute('data-theme','light');
-  window._viewAll=true; applyPager();
-  document.body.classList.add('pdf-capture');
-  await window.waitForImages();
-  try{
-    var fmt={a4:'a4',a5:'a5',a3:'a3',letter:'letter'}[currentPageSize]||'a4';
-    var pdf=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:fmt});
-    var pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight();
-    var m=6;
-    for(var i=0;i<sheets.length;i++){
-      var canvas=await html2canvas(sheets[i],{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false});
-      var img=canvas.toDataURL('image/png');
-      if(i>0) pdf.addPage(fmt,'portrait');
-      var iw=pw-2*m, ih=canvas.height*iw/canvas.width;
-      var maxH=ph-2*m;
-      if(ih>maxH){ ih=maxH; iw=canvas.width*ih/canvas.height; }
-      pdf.addImage(img,'PNG',(pw-iw)/2,m,iw,ih);
-      toast('⏳ PDF: صفحة '+(i+1)+' من '+sheets.length,'info');
+
+/* ============ 🚀 محرك تصدير PDF المحدث (Native Grid + Isolated Rendering) ============ */
+window.downloadPDF = async function() {
+    if (typeof window.html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+        toast('❌ مكتبات PDF مش محملة — اتأكد من الإنترنت', 'error'); return;
     }
-    pdf.save('EduFlow_Barcodes_'+new Date().toISOString().split('T')[0]+'.pdf');
-    toast('✅ تم تحميل PDF بنجاح','success');
-  }catch(e){ console.error(e); toast('❌ خطأ في PDF: '+e.message,'error'); }
-  document.body.classList.remove('pdf-capture');
-  document.body.setAttribute('data-theme',prevTheme||'dark');
-  window._viewAll=prevViewAll; applyPager();
+    
+    const cardsToPrint = selectedCards.size > 0 
+        ? allCards.filter(c => selectedCards.has(c.id)) 
+        : allCards;
+        
+    if (!cardsToPrint.length) {
+        toast('مفيش بطاقات للتصدير', 'warning'); return;
+    }
+    
+    toast('📥 جاري تجهيز PDF... ' + cardsToPrint.length + ' بطاقة', 'info');
+    
+    const btn = document.querySelector('.btn-pdf-action');
+    const originalText = btn ? btn.innerHTML : '';
+    if (btn) { btn.innerHTML = '⏳ جاري التحميل...'; btn.disabled = true; }
+
+    try {
+        const fmt = {a4:'a4',a5:'a5',a3:'a3',letter:'letter'}[currentPageSize] || 'a4';
+        const pdf = new window.jspdf.jsPDF({orientation:'portrait', unit:'mm', format:fmt});
+        const pageW = pdf.internal.pageSize.getWidth();
+        const pageH = pdf.internal.pageSize.getHeight();
+        const pageMargin = 5; 
+        
+        let dims;
+        if (currentShape === 'custom') {
+            dims = { w: customSize.w, h: customSize.h, qr: customSize.qr };
+        } else if (currentShape === 'landscape') {
+            dims = { w: 65, h: 45, qr: 26 };
+        } else if (currentShape === 'square') {
+            dims = { w: 48, h: 48, qr: 30 };
+        } else {
+            dims = { w: 48, h: 68, qr: 32 }; // vertical
+        }
+        
+        const cols = Math.max(1, Math.floor((pageW - 2 * pageMargin) / dims.w));
+        const rows = Math.max(1, Math.floor((pageH - 2 * pageMargin) / dims.h));
+        const cardsPerPage = cols * rows;
+        
+        const gridW = cols * dims.w;
+        const gridH = rows * dims.h;
+        const offsetX = (pageW - gridW) / 2;
+        const offsetY = (pageH - gridH) / 2;
+        
+        const showCutMarks = document.body.classList.contains('show-cut-marks');
+        const mmToPx = 3.7795;
+        const totalPages = Math.ceil(cardsToPrint.length / cardsPerPage);
+        let currentPage = 0;
+        
+        for (let i = 0; i < cardsToPrint.length; i++) {
+            const card = cardsToPrint[i];
+            const pageIndex = Math.floor(i / cardsPerPage);
+            
+            if (pageIndex > currentPage) {
+                pdf.addPage(fmt, 'portrait');
+                currentPage = pageIndex;
+                toast('⏳ PDF: صفحة ' + (currentPage + 1), 'info');
+            }
+            
+            const indexOnPage = i % cardsPerPage;
+            const col = indexOnPage % cols;
+            const row = Math.floor(indexOnPage / cols);
+            
+            let pOffsetX = offsetX;
+            let pOffsetY = offsetY;
+            
+            // توسيط الصفحات الأخيرة التي تحتوي على عدد قليل من البطاقات لمنع الفراغ المزعج
+            if (pageIndex === totalPages - 1 && totalPages > 1) {
+                const remaining = cardsToPrint.length - (pageIndex * cardsPerPage);
+                const lastPageRows = Math.ceil(remaining / cols);
+                const lastPageGridW = cols * dims.w;
+                const lastPageGridH = lastPageRows * dims.h;
+                pOffsetX = (pageW - lastPageGridW) / 2;
+                pOffsetY = (pageH - lastPageGridH) / 2;
+            }
+            
+            const x = pOffsetX + col * dims.w;
+            const y = pOffsetY + row * dims.h;
+            
+            // Draw Cut Marks natively in PDF
+            if (showCutMarks) {
+                pdf.setDrawColor(150);
+                pdf.setLineWidth(0.2);
+                const cmLen = 3;
+                pdf.line(x - cmLen, y, x - 1, y); pdf.line(x, y - cmLen, x, y - 1);
+                pdf.line(x + dims.w + 1, y, x + dims.w + cmLen, y); pdf.line(x + dims.w, y - cmLen, x + dims.w, y - 1);
+                pdf.line(x - cmLen, y + dims.h, x - 1, y + dims.h); pdf.line(x, y + dims.h + 1, x, y + dims.h + cmLen);
+                pdf.line(x + dims.w + 1, y + dims.h, x + dims.w + cmLen, y + dims.h); pdf.line(x + dims.w, y + dims.h + 1, x + dims.w, y + dims.h + cmLen);
+            }
+            
+            // Create a temporary DOM element to render the card exactly at the target aspect ratio
+            const wrapper = document.createElement('div');
+            const wPx = Math.round(dims.w * mmToPx);
+            const hPx = Math.round(dims.h * mmToPx);
+            
+            wrapper.style.cssText = `
+                position: fixed; left: -9999px; top: 0; 
+                width: ${wPx}px; height: ${hPx}px; 
+                background: #fff; padding: 0; margin: 0;
+                box-sizing: border-box; overflow: hidden;
+            `;
+            
+            const safeName = (card.name || '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+            const qrUrl = qrImg(card.code, 500, card.type);
+            const isLandscape = currentShape === 'landscape';
+            
+            wrapper.innerHTML = `
+                <div style="
+                    width: 100%; height: 100%; box-sizing: border-box;
+                    display: flex; flex-direction: ${isLandscape ? 'row' : 'column'};
+                    align-items: center; justify-content: center;
+                    gap: ${isLandscape ? '3mm' : '1.5mm'};
+                    padding: ${isLandscape ? '2mm 4mm' : '2mm'};
+                    font-family: 'Cairo', sans-serif; text-align: ${isLandscape ? 'right' : 'center'};
+                    direction: rtl; color: #000; background: #fff;
+                ">
+                    <div style="flex-shrink: 0; line-height: 0;">
+                        <img src="${qrUrl}" crossorigin="anonymous" style="width: ${dims.qr}mm; height: ${dims.qr}mm; display: block;">
+                    </div>
+                    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: ${isLandscape ? 'flex-start' : 'center'}; gap: 1mm;">
+                        <div style="font-size: ${dims.w > 60 ? '11pt' : '9pt'}; font-weight: 800; line-height: 1.2; margin: 0; color: #000; word-break: break-word;">${safeName}</div>
+                        <div style="font-family: 'Fira Code', monospace; font-size: ${dims.w > 60 ? '10pt' : '8pt'}; font-weight: 800; letter-spacing: 0.5px; color: #4f46e5; background: #f1f5f9; border: 1px dashed #cbd5e1; border-radius: 99px; padding: 0.5mm 3mm;">${card.code}</div>
+                        ${card.meta ? `<div style="font-size: 7pt; color: #475569; margin: 0; line-height: 1.3;">${card.meta}</div>` : ''}
+                        <div style="font-size: 6pt; color: #94a3b8; margin: 0; margin-top: 1mm;">${brandLine()}</div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(wrapper);
+            
+            const img = wrapper.querySelector('img');
+            if (img && !img.complete) {
+                await new Promise(resolve => {
+                    img.onload = resolve;
+                    img.onerror = resolve;
+                });
+            }
+            
+            const canvas = await html2canvas(wrapper, {
+                scale: 4,
+                backgroundColor: '#ffffff',
+                useCORS: true,
+                logging: false,
+                width: wPx,
+                height: hPx
+            });
+            
+            document.body.removeChild(wrapper);
+            
+            const imgData = canvas.toDataURL('image/png');
+            pdf.addImage(imgData, 'PNG', x, y, dims.w, dims.h);
+        }
+        
+        pdf.save('EduFlow_Barcodes_' + new Date().toISOString().split('T')[0] + '.pdf');
+        toast('✅ تم تحميل PDF بنجاح', 'success');
+        
+    } catch (e) {
+        console.error(e);
+        toast('❌ خطأ في PDF: ' + e.message, 'error');
+    } finally {
+        if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
+    }
 };
-/* ============ 👁️ معاينة + ZIP + CSV ============ */
+
 window.showPreview=function(){
   var cards=selectedCards.size?allCards.filter(function(c){return selectedCards.has(c.id);}):allCards;
   if(!cards.length) return;
@@ -657,7 +1144,14 @@ window.downloadAllAsZip=async function(){
 async function generateCardImage(card){
   return new Promise(function(resolve,reject){
     var W,H;
-    if(currentShape==='landscape'){W=1000;H=631;} else if(currentShape==='square'){W=820;H=820;} else {W=760;H=1000;}
+    if(currentShape==='landscape'){W=1000;H=631;}
+    else if(currentShape==='square'){W=820;H=820;}
+    else if(currentShape==='custom'){
+      // 🆕 نسب مخصصة للحجم المخصص
+      var ratio=customSize.w/customSize.h;
+      H=1000; W=Math.round(H*ratio);
+    }
+    else {W=760;H=1000;}
     var cv=document.createElement('canvas'); cv.width=W; cv.height=H;
     var x=cv.getContext('2d');
     x.fillStyle='#fff'; x.fillRect(0,0,W,H);
@@ -673,6 +1167,20 @@ async function generateCardImage(card){
         x.fillStyle='#4f46e5'; x.font='800 46px "Fira Code",monospace'; x.fillText(card.code,W-70,320);
         x.fillStyle='#64748b'; x.font='30px Cairo,Tahoma'; x.fillText((card.meta||'').replace(/<br>/g,' · '),W-70,390);
         x.fillStyle='#94a3b8'; x.font='22px Cairo,Tahoma'; x.fillText(brandLine(),W-70,H-50);
+      }else if(currentShape==='custom'){
+        // 🆕 رسم بالحجم المخصص
+        var ratio=customSize.qr/customSize.h;
+        var qs=Math.round(H*0.55);
+        var top=Math.round(H*0.08);
+        x.fillStyle='#f8fafc'; x.fillRect((W-qs)/2-16,top-16,qs+32,qs+32);
+        x.drawImage(img,(W-qs)/2,top,qs,qs);
+        var y=top+qs+Math.round(H*0.08);
+        x.fillStyle='#0f172a'; x.font='800 '+Math.round(H*0.05)+'px Cairo,Tahoma'; x.fillText(card.name||'-',W/2,y);
+        y+=Math.round(H*0.07);
+        x.fillStyle='#4f46e5'; x.font='800 '+Math.round(H*0.044)+'px "Fira Code",monospace'; x.fillText(card.code,W/2,y);
+        y+=Math.round(H*0.058);
+        x.fillStyle='#64748b'; x.font=Math.round(H*0.028)+'px Cairo,Tahoma'; x.fillText((card.meta||'').replace(/<br>/g,' · '),W/2,y);
+        x.fillStyle='#94a3b8'; x.font=Math.round(H*0.022)+'px Cairo,Tahoma'; x.fillText(brandLine(),W/2,H-Math.round(H*0.04));
       }else{
         var qs2=currentShape==='square'?430:460, top=currentShape==='square'?70:60;
         x.fillStyle='#f8fafc'; x.fillRect((W-qs2)/2-16,top-16,qs2+32,qs2+32);
@@ -698,19 +1206,23 @@ window.exportCSV=function(){
   a.download='EduFlow_Codes_'+new Date().toISOString().split('T')[0]+'.csv';
   document.body.appendChild(a); a.click(); a.remove();
 };
-/* ============ 🚀 الإقلاع ============ */
 (async function boot(){
   try{
     if(typeof DataService?.init==='function') await DataService.init();
     currentUser=AuthService?.getCurrentUser?AuthService.getCurrentUser():null;
     if(!currentUser){ location.href='login.html'; return; }
     try{ branding=typeof DataService?.getBranding==='function'?DataService.getBranding():{}; }catch(e){}
-    var ss,sp,sc,sa,scm,scp,th;
+    var ss,sp,sc,sa,scm,scp,th,scs;
     try{
       ss=localStorage.getItem('qrPrintShape'); sp=localStorage.getItem('qrPrintSize');
       sc=localStorage.getItem('qrPrintCards'); sa=localStorage.getItem('qrPrintAuto');
-      scm=localStorage.getItem('qrPrintCut'); scp=localStorage.getItem('qrPrintCompact'); th=localStorage.getItem('qrPrintTheme');
+      scm=localStorage.getItem('qrPrintCut'); scp=localStorage.getItem('qrPrintCompact');
+      th=localStorage.getItem('qrPrintTheme');
+      scs=localStorage.getItem('qrPrintCustomSize');
     }catch(e){}
+    // 🆕 استعادة الحجم المخصص
+    if(scs){ try{ customSize=JSON.parse(scs); }catch(e){} }
+
     if(ss) currentShape=ss;
     if(sp) currentPageSize=sp;
     if(sc) manualPerPage=parseInt(sc)||12;
@@ -726,10 +1238,26 @@ window.exportCSV=function(){
     if(th) document.body.setAttribute('data-theme',th);
     document.querySelectorAll('.shape-btn').forEach(function(b){b.classList.toggle('active',b.dataset.shape===currentShape);});
     document.querySelectorAll('.size-btn').forEach(function(b){b.classList.toggle('active',b.dataset.size===currentPageSize);});
+
+    // 🆕 تهيئة لوحة التحكم المخصص
+    document.getElementById('cardWSlider').value=customSize.w;
+    document.getElementById('cardHSlider').value=customSize.h;
+    document.getElementById('cardQRSlider').value=customSize.qr;
+    document.getElementById('cardColsSlider').value=customSize.cols;
+    document.getElementById('cardColsAuto').checked=customSize.colsAuto;
+    if(currentShape==='custom'){
+      document.getElementById('sizeControlPanel').classList.add('active');
+      document.documentElement.style.setProperty('--card-w',customSize.w+'mm');
+      document.documentElement.style.setProperty('--card-h',customSize.h+'mm');
+      document.documentElement.style.setProperty('--qr-custom',customSize.qr+'mm');
+    }
+
     var q=new URLSearchParams(location.search).get('search');
     if(q){ var el=document.getElementById('prSearch'); if(el) el.value=q; }
     window.refreshSmartFilters();
     refresh(true);
+    // 🆕 تحديث المعاينة الحية بعد تحميل البطاقات
+    if(currentShape==='custom') setTimeout(updateSizePreview,300);
   }catch(e){ console.error('boot',e); }
 })();
 </script>

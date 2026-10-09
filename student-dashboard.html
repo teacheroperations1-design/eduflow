@@ -450,62 +450,30 @@ box-shadow:0 4px 12px rgba(220,38,38,.4);
 💾 حفظ كلمة المرور الجديدة
 </button>
 </div>
-<!-- 📝 تحديث البيانات -->
+<!-- 📝 تحديث البيانات الشامل -->
 <div class="settings-card editable">
 <h3 class="card-title" style="margin-bottom:16px;display:flex;align-items:center;gap:8px;">
 <span style="font-size:20px;">📱</span> تحديث بياناتي
 </h3>
 <div class="filter-info" style="margin-bottom:16px;">
-💡 يمكنك تحديث رقم هاتفك الشخصي. البيانات المقفلة تتطلب التواصل مع الإدارة لتعديلها.
+💡 يمكنك تحديث جميع بياناتك. سيتم إشعار الإدارة تلقائياً بأي تغييرات تتم للمراجعة.
+</div>
+<div class="form-group">
+<label>👤 الاسم الكامل *</label>
+<input type="text" id="editMyName" class="form-input" placeholder="اسمك الكامل">
 </div>
 <div class="form-group">
 <label>📱 رقم هاتفي الشخصي</label>
 <input type="tel" id="editMyPhone" class="form-input" placeholder="01xxxxxxxxx" maxlength="11">
 </div>
+<div class="form-group">
+<label>👨‍👩‍👦 رقم ولي الأمر</label>
+<input type="tel" id="editMyParentPhone" class="form-input" placeholder="01xxxxxxxxx" maxlength="11">
+</div>
 <button class="btn btn-primary w-full" style="padding:14px;font-size:15px;" onclick="window.saveMyProfile()">
-💾 حفظ التحديثات
+💾 حفظ التحديثات وإشعار الإدارة
 </button>
 </div>
-<!-- 🔒 بيانات لا يمكن تعديلها -->
-<div class="settings-card readonly">
-<h3 class="card-title" style="margin-bottom:16px;display:flex;align-items:center;gap:8px;">
-<span style="font-size:20px;">🔒</span> بيانات محمية (للقراءة فقط)
-</h3>
-<div class="filter-info" style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);color:var(--warning);margin-bottom:16px;">
-⚠️ <strong>تنبيه:</strong> البيانات التالية لا يمكن تعديلها من هنا. لتعديلها، يرجى التواصل مع الإدارة مباشرة أو إرسال طلب من خلال "المتابعات".
-</div>
-<div class="readonly-field">
-<div class="lbl"><span class="lock-icon">🔒</span> الاسم الكامل</div>
-<div class="val" id="readonlyName">-</div>
-</div>
-<div class="readonly-field">
-<div class="lbl"><span class="lock-icon">🔒</span> الكود التعريفي</div>
-<div class="val" id="readonlyCode">-</div>
-</div>
-<div class="readonly-field">
-<div class="lbl"><span class="lock-icon">🔒</span> رقم ولي الأمر</div>
-<div class="val" id="readonlyParentPhone">-</div>
-<div class="text-xs text-muted" style="margin-top:4px;">
-رقم ولي الأمر هو القناة الرسمية لإشعارات الغياب والفواتير. لأي تغيير، يرجى التواصل مع الإدارة.
-</div>
-</div>
-<div class="readonly-field">
-<div class="lbl"><span class="lock-icon">🔒</span> المرحلة الدراسية</div>
-<div class="val" id="readonlyStage">-</div>
-</div>
-<div class="readonly-field">
-<div class="lbl"><span class="lock-icon">🔒</span> الصف الدراسي</div>
-<div class="val" id="readonlyGrade">-</div>
-</div>
-<button class="btn btn-secondary w-full" style="margin-top:12px;" onclick="window.requestDataChange()">
-📨 طلب تعديل بيانات من الإدارة
-</button>
-</div>
-</section>
-<section class="section" id="section-calendar">
-<div class="section-header"><div><h2 class="section-title">📅 جدول حصصي الأسبوعي</h2></div></div>
-<div class="card"><div id="calendarView"></div></div>
-</section>
 </div>
 </main>
 </div>
@@ -951,24 +919,69 @@ settings:window.loadSettings
 if(L[id]) L[id]();
 if(window.innerWidth<=1024) document.getElementById('sidebar')?.classList.remove('open');
 };
+
+
 window.loadSettings = function() {
-try {
-const s = DataService?.getUserById ? DataService.getUserById(activeStudentId) : currentUser;
-if (!s) return;
-// Load editable fields
-const editMyPhone = document.getElementById('editMyPhone');
-if(editMyPhone) editMyPhone.value = s.phone || '';
-// Load readonly fields
-const stage = EduFlowConfig?.educationLevels?.[s.stage]?.nameAr || '-';
-document.getElementById('readonlyName').textContent = s.name || '-';
-document.getElementById('readonlyCode').textContent = s.code || '-';
-document.getElementById('readonlyParentPhone').textContent = s.parentPhone || '-';
-document.getElementById('readonlyStage').textContent = stage;
-document.getElementById('readonlyGrade').textContent = s.grade || '-';
-} catch (e) {
-console.error('loadSettings error:', e);
-}
+    try {
+        const s = DataService?.getUserById ? DataService.getUserById(activeStudentId) : currentUser;
+        if (!s) return;
+        document.getElementById('editMyName').value = s.name || '';
+        document.getElementById('editMyPhone').value = s.phone || '';
+        document.getElementById('editMyParentPhone').value = s.parentPhone || '';
+        
+        const stageEl = document.getElementById('editMyStage');
+        if(stageEl && typeof EduFlowConfig !== 'undefined') {
+            const stages = Object.entries(EduFlowConfig.educationLevels || {}).map(([k,v]) => `<option value="${k}" ${s.stage===k?'selected':''}>${v.nameAr}</option>`).join('');
+            stageEl.innerHTML = '<option value="">-- اختر --</option>' + stages;
+            window.updateMyGrades(s.grade);
+        }
+    } catch (e) { console.error('loadSettings error:', e); }
 };
+
+
+
+window.saveMyProfile = async function() {
+    try {
+        const myName = document.getElementById('editMyName')?.value?.trim();
+        const myPhone = document.getElementById('editMyPhone')?.value?.trim();
+        const myParentPhone = document.getElementById('editMyParentPhone')?.value?.trim();
+        const myStage = document.getElementById('editMyStage')?.value;
+        const myGrade = document.getElementById('editMyGrade')?.value;
+
+        const phoneRegex = /^01[0-2,5]{1}[0-9]{8}$/;
+        if (!myName) { safeToast('❌ الاسم مطلوب', 'error'); return; }
+        if (myPhone && !phoneRegex.test(myPhone)) { safeToast('❌ رقم هاتفك الشخصي غير صحيح', 'error'); return; }
+        if (myParentPhone && !phoneRegex.test(myParentPhone)) { safeToast('❌ رقم ولي الأمر غير صحيح', 'error'); return; }
+
+        const updates = {
+            name: myName, phone: myPhone, parentPhone: myParentPhone,
+            profileUpdated: true, // علامة التنبيه للإدارة
+            profileUpdatedAt: new Date().toISOString()
+        };
+
+        if (typeof DataService?.updateUser === 'function') await DataService.updateUser(activeStudentId, updates);
+        else {
+            const d = db(); const user = (d.users || []).find(u => u.id === activeStudentId);
+            if (user) { Object.assign(user, updates); save(d); }
+        }
+
+        // إرسال إشعار للإدارة
+        if (typeof DataService?.addNotification === 'function') {
+            await DataService.addNotification({
+                targetUserId: 'admin', title: '🔔 تحديث بيانات طالب',
+                message: `الطالب ${myName} (${currentUser.code}) قام بتحديث بياناته الشخصية.`,
+                type: 'profile_update', meta: { studentId: activeStudentId }
+            });
+        }
+
+        Object.assign(currentUser, updates);
+        localStorage.setItem('eduflow_user', JSON.stringify(currentUser));
+        safeToast('✅ تم حفظ بياناتك بنجاح وإشعار الإدارة', 'success');
+        window.loadSettings();
+    } catch (e) { safeToast('خطأ في الحفظ: ' + e.message, 'error'); }
+};
+
+
 window.changeMyPassword = async function() {
 try {
 const currentPass = document.getElementById('currentPassword')?.value?.trim();
