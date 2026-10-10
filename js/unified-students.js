@@ -142,6 +142,7 @@ try{if(DataService.updateUser)await DataService.updateUser(sid,{name:u.name,pare
 }
 window.openEditExistingPlatform=function(sid){
 if(isAdminRole()){if(window.openStudentModal)return window.openStudentModal(sid);}
+if(isAssistant()){window.openUnifiedAddStudent();setTimeout(function(){UST.fillSingle(sid);},200);return;}
 if(window.openEditStudentProfile)return window.openEditStudentProfile(sid);
 if(window.openStudentModal)return window.openStudentModal(sid);
 };
@@ -924,7 +925,9 @@ ThemeManager.openModal(html,'modal-md');
 UST.saveFloatBox=function(){
 try{
 var d=db();d.gamification=d.gamification||{};
+var __oldFb=((db().gamification||{}).floatBox)||{};
 d.gamification.floatBox={
+days:__oldFb.days||[],
 enabled:(document.getElementById('fbEnabled')||{}).checked,
 minPts:parseInt((document.getElementById('fbMin')||{}).value)||1,
 maxPts:parseInt((document.getElementById('fbMax')||{}).value)||5,
@@ -1044,3 +1047,4 @@ window.openEditStudentProfile=function(id){window.openUnifiedAddStudent();if(id)
 }
 },2500);
 })();
+

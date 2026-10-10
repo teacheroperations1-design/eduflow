@@ -324,7 +324,9 @@ if(document.getElementById('floatGiftBox'))return;
 var c=cfgBox();
 if(c.enabled===false)return;
 if(!inWindow(c))return;
-if(Date.now()-lastClaim()<((c.everyMin||45)*60000))return;
+var lastShow=0; try{ lastShow=parseInt(localStorage.getItem('floatBoxLastShow')||'0'); }catch(e){}
+if(Date.now()-lastShow<((c.everyMin||45)*60000))return;
+try{ localStorage.setItem('floatBoxLastShow',String(Date.now())); }catch(e){}
 var b=document.createElement('button');b.id='floatGiftBox';b.type='button';
 b.style.cssText='position:fixed;bottom:90px;inset-inline-start:14px;z-index:9999;width:64px;height:64px;border-radius:50%;border:none;background:linear-gradient(135deg,#f59e0b,#ef4444);font-size:30px;cursor:pointer;box-shadow:0 10px 30px rgba(239,68,68,.5);animation:ustPulse 1.6s infinite;';
 b.textContent='🎁';

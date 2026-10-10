@@ -81,50 +81,65 @@
       } catch (e) { console.warn('[TM] sidebar fix', e); }
     },
 
-    _ensureModalRoot() {
-      try {
-        if (document.getElementById('globalModalOverlay')) return;
-        
-        const ov = document.createElement('div');
-        ov.id = 'globalModalOverlay'; 
-        ov.className = 'modal-overlay';
-        ov.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);z-index:2000;align-items:center;justify-content:center;padding:20px;';
-        
-        const m = document.createElement('div');
-        m.id = 'globalModal'; 
-        m.className = 'modal';
-        m.setAttribute('role', 'dialog');
-        m.setAttribute('aria-modal', 'true');
-        m.style.cssText = 'background:var(--surface-solid);border:1px solid var(--border);border-radius:var(--radius-xl);max-width:560px;width:100%;max-height:88vh;overflow-y:auto;position:relative;box-shadow:var(--shadow-lg);';
-        
-        ov.appendChild(m);
-        ov.addEventListener('click', function(e) { 
-          if (e.target === ov) TM.closeModal(); 
-        });
-        
-        document.body.appendChild(ov);
-      } catch (e) { console.warn('[TM] modal root', e); }
-    },
+_ensureModalRoot() {
+  try {
+    if (document.getElementById('globalModalOverlay')) return;
+    
+    const ov = document.createElement('div');
+    ov.id = 'globalModalOverlay'; 
+    ov.className = 'modal-overlay';
+    ov.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);z-index:2000;align-items:center;justify-content:center;padding:20px;';
+    
+    const m = document.createElement('div');
+    m.id = 'globalModal'; 
+    m.className = 'modal';
+    m.setAttribute('role', 'dialog');
+    m.setAttribute('aria-modal', 'true');
+    m.style.cssText = 'background:var(--surface-solid);border:1px solid var(--border);border-radius:var(--radius-xl);max-width:560px;width:100%;max-height:88vh;overflow-y:auto;position:relative;box-shadow:var(--shadow-lg);';
+    
+    ov.appendChild(m);
+    
+    // 🛡️ منع الإغلاق من الضغط على الخلفية — فقط زر ✕ يقفل المودال
+    // لو عايز تسمح بالإغلاق من برا، uncomment السطر اللي تحت:
+    // ov.addEventListener('click', function(e) { if (e.target === ov) TM.closeModal(); });
+    
+    document.body.appendChild(ov);
+  } catch (e) { console.warn('[TM] modal root', e); }
+},
 
-    openModal(content, size) {
-      try {
-        this._ensureModalRoot();
-        const ov = document.getElementById('globalModalOverlay');
-        const m = document.getElementById('globalModal');
-        if (!ov || !m) return;
-        
-        m.className = 'modal ' + (size || '');
-        m.style.maxWidth = (size === 'modal-lg') ? '820px' : (size === 'modal-md') ? '640px' : (size === 'modal-sm') ? '420px' : '560px';
-        m.innerHTML = content || '';
-        
-        ov.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-        
-        // تحسين إمكانية الوصول
-        m.setAttribute('tabindex', '-1');
-        m.focus();
-      } catch (e) { console.warn('[TM] openModal', e); }
-    },
+openModal(content, size) {
+  try {
+    this._ensureModalRoot();
+    const ov = document.getElementById('globalModalOverlay');
+    const m = document.getElementById('globalModal');
+    if (!ov || !m) return;
+    
+    m.className = 'modal ' + (size || '');
+    m.style.maxWidth = (size === 'modal-lg') ? '820px' : (size === 'modal-md') ? '640px' : (size === 'modal-sm') ? '420px' : '560px';
+    m.innerHTML = content || '';
+    
+    // 🛡️ إضافة hint صغير تحت المودال (اختياري)
+    let hint = document.getElementById('modalCloseHint');
+    if (!hint) {
+      hint = document.createElement('div');
+      hint.id = 'modalCloseHint';
+      hint.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#fff;padding:8px 16px;border-radius:999px;font-size:12px;z-index:2001;pointer-events:none;opacity:0;transition:opacity 0.3s;';
+      hint.textContent = '💡 استخدم زر ✕ للإغلاق';
+      document.body.appendChild(hint);
+    }
+    
+    ov.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    // إظهار الـ hint لمدة 3 ثواني
+    setTimeout(() => { hint.style.opacity = '1'; }, 100);
+    setTimeout(() => { hint.style.opacity = '0'; }, 3000);
+    
+    // تحسين إمكانية الوصول
+    m.setAttribute('tabindex', '-1');
+    m.focus();
+  } catch (e) { console.warn('[TM] openModal', e); }
+},
 
     closeModal() {
       try {

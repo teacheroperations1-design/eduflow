@@ -57,6 +57,12 @@ if(st>=m[0]&&!d.streakClaims[sid]['m'+m[0]]){
 d.streakClaims[sid]['m'+m[0]]=todayStr();
 addPts(sid,m[1],'🔥 مكافأة سلسلة '+m[0]+' يوم');
 try{if(DataService.addNotification)DataService.addNotification({targetUserId:sid,title:'🔥 سلسلة '+m[0]+' يوم!',message:'مبروك الاستمرارية! +'+m[1]+' نقطة اتضافت لحسابك.',type:'points',priority:'medium',meta:{event:'points'}});}catch(e){}
+try{
+if(sid===(cur()||{}).id&&typeof ThemeManager!=='undefined'&&ThemeManager.openModal&&!window.__streakModalShown){
+window.__streakModalShown=1;
+ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">🔥 سلسلة '+m[0]+' يوم!</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body" style="text-align:center;"><div style="font-size:64px;">🔥</div><div style="font-size:18px;font-weight:900;margin:10px 0;">مبروك الاستمرارية '+m[0]+' يوم متواصل!</div><div class="filter-info">🎁 <strong>+'+m[1]+' نقطة</strong> اتضافت لحسابك فوراً — كمّل كده والشعلة الجاية أقرب مما تتخيل.</div><button class="btn btn-primary w-full" style="margin-top:12px;" onclick="ThemeManager.closeModal()">💪 يلا نكمّل</button></div>','modal-sm');
+}
+}catch(e){}
 }
 });
 saveD(d);

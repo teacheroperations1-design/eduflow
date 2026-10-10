@@ -163,14 +163,29 @@ setTimeout(function(){ try{ nf.close(); }catch(e){} },15000);
 bumpBadge();
 }
 function hookAdd(){
-if(!window.DataService||typeof DataService.addNotification!=='function'||DataService.__notifyHooked) return;
-DataService.__notifyHooked=true;
-var orig=DataService.addNotification.bind(DataService);
-DataService.addNotification=function(n){
-var r=orig(n);
-try{ if(n&&targets().indexOf(n.targetUserId)>=0) fire(n); }catch(e){}
-return r;
-};
+  if(!window.DataService||typeof DataService.addNotification!=='function') return;
+  
+  /* 🆕 Event Bus pattern — كل مستمع بيتسجل لوحده */
+  if(!DataService.__notifyListeners) DataService.__notifyListeners=[];
+  
+  /* سجل الـ listener بتاعنا */
+  DataService.__notifyListeners.push(function(n){
+    try{ if(n&&targets().indexOf(n.targetUserId)>=0) fire(n); }catch(e){}
+  });
+  
+  /* لو مش لسه عملنا الـ master hook، نعمله */
+  if(!DataService.__notifyMasterHooked){
+    DataService.__notifyMasterHooked=true;
+    var orig=DataService.addNotification.bind(DataService);
+    DataService.addNotification=function(n){
+      var r=orig(n);
+      /* نفذ كل الـ listeners */
+      (DataService.__notifyListeners||[]).forEach(function(listener){
+        try{ listener(n); }catch(e){}
+      });
+      return r;
+    };
+  }
 }
 
 /* ========== سكانر أحداث المنصة ========== */
@@ -236,34 +251,30 @@ d.pendingCancelledSessions=remaining;
 (d.attendance||[]).forEach(function(a){ if(isNew(a)&&a.status==='approved'){ mark(a); (a.records||[]).forEach(function(r){ if(r.status==='absent') push(r.studentId,'absent','❌ تسجيل غياب','حصة '+(a.groupName||'')+' — '+(a.date||''),{type:'attendance'}); else if(r.status==='late') push(r.studentId,'late','⏰ تسجيل تأخر','حصة '+(a.groupName||'')+' — '+(a.date||''),{type:'attendance'}); }); } });
 try{
   var groups=(DataService.getGroups?DataService.getGroups():[]);
-  var curMonth=new Date().toISOString().slice(0,7);
+  d.warn7=d.warn7||{}; d.due8=d.due8||{};
   groups.forEach(function(g){
     var fee=g.monthlyFee||0; if(!fee) return;
-    var att=(DataService.getAttendance?DataService.getAttendance():[]).filter(function(a){return a.groupId===g.id&&a.status==='approved'&&(a.date||'').startsWith(curMonth);});
-    var done=att.length;
-    var req=(g.sessionsPerMonth)||(window.EduFlowConfig&&EduFlowConfig.billing&&EduFlowConfig.billing.sessionsBeforePayment)||8;
-    studentsOfGroup(g.id).forEach(function(sid){
-      if(done===req-1){
-        var lastKey='scan78_'+g.id+'_'+curMonth+'_'+sid;
-        var last2=+(d.notifyEmitted[lastKey]||0);
-        if(!last2){
-          d.notifyEmitted[lastKey]=now;
-          emits.push({targetUserId:sid,type:'payment',title:'🔔 الحصة الجايه الدفع',message:'مجموعة '+g.name+' — باقي حصة واحدة ('+done+'/'+req+') على الشهرية ('+fee+' ج.م)',meta:{event:'due_warn'}});
-        }
-      }
-      if(done>=req){
-        var p=(d.payments||[]).find(function(x){return x.studentId===sid&&x.groupId===g.id&&(x.month||'')===curMonth;});
-        var paid=p?((p.paidAmount)||0):0;
-        if(paid<fee){
-          var lastKey2='scan88_'+g.id+'_'+curMonth+'_'+sid;
-          var last3=+(d.notifyEmitted[lastKey2]||0);
-          if(!last3){
-            d.notifyEmitted[lastKey2]=now;
-            emits.push({targetUserId:sid,type:'payment',title:'💰 الشهرية مستحقة الآن',message:'مجموعة '+g.name+' — الشهرية '+fee+' ج.م (متبقي '+(fee-paid)+' ج.م)',meta:{event:'due_now'}});
-          }
-        }
-      }
-    });
+    if(!(window.LedgerUI&&LedgerUI.groupSessions&&LedgerUI.cyclesOf&&LedgerUI.paidForCycle)) return; /* المحرك الواحد هو المصدر */
+    var cyc=LedgerUI.cyclesOf(g); var open=cyc[cyc.length-1]; if(!open) return;
+    var ses=LedgerUI.groupSessions(g.id, open.ck);
+    var req=ses.required||8;
+    var warnAt=(g.warnAt!=null&&g.warnAt!=='')?+g.warnAt:(req-1);
+    var key=g.id+'__'+open.ck;
+    if(!ses.complete && ses.done>=warnAt && !d.warn7[key]){
+      d.warn7[key]=1;
+      studentsOfGroup(g.id).forEach(function(sid){
+        if((LedgerUI.paidForCycle(sid,g.id,open.ck)||0)>=fee) return;
+        emits.push({targetUserId:sid,type:'payment',title:'🔔 جهز الشهرية',message:'باقي '+(req-ses.done)+' حصة على اكتمال الدورة الحالية لمجموعة '+g.name+' — الشهرية ('+fee+' ج.م) هتتبطلب لما توصل '+req+'/'+req+'.',meta:{event:'due_warn'}});
+      });
+    }
+    if(ses.complete && !d.due8[key]){
+      d.due8[key]=1;
+      studentsOfGroup(g.id).forEach(function(sid){
+        var paid=LedgerUI.paidForCycle(sid,g.id,open.ck)||0;
+        if(paid>=fee) return;
+        emits.push({targetUserId:sid,type:'payment',title:'💰 الشهرية مستحقة الآن',message:'اكتملت حصص الدورة الحالية لمجموعة '+g.name+' ('+ses.done+'/'+req+') — المستحق: '+fee+' ج.م (متبقي '+(fee-paid)+' ج.م) 🌹',meta:{event:'due_now'}});
+      });
+    }
   });
 }catch(e){}
 if(emits.length){ saveD(d); emits.slice(0,50).forEach(function(n){ try{ DataService.addNotification(n); }catch(e){} }); }
