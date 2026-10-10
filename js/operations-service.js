@@ -1559,3 +1559,51 @@ console.log('✅ Ops Service loaded with all methods');
     });
   }catch(e){ console.warn('centers sync init error',e); }
 })();
+/* 🆕 تيم الأستاذ + دعم المنصة — مصدر واحد لكل الداشبوردات */
+Ops.teacherTeamContact=function(teacherId){
+try{
+var users=(DataService.getUsers?DataService.getUsers():[]);
+for(var i=0;i<users.length;i++){
+var u=users[i]; if(u.role!=='assistant') continue;
+var tid=u.teacherId||null;
+if(!tid&&typeof Ops.getAssignment==='function'){ var a=Ops.getAssignment(u.id); tid=a?a.teacherId:null; }
+if(tid===teacherId){
+var ph=String(u.teamPhone||u.phone||'').replace(/\D/g,'');
+if(ph) return {name:u.name, phone:ph, wa:'https://wa.me/2'+ph, tel:'tel:'+ph};
+}
+}
+return null;
+}catch(e){ return null; }
+};
+Ops.supportContact=function(){
+try{
+var b=null;
+try{ if(window.DataService&&DataService.getBranding) b=DataService.getBranding(); }catch(e){}
+if(!b||!(b.whatsappSupport||b.supportWhatsapp||b.whatsapp||b.supportPhone||b.phone)){
+try{ b=JSON.parse(localStorage.getItem('eduflow_branding')||'null')||b; }catch(e){}
+}
+/* 🎯 رقم المنصة من إعدادات الأدمن فقط — مفيش أي Fallback لأرقام شخصية */
+var ph=String((b&&(b.whatsappSupport||b.supportWhatsapp||b.whatsapp||b.supportPhone||b.phone))||'').replace(/\D/g,'');
+if(!ph) return null;
+return {phone:ph, wa:'https://wa.me/2'+ph, tel:'tel:'+ph};
+}catch(e){ return null; }
+};
+/* 📡 سحب رقم المنصة من السحابة وتحديث الكاش (بيضمن إن آخر رقم حفظه الأدمن هو اللي يظهر) */
+Ops.refreshSupportContact=function(cb){
+try{
+if(!(window.FirebaseService&&FirebaseService._db)){ cb&&cb(Ops.supportContact()); return; }
+FirebaseService._db.collection('meta').doc('branding').get().then(function(doc){
+if(doc&&doc.exists){
+var cloud=doc.data()||{};
+try{
+var local={}; try{ local=JSON.parse(localStorage.getItem('eduflow_branding')||'{}')||{}; }catch(e){}
+localStorage.setItem('eduflow_branding', JSON.stringify(Object.assign({},local,cloud)));
+}catch(e){}
+try{
+if(window.DataService&&DataService._getData){ var d=DataService._getData(); d.branding=Object.assign({},d.branding||{},cloud); if(DataService._saveData) DataService._saveData(d); }
+}catch(e){}
+}
+cb&&cb(Ops.supportContact());
+}).catch(function(){ cb&&cb(Ops.supportContact()); });
+}catch(e){ cb&&cb(null); }
+};

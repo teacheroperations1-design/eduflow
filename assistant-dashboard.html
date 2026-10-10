@@ -473,10 +473,20 @@
 <div id="videosList"></div>
 </section>
 <section class="section" id="section-classPosts">
-<div class="section-header"><div><h2 class="section-title">📰 إيه اللي اتاخد في الحصة</h2></div></div>
-<div class="card" style="margin-bottom:12px;"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-</div></div>
-<div id="classPostsList"></div>
+<div class="section-header">
+<div><h2 class="section-title">📰 بوستات الحصة</h2><p class="text-sm text-muted">إيه اللي اتاخد في كل حصة — بينزل للطلاب وأولياء الأمور فور النشر</p></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;">
+<button class="btn btn-primary btn-sm" onclick="window.openAsClassPostModal()">📢 بوست حصة جديد</button>
+<button class="btn btn-ghost btn-sm" onclick="window.loadAsClassPosts()">🔄 تحديث</button>
+</div>
+</div>
+<div class="card" style="padding:10px;margin-bottom:12px;">
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;">
+<select id="cpFilterGroup" class="form-select" onchange="window.loadAsClassPosts()"><option value="">👥 كل المجموعات</option></select>
+<input type="text" id="cpFilterSearch" class="form-input" placeholder="🔍 بحث في العنوان أو المحتوى..." oninput="window.loadAsClassPosts()">
+</div>
+</div>
+<div id="asClassPostsList"></div>
 </section>
 <section class="section" id="section-challenges">
 <div class="section-header"><div><h2 class="section-title">🏆 المسابقات والتحديات</h2><p class="text-sm text-muted">نقاط + ليدربورد يحفّز الطلاب</p></div><button class="btn btn-primary" onclick="window.openChallengeBuilder()">+ تحدي جديد</button></div>
@@ -1170,7 +1180,14 @@ ${photo?`<img src="${photo}" class="teacher-photo" onerror="this.style.display='
 <div class="text-xs text-muted">📚 ${myTeacher.subject||'-'} · بتدير كل مجموعاته وطلابه</div>
 </div>
 <button class="btn btn-primary btn-sm" onclick="window.openGroupModal()">+ مجموعة جديدة</button>
+</div></div>
+<div class="card" style="margin-bottom:16px;border-right:4px solid var(--info);padding:14px;">
+<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+<strong style="font-size:13px;">📞 رقم تيم الأستاذ (بيظهر للطلاب)</strong>
+<input type="tel" id="myTeamPhone" class="form-input" style="max-width:180px;" maxlength="11" placeholder="01xxxxxxxxx" value="${(currentUser&&(currentUser.teamPhone||currentUser.phone))||''}">
+<button class="btn btn-primary btn-sm" onclick="window.saveMyTeamPhone()">💾 حفظ</button>
 </div>
+<div class="text-xs text-muted" style="margin-top:6px;">ده الرقم اللي بيوصلك بطلاب أستاذك زر "🎧 تيم الأستاذ" في لوحاتهم.</div>
 </div>`;
 }else{
 banner=`<div class="card" style="margin-bottom:16px;border-right:4px solid var(--warning);text-align:center;padding:24px;">
@@ -2423,6 +2440,17 @@ if(el) el.innerHTML=filtered.length?filtered.map(function(r){
 return '<div class="sub-row" style="border-right:4px solid '+(r.st==='overdue'?'var(--danger)':r.st==='due'?'var(--info)':r.st==='warning'?'var(--warning)':r.st==='paid'?'var(--success)':'var(--border)')+';"><div style="flex:1;"><strong>'+r.s.name+'</strong><div class="text-xs text-muted">📚 '+r.g.name+' · 🔄 '+r.r.done+'/'+r.r.req+'</div>'+(r.st==='due'||r.st==='overdue'?'<div class="text-xs" style="color:var(--danger);font-weight:800;">مطلوب: '+r.r.fee+' ج.م (متبقي '+r.r.rem+' ج.م)</div>':'')+'</div><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">'+r.badge+((r.st==='due'||r.st==='overdue')?'<button class="btn btn-success btn-sm" onclick="window.recordAsPayment(\''+r.s.id+'\',\''+r.g.id+'\')">💰 تسجيل دفع</button>':'')+'</div></div>';
 }).join(''):'<div class="card" style="text-align:center;padding:24px;">لا طلاب مطابقين</div>';
 }catch(e){console.error(e);}
+};
+window.saveMyTeamPhone=async function(){
+try{
+var v=((document.getElementById('myTeamPhone')||{}).value||'').replace(/\D/g,'').slice(0,11);
+if(v.length<10){ window.safeToast('اكتب رقم صحيح (11 رقم)','error'); return; }
+var u=window.currentUser; if(!u) return;
+u.teamPhone=v; if(!u.phone) u.phone=v;
+if(DataService.updateUser) await DataService.updateUser(u.id,{teamPhone:v, phone:u.phone});
+try{ sessionStorage.setItem('eduflow_user', JSON.stringify(u)); }catch(e){}
+window.safeToast('✅ رقم التيم اتحفظ — ظهر للطلاب فوراً','success');
+}catch(e){ window.safeToast('خطأ','error'); }
 };
 
 window.openBulkBackfillModal=function(){
@@ -4406,6 +4434,8 @@ html+='<div class="card" style="margin-bottom:12px"><h3 class="card-title" style
 +window.cmdTileSafe('📡','حصص اليوم',"window.openTodaySessionsModal()")
 +window.cmdTileSafe('✋','اعتراضات الحضور',"window.openDisputesModal()")
 +window.cmdTileSafe('🛍️','المتجر',"window.showSection('store')")
++window.cmdTileSafe('📢','بوست حصة',"window.openAsClassPostModal()")
++window.cmdTileSafe('📰','البوستات',"window.showSection('classPosts')")
 +'</div></div>';
 var m2t=function(m){ return Math.floor(m/60)+':'+((m%60)<10?'0':'')+(m%60); };
 var liveCount=today.filter(function(g){ var schs2=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}]; var s2=schs2.find(function(x){return x.day===todayEn;}); if(!s2) return false; var st2=minOf(s2.time); return nowMin>=st2&&nowMin<st2+(parseInt(g.duration)||60); }).length;
@@ -4660,46 +4690,90 @@ else{ data.id='cat_'+Date.now(); data.createdAt=new Date().toISOString(); data.r
 DataService._saveData(d); ThemeManager.closeModal(); window.safeToast('✅ تم الحفظ','success'); window.loadAsStore();
 }catch(e){ window.safeToast('خطأ','error'); }
 };
-/* 4) بوستات الحصة بالكاميرا */
+
+
+/* 🕐 وقت المجموعة بصيغة 12 ساعة — بيظهر جنب اسم المجموعة في كل مكان */
+window.cpGroupTime=function(g){
+  if(!g) return '';
+  try{
+    if(g.schedules&&g.schedules.length){
+      return g.schedules.map(function(s){ return (window.dayAr?dayAr(s.day):s.day)+' '+(window.T?T(s.time):s.time); }).join(' + ');
+    }
+    if(g.day){ return (window.dayAr?dayAr(g.day):g.day)+' '+(window.T?T(g.time):(g.time||'')); }
+  }catch(e){}
+  return '';
+};
 window.loadAsClassPosts=function(){
-try{
-var gids=groups().map(function(g){return g.id;});
-var list=(dbx().classPosts||[]).filter(function(p){ return gids.indexOf(p.groupId)>=0; }).sort(function(a,b){ return new Date(b.createdAt||0)-new Date(a.createdAt||0); });
-var el=document.getElementById('asClassPostsList'); if(!el) return;
-el.innerHTML=list.length?list.map(function(p){
-var g=(DataService.getGroups?DataService.getGroups():[]).find(function(x){return x.id===p.groupId;});
-return '<div class="card" style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;"><div><strong>'+p.title+'</strong><div class="text-xs text-muted">📚 '+(g?g.name:'-')+' · 📅 '+(p.date||'')+'</div></div><button class="btn btn-danger btn-sm" onclick="window.deleteAsClassPost(\''+p.id+'\')">🗑️</button></div>'+(p.summary?'<p class="text-sm" style="margin-top:6px;">'+p.summary+'</p>':'')+(p.homeworkText?'<div class="text-sm" style="margin-top:6px;padding:8px;background:var(--warning-bg);border-radius:6px;">📋 '+p.homeworkText+'</div>':'')+(p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;max-height:260px;object-fit:cover;border-radius:8px;margin-top:8px;">':'')+'</div>';
-}).join(''):'<div class="card" style="text-align:center;padding:24px;">لا بوستات</div>';
-}catch(e){ console.error(e); }
+  try{
+    /* 🧹 طرد أي شريط فلاتر محقون غريب من الصفحة (فلتر الصف/السنتر اللي كان باين) */
+    ['gfGrade_classPosts','gfCenter_classPosts','gfTeacher_classPosts'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el){ var bar=el.closest('.card')||el.parentElement.parentElement; if(bar) bar.remove(); }
+    });
+    var d=(window.DataService&&DataService._getData)?DataService._getData():{};
+    var gs=(typeof Ops!=='undefined'&&Ops.groupsInScope)?Ops.groupsInScope((currentUser||{}).id):(DataService.getGroups?DataService.getGroups():[]);
+    /* تعبئة فلتر المجموعات بالاسم + المواعيد + عدد الطلاب */
+    var sel=document.getElementById('cpFilterGroup');
+    if(sel){
+      var curV=sel.value||'';
+      sel.innerHTML='<option value="">👥 كل المجموعات ('+gs.length+')</option>'+gs.map(function(g){
+        var gt=window.cpGroupTime(g); var cn=(DataService.getStudentsByGroup?DataService.getStudentsByGroup(g.id):[]).length;
+        return '<option value="'+g.id+'">'+g.name+(gt?' · 🕐 '+gt:'')+' · 👥 '+cn+'</option>';
+      }).join('');
+      sel.value=curV;
+    }
+    var fg=sel?sel.value:'';
+    var q=((document.getElementById('cpFilterSearch')||{}).value||'').toLowerCase();
+    var gids={}; gs.forEach(function(g){ gids[g.id]=1; });
+    var posts=(d.classPosts||[]).filter(function(p){ return p&&gids[p.groupId]; });
+    if(fg) posts=posts.filter(function(p){ return p.groupId===fg; });
+    if(q) posts=posts.filter(function(p){ return ((p.title||'')+' '+(p.body||'')+' '+(p.summary||'')+' '+(p.covered||'')+' '+(p.homeworkText||'')).toLowerCase().indexOf(q)>=0; });
+    posts.sort(function(a,b){ return String(b.createdAt||'').localeCompare(String(a.createdAt||'')); });
+    var el=document.getElementById('asClassPostsList'); if(!el) return;
+    if(!posts.length){
+      el.innerHTML='<div class="card" style="text-align:center;padding:30px;"><div style="font-size:44px;">📰</div><strong>لا بوستات</strong><div class="text-xs text-muted" style="margin-top:6px;">دوس "📢 بوست حصة جديد" واكتب ملخص أول حصة — هيظهر هنا وللطلاب فوراً</div></div>';
+      return;
+    }
+    el.innerHTML=posts.map(function(p){
+      var g=(DataService.getGroups?DataService.getGroups():[]).find(function(x){return x.id===p.groupId;});
+      var tName=(g&&g.teacherId&&DataService.getUserById)?((DataService.getUserById(g.teacherId)||{}).name||'-'):'-';
+      var gt=window.cpGroupTime(g);
+      var img=p.imageUrl?'<img src="'+(window.driveThumb?driveThumb(p.imageUrl):p.imageUrl)+'" style="width:100%;max-height:260px;object-fit:cover;border-radius:10px;margin-top:10px;" onerror="this.style.display=\'none\'">':'';
+      return '<div class="card" style="margin-bottom:12px;">'+
+        '<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;">'+
+        '<div><strong style="font-size:14px;">📢 '+(p.title||'بوست حصة')+'</strong>'+
+        '<div class="text-xs text-muted" style="margin-top:3px;">👥 '+(g?g.name:'مجموعة محذوفة')+' · 👨‍ '+tName+(gt?' · 🕐 '+gt:'')+'</div></div>'+
+        '<div style="display:flex;gap:6px;align-items:center;"><span class="badge badge-muted">'+(p.createdAt?new Date(p.createdAt).toLocaleString('ar-EG'):'')+'</span>'+
+        '<button class="btn btn-danger btn-sm" title="حذف" onclick="window.deleteAsClassPost(\''+p.id+'\')">🗑</button></div></div>'+
+        (p.covered?'<div class="text-sm" style="margin-top:8px;padding:8px 10px;background:var(--primary-bg);border-radius:8px;">📎 اتاخد في الحصة: <strong>'+p.covered+'</strong></div>':'')+
+        ((p.body||p.summary)?'<p class="text-sm" style="margin-top:8px;line-height:1.7;">'+(p.body||p.summary)+'</p>':'')+
+        (p.homeworkText?'<div class="text-sm" style="margin-top:8px;padding:8px 10px;background:var(--warning-bg);border-radius:8px;">📋 الواجب: '+p.homeworkText+'</div>':'')+
+        img+'</div>';
+    }).join('');
+  }catch(e){ console.error(e); }
 };
-window.openAsClassPost=function(preGroup){
-try{
-var gs=groups();
-var pre=preGroup||((window.liveGroupId&&window.liveGroupId())||'');
-if(!pre||!gs.some(function(g){return g.id===pre;})) pre=gs[0]?gs[0].id:'';
-window._asCpImg='';
-ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">📰 بوست الحصة</h3><button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">'+(pre&&window.liveGroupId&&pre===window.liveGroupId()?'<div class="filter-info" style="background:var(--success-bg);color:var(--success);">🔴 تم اختيار المجموعة النشطة تلقائياً</div>':'')+'<div class="form-group"><label>العنوان *</label><input id="asCpTitle" class="form-input" value="ملخص حصة"></div><div class="form-group"><label>المجموعة</label><select id="asCpGroup" class="form-select">'+gs.map(function(g){return '<option value="'+g.id+'" '+(g.id===pre?'selected':'')+'>'+g.name+'</option>';}).join('')+'</select></div><div class="form-group"><label>📝 اللي تم في الحصة</label><textarea id="asCpSummary" class="form-textarea" rows="3"></textarea></div><div class="form-group"><label>الواجب</label><textarea id="asCpHw" class="form-textarea" rows="2"></textarea></div><div class="form-group"><label>📸 صورة السبورة</label><div id="asCpPreview" style="margin-bottom:8px;"></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn btn-primary" onclick="document.getElementById(\'asCpCam\').click()">📷 تصوير السبورة</button><button type="button" class="btn btn-secondary" onclick="document.getElementById(\'asCpFileIn\').click()">🖼️ رفع من الجهاز</button></div><input type="file" id="asCpCam" accept="image/*" capture="environment" style="display:none" onchange="window.asCpHandle(this)"><input type="file" id="asCpFileIn" accept="image/*" style="display:none" onchange="window.asCpHandle(this)"></div><button class="btn btn-primary w-full" onclick="window.saveAsClassPost()">💾 نشر</button></div>','modal-md');
-}catch(e){}
-};
-window.asCpHandle=function(inp){
-var f=inp.files&&inp.files[0]; if(!f) return;
-var rd=new FileReader();
-rd.onload=function(){ var img=new Image(); img.onload=function(){ var maxW=1280, sc=Math.min(1,maxW/img.width); var cv=document.createElement('canvas'); cv.width=Math.max(1,Math.round(img.width*sc)); cv.height=Math.max(1,Math.round(img.height*sc)); cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height); window._asCpImg=cv.toDataURL('image/jpeg',0.72); var pv=document.getElementById('asCpPreview'); if(pv) pv.innerHTML='<img src="'+window._asCpImg+'" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;">'; }; img.src=rd.result; };
-rd.readAsDataURL(f); inp.value='';
-};
-window.saveAsClassPost=async function(){
-try{
-var t=(document.getElementById('asCpTitle')||{}).value||'';
-if(!t.trim()){ window.safeToast('اكتب العنوان','error'); return; }
-var d=dbx(); d.classPosts=d.classPosts||[];
-var p={id:'cp_'+Date.now(),title:t.trim(),groupId:(document.getElementById('asCpGroup')||{}).value,date:new Date().toISOString().split('T')[0],summary:(document.getElementById('asCpSummary')||{}).value,homeworkText:(document.getElementById('asCpHw')||{}).value,imageUrl:window._asCpImg||'',createdBy:(cur()||{}).id,createdAt:new Date().toISOString()};
-d.classPosts.push(p); DataService._saveData(d);
-if(window.FirebaseService&&FirebaseService.connected){ try{ FirebaseService.saveDoc('classPosts',p.id,p); }catch(e){} }
-window._asCpImg=''; ThemeManager.closeModal(); window.safeToast('✅ تم النشر','success'); window.loadAsClassPosts();
-}catch(e){ window.safeToast('خطأ','error'); }
-};
-window.deleteAsClassPost=async function(id){
-try{ if(!confirm('حذف البوست؟')) return; var d=dbx(); d.classPosts=(d.classPosts||[]).filter(function(p){return p.id!==id;}); DataService._saveData(d); if(window.FirebaseService&&FirebaseService.connected){ try{ FirebaseService.deleteDoc('classPosts',id); }catch(e){} } window.loadAsClassPosts(); }catch(e){}
+window.loadClassPosts=window.loadAsClassPosts;
+
+window.deleteClassPost=async function(id){
+  try{
+    if(!confirm('حذف البوست؟')) return;
+    
+    if(typeof DataService?.deleteClassPost==='function'){
+      await DataService.deleteClassPost(id);
+    }else if(typeof DataService?._saveData==='function'){
+      var d=DataService._getData();
+      d.classPosts=(d.classPosts||[]).filter(function(p){return p.id!==id;});
+      DataService._saveData(d);
+    }
+    
+    if(window.safeToast) window.safeToast('🗑 تم الحذف','success');
+    if(window.loadAsClassPosts) window.loadAsClassPosts();
+    if(window.loadClassPosts) window.loadClassPosts();
+    
+  }catch(e){ 
+    console.error(e);
+    if(window.safeToast) window.safeToast('خطأ: '+e.message,'error'); 
+  }
 };
 })();
 </script>
@@ -5112,34 +5186,119 @@ return null;
 })();
 
 
-/* ============ 3) بوستات الحصة — فلتر موحد + إيه اللي اتاخد + كاميرا ============ */
-window.openAsClassPostModal=function(){
-try{
-var gs=(typeof Ops!=='undefined'&&typeof Ops.groupsInScope==='function')?Ops.groupsInScope((currentUser||{}).id):[];
-window._asCpImg='';
-if(typeof ThemeManager==='undefined'||!ThemeManager.openModal){ if(window.safeToast) window.safeToast('النافذة غير جاهزة','error'); return; }
-ThemeManager.openModal(
-'<div class="modal-header"><h3 class="modal-title">📢 بوست حصة جديد</h3>'+
-'<button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>'+
-'<div class="modal-body">'+
-'<div class="form-group"><label>🔍 ابحث عن المجموعة</label>'+
-'<input type="text" id="cpSearch" class="form-input" placeholder="اكتب اسم المجموعة أو الأستاذ..." oninput="window.cpFilterGroups()">'+
-'<div id="cpGroupList" style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;margin-top:6px;padding:4px;">'+
-gs.map(function(g){return '<div class="cp-group-opt" data-gid="'+g.id+'" onclick="window.cpPickGroup(\''+g.id+'\')" style="padding:8px 10px;border-radius:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;"><div><strong>'+g.name+'</strong><div class="text-xs text-muted">'+(g.center||'-')+'</div></div></div>';}).join('')+
-'</div><input type="hidden" id="cpGroupId"></div>'+
-'<div class="form-group"><label>📝 عنوان البوست</label><input type="text" id="cpTitle" class="form-input" placeholder="ملخص الحصة..."></div>'+
-'<div class="form-group"><label>📄 محتوى البوست</label><textarea id="cpBody" class="form-textarea" rows="4" placeholder="اكتب تفاصيل الحصة..."></textarea></div>'+
-'<div class="form-group"><label>📎 إيه اللي اتاخد في الحصة؟</label>'+
-'<input type="text" id="cpCovered" class="form-input" placeholder="مثال: الوحدة 3 - الدرس 2"></div>'+
-'<div class="form-group"><label>📸 صورة من الحصة</label>'+
-'<div style="display:flex;gap:8px;flex-wrap:wrap;">'+
-'<input type="file" id="cpImgFile" accept="image/*" capture="environment" style="display:none" onchange="window.cpOnImg(this)">'+
-'<button class="btn btn-secondary" onclick="document.getElementById(\'cpImgFile\').click()">📷 التقط صورة</button>'+
-'</div><div id="cpImgPreview" style="margin-top:8px;"></div></div>'+
-'<button class="btn btn-primary w-full" onclick="window.saveAsClassPostV2()">📤 نشر البوست</button>'+
-'</div>','modal-md');
-}catch(e){ if(window.safeToast) window.safeToast('خطأ: '+e.message,'error'); }
+window.openAsClassPostModal=function(preGroup){
+  try{
+    var gs=(typeof Ops!=='undefined'&&typeof Ops.groupsInScope==='function')?Ops.groupsInScope((currentUser||{}).id):[];
+    window._asCpImg='';
+    
+    /* بناء قائمة المجموعات مع وقت الحصة */
+    var groupOpts=gs.map(function(g){
+      var timeStr='';
+      if(g.time){
+        timeStr=' · '+g.time;
+        if(g.day) timeStr+=' ('+g.day+')';
+      }
+      var selected=preGroup&&preGroup===g.id?' selected':'';
+      return '<option value="'+g.id+'"'+selected+'>'+g.name+timeStr+'</option>';
+    }).join('');
+    
+    if(typeof ThemeManager==='undefined'||!ThemeManager.openModal){ 
+      if(window.safeToast) window.safeToast('النافذة غير جاهزة','error'); 
+      return; 
+    }
+    
+    ThemeManager.openModal(
+      '<div class="modal-header"><h3 class="modal-title">📢 بوست حصة جديد</h3>'+
+      '<button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>'+
+      '<div class="modal-body">'+
+      '<div class="form-group"><label>المجموعة *</label><select id="asCpGroup" class="form-select">'+
+      '<option value="">-- اختر المجموعة --</option>'+
+      groupOpts+
+      '</select></div>'+
+      '<div class="form-group"><label>العنوان *</label><input type="text" id="asCpTitle" class="form-input" placeholder="مثال: ملخص حصة اليوم" value="ملخص حصة"></div>'+
+      '<div class="form-group"><label>📝 اللي تم في الحصة</label><textarea id="asCpSummary" class="form-textarea" rows="3" placeholder="اكتب ملخص سريع للحصة..."></textarea></div>'+
+      '<div class="form-group"><label>📋 الواجب المطلوب</label><textarea id="asCpHw" class="form-textarea" rows="2" placeholder="اكتب الواجب المطلوب من الطلاب..."></textarea></div>'+
+      '<div class="form-group"><label>📸 صورة السبورة (اختياري)</label>'+
+      '<div id="asCpPreview" style="margin-bottom:8px;"></div>'+
+      '<input type="file" id="asCpImage" accept="image/*" style="display:none;" onchange="window.previewAsCpImage(this)">'+
+      '<button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById(\'asCpImage\').click()">📷 اختر صورة</button></div>'+
+      '<button class="btn btn-primary w-full" onclick="window.saveAsClassPost()">💾 نشر البوست</button>'+
+      '</div>',
+      'modal-md'
+    );
+  }catch(e){ 
+    console.error(e);
+    if(window.safeToast) window.safeToast('خطأ: '+e.message,'error'); 
+  }
 };
+
+window.previewAsCpImage=function(input){
+  try{
+    if(!input.files||!input.files[0]) return;
+    var file=input.files[0];
+    var reader=new FileReader();
+    reader.onload=function(e){
+      window._asCpImg=e.target.result;
+      var prev=document.getElementById('asCpPreview');
+      if(prev) prev.innerHTML='<img src="'+e.target.result+'" style="max-width:100%;max-height:200px;border-radius:8px;">';
+    };
+    reader.readAsDataURL(file);
+  }catch(e){ console.error(e); }
+};
+
+window.saveAsClassPost=async function(){
+  try{
+    var gid=(document.getElementById('asCpGroup')||{}).value;
+    var title=(document.getElementById('asCpTitle')||{}).value||'';
+    var summary=(document.getElementById('asCpSummary')||{}).value||'';
+    var hw=(document.getElementById('asCpHw')||{}).value||'';
+    
+    if(!gid){ if(window.safeToast) window.safeToast('اختر المجموعة','error'); return; }
+    if(!title){ if(window.safeToast) window.safeToast('اكتب العنوان','error'); return; }
+    if(!summary){ if(window.safeToast) window.safeToast('اكتب ملخص الحصة','error'); return; }
+    
+    var data={
+      groupId:gid,
+      title:title,
+      summary:summary,
+      homeworkText:hw,
+      imageUrl:window._asCpImg||'',
+      createdBy:currentUser?.id||'',
+      createdAt:new Date().toISOString()
+    };
+    
+    if(typeof DataService?.addClassPost==='function'){
+      await DataService.addClassPost(data);
+    }else if(typeof DataService?._saveData==='function'){
+      var d=DataService._getData();
+      d.classPosts=d.classPosts||[];
+      d.classPosts.push(data);
+      DataService._saveData(d);
+    }
+    
+    /* إشعار الطلاب */
+    var g=(DataService.getGroups?DataService.getGroups():[]).find(function(x){return x.id===gid;});
+    if(g){
+      try{
+        if(typeof DataService?.notifyGroup==='function'){
+          DataService.notifyGroup(gid,'📰 ملخص حصة جديد: '+title,'شوف إيه اللي اتاخد في الحصة والواجب المطلوب','post');
+        }
+      }catch(e){}
+    }
+    
+    ThemeManager.closeModal();
+    if(window.safeToast) window.safeToast('✅ تم نشر البوست ووصل إشعار للطلاب','success');
+    
+    /* تحديث الصفحة لو مفتوحة */
+    if(window.loadAsClassPosts) window.loadAsClassPosts();
+    if(window.loadClassPosts) window.loadClassPosts();
+    
+  }catch(e){ 
+    console.error(e);
+    if(window.safeToast) window.safeToast('خطأ: '+e.message,'error'); 
+  }
+};
+
 
 window.cpFilterGroups=function(){
 try{
@@ -5227,8 +5386,8 @@ var g=gs.find(function(x){return x.id===r;});
 return g?'<button class="btn btn-secondary btn-sm" onclick="window.qePickGroup(\''+g.id+'\')">'+g.name+'</button>':'';
 }).join('')+'</div></div>':'')+
 '<div id="qeSmartList" style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px;">'+
-gs.map(function(g){return '<div class="qe-gopt" data-gid="'+g.id+'" onclick="window.qePickGroup(\''+g.id+'\')" style="padding:8px 10px;border-radius:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;"><div><strong>'+g.name+'</strong><div class="text-xs text-muted">'+(g.center||'-')+'</div></div></div>';}).join('')+
-'</div>'+
+gs.map(function(g){var gt=window.cpGroupTime?window.cpGroupTime(g):'';var cn=(DataService.getStudentsByGroup?DataService.getStudentsByGroup(g.id):[]).length;return '<div class="cp-group-opt" data-gid="'+g.id+'" onclick="window.cpPickGroup(\''+g.id+'\')" style="padding:8px 10px;border-radius:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;"><div><strong>'+g.name+'</strong><div class="text-xs text-muted">'+(g.center||'-')+(gt?' · 🕐 '+gt:'')+' · 👥 '+cn+' طالب</div></div></div>';}).join('')
+  '</div>'+
 '<div id="qePickedBadge" style="margin-top:8px;"></div>'+
 '</div>';
 }catch(e){ console.error(e); }

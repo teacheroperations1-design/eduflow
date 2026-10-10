@@ -355,18 +355,14 @@ box-shadow:0 4px 12px rgba(220,38,38,.4);
 <div class="section-header"><div><h2 class="section-title">🎓 امتحاناتي</h2><p class="text-sm text-muted">الامتحانات الأونلاين ونتائج الأوفلاين</p></div></div>
 <div id="examsList"></div>
 </section>
-<section class="section" id="section-results">
-<div class="section-header"><div><h2 class="section-title">📊 درجاتي ونتائجي</h2></div></div>
-<div class="tabs">
-<button class="tab-btn active" onclick="window.switchResultMode(event,'paper')">📄 نتائج ورقي</button>
-<button class="tab-btn" onclick="window.switchResultMode(event,'online')">🌐 نتائج أونلاين</button>
+
+<section class="section" id="section-results"><div class="section-header"><div><h2 class="section-title">📊 درجاتي ونتائجي</h2><p class="text-sm text-muted">📄 الورقي أولاً جنب 🌐 الأونلاين — مقسّمة حسب الأستاذ والمادة</p></div><button class="btn btn-ghost btn-sm" onclick="window.loadResultsV2&&window.loadResultsV2()">🔄 تحديث</button></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;" id="resultsGrid">
+<div class="card" style="margin:0;"><div class="card-header"><h3 class="card-title">📄 نتائج الورقي</h3><span class="points-badge" id="paperAvg">-</span></div><div id="resultsPaperList" style="padding:10px;"></div></div>
+<div class="card" style="margin:0;"><div class="card-header"><h3 class="card-title">🌐 نتائج الأونلاين</h3><span class="points-badge" id="onlineAvg">-</span></div><div id="resultsOnlineList" style="padding:10px;"></div></div>
 </div>
-<div class="tabs">
-<button class="tab-btn active" id="tabBtnHw" onclick="window.switchResultTab(event,'hw')">📝 واجبات</button>
-<button class="tab-btn" id="tabBtnEx" onclick="window.switchResultTab(event,'ex')">🎓 امتحانات</button>
-</div>
-<div id="resultsList"></div>
-</section>
+<style>@media(max-width:900px){#resultsGrid{grid-template-columns:1fr;}}</style></section>
+
 <section class="section" id="section-points">
 <div class="section-header"><div><h2 class="section-title">🏆 نقاطي وترتيبي</h2></div></div>
 <div class="card" style="margin-bottom:16px;text-align:center;padding:20px;">
@@ -1846,15 +1842,7 @@ return `<div class="sub-row ${p.status === 'delivered' ? 'graded' : (p.status ==
 }).join('');
 };
 
-window.loadTeachers=function(){
-const ts=DataService?.getStudentTeachers?DataService.getStudentTeachers(activeStudentId):[];
-const el=document.getElementById('teachersList');
-if(!ts.length){ el.innerHTML='<p class="text-muted">لا يوجد أساتذة</p>'; return; }
-el.innerHTML=ts.map(t=>{
-const photo=t.teacher?.photoUrl?window.driveThumb(t.teacher.photoUrl):'';
-return `<div class="card" style="margin-bottom:10px;"><div style="display:flex;gap:12px;align-items:center;">${photo?`<img src="${photo}" class="teacher-photo" loading="lazy" onerror="this.style.display='none'">`:'<div class="user-avatar" style="width:56px;height:56px;font-size:20px;">👨‍🏫</div>'}<div style="flex:1;"><strong>${t.teacher?.name||'-'}</strong><div class="text-xs text-muted">${t.group?.name||'-'} · ${dayAr(t.group?.day)} ${T(t.group?.time)}</div>${t.teacher?.phone?`<a href="https://wa.me/2${t.teacher.phone.replace(/\D/g,'')}" target="_blank" class="wa-btn" style="margin-top:6px;">💬 واتساب</a>`:''}</div></div></div>`;
-}).join('');
-};
+window.loadTeachers=function(){const ts=DataService?.getStudentTeachers?DataService.getStudentTeachers(activeStudentId):[];const el=document.getElementById('teachersList');if(!ts.length){ el.innerHTML='<p class="text-muted">لا يوجد أساتذة</p>'; return; }el.innerHTML=ts.map(t=>{const photo=t.teacher?.photoUrl?window.driveThumb(t.teacher.photoUrl):'';const teamC=(window.Ops&&Ops.teacherTeamContact)?Ops.teacherTeamContact(t.teacher&&t.teacher.id):null;return `<div class="card" style="margin-bottom:10px;"><div style="display:flex;gap:12px;align-items:center;">${photo?`<img src="${photo}" class="teacher-photo" loading="lazy" onerror="this.style.display='none'">`:'<div class="user-avatar" style="width:56px;height:56px;font-size:20px;">👨‍🏫</div>'}<div style="flex:1;"><strong>${t.teacher?.name||'-'}</strong><div class="text-xs text-muted">${t.group?.name||'-'} · ${dayAr(t.group?.day)} ${T(t.group?.time)}</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">${t.teacher?.phone?`<a href="https://wa.me/2${t.teacher.phone.replace(/\D/g,'')}" target="_blank" class="wa-btn">💬 واتساب الأستاذ</a>`:''}${teamC?`<a href="${teamC.wa}" target="_blank" class="wa-btn" style="background:#128c7e;">🎧 تيم الأستاذ</a>`:'<span class="badge badge-muted" style="align-self:center;">🎧 التيم مش مسجل — كلم الإدارة</span>'}</div></div></div></div>`;}).join('');};
 window.loadVideos=function(){
 try{
 const videos = typeof DataService?.getVideosForStudent === 'function' ? DataService.getVideosForStudent(activeStudentId) : [];
@@ -2485,7 +2473,8 @@ imageUrl:(document.getElementById('storeItemImg')||{}).value||''
 };
 var d=DataService._getData(); d.storeCatalog=d.storeCatalog||[];
 if(editId){
-var it=null; for(var i=0;i<d.storeCatalog.length;i++){ if(d.storeCatalog[i].id===editId){ it=d.storeCatalog[i]; break; } }
+var it=null;
+for(var i=0;i<d.storeCatalog.length;i++){ if(d.storeCatalog[i].id===editId){ it=d.storeCatalog[i]; break; } }
 if(!it){ window.safeToast('المنتج مش موجود','error'); return false; }
 Object.assign(it,data,{updatedAt:new Date().toISOString()});
 if(window.FirebaseService&&FirebaseService.connected){ try{ await FirebaseService.saveDoc('storeCatalog',editId,it); }catch(err){} }
@@ -2566,8 +2555,26 @@ return r;
 try{ var act=document.querySelector('.section.active'); if(act&&act.id==='section-realStore') window.loadRealStore(); }catch(e){}
 </script>
 
-<script>
-window.openParentPortal=function(){
+<a id="supportFab" href="#" target="_blank" style="position:fixed;bottom:18px;left:18px;z-index:1500;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;padding:12px 18px;border-radius:999px;font-weight:800;font-size:13px;text-decoration:none;box-shadow:0 8px 24px rgba(37,211,66,.35);display:none;align-items:center;gap:6px;">🎧 تواصل مع الدعم</a>
+<script>(function(){
+function paintFab(c){
+var f=document.getElementById('supportFab'); if(!f) return;
+if(c&&c.phone){
+f.href=c.wa;
+f.title='🎧 دعم المنصة: '+c.phone;
+f.innerHTML='🎧   الدعم الفني <span style="display:block;font-size:10px;font-family:var(--font-en);letter-spacing:.5px;opacity:.95;margin-top:2px;"></span>';
+f.style.display='inline-flex'; f.style.flexDirection='column'; f.style.lineHeight='1.3'; f.style.textAlign='center';
+}else{
+f.style.display='none'; /* مفيش رقم منصة مسجل = الزر ميظهرش خالص */
+}
+}
+function setFab(){ try{ paintFab((window.Ops&&Ops.supportContact)?Ops.supportContact():null); }catch(e){} }
+function setFabCloud(){ try{ if(window.Ops&&Ops.refreshSupportContact) Ops.refreshSupportContact(paintFab); else setFab(); }catch(e){ setFab(); } }
+setFab(); setTimeout(setFabCloud,1200); setTimeout(setFabCloud,3500);
+setInterval(setFab,15000); setInterval(setFabCloud,60000);
+})();</script>
+
+<script>window.openParentPortal=function(){
   try{
     var u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null;
     if(!u||!u.code){ if(window.safeToast) window.safeToast('مفيش كود طالب — كلم الإدارة','error'); return; }
@@ -2680,5 +2687,126 @@ setTimeout(checkUrgentNotifs,5000);
 
 </script>
 <script src="js/ledger-ui.js"></script>
+<script>
+/* ============ 📊 نتائج V2: ورقي | أونلاين مقسّمة بالأستاذ والمادة ============ */
+window.loadResultsV2=function(){
+  try{
+    var u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null;
+    var sid=u?u.id:null; if(!sid) return;
+    var d=(DataService._getData)?DataService._getData():{};
+    var ts=(DataService.getStudentTeachers?DataService.getStudentTeachers(sid):[]);
+    var gmap={}; ts.forEach(function(t){ if(t.group) gmap[t.group.id]=t; });
+    function tOf(gid){ var t=gmap[gid]; return (t&&t.teacher)||null; }
+    function gOf(gid){ var t=gmap[gid]; return (t&&t.group)||null; }
+    var paper=[],online=[];
+    (d.examAttempts||[]).forEach(function(a){
+      if(a.studentId!==sid) return;
+      var ex=(d.exams||[]).find(function(x){return x.id===a.examId;}); if(!ex||!gmap[ex.groupId]) return;
+      var rel=(window.isExamReleased)?window.isExamReleased(a):true;
+      var row={kind:'🎓 امتحان',title:ex.title,score:rel?a.score:null,total:a.maxScore||ex.totalPoints||100,date:a.endTime||a.submittedAt||'',gid:ex.groupId};
+      ((ex.mode==='offline'||ex.paper)?paper:online).push(row);
+    });
+    (d.submissions||[]).forEach(function(s2){
+      if(s2.studentId!==sid||s2.status!=='graded') return;
+      var hw=(d.homework||[]).find(function(h){return h.id===s2.homeworkId;}); if(!hw||!gmap[hw.groupId]) return;
+      var row2={kind:'📝 واجب',title:hw.title,score:s2.score,total:hw.totalPoints||100,date:s2.submittedAt||'',gid:hw.groupId};
+      (hw.paper?paper:online).push(row2);
+    });
+    function colHtml(list){
+      if(!list.length) return '<div style="text-align:center;padding:20px;color:var(--text-muted);"><div style="font-size:36px;">📭</div><strong>لا نتائج بعد</strong></div>';
+      var byT={};
+      list.forEach(function(r){ var t=tOf(r.gid); var k=t?t.id:'x'; (byT[k]=byT[k]||{t:t,rows:[]}).rows.push(r); });
+      return Object.keys(byT).map(function(k){
+        var b=byT[k], t=b.t;
+        var graded=b.rows.filter(function(r){return r.score!=null;});
+        var avg=graded.length?Math.round(graded.reduce(function(a,r){return a+(r.total?(r.score/r.total*100):0);},0)/graded.length):null;
+        b.rows.sort(function(a,b2){return String(b2.date||'').localeCompare(String(a.date||''));});
+        return '<div style="border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:10px;background:var(--surface-hover);">'+
+          '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">'+
+          (t&&t.photoUrl?'<img src="'+(window.driveThumb?driveThumb(t.photoUrl):t.photoUrl)+'" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);" onerror="this.style.display=\'none\'">':'<div style="width:34px;height:34px;border-radius:50%;background:var(--primary-bg);display:flex;align-items:center;justify-content:center;">👨‍🏫</div>')+
+          '<div style="flex:1;"><strong style="font-size:13px;">'+((t&&t.name)||'أستاذ')+'</strong><div class="text-xs text-muted">📚 '+((t&&t.subject)||'المادة')+'</div></div>'+
+          (avg!=null?'<span class="points-badge">متوسط '+avg+'%</span>':'')+
+          '</div>'+
+          b.rows.map(function(r){
+            var gg=gOf(r.gid);
+            if(r.score==null) return '<div class="sub-row" style="padding:8px;margin-bottom:6px;"><div style="flex:1;"><strong style="font-size:12px;">'+r.kind+': '+r.title+'</strong><div class="text-xs text-muted">'+(gg?gg.name:'')+' · 📅 '+String(r.date||'').slice(0,10)+'</div></div><span class="badge badge-muted">🔒 قيد المراجعة</span></div>';
+            var pct=r.total?Math.round(r.score/r.total*100):0;
+            var cls=pct>=75?'success':pct>=50?'warning':'danger';
+            return '<div class="sub-row" style="padding:8px;margin-bottom:6px;"><div style="flex:1;"><strong style="font-size:12px;">'+r.kind+': '+r.title+'</strong><div class="text-xs text-muted">'+(gg?gg.name:'')+' · 📅 '+String(r.date||'').slice(0,10)+'</div></div><span class="grade-badge '+cls+'">'+pct+'%</span></div>';
+          }).join('')+
+        '</div>';
+      }).join('');
+    }
+    var pEl=document.getElementById('resultsPaperList'), oEl=document.getElementById('resultsOnlineList');
+    if(pEl) pEl.innerHTML=colHtml(paper);
+    if(oEl) oEl.innerHTML=colHtml(online);
+    function avgAll(list){ var g2=list.filter(function(r){return r.score!=null;}); if(!g2.length) return '-'; return Math.round(g2.reduce(function(a,r){return a+(r.total?(r.score/r.total*100):0);},0)/g2.length)+'%'; }
+    var pa=document.getElementById('paperAvg'), oa=document.getElementById('onlineAvg');
+    if(pa) pa.textContent='متوسط '+avgAll(paper);
+    if(oa) oa.textContent='متوسط '+avgAll(online);
+  }catch(e){ console.error(e); }
+};
+window.loadResults=window.loadResultsV2;
+window.switchResultMode=function(){}; window.switchResultTab=function(){};
+
+/* ============ 🔔 أقرب حصة جاية — واضحة تماماً (مادة + أستاذ + سنتر + عد تنازلي حي) ============ */
+(function(){
+  var DAYS=[{en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},{en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'},{en:'Saturday',ar:'السبت'}];
+  function arD(en){var x=DAYS.filter(function(d){return d.en===en;})[0];return x?x.ar:en;}
+  function f12(t){if(!t)return'';var p=String(t).split(':');var h=+p[0]||0;var m=p[1]||'00';var ap=h>=12?'م':'ص';h=h%12;if(h===0)h=12;return h+':'+m+' '+ap;}
+  function min(t){var p=String(t||'0:00').split(':');return (+p[0]||0)*60+(+p[1]||0);}
+  function p2(n){return (n<10?'0':'')+n;}
+  window.renderNextClass=function(){
+    try{
+      var u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null;
+      var sid=u?u.id:null; if(!sid) return;
+      var ts=(DataService.getStudentTeachers?DataService.getStudentTeachers(sid):[]);
+      if(!ts.length) return;
+      var now=new Date(); var nowMin=now.getHours()*60+now.getMinutes();
+      var cand=[];
+      ts.forEach(function(t){
+        var g=t.group; if(!g) return;
+        var sch=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}];
+        sch.forEach(function(s){
+          var di=DAYS.map(function(x){return x.en;}).indexOf(s.day);
+          var diff=(di-now.getDay()+7)%7;
+          var st=min(s.time);
+          if(diff===0&&st<=nowMin) diff=7;
+          cand.push({g:g,t:t.teacher||null,s:s,diff:diff,st:st});
+        });
+      });
+      if(!cand.length) return;
+      cand.sort(function(a,b){ return a.diff-b.diff||a.st-b.st; });
+      var nx=cand[0];
+      var host=document.getElementById('nextClassCard')||document.getElementById('nextClassBox')||document.getElementById('nextClass')||document.querySelector('[id^="nextClass"]');
+      if(!host){ var mc=document.getElementById('myCycleCard'); if(mc&&mc.parentNode){ host=document.createElement('div'); host.id='nextClassCard'; host.style.marginBottom='12px'; mc.parentNode.insertBefore(host,mc); } else return; }
+      var subj=(nx.t&&nx.t.subject)?nx.t.subject:'';
+      var target=new Date(now); target.setDate(target.getDate()+nx.diff); target.setHours(Math.floor(nx.st/60),nx.st%60,0,0);
+      window.__ncTarget=target.getTime();
+      host.innerHTML='<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-right:4px solid var(--primary);border-radius:14px;padding:12px 14px;">'+
+        '<div style="flex:1;min-width:220px;">'+
+        '<div style="font-weight:900;font-size:14px;">🔔 أقرب حصة جاية: '+nx.g.name+(subj?' <span class="badge badge-primary">📚 '+subj+'</span>':'')+'</div>'+
+        '<div class="text-xs text-muted" style="margin-top:5px;display:flex;gap:8px;flex-wrap:wrap;">'+
+        '<span>👨‍ '+((nx.t&&nx.t.name)||'-')+'</span>'+
+        '<span>🏢 '+(nx.g.center||'-')+'</span>'+
+        '<span>📅 '+arD(nx.s.day)+' '+f12(nx.s.time)+'</span>'+
+        (nx.diff===0?'<span class="badge badge-success">النهارده</span>':(nx.diff===1?'<span class="badge badge-info">بكرة</span>':'<span class="badge badge-info">بعد '+nx.diff+' أيام</span>'))+
+        '</div></div>'+
+        '<div id="ncCountdown" style="font-family:var(--font-en);font-weight:900;font-size:20px;color:var(--primary);background:var(--primary-bg);padding:6px 14px;border-radius:10px;">--:--:--</div>'+
+        '</div>';
+      if(!window.__ncTick){
+        window.__ncTick=setInterval(function(){
+          var el=document.getElementById('ncCountdown'); var tg=window.__ncTarget;
+          if(!el||!tg) return;
+          var ms=tg-Date.now();
+          if(ms<=0){ el.textContent='00:00:00'; return; }
+          el.textContent=p2(Math.floor(ms/3600000))+':'+p2(Math.floor(ms%3600000/60000))+':'+p2(Math.floor(ms%60000/1000));
+        },1000);
+      }
+    }catch(e){}
+  };
+})();
+</script>
+
 </body>
 </html>

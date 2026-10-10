@@ -153,8 +153,9 @@ out.push({g:g,time:s.time,st:st,en:en,status:status,nowMin:nowMin});
 out.sort(function(a,b){return a.st-b.st;});
 return out;
 }
-function scansToday(){ return (db().barcodeScans||[]).filter(function(x){return x.day===dayStr(0);}); }
-function scansDay(off){ return (db().barcodeScans||[]).filter(function(x){return x.day===dayStr(off);}); }
+function allScans(){ var d=db(),out=[]; ['barcodeScans','barcodeLogs','qrScans'].forEach(function(k){ (d[k]||[]).forEach(function(x){ out.push(x); }); }); return out; }
+function scansToday(){ return allScans().filter(function(x){ return x.day===dayStr(0)||((x.at||'').slice(0,10)===dayStr(0)); }); }
+function scansDay(off){ return allScans().filter(function(x){ return x.day===dayStr(off)||((x.at||'').slice(0,10)===dayStr(off)); }); }
 function activeNowIds(){
 var d=db(); var ids={};
 var cut5=Date.now()-5*60000, cut15=Date.now()-15*60000;

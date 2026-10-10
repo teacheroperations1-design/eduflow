@@ -1,43 +1,72 @@
 /* ================================================================
-🔕 notify-rules — طالب/ولي الأمر ميستقبلوش غير:
-   1) إنذار الحصة قبل الأخيرة (due_warn)
-   2) استحقاق الشهرية عند اكتمال النصاب (due_now)
+🔕 notify-rules V2 — فلترة ذكية بدون قفل أحداث مهمة
+• الطالب/ولي الأمر يستقبلوا كل الأحداث المسموحة في policy
+• الأدمن يقدر يقفل أي حدث من صفحة سياسة الإشعارات
+• مفيش force function بتقفل أحداث أوتوماتيك
 ================================================================ */
 (function(){
 "use strict";
-var ALLOW=['due_warn','due_now','session_cancel','schedule_change','absence_marked','absence_resolved'];
-var ALL_EVENTS=['hw_new','exam_new','points','praise','absent','late','session_cancel','schedule_change','due_warn','due_now','payment_received','ledger_act','video_new','post_new','material_new','challenge_new','general'];
-function roleOf(uid){try{var u=DataService.getUserById?DataService.getUserById(uid):null;return u?u.role:null;}catch(e){return null;}}
-function force(){
-try{
-if(localStorage.getItem('ldgNotifForcedV1'))return;
-var d=DataService._getData?DataService._getData():{};
-var pol=d.notifyPolicy||{};
-['student','parent'].forEach(function(r){
-pol[r]=pol[r]||{};
-ALL_EVENTS.forEach(function(k){pol[r][k]=ALLOW.indexOf(k)>=0;});
-});
-d.notifyPolicy=pol;
-if(DataService._saveData)DataService._saveData(d);
-try{localStorage.setItem('eduNotifyPolicy',JSON.stringify(pol));}catch(e){}
-if(window.FirebaseService&&FirebaseService.connected){try{FirebaseService.saveDoc('notifyPolicy','policy',pol);}catch(e){}}
-localStorage.setItem('ldgNotifForcedV1','1');
-}catch(e){}
+
+/* 🆕 V2: كل الأحداث مسموحة افتراضياً، الأدمن يتحكم من UI */
+var STUDENT_PARENT_EVENTS=[
+  'hw_new','exam_new','points','praise','absent','late',
+  'session_cancel','schedule_change','due_warn','due_now',
+  'payment_received','video_new','post_new','material_new',
+  'challenge_new','general'
+];
+
+function forcePolicy(){
+  try{
+    if(localStorage.getItem('ldgNotifForcedV2'))return;
+    var d=DataService._getData?DataService._getData():{};
+    var pol=d.notifyPolicy||{};
+    
+    /* التأكد إن كل الأحداث موجودة ومفعلة للطالب وولي الأمر */
+    ['student','parent'].forEach(function(r){
+      pol[r]=pol[r]||{};
+      STUDENT_PARENT_EVENTS.forEach(function(k){
+        if(pol[r][k]===undefined) pol[r][k]=true;
+      });
+    });
+    
+    d.notifyPolicy=pol;
+    if(DataService._saveData)DataService._saveData(d);
+    try{localStorage.setItem('eduNotifyPolicy',JSON.stringify(pol));}catch(e){}
+    if(window.FirebaseService&&FirebaseService.connected){
+      try{FirebaseService.saveDoc('notifyPolicy','policy',pol);}catch(e){}
+    }
+    localStorage.setItem('ldgNotifForcedV2','1');
+  }catch(e){}
 }
-force();setTimeout(force,1500);setTimeout(force,4000);
-/* منع إنشاء أي إشعار خارج القائمة للطالب/ولي الأمر من أي مصدر */
+
+forcePolicy();
+setTimeout(forcePolicy,1500);
+setTimeout(forcePolicy,4000);
+
+/* 🆕 V2: فلترة بسيطة — لو الحدث مقفول في policy، ممنوع */
 if(window.DataService&&DataService.addNotification&&!DataService.__nrWrapped){
-DataService.__nrWrapped=1;
-var orig=DataService.addNotification.bind(DataService);
-DataService.addNotification=function(n){
-try{
-var r=roleOf(n&&n.targetUserId);
-if(r==='student'||r==='parent'){
-var ev=(n&&n.meta&&n.meta.event)||'';
-if(ALLOW.indexOf(ev)<0)return Promise.resolve(null);
-}
-}catch(e){}
-return orig(n);
-};
+  DataService.__nrWrapped=1;
+  var orig=DataService.addNotification.bind(DataService);
+  DataService.addNotification=function(n){
+    try{
+      var uid=n&&n.targetUserId;
+      if(!uid) return orig(n);
+      
+      var u=DataService.getUserById?DataService.getUserById(uid):null;
+      if(!u) return orig(n);
+      
+      var role=u.role;
+      if(role==='student'||role==='parent'){
+        var ev=(n&&n.meta&&n.meta.event)||'';
+        var d=DataService._getData?DataService._getData():{};
+        var pol=d.notifyPolicy||{};
+        var rolePol=pol[role]||{};
+        
+        /* لو الحدث مقفول صراحة في policy، ممنوع */
+        if(rolePol[ev]===false) return Promise.resolve(null);
+      }
+    }catch(e){}
+    return orig(n);
+  };
 }
 })();

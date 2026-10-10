@@ -140,19 +140,39 @@ window.PushService.testPush=function(){
 };
 function hook(){
   try{
-    if(!window.DataService||typeof DataService.addNotification!=='function'||DataService.__pushHooked) return;
-    DataService.__pushHooked=1;
-    var orig=DataService.addNotification;
-    DataService.addNotification=function(payload){
-      var r=orig.apply(this,arguments);
+    if(!window.DataService||typeof DataService.addNotification!=='function') return;
+    
+    /* 🆕 استخدم نفس الـ Event Bus */
+    if(!DataService.__notifyListeners) DataService.__notifyListeners=[];
+    
+    /* سجل الـ listener بتاعنا */
+    DataService.__notifyListeners.push(function(payload){
       try{
         if(payload&&payload.targetUserId){
-          sendPush({to:payload.targetUserId,title:payload.title||'🔔 إشعار جديد',body:payload.message||'',tag:payload.type||'general',page:pageForUid(payload.targetUserId)});
+          sendPush({
+            to:payload.targetUserId,
+            title:payload.title||'🔔 إشعار جديد',
+            body:payload.message||'',
+            tag:payload.type||'general',
+            page:pageForUid(payload.targetUserId)
+          });
         }
       }catch(e){}
-      return r;
-    };
+    });
+    
+    /* لو مش لسه عملنا الـ master hook، نعمله */
+    if(!DataService.__notifyMasterHooked){
+      DataService.__notifyMasterHooked=true;
+      var orig=DataService.addNotification.bind(DataService);
+      DataService.addNotification=function(n){
+        var r=orig(n);
+        (DataService.__notifyListeners||[]).forEach(function(listener){
+          try{ listener(n); }catch(e){}
+        });
+        return r;
+      };
+    }
   }catch(e){}
 }
-hook(); setTimeout(hook,1200); setTimeout(hook,3000); setInterval(hook,20000);
+hook(); setTimeout(hook,1200); setTimeout(hook,3000);
 })();

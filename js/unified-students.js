@@ -925,7 +925,9 @@ ThemeManager.openModal(html,'modal-md');
 UST.saveFloatBox=function(){
 try{
 var d=db();d.gamification=d.gamification||{};
+var __oldFb=((db().gamification||{}).floatBox)||{};
 d.gamification.floatBox={
+days:__oldFb.days||[],
 enabled:(document.getElementById('fbEnabled')||{}).checked,
 minPts:parseInt((document.getElementById('fbMin')||{}).value)||1,
 maxPts:parseInt((document.getElementById('fbMax')||{}).value)||5,

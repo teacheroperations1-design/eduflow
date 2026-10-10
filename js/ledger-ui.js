@@ -88,7 +88,7 @@ var base=cycleName(m);
 if(gid)return base+' ('+cycleRange(gid,m)+')';
 return base;
 }
-return m;
+try{ return new Date(m+'-01T12:00:00').toLocaleDateString('ar-EG',{month:'long',year:'numeric'}); }catch(e){ return m; }
 }
 function today(){ return localToday(); }
 function daysInRange(from,to){
@@ -448,6 +448,17 @@ var paid=paidOf(payFor(sid,gid,m));
 if(paid>=fee) continue;
 out.push({month:m,fee:fee,paid:paid,rem:Math.max(0,fee-paid)});
 }
+/* 📜 مستحقات رجعية (شهور قبل النظام أو مضافة يدوياً) */
+var seen={}; out.forEach(function(x){seen[x.month]=1;});
+(db().payments||[]).forEach(function(p){
+if(!p||p.studentId!==sid||p.groupId!==gid) return;
+var m=String(p.month||''); if(!m||seen[m]||list.indexOf(m)>=0) return;
+var amt=p.amount||0; if(!amt) return;
+var pd=p.paidAmount||0; if(pd>=amt) return;
+seen[m]=1;
+out.push({month:m,fee:amt,paid:pd,rem:Math.max(0,amt-pd),legacy:!!p.legacy});
+});
+out.sort(function(a,b){ return String(a.month).localeCompare(String(b.month)); });
 return out;
 }
 function flagsOf(sid,g,month,ses){
@@ -570,9 +581,9 @@ return '<div style="display:flex;justify-content:space-between;align-items:cente
 +'<div class="ldg-toolbar" style="margin:0;">'
 +(isAdmin()?'<button class="btn btn-primary btn-sm" onclick="LedgerUI.openCountControl()">🎛️ تحكم العدّ والتجميد</button>':'')
 +(isAdmin()?'<button class="btn '+(LU.countingState().active?'btn-success':'btn-warning')+' btn-sm" onclick="LedgerUI.toggleCounting()">'+(LU.countingState().active?'▶️ العد شغال — دوس للإيقاف':'🧊 العد موقوف — دوس لبدء العد')+'</button>':'')
-+'<button class="btn btn-ghost btn-sm" onclick="LedgerUI.refreshBtn()">🔄 تحديث</button>'
 +'<button class="btn btn-warning btn-sm" onclick="window.openBulkBackfillModal&&window.openBulkBackfillModal()">📥 ترحيل حصص</button>'
 +'<button class="btn btn-warning btn-sm" onclick="LedgerUI.openCancelModal()">🚫 إلغاء حصة</button>'
++((isAdmin()||((cur()||{}).role==='assistant'))?'<button class="btn btn-secondary btn-sm" onclick="LedgerUI.openLegacyDueModal()">📜 مستحق رجعي</button>':'')
 +'</div></div>';
 }
 function tickClock(){
@@ -694,6 +705,104 @@ if(window.safeToast) window.safeToast('🔔 تم إرسال التذكير لل�
 }catch(e){}
 };
 
+/* ========== 📜 مستحقات رجعية (شهور قبل دخول السيستم) ========== */
+LU.addLegacyDue=async function(sid,gid,month,amount,note){
+try{
+var g=gById(gid), s=DataService.getUserById?DataService.getUserById(sid):null;
+if(!g||!s){ if(window.safeToast) window.safeToast('بيانات ناقصة','error'); return; }
+var amt=parseFloat(amount)||g.monthlyFee||0;
+if(!amt||!month){ if(window.safeToast) window.safeToast('دخل الشهر والمبلغ','error'); return; }
+var d=db(); d.payments=d.payments||[];
+var p=d.payments.find(function(x){ return x.studentId===sid&&x.groupId===gid&&String(x.month||'')===month; });
+if(!p){ p={id:'pay_'+Date.now(),studentId:sid,groupId:gid,teacherId:g.teacherId||null,month:month,amount:amt,paidAmount:0,status:'unpaid',history:[],createdAt:new Date().toISOString(),legacy:true}; d.payments.push(p); }
+else { p.amount=amt; p.legacy=true; p.status=(p.paidAmount||0)>=amt?'paid':((p.paidAmount||0)>0?'partial':'unpaid'); }
+saveD(d); await cloudPay(p,false);
+var msg='💰 شهرية '+monthName(month)+' مستحقة: '+amt+' ج.م — مجموعة '+g.name+'.'+(note?(' ('+note+')'):'')+' برجاء السداد في أقرب حصة 🌹';
+if(DataService.addNotification){
+DataService.addNotification({targetUserId:sid,title:'📜 مستحق سابق عليك',message:msg,type:'payment',priority:'high',meta:{event:'legacy_due',month:month}});
+var pp=String(s.parentPhone||'').replace(/\D/g,'');
+(DataService.getUsers?DataService.getUsers():[]).forEach(function(u){
+if(u.role!=='parent') return;
+var up=String(u.phone||'').replace(/\D/g,'');
+if((u.studentIds||[]).indexOf(sid)>=0||(pp&&up&&up===pp)) DataService.addNotification({targetUserId:u.id,title:'📜 مستحق سابق على ابنك',message:msg+' (الطالب: '+s.name+')',type:'payment',priority:'high',meta:{event:'legacy_due',month:month}});
+});
+}
+logAct('📜 إضافة مستحق رجعي',{groupId:gid,groupName:g.name,text:s.name+' — '+month,amount:amt});
+LU._sesCache={};
+try{ localStorage.setItem('eduflowLedgerPing',String(Date.now())); }catch(e){}
+if(window.safeToast) window.safeToast('✅ اتسجل المستحق ووصل إشعار للطالب وولي الأمر','success');
+LU.refresh();
+}catch(e){ if(window.safeToast) window.safeToast('خطأ: '+e.message,'error'); }
+};
+
+/* ========== 📜 V12.1: مستحق رجعي مظبوط + مربوط بالتحصيل ========== */
+function groupsOfStudent(sid){
+var out=[],seen={};
+try{ (DataService.getStudentTeachers?DataService.getStudentTeachers(sid):[]).forEach(function(t){ if(t.group&&!seen[t.group.id]){seen[t.group.id]=1;out.push(t.group);} }); }catch(e){}
+try{ (db().enrollments||[]).forEach(function(en){ if(en.studentId===sid&&en.status==='active'&&!seen[en.groupId]){ var g=gById(en.groupId); if(g){seen[g.id]=1;out.push(g);} } }); }catch(e){}
+try{ var s0=DataService.getUserById?DataService.getUserById(sid):null; if(s0&&s0.groupId&&!seen[s0.groupId]){ var g2=gById(s0.groupId); if(g2){seen[g2.id]=1;out.push(g2);} } }catch(e){}
+return out;
+}
+function legacySummaryHtml(sid){
+var rows=[];
+groupsOfStudent(sid).forEach(function(g){
+(db().payments||[]).forEach(function(p){
+if(p&&p.studentId===sid&&p.groupId===g.id&&p.legacy&&(p.paidAmount||0)<(p.amount||0)) rows.push('<span class="badge badge-danger" style="margin:2px;">📜 '+monthName(p.month)+' — '+g.name+': متبقي '+((p.amount||0)-(p.paidAmount||0))+' ج.م</span>');
+});
+});
+return rows.length?('<div class="filter-info" style="background:var(--danger-bg);border-color:var(--danger);color:var(--danger);">⚠️ عليه بالفعل: '+rows.join(' ')+'</div>'):'';
+}
+LU.openLegacyDueModal=function(prefSid){
+try{
+var sts=(DataService.getStudents?DataService.getStudents():[]);
+if(!isAdmin()){ var gids={}; myGroups().forEach(function(g){gids[g.id]=1;}); sts=sts.filter(function(s){ return groupsOfStudent(s.id).some(function(g){return gids[g.id];}); }); }
+window.__ldFilterStu=function(){
+var q=((document.getElementById('ldSearch')||{}).value||'').toLowerCase();
+var sel=document.getElementById('ldSid'); if(!sel) return;
+var list=sts.filter(function(s){ return !q||(s.name||'').toLowerCase().indexOf(q)>=0||(s.code||'').toLowerCase().indexOf(q)>=0||String(s.parentPhone||'').indexOf(q)>=0; }).slice(0,60);
+sel.innerHTML=list.length?list.map(function(s){ return '<option value="'+s.id+'">'+s.name+' ('+(s.code||'-')+')</option>'; }).join(''):'<option value="">مفيش نتائج</option>';
+window.__ldStuChanged();
+};
+window.__ldStuChanged=function(){
+var sid=(document.getElementById('ldSid')||{}).value;
+var gsel=document.getElementById('ldGid'); if(!gsel) return;
+var gs=sid?groupsOfStudent(sid):[];
+gsel.innerHTML=gs.length?gs.map(function(g){ return '<option value="'+g.id+'">'+g.name+' — شهرية '+(g.monthlyFee||0)+' ج.م</option>'; }).join(''):'<option value="">⚠️ الطالب مش في أي مجموعة</option>';
+var am=document.getElementById('ldAmt'); if(am&&gs[0]) am.value=gs[0].monthlyFee||0;
+var ex=document.getElementById('ldExisting'); if(ex) ex.innerHTML=sid?legacySummaryHtml(sid):'';
+};
+window.__ldGChanged=function(){
+var g=gById((document.getElementById('ldGid')||{}).value);
+var am=document.getElementById('ldAmt'); if(am&&g) am.value=g.monthlyFee||0;
+};
+var d0=new Date(); d0.setDate(1); d0.setMonth(d0.getMonth()-1);
+var defM=d0.getFullYear()+'-'+String(d0.getMonth()+1).padStart(2,'0');
+ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">📜 تسجيل مستحق رجعي</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">'+
+'<div class="filter-info">💡 سجّل شهرية شهر سابق — هتظهر فوراً في خانة التحصيل عندك، وفي داشبورد الطالب وولي الأمر مع إشعار فوري.</div>'+
+'<div class="form-group"><label>🔍 ابحث بالطالب</label><input type="text" id="ldSearch" class="form-input" placeholder="اسم / كود / رقم ولي أمر..." oninput="window.__ldFilterStu()">'+
+'<select id="ldSid" size="6" class="form-select" style="margin-top:6px;" onchange="window.__ldStuChanged()"></select></div>'+
+'<div class="form-group"><label>👥 المجموعة (كل مجموعات الطالب)</label><select id="ldGid" class="form-select" onchange="window.__ldGChanged()"></select></div>'+
+'<div id="ldExisting" style="margin-bottom:8px;"></div>'+
+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="form-group"><label>📅 شهر المستحق</label><input type="month" id="ldMonth" class="form-input" value="'+defM+'"></div><div class="form-group"><label>💰 المبلغ</label><input type="number" id="ldAmt" class="form-input" min="0"></div></div>'+
+'<div class="form-group"><label>📝 ملاحظة (اختياري)</label><input type="text" id="ldNote" class="form-input" placeholder="مثال: شهرية سبتمبر قبل دخول السيستم"></div>'+
+'<button class="btn btn-primary w-full" onclick="LedgerUI.submitLegacyDue()">💾 تسجيل + إشعار الطالب وولي الأمر</button></div>','modal-sm');
+window.__ldFilterStu();
+if(prefSid){ var s2=document.getElementById('ldSid'); if(s2){ s2.value=prefSid; window.__ldStuChanged(); } }
+}catch(e){ console.error(e); if(window.safeToast) window.safeToast('خطأ في فتح المودال','error'); }
+};
+LU.submitLegacyDue=function(){
+var sid=(document.getElementById('ldSid')||{}).value;
+var gid=(document.getElementById('ldGid')||{}).value;
+var m=(document.getElementById('ldMonth')||{}).value;
+var amt=(document.getElementById('ldAmt')||{}).value;
+var note=(document.getElementById('ldNote')||{}).value||'';
+if(!sid){ if(window.safeToast) window.safeToast('اختار الطالب','error'); return; }
+if(!gid){ if(window.safeToast) window.safeToast('الطالب مش في أي مجموعة','error'); return; }
+if(!m){ if(window.safeToast) window.safeToast('اختار شهر المستحق','error'); return; }
+ThemeManager.closeModal();
+LU.addLegacyDue(sid,gid,m,amt,note);
+};
+
 /* ========== كارت مجموعة ========== */
 function groupCard(g,month,mode,rowsAll){
 var rows=rowsAll?rowsAll.filter(function(r){return r.g.id===g.id;}):buildRows([g],month);
@@ -797,7 +906,6 @@ ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">📒 '
 }catch(e){ console.error(e); }
 };
 
-/* ========== 💵 تحصيل ========== */
 LU.payModal=function(sid,gid,month){
 try{
 var g=gById(gid), s=DataService.getUserById?DataService.getUserById(sid):null;
@@ -807,11 +915,17 @@ var dms=dueMonths(sid,gid,total);
 var sel=normMonth(month||LU._st.month);
 var set={}; dms.forEach(function(x){set[x.month]=1;}); set[sel]=1; set[localMonth()]=1;
 var monthsArr=Object.keys(set).sort();
-var defMonth=dms.length?dms[0].month:sel;
+var defMonth=month||(dms.length?dms[0].month:sel);
+/* 📜 بانر الدفعات القديمة فوق مودال التحصيل */
+var oldDebts=dms.filter(function(x){ return x.month<localMonth()||(/^\d{4}-\d{2}$/.test(x.month)&&monthsList().indexOf(x.month)<0); });
+var legacyBanner=oldDebts.length?('<div class="filter-info" style="background:var(--danger-bg);border-color:var(--danger);color:var(--danger);margin-bottom:10px;">⚠️ <strong>الطالب عليه دفعات قديمة:</strong><br>'+oldDebts.map(function(x){ return '📜 '+monthName(x.month)+' — متبقي '+x.rem+' ج.م <button type="button" class="btn btn-danger btn-sm" style="margin-inline-start:4px;" onclick="document.getElementById(\'pmMonth\').value=\''+x.month+'\';LedgerUI.pmInfo()">تحصيله دلوقتي</button>'; }).join('<br>')+'</div>'):'';
 ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">💵 تحصيل كاش: '+(s?s.name:'')+'</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">'
++legacyBanner
 +'<div class="form-group"><label>📅 شهرية شهر مين بتتحصل؟</label><select id="pmMonth" class="form-select" onchange="LedgerUI.pmInfo()">'+monthsArr.map(function(m){
-var ses=LU.groupSessions(gid,m); var paid=paidOf(payFor(sid,gid,m));
-var tag=!ses.complete?(paid>0?'مقدم — لسه مكملش الحصص':'لسه مستحقة'):(paid>=total&&total>0?'✓ مسددة':'💰 مستحقة الآن (كمل '+ses.done+'/'+ses.required+')');
+var isLegacy=/^\d{4}-\d{2}$/.test(m)&&monthsList().indexOf(m)<0;
+var ses=LU.groupSessions(gid,m); var rec0=payFor(sid,gid,m); var paid0=paidOf(rec0);
+var mTotal=(isLegacy&&rec0&&rec0.amount)?rec0.amount:total;
+var tag=isLegacy?'📜 مستحق سابق — مش الشهر الحالي':(!ses.complete?(paid0>0?'مقدم — لسه مكملش الحصص':'لسه مستحقة'):(paid0>=mTotal&&mTotal>0?'✓ مسددة':'💰 مستحقة الآن (كمل '+ses.done+'/'+ses.required+')'));
 return '<option value="'+m+'" '+(m===defMonth?'selected':'')+'>'+monthName(m)+' — '+tag+'</option>';
 }).join('')+'</select></div>'
 +'<div class="filter-info" id="pmInfo"></div>'
@@ -827,23 +941,30 @@ LU.pmInfo();
 LU.pmInfo=function(){
 try{
 var pm=LU._pm||{}; var m=(document.getElementById('pmMonth')||{}).value||localMonth();
-var g=gById(pm.gid); var total=feeOf(g);
-var paid=paidOf(payFor(pm.sid,pm.gid,m)); var rem=Math.max(0,total-paid);
+var g=gById(pm.gid); var fee=feeOf(g);
+var rec=payFor(pm.sid,pm.gid,m);
+var isLeg=/^\d{4}-\d{2}$/.test(m)&&monthsList().indexOf(m)<0;
+var total=(isLeg&&rec&&rec.amount)?rec.amount:fee;
+var paid=paidOf(rec); var rem=Math.max(0,total-paid);
 var ses=LU.groupSessions(pm.gid,m);
 var el=document.getElementById('pmInfo');
-if(el) el.innerHTML='📅 '+monthName(m)+' · الشهرية: <strong>'+total+'</strong> · المدفوع: <strong>'+paid+'</strong> · المتبقي: <strong style="color:var(--danger)">'+rem+'</strong> · الحصص: <strong>'+ses.done+'/'+ses.required+'</strong> '+(ses.complete?'(مكتملة → المطالبة صحيحة)':'(مكملتش — أي دفع هيتسجل مقدم)');
+if(el) el.innerHTML='📅 '+monthName(m)+' · الشهرية: <strong>'+total+'</strong> · المدفوع: <strong>'+paid+'</strong> · المتبقي: <strong style="color:var(--danger)">'+rem+'</strong> · الحصص: <strong>'+ses.done+'/'+ses.required+'</strong> '+(isLeg?'<br>📜 <strong>بتحصّل مستحق شهر سابق — مش شهرية الشهر الحالي.</strong>':(ses.complete?'(مكتملة → المطالبة صحيحة)':'(مكملتش — أي دفع هيتسجل مقدم)'));
 var amt=document.getElementById('pmAmt'); if(amt) amt.value=rem>0?rem:(total||0);
 }catch(e){}
 };
 LU.pmSet=function(w){
 try{
 var pm=LU._pm||{}; var m=(document.getElementById('pmMonth')||{}).value||localMonth();
-var g=gById(pm.gid); var total=feeOf(g);
-var paid=paidOf(payFor(pm.sid,pm.gid,m)); var rem=Math.max(0,total-paid);
+var g=gById(pm.gid); var fee=feeOf(g);
+var rec=payFor(pm.sid,pm.gid,m);
+var isLeg=/^\d{4}-\d{2}$/.test(m)&&monthsList().indexOf(m)<0;
+var total=(isLeg&&rec&&rec.amount)?rec.amount:fee;
+var paid=paidOf(rec); var rem=Math.max(0,total-paid);
 var amt=document.getElementById('pmAmt'); if(!amt) return;
 amt.value=(w==='rem')?rem:(w==='half'?Math.round(total/2):total);
 }catch(e){}
 };
+
 LU.applyPay=async function(sid,gid,month){
 try{
 var amt=parseFloat(document.getElementById('pmAmt').value)||0;
@@ -863,6 +984,20 @@ saveD(d); await cloudPay(p,false);
 var rem=Math.max(0,p.amount-p.paidAmount);
 ThemeManager.closeModal();
 if(window.safeToast) window.safeToast('💵 تم تسجيل '+amt+' ج.م'+(rem>0?(' — باقي '+rem):' — مسدد بالكامل'),'success');
+try{
+var isLegM=/^\d{4}-\d{2}$/.test(month)&&monthsList().indexOf(month)<0;
+if(isLegM&&rem<=0&&DataService.addNotification){
+var msgL='✅ تم سداد المستحق القديم لشهر '+monthName(month)+' بالكامل — شكراً 🌹';
+DataService.addNotification({targetUserId:sid,title:'✅ سداد مستحق سابق',message:msgL,type:'payment',priority:'medium',meta:{event:'legacy_paid',month:month}});
+var stL=DataService.getUserById?DataService.getUserById(sid):null;
+var ppL=String((stL&&stL.parentPhone)||'').replace(/\D/g,'');
+(DataService.getUsers?DataService.getUsers():[]).forEach(function(uL){
+if(uL.role!=='parent') return;
+var upL=String(uL.phone||'').replace(/\D/g,'');
+if((uL.studentIds||[]).indexOf(sid)>=0||(ppL&&upL&&upL===ppL)) DataService.addNotification({targetUserId:uL.id,title:'✅ سداد مستحق سابق لابنك',message:msgL+' (الطالب: '+(stL?stL.name:'')+')',type:'payment',priority:'medium',meta:{event:'legacy_paid',month:month}});
+});
+}
+}catch(eN){}
 }catch(e){ if(window.safeToast) window.safeToast('خطأ: '+e.message,'error'); }
 finally{ LU.refresh(); }
 };

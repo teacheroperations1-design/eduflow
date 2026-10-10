@@ -477,5 +477,27 @@ function showError(title, msg){
   `;
 }
 </script>
+<script>
+(function(){
+try{
+var code=new URLSearchParams(location.search).get('code'); if(!code) return;
+function rec(){
+try{
+var s=(DataService.findStudentByCode?DataService.findStudentByCode(code):null)||(DataService.getStudents?DataService.getStudents():[]).find(function(x){return x.code===code;});
+if(!s) return;
+var n=new Date(), ds=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');
+var d=DataService._getData(); d.barcodeScans=d.barcodeScans||[];
+var id='bs_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+d.barcodeScans.push({id:id,studentId:s.id,day:ds,at:n.toISOString()});
+if(d.barcodeScans.length>6000) d.barcodeScans=d.barcodeScans.slice(-5000);
+DataService._saveData(d);
+try{ if(window.FirebaseService&&FirebaseService._db) FirebaseService.saveDoc('barcodeScans',id,{studentId:s.id,day:ds,at:n.toISOString()}); }catch(e){}
+}catch(e){}
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){ setTimeout(rec,800); }); else setTimeout(rec,800);
+setTimeout(rec,2500);
+}catch(e){}
+})();
+</script>
 </body>
 </html>
