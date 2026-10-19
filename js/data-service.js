@@ -1790,5 +1790,52 @@ for(var k=0;k<admins.length;k++){ await DataService.addNotification({title:'💰
 return res;
 };
 })();
+/* ================================================================
+   ↩️ نظام التراجع العالمي (Global Undo System)
+   ================================================================ */
+(function() {
+    // 1. اعتراض عملية الحفظ لأخذ نسخة احتياطية قبل التعديل
+    if (window.DataService && typeof DataService._saveData === 'function') {
+        const originalSave = DataService._saveData;
+        DataService._saveData = function(data) {
+            try {
+                // حفظ الحالة الحالية كنسخة احتياطية للتراجع
+                const currentDb = localStorage.getItem('eduflow_db') || '{}';
+                localStorage.setItem('eduflow_undo_backup', currentDb);
+                localStorage.setItem('eduflow_undo_time', new Date().toLocaleTimeString('ar-EG'));
+            } catch(e) {}
+            return originalSave.call(this, data);
+        };
+    }
 
+    // 2. دالة التراجع
+    window.undoLastAction = function() {
+        const backup = localStorage.getItem('eduflow_undo_backup');
+        const time = localStorage.getItem('eduflow_undo_time') || 'غير معروف';
+        
+        if (!backup) {
+            if(window.safeToast) window.safeToast('لا توجد نسخة احتياطية للتراجع عنها', 'warning');
+            else alert('لا توجد نسخة احتياطية للتراجع عنها');
+            return;
+        }
+
+        if (!confirm(`هل أنت متأكد من التراجع عن آخر تعديل؟\nسيتم استعادة البيانات للحالة التي كانت عليها الساعة: ${time}`)) {
+            return;
+        }
+
+        try {
+            // استعادة النسخة الاحتياطية
+            localStorage.setItem('eduflow_db', backup);
+            
+            // إذا كان هناك مزامنة مع Firebase، نحتاج لإعادة التحميل لضمان التطابق
+            if(window.safeToast) window.safeToast('↩️ تم التراجع عن آخر تعديل بنجاح', 'success');
+            
+            // إعادة تحميل الصفحة لتطبيق التغييرات
+            setTimeout(() => { location.reload(); }, 500);
+        } catch(e) {
+            console.error('Undo failed', e);
+            if(window.safeToast) window.safeToast('فشل عملية التراجع', 'error');
+        }
+    };
+})();
 window.DataService = DataService;

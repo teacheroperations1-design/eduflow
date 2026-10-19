@@ -287,6 +287,86 @@ window.createUploadButton = function(inputId, previewId, title){
   };
   console.log('✅ Ops bridge loaded — سد فجوات الخدمات');
 })();
+/* ============ ⏳ مؤشر تحميل عام لأي ضغطة ============ */
+(function(){
+  if(document.getElementById('glLoaderCss')) return;
+  var st=document.createElement('style'); st.id='glLoaderCss';
+  st.textContent='#glLoader{position:fixed;top:0;left:0;right:0;height:4px;z-index:999999;pointer-events:none;}#glLoader .bar{height:100%;width:0;background:linear-gradient(90deg,#6366f1,#ec4899,#f59e0b);box-shadow:0 0 12px rgba(99,102,241,.8);}#glLoader.on .bar{width:85%;transition:width 8s cubic-bezier(.1,.7,.3,1);}#glLoader.done .bar{width:100%;transition:width .25s;opacity:0;}';
+  document.head.appendChild(st);
+  var el=document.createElement('div'); el.id='glLoader'; el.innerHTML='<div class="bar"></div>'; document.body.appendChild(el);
+  window.__loaderOn=function(){ el.classList.remove('done'); void el.offsetWidth; el.classList.add('on'); };
+  window.__loaderOff=function(){ el.classList.add('done'); el.classList.remove('on'); setTimeout(function(){ el.classList.remove('done'); },400); };
+  document.addEventListener('click',function(e){
+    var b=e.target&&e.target.closest?e.target.closest('button,.btn,.sidebar-item,.store-item,.fc-opt'):null;
+    if(!b) return;
+    window.__loaderOn();
+    clearTimeout(window.__ldT); window.__ldT=setTimeout(window.__loaderOff,2600);
+  },true);
+  if(window.ThemeManager&&!ThemeManager.__ldWrap){ ThemeManager.__ldWrap=1; var om=ThemeManager.openModal; ThemeManager.openModal=function(){ window.__loaderOff&&window.__loaderOff(); return om.apply(this,arguments); }; }
+})();
+/* ============ 📸 صور بوستات الحصة (موحّدة) ============ */
+window.postImagesHtml=function(p){
+  var imgs=(p&&((p.boardImages&&p.boardImages.length)?p.boardImages:p.images))||[];
+  if(!imgs.length) return '';
+  return '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;margin-top:8px;">'+imgs.map(function(im){return '<img src="'+im+'" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;border:1px solid var(--border);cursor:pointer;" onclick="window.openImageZoom&&window.openImageZoom(this.src)">';}).join('')+'</div>';
+};
+/* ============ 📡 سجل حي لشاشة المراقبة ============ */
+window.pushLiveFeed=function(type,name,extra){
+  try{
+    var d=(window.DataService&&DataService._getData)?DataService._getData():{};
+    d.liveFeed=d.liveFeed||[];
+    d.liveFeed.unshift({id:'lf_'+Date.now()+Math.random().toString(36).slice(2,5),type:type,name:name||'',at:new Date().toISOString(),extra:extra||''});
+    if(d.liveFeed.length>120) d.liveFeed.length=120;
+    DataService._saveData(d);
+  }catch(e){}
+};
 
+
+
+/* ============ 📸 إظهار صور السبورة/البوستات (ليدر أو أستاذ) في كل الشاشات ============ */
+(function(){
+  if(window.__postImgHook) return; window.__postImgHook=1;
+  function inject(){
+    try{
+      var d=(window.DataService&&DataService._getData)?DataService._getData():{};
+      var posts=(d.classPosts||[]).filter(function(p){return (p.boardImages&&p.boardImages.length)||(p.images&&p.images.length);});
+      if(!posts.length) return;
+      var nodes=document.querySelectorAll('.sub-row,.card,.post-card,.cp-card');
+      posts.forEach(function(p){
+        var imgs=p.boardImages||p.images;
+        for(var i=0;i<nodes.length;i++){
+          var el=nodes[i];
+          if(el.querySelector('.lbImgs')) continue;
+          var t=el.textContent||'';
+          if((p.title&&t.indexOf(p.title)>=0)||((p.content||'').length>10&&t.indexOf(String(p.content).slice(0,40))>=0)){
+            var wrap=document.createElement('div'); wrap.className='lbImgs';
+            wrap.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px;margin-top:8px;';
+            wrap.innerHTML=imgs.map(function(im){return '<img src="'+im+'" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;border:1px solid var(--border);cursor:pointer;" onclick="window.openImageZoom&&window.openImageZoom(this.src)">';}).join('');
+            el.appendChild(wrap);
+          }
+        }
+      });
+    }catch(e){}
+  }
+  setInterval(inject,3000); setTimeout(inject,1200);
+})();
+/* ============ 🛠 تطبيع بوستات السبورة القديمة (إصلاح 📅 undefined) ============ */
+(function(){
+  function fix(){
+    try{
+      var d=(window.DataService&&DataService._getData)?DataService._getData():{};
+      var ch=false;
+      (d.classPosts||[]).forEach(function(p){
+        if(!p.date){
+          var m=String(p.title||'').match(/(\d{4}-\d{2}-\d{2})/);
+          p.date=m?m[1]:String(p.createdAt||new Date().toISOString()).slice(0,10);
+          ch=true;
+        }
+      });
+      if(ch) DataService._saveData(d);
+    }catch(e){}
+  }
+  fix(); setTimeout(fix,1500); setInterval(fix,20000);
+})();
 window.UI = UI;
 console.log('✅ UI Helpers loaded with Image Upload System');

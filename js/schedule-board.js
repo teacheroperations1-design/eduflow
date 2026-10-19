@@ -1105,3 +1105,35 @@ if(!isNow) hEl.textContent=hEl.textContent.replace(' ⏰','');
 }
 tick(); setInterval(tick,30000);
 })();
+/* ========== ⏱️ علامة: مجموعة ساعة واحدة بموعد واحد (الأصل موعدين) ========== */
+(function(){
+if(window.__ohMark) return; window.__ohMark=1;
+window.__oneHourMark=function(g){
+  var sch=(g.schedules&&g.schedules.length)?g.schedules:[(g.day?{day:g.day,time:g.time}:null)].filter(Boolean);
+  var dur=parseInt(g.duration)||60;
+  var weekly=dur*sch.length;
+  return sch.length===1 && weekly<=60;
+};
+function mark(){
+  try{
+    var gs=(DataService.getGroups?DataService.getGroups():[]).filter(window.__oneHourMark);
+    if(!gs.length) return;
+    document.querySelectorAll('.sb-card,.group-card,.card,.sub-row,.week-session').forEach(function(el){
+      if(el.querySelector('.ohMark')) return;
+      /* 🎯 مطابقة على عنصر الاسم بس وبالاسم الكامل — مفيش لصق على كروت تانية */
+      var nodes=[el.querySelector('.sb-name,.group-name,.title'), el.querySelector('strong'), el.querySelector('b')];
+      for(var n=0;n<nodes.length;n++){
+        var node=nodes[n]; if(!node||node.querySelector('.ohMark')) continue;
+        var txt=(node.textContent||'').trim();
+        for(var i=0;i<gs.length;i++){
+          if(gs[i].name && txt===gs[i].name){
+            var s=document.createElement('span'); s.className='ohMark'; s.title='⚠️ ساعة واحدة أسبوعياً بموعد واحد — يُفضّل إضافة موعد ثاني'; s.textContent=' ⏱️'; s.style.cssText='font-size:11px;color:var(--warning);font-weight:900;';
+            node.appendChild(s); return;
+          }
+        }
+      }
+    });
+  }catch(e){}
+}
+setInterval(mark,2500); setTimeout(mark,1200);
+})();

@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>تسجيل حضور الحصة | EduFlow</title>
+<link rel="stylesheet" href="css/eduflow-theme.css">
+<style>
+/* ==========================================
+   🎨 Core Animations & Vibes
+   ========================================== */
+:root {
+  --primary: #6366f1;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --glass-bg: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.15);
+}
+[data-theme="light"] {
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.8);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Cairo', sans-serif;
+  background: #0f172a;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Floating Background Orbs */
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  animation: floatOrb 15s infinite ease-in-out;
+  z-index: 0;
+}
+.orb-1 { width: 300px; height: 300px; background: #6366f1; top: -50px; right: -50px; animation-delay: 0s; }
+.orb-2 { width: 400px; height: 400px; background: #ec4899; bottom: -100px; left: -100px; animation-delay: -5s; }
+.orb-3 { width: 250px; height: 250px; background: #8b5cf6; top: 40%; left: 30%; animation-delay: -10s; }
+
+@keyframes floatOrb {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -40px) scale(1.1); }
+  66% { transform: translate(-20px, 30px) scale(0.9); }
+}
+
+/* Main Card */
+.ci-wrap {
+  width: 90%;
+  max-width: 440px;
+  position: relative;
+  z-index: 10;
+  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(40px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.ci-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 28px;
+  padding: 32px 24px;
+  text-align: center;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s ease;
+}
+
+/* Typography & Icons */
+.ci-icon-wrap {
+  font-size: 64px;
+  margin-bottom: 16px;
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+.ci-icon-wrap.pulse { animation: pulseIcon 2s infinite; }
+@keyframes pulseIcon {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.ci-title {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 8px;
+  color: #fff;
+}
+[data-theme="light"] .ci-title { color: #0f172a; }
+
+.ci-msg {
+  font-size: 14px;
+  line-height: 1.8;
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 24px;
+}
+[data-theme="light"] .ci-msg { color: #475569; }
+
+/* Buttons */
+.ci-btn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+[data-theme="light"] .ci-btn { background: rgba(0,0,0,0.03); color: #0f172a; }
+
+.ci-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(0,0,0,0.3); }
+.ci-btn:active { transform: translateY(0); }
+
+.ci-btn.primary {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border: none;
+  box-shadow: 0 8px 16px -4px rgba(99, 102, 241, 0.4);
+}
+.ci-btn.success {
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  box-shadow: 0 8px 16px -4px rgba(16, 185, 129, 0.4);
+}
+.ci-btn.ghost {
+  background: transparent;
+  border: 1px dashed var(--glass-border);
+  color: rgba(255,255,255,0.7);
+}
+.ci-btn.warning {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border: none;
+}
+
+/* Video Scanner */
+.scanner-wrap {
+  position: relative;
+  width: 100%;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-top: 16px;
+  background: #000;
+  display: none;
+  border: 2px solid var(--glass-border);
+}
+#ciVideo {
+  width: 100%;
+  height: 280px;
+  object-fit: cover;
+  display: block;
+}
+/* Scanning Laser Animation */
+.scanner-laser {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, #10b981, transparent);
+  box-shadow: 0 0 15px #10b981;
+  animation: scanMove 2s linear infinite;
+  pointer-events: none;
+}
+@keyframes scanMove {
+  0% { top: 0; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* Success Animation */
+.success-checkmark {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 16px;
+  display: none;
+}
+.checkmark-circle {
+  stroke-dasharray: 166;
+  stroke-dashoffset: 166;
+  stroke-width: 4;
+  stroke-miterlimit: 10;
+  stroke: #10b981;
+  fill: none;
+  animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+.checkmark-check {
+  transform-origin: 50% 50%;
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  stroke: #10b981;
+  stroke-width: 4;
+  fill: none;
+  animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.4s forwards;
+}
+@keyframes stroke {
+  100% { stroke-dashoffset: 0; }
+}
+
+/* Inputs */
+.ci-input {
+  width: 100%;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+  font-family: 'Fira Code', monospace;
+  font-size: 18px;
+  text-align: center;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  outline: none;
+  transition: all 0.2s;
+}
+[data-theme="light"] .ci-input { background: rgba(0,0,0,0.03); color: #0f172a; }
+.ci-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
+
+.footer-text {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+  z-index: 10;
+  position: relative;
+}
+[data-theme="light"] .footer-text { color: rgba(0,0,0,0.4); }
+</style>
+</head>
+<body data-theme="dark">
+
+<!-- Background Orbs -->
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<div class="ci-wrap">
+  <div class="ci-card" id="mainCard">
+    <!-- Success Animation SVG -->
+    <svg class="success-checkmark" id="successSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+      <circle class="checkmark-circle" cx="26" cy="26" r="25"/>
+      <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+    </svg>
+
+    <div class="ci-icon-wrap" id="ciIcon">⏳</div>
+    <h2 class="ci-title" id="ciTitle">جاري تجهيز بوابة الحضور...</h2>
+    <p class="ci-msg" id="ciMsg"></p>
+    
+    <div id="ciActions"></div>
+    
+    <div class="scanner-wrap" id="scannerWrap">
+      <video id="ciVideo" playsinline muted></video>
+      <div class="scanner-laser"></div>
+    </div>
+  </div>
+  
+  <div class="footer-text">EduFlow by Habbash Group — بوابة الحضور الذكية</div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="js/config.js"></script>
+<script src="js/firebase-service.js"></script>
+<script src="js/data-service.js"></script>
+<script src="js/auth-service.js"></script>
+<script>
+(function(){
+"use strict";
+var DAYEN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+var urlGid=new URLSearchParams(location.search).get('gid')||'';
+function pad(n){return String(n).padStart(2,'0');}
+function todayStr(){var d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function nowMin(){var d=new Date();return d.getHours()*60+d.getMinutes();}
+function minOf(t){var p=String(t||'0:00').split(':');return (+p[0]||0)*60+(+p[1]||0);}
+function db(){return (window.DataService&&DataService._getData)?DataService._getData():{};}
+function saveD(d){if(DataService._saveData)DataService._saveData(d);}
+function groups(){return (DataService.getGroups?DataService.getGroups():[]);}
+function gById(id){return groups().find(function(g){return g.id===id;});}
+function schedOf(g){return (g.schedules&&g.schedules.length)?g.schedules:(g.day?[{day:g.day,time:g.time}]:[]);}
+function groupsOf(sid){try{return (DataService.getStudentTeachers?DataService.getStudentTeachers(sid):[]).map(function(t){return t.group;}).filter(Boolean);}catch(e){return [];}}
+function deviceId(){try{var id=localStorage.getItem('eduflowDeviceId');if(!id){id='dev_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);localStorage.setItem('eduflowDeviceId',id);}return id;}catch(e){return 'dev_unknown';}}
+
+var OPEN_BEFORE=30, OPEN_AFTER=30;
+
+function openSessionsFor(sid){
+  var nm=nowMin(),todayEn=DAYEN[new Date().getDay()],out=[];
+  groupsOf(sid).forEach(function(g){
+    if(urlGid&&g.id!==urlGid)return;
+    schedOf(g).forEach(function(s){
+      if(s.day!==todayEn)return;
+      var st=minOf(s.time), en=st+(parseInt(g.duration)||60);
+      if(nm>=st-OPEN_BEFORE&&nm<=en+OPEN_AFTER) out.push({g:g,time:s.time,st:st,en:en});
+    });
+  });
+  out.sort(function(a,b){return a.st-b.st;});
+  return out;
+}
+
+/* 🎨 UI State Manager */
+function setUI(icon, title, msg, actionsHtml, showScanner, isSuccess){
+  document.getElementById('ciIcon').textContent = icon;
+  document.getElementById('ciIcon').className = 'ci-icon-wrap' + (icon==='📷'?' pulse':'');
+  document.getElementById('ciTitle').textContent = title;
+  document.getElementById('ciMsg').innerHTML = msg || '';
+  document.getElementById('ciActions').innerHTML = actionsHtml || '';
+  
+  var scanner = document.getElementById('scannerWrap');
+  scanner.style.display = showScanner ? 'block' : 'none';
+  
+  var successSvg = document.getElementById('successSvg');
+  var mainIcon = document.getElementById('ciIcon');
+  if(isSuccess){
+    successSvg.style.display = 'block';
+    mainIcon.style.display = 'none';
+  } else {
+    successSvg.style.display = 'none';
+    mainIcon.style.display = 'inline-block';
+  }
+}
+
+/* 🔐 Session Check */
+function getSavedUser(){
+  try{
+    var u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null;
+    if(u&&u.role==='student') return u;
+    var raw=sessionStorage.getItem('eduflow_user')||localStorage.getItem('eduflow_user');
+    if(raw){ var p=JSON.parse(raw); if(p&&p.role==='student') return p; }
+    var bs=sessionStorage.getItem('eduflow_barcode_session')||localStorage.getItem('eduflow_barcode_session');
+    if(bs){ var b=JSON.parse(bs); if(b&&b.barcodeLogin&&b.expiresAt>Date.now()){ var s=DataService.getUserById?DataService.getUserById(b.id):null; if(s&&s.role==='student') return s; } }
+  }catch(e){}
+  return null;
+}
+
+function saveSession(s){
+  try{
+    sessionStorage.setItem('eduflow_user',JSON.stringify(s));
+    localStorage.setItem('eduflow_user',JSON.stringify(s));
+    var bs=JSON.stringify({id:s.id,barcodeLogin:true,expiresAt:Date.now()+6*3600000});
+    sessionStorage.setItem('eduflow_barcode_session',bs);
+    localStorage.setItem('eduflow_barcode_session',bs);
+  }catch(e){}
+}
+
+/* ✅ Check-in Logic */
+function doCheckIn(sid,gid){
+  var d=db();d.checkIns=d.checkIns||[];
+  if(d.checkIns.some(function(x){return x.studentId===sid&&x.groupId===gid&&x.date===todayStr();})){
+    setUI('✅','متسجل بالفعل!','حضرتك مسجلة في هذه الحصة اليوم.<br>نتمنى لك يوماً دراسياً موفقاً 💜',
+    '<button class="ci-btn primary" onclick="location.href=\'student-dashboard.html\'">🎓 فتح لوحة التحكم</button>', false, true);
+    return;
+  }
+  
+  var rec={id:'ci_'+Date.now()+'_'+sid,studentId:sid,groupId:gid,date:todayStr(),at:new Date().toISOString(),method:'door',deviceId:deviceId()};
+  d.checkIns.push(rec);saveD(d);
+  try{if(window.FirebaseService&&FirebaseService._db)FirebaseService.saveDoc('checkIns',rec.id,rec);}catch(e){}
+  
+  var g=gById(gid);
+  setUI('','تم تسجيل الحضور بنجاح!','<strong>'+(g?g.name:'')+'</strong><br>'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'<br>مع السلامة في الحصة 💜',
+  '<button class="ci-btn primary" style="margin-top:24px;" onclick="location.href=\'student-dashboard.html\'">🎓 فتح لوحة التحكم</button>', false, true);
+}
+
+function pickSession(sid,list){
+  if(!list.length){
+    setUI('😴','خارج نافذة الحضور','الحصة إما لم تبدأ بعد أو انتهت.<br>النوافذ تفتح قبل الحصة بـ 30 دقيقة وتغلق بعدها بـ 30 دقيقة.',
+    '<button class="ci-btn primary" onclick="location.href=\'student-dashboard.html\'">🎓 فتح لوحة التحكم</button>'+
+    '<button class="ci-btn ghost" onclick="gate()">🔄 محاولة مرة أخرى</button>');
+    return;
+  }
+  if(list.length===1){ doCheckIn(sid,list[0].g.id); return; }
+  
+  var btns = list.map(function(s){
+    return '<button class="ci-btn" onclick="doCheckIn(\''+sid+'\',\''+s.g.id+'\')">📚 '+s.g.name+' <span style="opacity:0.7;font-size:12px;margin-right:auto;">🕐 '+s.time+'</span></button>';
+  }).join('');
+  
+  setUI('👥','اختر الحصة','لديك أكثر من حصة في هذا الوقت:', btns);
+}
+
+/* 🔍 Code Entry */
+function identifyByCode(code){
+  code=(code||'').trim(); if(!code) return;
+  var s=null;
+  try{ s=DataService.findStudentByCode?DataService.findStudentByCode(code):null; }catch(e){}
+  if(!s){ try{ s=(DataService.getStudents?DataService.getStudents():[]).find(function(x){return (x.code||'').toLowerCase()===code.toLowerCase();}); }catch(e){} }
+  
+  if(!s){
+    setUI('❌','الكود غير صحيح','تأكد من الكود المكتوب على الكارنيه.',
+    '<button class="ci-btn primary" onclick="showCodeForm()">⌨️ محاولة أخرى</button>'+
+    '<button class="ci-btn warning" onclick="location.href=\'teachers-showcase.html\'">🏫 لست طالباً؟ تصفح المنصة</button>');
+    return;
+  }
+  saveSession(s);
+  pickSession(s.id, openSessionsFor(s.id));
+}
+
+window.__ciCodeGo=function(){ identifyByCode(document.getElementById('ciCodeInput').value); };
+window.gate=function(){ gate(); };
+window.showCodeForm=function(){ showCodeForm(); };
+window.doCheckIn=function(sid,gid){ doCheckIn(sid,gid); };
+window.__ciPick=function(sid,gid){ doCheckIn(sid,gid); };
+
+function showCodeForm(){
+  stopScan();
+  setUI('⌨️','إدخال يدوي','أدخل كود الطالب المطبوع على الكارنيه:',
+  '<input id="ciCodeInput" class="ci-input" placeholder="EDU-XXXX" autocomplete="off">'+
+  '<button class="ci-btn success" onclick="window.__ciCodeGo()">✅ تحقق وسجّل</button>'+
+  '<button class="ci-btn" onclick="window.__ciScan()">📷 مسح بالكاميرا</button>'+
+  '<button class="ci-btn ghost" onclick="location.href=\'teachers-showcase.html\'">🏫 تصفح المنصة</button>');
+  setTimeout(function(){var i=document.getElementById('ciCodeInput');if(i){i.focus();}},120);
+}
+
+/* 📷 Scanner Logic */
+var stream=null, scanTimer=null;
+function stopScan(){ 
+  try{if(scanTimer){clearInterval(scanTimer);scanTimer=null;}}catch(e){} 
+  try{if(stream){stream.getTracks().forEach(function(t){t.stop();});stream=null;}}catch(e){} 
+}
+
+window.__ciScan=function(){
+  var v=document.getElementById('ciVideo');
+  if(!navigator.mediaDevices||typeof navigator.mediaDevices.getUserMedia!=='function'||!('BarcodeDetector' in window)){
+    showCodeForm();
+    return;
+  }
+  
+  setUI('📷','وجّه الكاميرا','ضع باركود الكارنيه داخل الإطار ليتم التعرف عليك تلقائياً.', '', true);
+  
+  var det=new BarcodeDetector({formats:['qr_code','code_128','ean_13']});
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(function(s){
+    stream=s; v.srcObject=s; v.play();
+    scanTimer=setInterval(function(){
+      try{ 
+        det.detect(v).then(function(codes){
+          if(!codes||!codes.length)return;
+          stopScan();
+          var raw=String(codes[0].rawValue||'');
+          var m=raw.match(/barcode=([\w-]+)/)||raw.match(/code=([\w-]+)/);
+          identifyByCode(m?m[1]:raw);
+        }).catch(function(){}); 
+      }catch(e){}
+    },500);
+  }).catch(function(){ 
+    stopScan();
+    setUI('⚠️','فشل الوصول للكاميرا','يرجى السماح باستخدام الكاميرا من إعدادات المتصفح، أو استخدم الإدخال اليدوي.',
+    '<button class="ci-btn primary" onclick="showCodeForm()">⌨️ إدخال يدوي</button>');
+  });
+};
+
+/* 🚀 Initialization Flow */
+function gate(){
+  setUI('🚪','بوابة الحضور الذكية','هل أنت طالب مسجل لدينا بالفعل؟',
+  '<button class="ci-btn success" onclick="window.__ciYes()">🙋 نعم، أنا طالب</button>'+
+  '<button class="ci-btn warning" onclick="location.href=\'teachers-showcase.html\'">🏫 لا / جديد - تعرف علينا</button>');
+  
+  window.__ciYes=function(){
+    if('BarcodeDetector' in window && navigator.mediaDevices) window.__ciScan(); 
+    else showCodeForm();
+  };
+}
+
+(async function(){
+  try{ if(DataService&&DataService.init) await DataService.init(); }catch(e){}
+  try{
+    var saved=getSavedUser();
+    window.__ciSavedGo=function(){ pickSession(saved.id, openSessionsFor(saved.id)); };
+    if(saved){
+      var sessions=openSessionsFor(saved.id);
+      if(sessions.length > 0){
+        // Smart Auto-Entry: Show a beautiful one-tap card
+        setUI('👋','أهلاً بك يا '+(saved.name||'طالب'),'مسجل دخولك على هذا الجهاز.<br>اضغط أدناه لتسجيل حضورك فوراً.',
+        '<button class="ci-btn success" style="font-size:18px;padding:20px;" onclick="window.__ciSavedGo()">✅ تسجيل الحضور الآن</button>'+
+        '<button class="ci-btn ghost" onclick="gate()">🔄 لست أنا / طالب آخر</button>');
+      } else {
+        // Saved but no active session right now
+        setUI('👋','أهلاً بك يا '+(saved.name||'طالب'),'لا توجد حصص نشطة في هذا الوقت.',
+        '<button class="ci-btn primary" onclick="location.href=\'student-dashboard.html\'">🎓 فتح لوحة التحكم</button>'+
+        '<button class="ci-btn ghost" onclick="gate()">🔄 محاولة مرة أخرى</button>');
+      }
+      return;
+    }
+    gate();
+  }catch(e){ gate(); }
+})();
+
+})();
+</script>
+</body>
+</html>

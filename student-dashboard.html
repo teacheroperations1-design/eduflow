@@ -258,6 +258,9 @@ box-shadow:0 4px 12px rgba(220,38,38,.4);
 /* 🛍️ منتج المتجر الحقيقي */
 .rs-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:10px;transition:all .2s;}
 .rs-item:hover{border-color:var(--primary-border);transform:translateY(-2px);}
+.rs-item{min-width:0;overflow:hidden;}
+.rs-item .btn{min-width:0;padding:10px 8px;font-size:13px;white-space:nowrap;}
+.rs-item p{margin:0;word-break:break-word;}
 .rs-item.coming{opacity:.7;}
 .rs-item-img{width:100%;height:140px;object-fit:cover;border-radius:10px;background:var(--surface-hover);}
 .rs-item-img.placeholder{display:flex;align-items:center;justify-content:center;font-size:48px;color:var(--text-muted);}
@@ -326,9 +329,11 @@ box-shadow:0 4px 12px rgba(220,38,38,.4);
 <button class="quick-action" onclick="window.showSection('points')"><div class="quick-action-icon">🏆</div><div class="quick-action-label">نقاطي</div></button>
 <button class="quick-action" onclick="window.showSection('store')"><div class="quick-action-icon">🛒</div><div class="quick-action-label">المتجر</div></button>
 <button class="quick-action" onclick="window.showSection('teachers')"><div class="quick-action-icon">👨🏫</div><div class="quick-action-label">أساتذتي</div></button>
-<button class="quick-action" onclick="window.showSection('barcodeRequests')"><div class="quick-action-icon">🎟️</div><div class="quick-action-label">طلب باركود</div></button>
+<button class="quick-action" onclick="window.open('teachers-showcase.html','_blank')"><div class="quick-action-icon">🌟</div><div class="quick-action-label">تعرّف على الأساتذة</div></button>
+<button class="quick-action" onclick="window.showSection('barcodeRequests')"><div class="quick-action-icon">🎟️</div><div class="quick-action-label">طلب باركود</div></button><button class="quick-action" id="qaLeader" onclick="window.showSection('leader')" style="display:none;"><div class="quick-action-icon">🎖️</div><div class="quick-action-label">أنا الليدر</div></button><button class="quick-action" onclick="window.open('teachers-showcase.html','_blank')"><div class="quick-action-icon">🌟</div><div class="quick-action-label">تعرّف على الأساتذة</div></button>
 <button class="quick-action" onclick="window.showSection('attendance')"><div class="quick-action-icon">📋</div><div class="quick-action-label">تسجيل حضور</div></button><button class="quick-action" onclick="window.openParentPortal()"><div class="quick-action-icon">👨‍👩‍👦</div><div class="quick-action-label">دخول ولي الأمر</div></button>
 </div>
+<div id="gamesLabHost"></div>
 <h3 style="margin:16px 0 12px;">🔔 ما الجديد؟</h3>
 <div id="whatsNewList" style="margin-bottom:20px;"></div>
 <h3 style="margin:16px 0 12px;">🎯 إحصائياتي السريعة</h3>
@@ -339,6 +344,7 @@ box-shadow:0 4px 12px rgba(220,38,38,.4);
 <div class="section-header"><div><h2 class="section-title">📋 حضوري</h2></div></div>
 <div class="card" style="margin-bottom:16px;">
 <h3 class="card-title" style="margin-bottom:12px;">📱 تسجيل حضور</h3>
+<div id="oneTapCheckin" style="margin-bottom:12px;"></div>
 <div class="form-group"><label>المجموعة</label><select id="attGroup" class="form-select"></select></div>
 <button class="btn btn-primary w-full" onclick="window.startQRScanner()" style="margin-bottom:12px;">📷 مسح QR من الشاشة</button>
 <div class="form-group"><label>أو أدخل الكود</label>
@@ -356,12 +362,39 @@ box-shadow:0 4px 12px rgba(220,38,38,.4);
 <div id="examsList"></div>
 </section>
 
-<section class="section" id="section-results"><div class="section-header"><div><h2 class="section-title">📊 درجاتي ونتائجي</h2><p class="text-sm text-muted">📄 الورقي أولاً جنب 🌐 الأونلاين — مقسّمة حسب الأستاذ والمادة</p></div><button class="btn btn-ghost btn-sm" onclick="window.loadResultsV2&&window.loadResultsV2()">🔄 تحديث</button></div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;" id="resultsGrid">
-<div class="card" style="margin:0;"><div class="card-header"><h3 class="card-title">📄 نتائج الورقي</h3><span class="points-badge" id="paperAvg">-</span></div><div id="resultsPaperList" style="padding:10px;"></div></div>
-<div class="card" style="margin:0;"><div class="card-header"><h3 class="card-title">🌐 نتائج الأونلاين</h3><span class="points-badge" id="onlineAvg">-</span></div><div id="resultsOnlineList" style="padding:10px;"></div></div>
+<section class="section" id="section-followups">
+<div class="section-header"><div><h2 class="section-title">📌 متابعاتي</h2><p class="text-sm text-muted">أي متابعات مفتوحة بخصوصك</p></div><button class="btn btn-ghost btn-sm" onclick="window.renderFollowupsCenter()">🔄</button></div>
+</section>
+
+<section class="section" id="section-results">
+<div class="section-header">
+  <div>
+    <h2 class="section-title">📊 نتائجي وتقديري</h2>
+    <p class="text-sm text-muted">كل درجاتي — امتحانات وواجبات — مجمّعة حسب الأستاذ</p>
+  </div>
+  <button class="btn btn-ghost btn-sm" onclick="window.loadResultsV3&&window.loadResultsV3()">🔄 تحديث</button>
 </div>
-<style>@media(max-width:900px){#resultsGrid{grid-template-columns:1fr;}}</style></section>
+
+<div id="resultsOverview" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px;"></div>
+
+<div class="card" style="padding:10px;margin-bottom:14px;">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;">
+    <select class="form-select" id="resTypeFilter" onchange="window.loadResultsV3()">
+      <option value="all">📚 كل الأنواع</option>
+      <option value="exam">🎓 امتحانات</option>
+      <option value="hw">📝 واجبات</option>
+    </select>
+    <select class="form-select" id="resStatusFilter" onchange="window.loadResultsV3()">
+      <option value="all">📋 كل الحالات</option>
+      <option value="approved">✅ صادر</option>
+      <option value="pending">🕒 قيد المراجعة</option>
+    </select>
+  </div>
+</div>
+
+<div id="resultsGrouped" style="display:grid;gap:16px;"></div>
+</section>
+
 
 <section class="section" id="section-points">
 <div class="section-header"><div><h2 class="section-title">🏆 نقاطي وترتيبي</h2></div></div>
@@ -386,10 +419,27 @@ box-shadow:0 4px 12px rgba(220,38,38,.4);
 <div class="barcode-request-stats" id="barcodeRequestStats"></div>
 <div class="card"><h3 class="card-title" style="margin-bottom:12px;">📋 طلباتي السابقة</h3><div id="barcodeRequestsList"></div></div>
 </section>
-<!-- 🛍️ متجر المذكرات والكتب --><section class="section" id="section-realStore"><div class="section-header"><div><h2 class="section-title">🛍️ متجر المذكرات والكتب</h2><p class="text-sm text-muted">تصفح واشتري أو احجز — الدفع كاش عند الاستلام</p></div><button class="btn btn-ghost btn-sm" onclick="window.loadRealStore()">🔄 تحديث</button></div><div class="card" style="margin-bottom:12px;"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;"><div class="form-group" style="margin:0;"><label>🔍 بحث</label><input type="text" id="rsSearch" class="form-input" placeholder="اسم المذكرة..." autocomplete="off" name="rs_search_q" data-lpsearch="false" onfocus="try{if((this.value||'').indexOf('@')>=0)this.value='';}catch(e){}" onkeyup="window.loadRealStore()"></div><div class="form-group" style="margin:0;"><label>📂 الفئة</label><select id="rsCat" class="form-select" onchange="window.loadRealStore()"><option value="">الكل</option><option value="مذكرة">مذكرة</option><option value="كتاب">كتاب</option><option value="هدايا">هدايا</option></select></div><div class="form-group" style="margin:0;"><label>🎯 المرحلة</label><select id="rsStage" class="form-select" onchange="window.loadRealStore()"><option value="">الكل</option></select></div></div></div><div id="realStoreList" class="store-grid"></div></section><!-- 📦 طلباتي --><section class="section" id="section-myOrders"><div class="section-header"><div><h2 class="section-title">📦 طلباتي</h2><p class="text-sm text-muted">كل طلباتك في متجر المذكرات</p></div><button class="btn btn-ghost btn-sm" onclick="window.loadMyOrders()">🔄 تحديث</button></div><div class="filter-bar" style="margin-bottom:12px;"><button class="filter-btn active" onclick="window.setMyOrdersFilter('all',this)">الكل</button><button class="filter-btn" onclick="window.setMyOrdersFilter('pending',this)">⏳ معلقة</button><button class="filter-btn" onclick="window.setMyOrdersFilter('approved',this)">✅ موافق عليها</button><button class="filter-btn" onclick="window.setMyOrdersFilter('delivered',this)">📬 مسلّمة</button><button class="filter-btn" onclick="window.setMyOrdersFilter('cancelled',this)">❌ ملغية</button></div><div id="myOrdersList"></div></section><section class="section" id="section-teachers">
+<!-- 🛍️ متجر المذكرات والكتب -->
+ <section class="section" id="section-realStore">
+<div class="section-header"><div><h2 class="section-title">🛍️ متجر المذكرات والكتب</h2><p class="text-sm text-muted">مذكرات صفك ومرحلتك بتظهر هنا تلقائياً — الدفع كاش عند الاستلام</p></div><button class="btn btn-ghost btn-sm" onclick="window.loadRealStore()">🔄 تحديث</button></div>
+<div id="realStoreList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;"></div>
+</section>
+<section class="section" id="section-teachers">
 <div class="section-header"><div><h2 class="section-title">👨‍🏫 أساتذتي</h2></div></div>
 <div id="teachersList"></div>
 </section>
+
+<section class="section" id="section-myOrders">
+<div class="section-header"><div><h2 class="section-title">📦 طلباتي</h2><p class="text-sm text-muted">طلبات المذكرات والكتب</p></div><button class="btn btn-ghost btn-sm" onclick="window.loadMyOrders()">🔄 تحديث</button></div>
+<div class="filter-bar" style="margin-bottom:12px;">
+<button class="filter-btn active" onclick="window.setMyOrdersFilter('all',this)">الكل</button>
+<button class="filter-btn" onclick="window.setMyOrdersFilter('pending',this)">⏳ معلقة</button>
+<button class="filter-btn" onclick="window.setMyOrdersFilter('delivered',this)">📬 مسلّمة</button>
+<button class="filter-btn" onclick="window.setMyOrdersFilter('cancelled',this)">❌ ملغية</button>
+</div>
+<div id="myOrdersList"></div>
+</section>
+
 <section class="section" id="section-videos">
 <div class="section-header"><div><h2 class="section-title">🎬 الفيديوهات التعليمية</h2></div></div>
 <div id="videosList"></div>
@@ -410,10 +460,7 @@ box-shadow:0 4px 12px rgba(220,38,38,.4);
 <div class="section-header"><div><h2 class="section-title">💰 مدفوعاتي</h2></div></div>
 <div id="paymentsList"></div>
 </section>
-<section class="section" id="section-followups">
-<div class="section-header"><div><h2 class="section-title">📌 متابعاتي</h2></div></div>
-<div id="followupsList"></div>
-</section>
+
 <!-- ⚙️ الإعدادات -->
 <section class="section" id="section-settings">
 <div class="section-header">
@@ -480,6 +527,7 @@ box-shadow:0 4px 12px rgba(220,38,38,.4);
 <script src="js/config.js"></script>
 <script src="js/firebase-service.js"></script>
 <script src="js/data-service.js"></script>
+<script src="js/legendary-core.js"></script>
 <script src="js/operations-service.js"></script>
 <script src="js/ui-helpers.js"></script>
 <script src="js/drive-service.js"></script>
@@ -562,6 +610,7 @@ const T=tm=>DataService?.formatTime12?DataService.formatTime12(tm):tm;
 const db=()=>DataService?._getData?DataService._getData():{};
 const save=d=>DataService?._saveData?DataService._saveData(d):null;
 const safeToast=(msg,type='info')=>{ if(typeof ThemeManager?.toast==='function') ThemeManager.toast(msg,type); };
+window.safeToast=safeToast;
 window.driveThumb=function(url){
 try{
 if(!url) return '';
@@ -884,19 +933,36 @@ console.error('Boot error:', err);
 document.body.innerHTML='<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;"><div class="card">خطأ في التحميل: '+err.message+'<br><a href="login.html" class="btn btn-primary" style="margin-top:12px;">العودة</a></div></div>';
 }
 })();
-window.buildMenu=function(){
-const menu=[
-{s:'الرئيسية',items:[{id:'dashboard',l:'لوحة التحكم',i:'🎯'}]},
-{s:'التعلم',items:[{id:'attendance',l:'الحضور',i:'📋'},{id:'homework',l:'الواجبات',i:'📝'},{id:'exams',l:'الامتحانات',i:'🎓'},{id:'results',l:'النتائج',i:'📊'},{id:'classPosts',l:'بوستات الحصة',i:'📰'}]},
-{s:'🏆 التحفيز',items:[{id:'points',l:'نقاطي',i:'🏆'},{id:'store',l:'استبدال النقاط',i:'🏆'},{id:'realStore',l:'متجر المذكرات',i:'🛍️'},{id:'myOrders',l:'طلباتي',i:'📦'},{id:'challenges',l:'المسابقات',i:'🏆'}]},
-{s:'المحتوى',items:[{id:'videos',l:'الفيديوهات',i:'🎬'},{id:'interactive',l:'المواد التفاعلية',i:'🧩'}]},
-{s:'الخدمات',items:[{id:'barcodeRequests',l:'طلبات الباركود',i:'🎟️'}]},
-{s:'أساتذتي',items:[{id:'teachers',l:'قائمة الأساتذة',i:'👨‍🏫'}]},
-{s:'المالية والمتابعة',items:[{id:'payments',l:'المدفوعات',i:'💰'},{id:'followups',l:'المتابعات',i:'📌'},{id:'calendar',l:'التقويم',i:'📅'}]},
-{s:'⚙️ الحساب',items:[{id:'settings',l:'الإعدادات',i:'⚙️'}]}
-];
-document.getElementById('sidebarNav').innerHTML=menu.map(sec=>`<div class="sidebar-section"><div class="sidebar-section-title">${sec.s}</div>${sec.items.map(it=>`<div class="sidebar-item" data-section="${it.id}" onclick="window.showSection('${it.id}')"><span class="sidebar-item-icon">${it.i}</span><span class="sidebar-item-label">${it.l}</span></div>`).join('')}</div>`).join('');
+window.buildMenu = function(){
+const menu = [
+    {s:'الرئيسية', items:[{id:'dashboard', l:'لوحة التحكم', i:'🎯'}]},
+    {s:'التعلم', items:[{id:'homework', l:'الواجبات', i:'📝'}, {id:'exams', l:'الامتحانات', i:'🎓'}, {id:'results', l:'النتائج', i:'📊'}, {id:'attendance',l:'الحضور', i:'📋'}, {id:'classPosts', l:'بوستات الحصة', i:'📰'}, {id:'fcGames', l:'الألعاب', i:'🎮'}]},
+    {s:'🏆 التحفيز', items:[{id:'points', l:'نقاطي', i:'🏆'}, {id:'store', l:'استبدال النقاط', i:'🏆'}, {id:'realStore', l:'متجر المذكرات', i:'🛍️'}, {id:'myOrders', l:'طلباتي', i:'📦'}, {id:'challenges', l:'المسابقات', i:'🏆'},{id:'leader', l:'أنا الليدر', i:'🎖️'},{id:'mypay', l:'مدفوعاتي', i:'💵'}]},
+    {s:'المحتوى', items:[{id:'videos', l:'الفيديوهات', i:'🎬'}, {id:'interactive', l:'المواد التفاعلية', i:'🧩'}]},
+    {s:'أساتذتي', items:[{id:'teachers', l:'قائمة الأساتذة', i:'👨‍🏫'}, {l:'تعرّف على أساتذة المنصة', i:'🌟', href:'teachers-showcase.html'}]},
+    {s:'المالية والمتابعة', items:[{id:'payments', l:'المدفوعات', i:'💰'}, {id:'followups', l:'المتابعات', i:'📌'}]},
+    {s:'الخدمات', items:[{id:'barcodeRequests', l:'طلبات الباركود', i:'🎟️'}]},
+    {s:'⚙️ الحساب', items:[{id:'settings', l:'الإعدادات', i:'⚙️'}]}
+  ];
+
+  const nav = document.getElementById('sidebarNav');
+  if(nav) {
+    nav.innerHTML = menu.map(sec => 
+      `<div class="sidebar-section">
+        <div class="sidebar-section-title">${sec.s}</div>
+        ${sec.items.map(it => {
+          // إذا كان هناك رابط (href) نفتح في تبويب جديد، غير ذلك نستخدم showSection
+          const action = it.href ? `window.open('${it.href}','_blank')` : `window.showSection('${it.id}')`;
+          return `<div class="sidebar-item" data-section="${it.id || 'showcase'}" onclick="${action}">
+                    <span class="sidebar-item-icon">${it.i}</span>
+                    <span class="sidebar-item-label">${it.l}</span>
+                  </div>`;
+        }).join('')}
+      </div>`
+    ).join('');
+  }
 };
+
 window.showSection=function(id){
 document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
 document.getElementById('section-'+id)?.classList.add('active');
@@ -905,7 +971,7 @@ const L={
 dashboard:window.loadDashboard, attendance:window.loadAttendance, homework:window.loadHomework,
 exams:window.loadExams, results:window.loadResults, points:window.loadPoints, store:window.loadStore,
 realStore:function(){ if(window.loadRealStore) window.loadRealStore(); },
-myOrders:function(){ if(window.loadMyOrders) window.loadMyOrders(); },
+myOrders:async function(){ try{ if(window.ensureStoreCloud) await window.ensureStoreCloud(); }catch(e){} if(window.loadMyOrders) window.loadMyOrders(); },
 teachers:window.loadTeachers, videos:window.loadVideos, challenges:window.loadChallenges,
 classPosts:window.loadClassPosts, interactive:window.loadInteractive, payments:window.loadPayments,
 followups:window.loadFollowups, calendar:window.loadCalendar, barcodeRequests:window.loadBarcodeRequests,
@@ -1025,6 +1091,7 @@ console.error('changeMyPassword error:', e);
 safeToast('خطأ في تغيير كلمة المرور: ' + e.message, 'error');
 }
 };
+
 window.saveMyProfile = async function() {
 try {
 const myPhone = document.getElementById('editMyPhone')?.value?.trim();
@@ -1314,12 +1381,49 @@ ${photo}
 }).join(''):'<p class="text-muted">لا سجلات حضور بعد</p>';
 };
 window.startQRScanner=function(){ window.open('qr-scan.html','_blank'); };
+/* 🚪 تسجيل حضور من باركود الباب + تسجيل حي */
+window.scanDoorQR=function(){ window.open('checkin.html','_blank'); };
+window.handleDoorCode=function(code){
+  try{
+    code=(code||'').trim();
+    if(!code){ if(window.safeToast) window.safeToast('اكتب الكود','error'); return; }
+    if(typeof DataService.checkInByCode==='function'){
+      DataService.checkInByCode(activeStudentId||currentUser.id,code).then(function(res){
+        if(res&&res.ok!==false){
+          if(window.safeToast) window.safeToast('✅ تم تسجيل حضورك','success');
+          try{ window.pushLiveFeed&&pushLiveFeed('checkin',(DataService.getUserById(activeStudentId||currentUser.id)||{}).name,'🚪 باركود الباب'); }catch(e){}
+          if(window.loadAttendance) window.loadAttendance();
+        }
+        else{ if(window.safeToast) window.safeToast((res&&res.msg)||'الكود مش صحيح','error'); }
+      });
+    }else{ if(window.safeToast) window.safeToast('الخدمة مش متاحة','error'); }
+  }catch(e){ if(window.safeToast) window.safeToast('خطأ: '+e.message,'error'); }
+};
+/* 🔌 حقن زرار الباب في صفحة الحضور (ذاتي — مش هيكرر) */
+(function(){
+  function addDoorBtn(){
+    var sec=document.getElementById('section-attendance'); if(!sec) return;
+    if(document.getElementById('doorBtnRow')) return;
+    var row=document.createElement('div'); row.id='doorBtnRow';
+    row.style.cssText='display:flex;gap:8px;margin:0 0 12px;flex-wrap:wrap;';
+    row.innerHTML='<button type="button" class="btn btn-success" style="flex:1;padding:14px;font-weight:800;" onclick="window.scanDoorQR()">🚪 تسجيل حضور من باركود الباب</button>'+
+    '<button type="button" class="btn btn-secondary" style="flex:1;padding:14px;font-weight:800;" onclick="window.startQRScanner()">📷 مسح بالكاميرا</button>';
+    var hdr=sec.querySelector('.section-header');
+    if(hdr&&hdr.nextSibling) sec.insertBefore(row,hdr.nextSibling); else sec.prepend(row);
+  }
+  addDoorBtn(); setTimeout(addDoorBtn,800); setTimeout(addDoorBtn,2000);
+  if(typeof window.showSection==='function'&&!window.__doorBtnHook){
+    window.__doorBtnHook=1;
+    var os=window.showSection;
+    window.showSection=function(id){ var r=os.apply(this,arguments); if(id==='attendance') setTimeout(addDoorBtn,120); return r; };
+  }
+})();
 window.submitCode=function(){
 const code=document.getElementById('attCode')?.value.trim();
 if(!code){ safeToast('أدخل الكود','error'); return; }
 if(typeof DataService?.checkInByCode==='function'){
 DataService.checkInByCode(activeStudentId, code).then(res=>{
-if(res.success){ safeToast('✅ تم تسجيل الحضور','success'); document.getElementById('attCode').value=''; window.loadAttendance(); }
+if(res.success){ safeToast('✅ تم تسجيل الحضور','success'); try{ window.pushLiveFeed&&pushLiveFeed('checkin',(DataService.getUserById(activeStudentId)||{}).name,'⌨️ كيد'); }catch(e){} document.getElementById('attCode').value=''; window.loadAttendance(); }
 else safeToast(res.message||'كود غير صحيح','error');
 });
 } else safeToast('الخدمة غير متوفرة','error');
@@ -1489,13 +1593,9 @@ statusText=`🌐 أونلاين · ⏱️ ${e.duration||60}د`;
 if(window.isExamReleased(att)){ statusBadge=`<span class="badge badge-success">✓ ${Math.round((att.score||0)/mx*100)}%</span>`; statusText=`📄 ورقي · الدرجة: ${att.score||0}/${mx}`; }
 else { statusBadge=`<span class="badge badge-muted">—</span>`; statusText=`📄 ورقي · لم تُرصد الدرجة بعد`; }
 }
-html+=`<div class="sub-row ${att?'graded':'pending'}" onclick="window.openExam('${e.id}')" style="cursor:pointer;">
-<div style="flex:1;min-width:0;">
-<strong style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.title}</strong>
-<div class="text-xs text-muted" style="margin-top:2px;">${statusText}</div>
-</div>
-${statusBadge}
-</div>`;
+var examTitle = e.title || 'امتحان';
+var examTeacher = (DataService.getUserById && e.teacherId) ? (DataService.getUserById(e.teacherId) || {}).name : '';
+html+=`<div class="sub-row ${att?'graded':'pending'}" onclick="window.openExam('${e.id}')" style="cursor:pointer;"><div style="flex:1;min-width:0;"><strong style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${examTitle}</strong><div class="text-xs text-muted" style="margin-top:2px;">${statusText}${examTeacher?(' · ‍🏫 '+examTeacher):''}</div></div>${statusBadge}</div>`;
 });
 html+=`</div></div>`;
 });
@@ -2154,6 +2254,69 @@ safeToast('خطأ في إرسال الطلب', 'error');
 }
 };
 
+window.renderFollowupsCenter=function(){
+  var sec=document.getElementById('section-followups'); if(!sec) return;
+  var host=sec.querySelector('#fuHost'); if(!host){ host=document.createElement('div'); host.id='fuHost'; sec.appendChild(host); }
+  var u=(typeof currentUser!=='undefined')?currentUser:null; if(!u) return;
+  var d=(DataService._getData)?DataService._getData():{};
+  var list=(d.followUps||[]).filter(function(f){return f.studentId===u.id;});
+  list.sort(function(a,b){return String(b.createdAt||'').localeCompare(String(a.createdAt||''));});
+  var open=list.filter(function(f){return f.status!=='resolved';}).length;
+  var IC={absence:['📋','غياب'],payment:['💰','دفعة'],overdue_payment:['💰','فاتورة متأخرة'],behavior:['🧭','سلوك'],academic:['📚','مستوى دراسي']};
+  var html='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">'+
+    '<div class="card" style="padding:12px;text-align:center;margin:0;"><div style="font-size:22px;font-weight:900;color:var(--warning);font-family:var(--font-en);">'+open+'</div><div class="text-xs text-muted">🔴 مفتوحة الآن</div></div>'+
+    '<div class="card" style="padding:12px;text-align:center;margin:0;"><div style="font-size:22px;font-weight:900;color:var(--success);font-family:var(--font-en);">'+(list.length-open)+'</div><div class="text-xs text-muted">✅ اتقفلت</div></div>'+
+    '<div class="card" style="padding:12px;text-align:center;margin:0;"><div style="font-size:22px;font-weight:900;color:var(--primary);font-family:var(--font-en);">'+list.length+'</div><div class="text-xs text-muted">📌 الإجمالي</div></div></div>';
+  if(!list.length){
+    html+='<div class="card" style="text-align:center;padding:36px;"><div style="font-size:52px;">🎉</div><strong>مفيش أي متابعات عليك</strong><div class="text-xs text-muted" style="margin-top:6px;">استمر كده — حضورك ودفعاتك تمام</div></div>';
+  }else{
+    html+=list.map(function(f){
+      var meta=IC[f.reason||f.type]||['📌','متابعة'];
+      var st=f.status==='resolved'?['✅ مغلقة','badge-success']:f.status==='progress'?['🟡 جاري التعامل','badge-warning']:['🔴 مفتوحة','badge-danger'];
+      var canDispute=(f.reason==='absence'||f.type==='absence')&&f.status!=='resolved';
+      var canPay=(f.reason==='payment'||f.type==='payment'||f.reason==='overdue_payment')&&f.status!=='resolved';
+      return '<div class="card" style="padding:14px;margin-bottom:10px;border-right:4px solid '+(f.status==='resolved'?'var(--success)':'var(--warning)')+';">'+
+        '<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:flex-start;">'+
+        '<div style="flex:1;min-width:180px;"><strong style="font-size:14px;">'+meta[0]+' '+(f.title||meta[1])+'</strong> <span class="badge '+st[1]+'">'+st[0]+'</span>'+
+        '<div class="text-xs text-muted" style="margin-top:4px;">📅 '+String(f.startDate||f.createdAt||'').slice(0,10)+(f.description?' · '+f.description:'')+'</div></div>'+
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;">'+
+        (canDispute?'<button class="btn btn-warning btn-sm" onclick="window.openAttendanceDispute(\''+(f.groupId||'')+'\',\''+String(f.startDate||'').slice(0,10)+'\')">✋ أنا كنت حاضر</button>':'')+
+        (canPay?'<button class="btn btn-success btn-sm" onclick="window.openPayClaimModal&&window.openPayClaimModal()">💵 أنا دفعت</button>':'')+
+        '</div></div>'+
+        ((f.history&&f.history.length)?'<div style="margin-top:10px;padding:10px;background:var(--surface-hover);border-radius:10px;"><div class="text-xs text-muted" style="margin-bottom:6px;">📜 آخر المستجدات:</div>'+f.history.slice(-3).map(function(h){return '<div class="text-xs" style="margin-top:3px;">• '+String(h.date||'').slice(0,10)+' — '+h.note+'</div>';}).join('')+'</div>':'')+
+        '</div>';
+    }).join('');
+  }
+  host.innerHTML=html;
+};
+/* ========== ✋ اعتراض على غياب (بيروح للمساعد المختص الأول) ========== */
+window.openAttendanceDispute=function(gid,date){
+  var u=currentUser;
+  var gs=(DataService.getStudentTeachers?DataService.getStudentTeachers(u.id):[]).map(function(t){return t.group;}).filter(function(g){return g&&(!gid||g.id===gid);});
+  ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">✋ اعتراض على غياب</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">'+
+  '<div class="form-group"><label>المجموعة</label><select id="dspG" class="form-select">'+gs.map(function(g){return '<option value="'+g.id+'">'+g.name+'</option>';}).join('')+'</select></div>'+
+  '<div class="form-group"><label>تاريخ الحصة</label><input type="date" id="dspD" class="form-input" value="'+(date&&date!=='undefined'?date:new Date().toISOString().slice(0,10))+'"></div>'+
+  '<div class="form-group"><label>السبب</label><textarea id="dspR" class="form-input" rows="2" placeholder="مثال: كنت حاضر بس اتسجلت غائب بالغلط"></textarea></div>'+
+  '<button class="btn btn-primary w-full" onclick="window.submitAttendanceDispute()">📤 إرسال للمساعد المختص</button></div>','modal-sm');
+};
+window.submitAttendanceDispute=function(){
+  var u=currentUser; var d=(DataService._getData)?DataService._getData():{};
+  var gid=(document.getElementById('dspG')||{}).value; var dt=(document.getElementById('dspD')||{}).value; var rs=(document.getElementById('dspR')||{}).value||'أنا كنت حاضر';
+  if(!gid||!dt){ if(window.safeToast) window.safeToast('أكمل البيانات','error'); return; }
+  d.attendanceDisputes=d.attendanceDisputes||[];
+  var item={id:'dsp_'+Date.now(),sid:u.id,studentId:u.id,gid:gid,date:dt,reason:rs,status:'pending',createdAt:new Date().toISOString()};
+  d.attendanceDisputes.push(item);
+  DataService._saveData(d);
+  var g=(DataService.getGroups?DataService.getGroups():[]).find(function(x){return x.id===gid;});
+  var targets=[]; if(g&&g.teacherId) targets.push(g.teacherId);
+  (d.users||[]).forEach(function(x){ if(x.role==='assistant'){ var a=(window.Ops&&Ops.getAssignment)?Ops.getAssignment(x.id):null; if(a&&g&&a.teacherId===g.teacherId) targets.push(x.id); } if(x.role==='admin'||x.role==='super_admin') targets.push(x.id); });
+  targets.forEach(function(tid){ try{ DataService.addNotification({targetUserId:tid,title:'✋ اعتراض على غياب',message:(u.name||'طالب')+' معترض على غياب '+dt+' في مجموعة '+(g?g.name:'')+' — '+rs,type:'attendance',priority:'high',meta:{event:'absent',refId:item.id}}); }catch(e){} });
+  try{ window.pushLiveFeed&&pushLiveFeed('dispute',u.name,'✋ اعتراض غياب'); }catch(e){}
+  ThemeManager.closeModal();
+  if(window.safeToast) window.safeToast('✅ اتبعت للمساعد المختص — الرد هيظهر في متابعاتي','success');
+  window.renderFollowupsCenter&&window.renderFollowupsCenter();
+};
+
 window.recordStreakActivity = function(studentId, type) {
   try {
     const d = db();
@@ -2648,6 +2811,10 @@ if(t) setTimeout(render,120);
 })();
 </script>
 <script src="js/billing/core.js"></script>
+<script src="js/legendary-money.js"></script>
+<script src="js/legendary-comms.js"></script>
+<script src="js/legendary-shield.js"></script>
+<script src="js/legendary-exams.js"></script>
 <script src="js/billing/notify-rules.js"></script>
 <script src="js/fun-center.js"></script>
 <script>
@@ -2686,127 +2853,296 @@ setTimeout(checkUrgentNotifs,5000);
 })();
 
 </script>
-<script src="js/ledger-ui.js"></script>
-<script>
-/* ============ 📊 نتائج V2: ورقي | أونلاين مقسّمة بالأستاذ والمادة ============ */
-window.loadResultsV2=function(){
-  try{
-    var u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null;
-    var sid=u?u.id:null; if(!sid) return;
-    var d=(DataService._getData)?DataService._getData():{};
-    var ts=(DataService.getStudentTeachers?DataService.getStudentTeachers(sid):[]);
-    var gmap={}; ts.forEach(function(t){ if(t.group) gmap[t.group.id]=t; });
-    function tOf(gid){ var t=gmap[gid]; return (t&&t.teacher)||null; }
-    function gOf(gid){ var t=gmap[gid]; return (t&&t.group)||null; }
-    var paper=[],online=[];
-    (d.examAttempts||[]).forEach(function(a){
-      if(a.studentId!==sid) return;
-      var ex=(d.exams||[]).find(function(x){return x.id===a.examId;}); if(!ex||!gmap[ex.groupId]) return;
-      var rel=(window.isExamReleased)?window.isExamReleased(a):true;
-      var row={kind:'🎓 امتحان',title:ex.title,score:rel?a.score:null,total:a.maxScore||ex.totalPoints||100,date:a.endTime||a.submittedAt||'',gid:ex.groupId};
-      ((ex.mode==='offline'||ex.paper)?paper:online).push(row);
-    });
-    (d.submissions||[]).forEach(function(s2){
-      if(s2.studentId!==sid||s2.status!=='graded') return;
-      var hw=(d.homework||[]).find(function(h){return h.id===s2.homeworkId;}); if(!hw||!gmap[hw.groupId]) return;
-      var row2={kind:'📝 واجب',title:hw.title,score:s2.score,total:hw.totalPoints||100,date:s2.submittedAt||'',gid:hw.groupId};
-      (hw.paper?paper:online).push(row2);
-    });
-    function colHtml(list){
-      if(!list.length) return '<div style="text-align:center;padding:20px;color:var(--text-muted);"><div style="font-size:36px;">📭</div><strong>لا نتائج بعد</strong></div>';
-      var byT={};
-      list.forEach(function(r){ var t=tOf(r.gid); var k=t?t.id:'x'; (byT[k]=byT[k]||{t:t,rows:[]}).rows.push(r); });
-      return Object.keys(byT).map(function(k){
-        var b=byT[k], t=b.t;
-        var graded=b.rows.filter(function(r){return r.score!=null;});
-        var avg=graded.length?Math.round(graded.reduce(function(a,r){return a+(r.total?(r.score/r.total*100):0);},0)/graded.length):null;
-        b.rows.sort(function(a,b2){return String(b2.date||'').localeCompare(String(a.date||''));});
-        return '<div style="border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:10px;background:var(--surface-hover);">'+
-          '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">'+
-          (t&&t.photoUrl?'<img src="'+(window.driveThumb?driveThumb(t.photoUrl):t.photoUrl)+'" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);" onerror="this.style.display=\'none\'">':'<div style="width:34px;height:34px;border-radius:50%;background:var(--primary-bg);display:flex;align-items:center;justify-content:center;">👨‍🏫</div>')+
-          '<div style="flex:1;"><strong style="font-size:13px;">'+((t&&t.name)||'أستاذ')+'</strong><div class="text-xs text-muted">📚 '+((t&&t.subject)||'المادة')+'</div></div>'+
-          (avg!=null?'<span class="points-badge">متوسط '+avg+'%</span>':'')+
-          '</div>'+
-          b.rows.map(function(r){
-            var gg=gOf(r.gid);
-            if(r.score==null) return '<div class="sub-row" style="padding:8px;margin-bottom:6px;"><div style="flex:1;"><strong style="font-size:12px;">'+r.kind+': '+r.title+'</strong><div class="text-xs text-muted">'+(gg?gg.name:'')+' · 📅 '+String(r.date||'').slice(0,10)+'</div></div><span class="badge badge-muted">🔒 قيد المراجعة</span></div>';
-            var pct=r.total?Math.round(r.score/r.total*100):0;
-            var cls=pct>=75?'success':pct>=50?'warning':'danger';
-            return '<div class="sub-row" style="padding:8px;margin-bottom:6px;"><div style="flex:1;"><strong style="font-size:12px;">'+r.kind+': '+r.title+'</strong><div class="text-xs text-muted">'+(gg?gg.name:'')+' · 📅 '+String(r.date||'').slice(0,10)+'</div></div><span class="grade-badge '+cls+'">'+pct+'%</span></div>';
-          }).join('')+
-        '</div>';
-      }).join('');
-    }
-    var pEl=document.getElementById('resultsPaperList'), oEl=document.getElementById('resultsOnlineList');
-    if(pEl) pEl.innerHTML=colHtml(paper);
-    if(oEl) oEl.innerHTML=colHtml(online);
-    function avgAll(list){ var g2=list.filter(function(r){return r.score!=null;}); if(!g2.length) return '-'; return Math.round(g2.reduce(function(a,r){return a+(r.total?(r.score/r.total*100):0);},0)/g2.length)+'%'; }
-    var pa=document.getElementById('paperAvg'), oa=document.getElementById('onlineAvg');
-    if(pa) pa.textContent='متوسط '+avgAll(paper);
-    if(oa) oa.textContent='متوسط '+avgAll(online);
-  }catch(e){ console.error(e); }
-};
-window.loadResults=window.loadResultsV2;
-window.switchResultMode=function(){}; window.switchResultTab=function(){};
 
-/* ============ 🔔 أقرب حصة جاية — واضحة تماماً (مادة + أستاذ + سنتر + عد تنازلي حي) ============ */
+<script>
 (function(){
-  var DAYS=[{en:'Sunday',ar:'الأحد'},{en:'Monday',ar:'الإثنين'},{en:'Tuesday',ar:'الثلاثاء'},{en:'Wednesday',ar:'الأربعاء'},{en:'Thursday',ar:'الخميس'},{en:'Friday',ar:'الجمعة'},{en:'Saturday',ar:'السبت'}];
-  function arD(en){var x=DAYS.filter(function(d){return d.en===en;})[0];return x?x.ar:en;}
-  function f12(t){if(!t)return'';var p=String(t).split(':');var h=+p[0]||0;var m=p[1]||'00';var ap=h>=12?'م':'ص';h=h%12;if(h===0)h=12;return h+':'+m+' '+ap;}
-  function min(t){var p=String(t||'0:00').split(':');return (+p[0]||0)*60+(+p[1]||0);}
-  function p2(n){return (n<10?'0':'')+n;}
-  window.renderNextClass=function(){
+function mk(status,msg){
+  return function(itemId){
     try{
-      var u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null;
-      var sid=u?u.id:null; if(!sid) return;
-      var ts=(DataService.getStudentTeachers?DataService.getStudentTeachers(sid):[]);
-      if(!ts.length) return;
-      var now=new Date(); var nowMin=now.getHours()*60+now.getMinutes();
-      var cand=[];
-      ts.forEach(function(t){
-        var g=t.group; if(!g) return;
-        var sch=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}];
-        sch.forEach(function(s){
-          var di=DAYS.map(function(x){return x.en;}).indexOf(s.day);
-          var diff=(di-now.getDay()+7)%7;
-          var st=min(s.time);
-          if(diff===0&&st<=nowMin) diff=7;
-          cand.push({g:g,t:t.teacher||null,s:s,diff:diff,st:st});
-        });
-      });
-      if(!cand.length) return;
-      cand.sort(function(a,b){ return a.diff-b.diff||a.st-b.st; });
-      var nx=cand[0];
-      var host=document.getElementById('nextClassCard')||document.getElementById('nextClassBox')||document.getElementById('nextClass')||document.querySelector('[id^="nextClass"]');
-      if(!host){ var mc=document.getElementById('myCycleCard'); if(mc&&mc.parentNode){ host=document.createElement('div'); host.id='nextClassCard'; host.style.marginBottom='12px'; mc.parentNode.insertBefore(host,mc); } else return; }
-      var subj=(nx.t&&nx.t.subject)?nx.t.subject:'';
-      var target=new Date(now); target.setDate(target.getDate()+nx.diff); target.setHours(Math.floor(nx.st/60),nx.st%60,0,0);
-      window.__ncTarget=target.getTime();
-      host.innerHTML='<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-right:4px solid var(--primary);border-radius:14px;padding:12px 14px;">'+
-        '<div style="flex:1;min-width:220px;">'+
-        '<div style="font-weight:900;font-size:14px;">🔔 أقرب حصة جاية: '+nx.g.name+(subj?' <span class="badge badge-primary">📚 '+subj+'</span>':'')+'</div>'+
-        '<div class="text-xs text-muted" style="margin-top:5px;display:flex;gap:8px;flex-wrap:wrap;">'+
-        '<span>👨‍ '+((nx.t&&nx.t.name)||'-')+'</span>'+
-        '<span>🏢 '+(nx.g.center||'-')+'</span>'+
-        '<span>📅 '+arD(nx.s.day)+' '+f12(nx.s.time)+'</span>'+
-        (nx.diff===0?'<span class="badge badge-success">النهارده</span>':(nx.diff===1?'<span class="badge badge-info">بكرة</span>':'<span class="badge badge-info">بعد '+nx.diff+' أيام</span>'))+
-        '</div></div>'+
-        '<div id="ncCountdown" style="font-family:var(--font-en);font-weight:900;font-size:20px;color:var(--primary);background:var(--primary-bg);padding:6px 14px;border-radius:10px;">--:--:--</div>'+
-        '</div>';
-      if(!window.__ncTick){
-        window.__ncTick=setInterval(function(){
-          var el=document.getElementById('ncCountdown'); var tg=window.__ncTarget;
-          if(!el||!tg) return;
-          var ms=tg-Date.now();
-          if(ms<=0){ el.textContent='00:00:00'; return; }
-          el.textContent=p2(Math.floor(ms/3600000))+':'+p2(Math.floor(ms%3600000/60000))+':'+p2(Math.floor(ms%60000/1000));
-        },1000);
-      }
-    }catch(e){}
+      var d=DataService._getData(); d.storeOrders=d.storeOrders||[];
+      var it=(d.storeCatalog||[]).find(function(x){return x.id===itemId;});
+      if(!it){ safeToast('المنتج مش موجود','error'); return; }
+      if((parseInt(it.stock)||0)<=0){ safeToast('نفذ المخزون','error'); return; }
+      if(!confirm(msg+' "'+it.name+'" بسعر '+(it.price||0)+' ج.م؟\nالدفع كاش عند الاستلام.')) return;
+      var o={id:'ord_'+Date.now(),studentId:activeStudentId,studentName:currentUser.name,studentCode:currentUser.code,
+             catalogItemId:itemId,quantity:1,status:status,createdAt:new Date().toISOString()};
+      d.storeOrders.push(o); DataService._saveData(d);
+      if(window.FirebaseService&&FirebaseService.connected){ try{ FirebaseService.saveDoc('storeOrders',o.id,o); }catch(e){} }
+      safeToast('✅ تم تسجيل طلبك — هتلاقيه في "طلباتي"','success');
+    }catch(e){ console.error(e); safeToast('خطأ: '+e.message,'error'); }
   };
+}
+if(typeof window.buyRealItem!=='function') window.buyRealItem=mk('pending_payment','شراء');
+if(typeof window.reserveRealItem!=='function') window.reserveRealItem=mk('pending_reserve','حجز');
 })();
 </script>
 
+<script src="js/ledger-ui.js"></script>
+<script>
+/* ============ 🎁 بيانات الطالب الإضافية + مكافأة الإكمال ============ */
+(function(){
+function me(){ try{ return (window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():window.currentUser; }catch(e){ return null; } }
+function injectExtra(){
+  var btn=document.querySelector('#section-settings button[onclick*="saveMyProfile"]');
+  if(!btn||document.getElementById('extraFieldsBox')) return;
+  var box=document.createElement('div'); box.id='extraFieldsBox'; box.className='card'; box.style.marginBottom='14px';
+  box.innerHTML='<div class="card-title" style="margin-bottom:10px;">🎁 كمّل بياناتك واخد 5 نقاط</div>'+
+  '<div class="form-group"><label>🏠 العنوان</label><input type="text" id="myAddress" class="form-input" placeholder="المنطقة / المدينة"></div>'+
+  '<div class="form-group"><label>🏫 المدرسة</label><input type="text" id="mySchool" class="form-input" placeholder="اسم المدرسة"></div>'+
+  '<div class="form-group"><label>🎒 الفصل المدرسي</label><input type="text" id="mySchoolClass" class="form-input" placeholder="مثال: 3/2"></div>'+
+  '<div class="text-xs text-muted">🎁 5 نقاط هدية (مرة واحدة) لما <b>كل</b> بياناتك تبقى كاملة: الاسم 3 أجزاء + رقم موبايلك + رقم ولي الأمر + المرحلة + الصف + العنوان + المدرسة + الفصل.</div>';
+  btn.parentNode.insertBefore(box, btn);
+}
+function fillExtra(){
+  try{
+    var u=me(); if(!u) return; var s=DataService.getUserById?DataService.getUserById(u.id):null; if(!s) return;
+    var map={myAddress:s.address||'',mySchool:s.school||'',mySchoolClass:s.schoolClass||''};
+    Object.keys(map).forEach(function(id){ var el=document.getElementById(id); if(el&&!el.value) el.value=map[id]; });
+  }catch(e){}
+}
+var origSave=window.saveMyProfile;
+window.saveMyProfile=async function(){
+  var r=await origSave.apply(this,arguments);
+  try{
+    var u=me(); if(!u) return r;
+    var addr=(document.getElementById('myAddress')||{}).value||'';
+    var sch=(document.getElementById('mySchool')||{}).value||'';
+    var scl=(document.getElementById('mySchoolClass')||{}).value||'';
+    if(addr||sch||scl){
+      var upd={address:addr,school:sch,schoolClass:scl}, bonus=false;
+      var s=DataService.getUserById?DataService.getUserById(u.id):null;
+      if(s&&!s.profileBonusClaimed){
+        var nmOk=(s.name||'').trim().split(/\s+/).length>=3;
+        var phOk=(s.phone||'').replace(/\D/g,'').length>=10;
+        var ppOk=(s.parentPhone||'').replace(/\D/g,'').length>=10;
+        if(nmOk&&phOk&&ppOk&&s.stage&&s.grade&&addr&&sch&&scl){ upd.profileBonusClaimed=true; bonus=true; }
+        else if(window.safeToast) window.safeToast('🎁 فاضلك شوية: كمّل (الاسم 3 أجزاء + رقمك + رقم ولي الأمر + المرحلة + الصف + العنوان والمدرسة والفصل) وهتاخد 5 نقاط','info');
+      }
+      if(DataService.updateUser) await DataService.updateUser(u.id,upd);
+      if(bonus){
+        try{ if(window.Ops&&Ops.addManualPoints) Ops.addManualPoints(u.id,5,'🎁 إكمال بيانات الملف الشخصي',u.id); }catch(e){}
+        try{ if(DataService.addNotification) DataService.addNotification({targetUserId:u.id,title:'🎁 هدية 5 نقاط',message:'شكراً إنك كمّلت بياناتك (العنوان والمدرسة والفصل) — اتضافت 5 نقاط لحسابك.',type:'points',priority:'medium',meta:{event:'points'}}); }catch(e){}
+        if(window.safeToast) window.safeToast('🎁 اتحفظت بياناتك واتضافت 5 نقاط لحسابك','success');
+      }
+    }
+  }catch(e){}
+  return r;
+};
+setInterval(function(){
+  var sec=document.getElementById('section-settings');
+  if(sec&&sec.classList.contains('active')){ injectExtra(); fillExtra(); }
+},2000);
+})();
+
+</script>
+<script>
+  /* ⏰ توحيد نافذة التشيك‑إن: 15 قبل لـ 15 بعد (override مضمون) */
+(function(){
+  function patch(){
+    if(window.AttendEngine&&AttendEngine.openSessionsFor&&!AttendEngine.__w15){
+      AttendEngine.__w15=1;
+      var oo=AttendEngine.openSessionsFor;
+      AttendEngine.openSessionsFor=function(sid){
+        try{
+          var DAYEN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+          var now=new Date(); var nm=now.getHours()*60+now.getMinutes(); var today=DAYEN[now.getDay()];
+          var out=[];
+          (DataService.getStudentTeachers?DataService.getStudentTeachers(sid):[]).forEach(function(t){
+            var g=t.group; if(!g) return;
+            var sch=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}];
+            sch.forEach(function(s){ if(!s||s.day!==today) return;
+              var p=String(s.time||'0:00').split(':'); var st=(+p[0])*60+(+p[1]); var en=st+(parseInt(g.duration)||60);
+              if(nm>=st-15&&nm<=en+15) out.push({group:g,time:s.time});
+            });
+          });
+          if(out.length) return out;
+        }catch(e){}
+        return oo.apply(this,arguments);
+      };
+    }
+  }
+  patch(); setTimeout(patch,1000); setInterval(patch,5000);
+})();
+
+/* ============ 🛍️ V2: متجر المذكرات — فلتر تلقائي بصف ومرحلة الطالب (بدون فلاتر ظاهرة) ============ */
+(function(){
+  function wrapStore(){
+    var orig=window.loadRealStore;
+    if(!orig||orig.__v2) return;
+    window.loadRealStore=function(){
+      var d=(window.DataService&&DataService._getData)?DataService._getData():{};
+      var me=(typeof activeStudentId!=='undefined'&&activeStudentId&&DataService.getUserById)?DataService.getUserById(activeStudentId):null;
+      var ms=(me&&me.stage)||'', mg=(me&&me.grade)||'';
+      var full=d.storeCatalog||[];
+      /* بيظهر للطالب بس: اللي بدون تحديد + اللي مطابق لمرحلته وصفه */
+      d.storeCatalog=full.filter(function(i){
+        if(i.active===false) return false;
+        var okS=!i.stage||!ms||i.stage===ms;
+        var okG=!i.grade||!mg||i.grade===mg;
+        return okS&&okG;
+      });
+      try{ orig.apply(this,arguments); } finally { d.storeCatalog=full; }
+    };
+    window.loadRealStore.__v2=1;
+  }
+  wrapStore(); setTimeout(wrapStore,800); setTimeout(wrapStore,2000);
+})();
+</script>
+<script src="js/student-results.js"></script>
+<script>
+/* ============ 🎖️ أنا الليدر + 💵 مدفوعاتي ============ */
+(function(){
+function cur(){ try{ return (typeof currentUser!=='undefined'&&currentUser)?currentUser:((window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null);}catch(e){return null;} }
+function db(){ return (window.DataService&&DataService._getData)?DataService._getData():{}; }
+function build(){
+  var u=cur(); if(!u||u.role!=='student') return;
+  if(document.getElementById('section-leader')) return;
+  var ca=document.querySelector('.content-area'); if(!ca) return;
+  var sec=document.createElement('section'); sec.className='section'; sec.id='section-leader';
+  sec.innerHTML='<div class="section-header"><div><h2 class="section-title">🎖️ منطقة الليدر</h2><p class="text-sm text-muted">سجل حضور مجموعتك وصوّر السبورة — يوصل للأسست والأستاذ للاعتماد</p></div></div><div id="leaderHost"></div>';
+  ca.appendChild(sec);
+  var sec2=document.createElement('section'); sec2.className='section'; sec2.id='section-mypay';
+  sec2.innerHTML='<div class="section-header"><div><h2 class="section-title">💵 مدفوعاتي</h2><p class="text-sm text-muted">سجل إنك دفعت الشهرية والأسست/الأستاذ يعتمد</p></div><button class="btn btn-primary btn-sm" onclick="window.openPayClaimModal()">+ سجلت دفعة</button></div><div id="myPayHost"></div>';
+  ca.appendChild(sec2);
+  var nav=document.getElementById('sidebarNav');
+  if(nav){
+    if(!nav.querySelector('[data-section="leader"]')){
+      var a=nav.querySelector('[data-section="attendance"]');
+      var it='<div class="sidebar-item" data-section="leader" onclick="window.showSection(\'leader\')"><span class="sidebar-item-icon">🎖️</span><span class="sidebar-item-label">أنا الليدر</span></div>';
+      if(a) a.insertAdjacentHTML('afterend',it); else nav.insertAdjacentHTML('beforeend',it);
+    }
+    if(!nav.querySelector('[data-section="mypay"]')){
+      var b=nav.querySelector('[data-section="payments"]')||nav.querySelector('[data-section="leader"]');
+      var it2='<div class="sidebar-item" data-section="mypay" onclick="window.showSection(\'mypay\')"><span class="sidebar-item-icon">💵</span><span class="sidebar-item-label">مدفوعاتي</span></div>';
+      if(b) b.insertAdjacentHTML('afterend',it2); else nav.insertAdjacentHTML('beforeend',it2);
+    }
+  }
+  if(typeof window.showSection==='function'&&!window.__leadHook){
+    window.__leadHook=1; var os=window.showSection;
+    window.showSection=function(id){ var r=os.apply(this,arguments);
+      if(id==='leader') setTimeout(window.renderLeader,80);
+      if(id==='mypay') setTimeout(window.renderMyPay,80);
+      return r; };
+  }
+  setTimeout(function(){
+    var mine=(DataService.getGroups?DataService.getGroups():[]).filter(function(g){return g.leaderId===u.id;});
+    var item=document.querySelector('#sidebarNav [data-section="leader"]');
+    if(item) item.style.display=mine.length?'':'none';
+  },1200);
+}
+window.renderLeader=function(){
+  var u=cur(); var host=document.getElementById('leaderHost'); if(!u||!host) return;
+  var gs=(DataService.getGroups?DataService.getGroups():[]).filter(function(g){return g.leaderId===u.id;});
+  if(!gs.length){ host.innerHTML='<div class="card" style="text-align:center;padding:30px;"><div style="font-size:44px;">🎖️</div><strong>مش ليدر في أي مجموعة حالياً</strong></div>'; return; }
+  host.innerHTML=gs.map(function(g){
+    var sts=(DataService.getStudentsByGroup?DataService.getStudentsByGroup(g.id):[]);
+    return '<div class="card" style="padding:14px;margin-bottom:12px;"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><div><strong>'+g.name+'</strong><div class="text-xs text-muted">👥 '+sts.length+' طالب · 📅 '+new Date().toISOString().slice(0,10)+'</div></div><div style="display:flex;gap:6px;"><button class="btn btn-primary btn-sm" onclick="window.openLeaderAtt(\''+g.id+'\')">📋 تسجيل حضور/غياب</button><button class="btn btn-secondary btn-sm" onclick="window.openLeaderBoard(\''+g.id+'\')">📸 تصوير السبورة</button></div></div></div>';
+  }).join('');
+};
+window.openLeaderAtt=function(gid){
+  var g=(DataService.getGroups?DataService.getGroups():[]).find(function(x){return x.id===gid;});
+  var DAY=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var today=DAY[new Date().getDay()];
+  var sch=g?((g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}]):[];
+  var todaySess=sch.filter(function(s){return s.day===today;});
+  if(!todaySess.length){ if(window.safeToast) window.safeToast('📅 مفيش حصة متاخدة النهارده للمجموعة دي — التسجيل بيتم يوم الحصة بس','warning'); return; }
+  var sts=(DataService.getStudentsByGroup?DataService.getStudentsByGroup(gid):[]);
+  ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">📋 حضور حصة اليوم ('+todaySess.map(function(s){return s.time;}).join(' + ')+')</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div style="max-height:50vh;overflow:auto;">'+sts.map(function(s){return '<div class="sub-row" style="padding:6px 8px;"><div style="flex:1;"><strong style="font-size:13px;">'+s.name+'</strong></div><select class="form-select ldAtt" data-sid="'+s.id+'" style="width:110px;"><option value="present">حاضر</option><option value="absent">غائب</option><option value="late">متأخر</option></select></div>';}).join('')+'</div><button class="btn btn-primary w-full" style="margin-top:10px;" onclick="window.submitLeaderAtt(\''+gid+'\')">📤 إرسال للاعتماد</button></div>','modal-md');
+};
+window.submitLeaderAtt=async function(gid){
+  var u=cur();
+  var records=Array.prototype.slice.call(document.querySelectorAll('.ldAtt')).map(function(s){return {studentId:s.getAttribute('data-sid'),status:s.value};});
+  var r=await Ops.leaderSubmitAttendance(gid,records,u.id);
+  ThemeManager.closeModal();
+  if(r.success){ try{ window.pushLiveFeed&&pushLiveFeed('leader-attendance',((DataService.getGroups?DataService.getGroups():[]).find(function(g){return g.id===gid;})||{}).name,'🎖️ حضور الليدر'); }catch(e){} }
+  if(window.safeToast) window.safeToast(r.success?'✅ اتبعت للأسست للاعتماد':'❌ خطأ', r.success?'success':'error');
+};
+window.openLeaderBoard=function(gid){
+  window.__lbImgs=[];
+  ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">📸 سبورة الحصة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>📝 إيه اللي اتاخد في الحصة؟</label><textarea id="lbNote" class="form-input" rows="3" placeholder="مثال: شرحنا الفصل التاني + حلنا 5 مسائل..."></textarea></div><label style="display:block;border:2px dashed var(--border);border-radius:12px;padding:16px;text-align:center;cursor:pointer;"><input type="file" accept="image/*" multiple style="display:none;" onchange="window.__lbAdd(this)"><div style="font-size:30px;">📷</div><div class="text-xs text-muted">صور السبورة (صورة أو أكتر)</div></label><div id="lbPrev" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;"></div><button class="btn btn-primary w-full" style="margin-top:12px;" onclick="window.submitLeaderBoard(\''+gid+'\')">📤 نشر في "إيه اللي اتاخد"</button></div>','modal-md');
+};
+window.__lbAdd=function(inp){
+  Array.prototype.slice.call(inp.files||[]).forEach(function(f){
+    var rd=new FileReader(); rd.onload=function(e){ window.__lbImgs.push(e.target.result); var h=document.getElementById('lbPrev'); if(h) h.insertAdjacentHTML('beforeend','<img src="'+e.target.result+'" style="width:56px;height:56px;object-fit:cover;border-radius:8px;">'); }; rd.readAsDataURL(f);
+  });
+};
+window.submitLeaderBoard=async function(gid){
+  var u=cur(); var note=(document.getElementById('lbNote')||{}).value||'';
+  var r=await Ops.leaderSubmitBoard(gid, window.__lbImgs||[], note, u.id);
+  ThemeManager.closeModal();
+  if(r.success){ try{ window.pushLiveFeed&&pushLiveFeed('leader-board',((DataService.getGroups?DataService.getGroups():[]).find(function(g){return g.id===gid;})||{}).name,'📸 صور سبورة'); }catch(e){} }
+  if(window.safeToast) window.safeToast(r.success?'✅ اتنشر في بوستات الحصة':'❌ خطأ', r.success?'success':'error');
+};
+window.openPayClaimModal=function(){
+  var u=cur(); var ts=(DataService.getStudentTeachers?DataService.getStudentTeachers(u.id):[]);
+  ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">💵 سجلت دفعة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">'+
+  '<div class="form-group"><label>المجموعة *</label><select id="pcG" class="form-select">'+ts.map(function(t){return '<option value="'+t.group.id+'">'+t.group.name+' — '+(t.teacher?t.teacher.name:'')+'</option>';}).join('')+'</select></div>'+
+  '<div class="form-group"><label>📅 شهر الدفعة</label><select id="pcMonth" class="form-select">'+(function(){ var out=[]; var now=new Date(); for(var i=0;i<6;i++){ var d2=new Date(now.getFullYear(),now.getMonth()-i,1); out.push('<option value="'+d2.toISOString().slice(0,7)+'">'+d2.toLocaleDateString('ar-EG',{month:'long',year:'numeric'})+'</option>'); } return out.join(''); })()+'</select></div>'+
+  '<div class="form-group"><label>المبلغ *</label><input type="number" id="pcA" class="form-input"></div>'+
+  '<div class="form-group"><label>طريقة الدفع</label><select id="pcM" class="form-select"><option value="cash">كاش في السنتر</option><option value="vodafone">فودافون كاش</option><option value="instapay">إنستا باي</option></select></div>'+
+  '<div class="form-group"><label>📷 صورة الإيصال (اختياري)</label><input type="file" accept="image/*" id="pcImg" class="form-input"></div>'+
+  '<button class="btn btn-primary w-full" onclick="window.submitPayClaim()">📤 إرسال للاعتماد</button></div>','modal-sm');
+};
+window.submitPayClaim=function(){
+  var u=cur(); var gid=(document.getElementById('pcG')||{}).value;
+  var amt=(document.getElementById('pcA')||{}).value;
+  var m=(document.getElementById('pcM')||{}).value;
+  if(!gid||!amt){ if(window.safeToast) window.safeToast('أكمل البيانات','error'); return; }
+  var f=(document.getElementById('pcImg')||{}).files;
+  function send(img){ Ops.submitPaymentClaim(u.id,gid,amt,m,img||'',(document.getElementById('pcMonth')||{}).value||'').then(function(){ ThemeManager.closeModal(); try{ window.pushLiveFeed&&pushLiveFeed('payment',(DataService.getUserById(u.id)||{}).name,'💵 طلب دفعة'); }catch(e){}
+if(window.safeToast) window.safeToast('✅ اتبعت للأسست والأستاذ للاعتماد','success'); window.renderMyPay&&window.renderMyPay(); }); }
+  if(f&&f[0]){ var rd=new FileReader(); rd.onload=function(e){ send(e.target.result); }; rd.readAsDataURL(f[0]); } else send('');
+};
+window.renderMyPay=function(){
+  var u=cur(); var host=document.getElementById('myPayHost'); if(!u||!host) return;
+  var list=(db().paymentClaims||[]).filter(function(c){return c.studentId===u.id;}).sort(function(a,b){return String(b.createdAt).localeCompare(String(a.createdAt));});
+  host.innerHTML=list.length?list.map(function(c){
+    var g=(DataService.getGroups?DataService.getGroups():[]).find(function(x){return x.id===c.groupId;});
+    var b=c.status==='approved'?'<span class="badge badge-success">✅ معتمدة</span>':c.status==='rejected'?'<span class="badge badge-danger">❌ مرفوضة</span>':'<span class="badge badge-warning">🕒 بانتظار الاعتماد</span>';
+    return '<div class="sub-row" style="padding:10px;"><div style="flex:1;"><strong>'+c.amount+' ج.م</strong><div class="text-xs text-muted">'+(g?g.name:'')+' · '+({cash:'كاش',vodafone:'فودافون كاش',instapay:'إنستا باي'}[c.method]||c.method)+' · '+String(c.createdAt).slice(0,10)+'</div></div>'+b+'</div>';
+  }).join(''):'<div class="card" style="text-align:center;padding:24px;"><div style="font-size:40px;">💵</div><strong>مفيش طلبات دفع لسه</strong></div>';
+};
+if(typeof window.buildMenu==='function'&&!window.__bmWrap1){ window.__bmWrap1=1; var _obm1=window.buildMenu; window.buildMenu=function(){ var r=_obm1.apply(this,arguments); setTimeout(build,60); setTimeout(build,500); return r; }; }
+setInterval(function(){
+  try{
+    var u=cur(); if(!u||u.role!=='student') return;
+    var gs=(DataService.getGroups?DataService.getGroups():[]).filter(function(g){return g.leaderId===u.id;});
+    var qa=document.getElementById('qaLeader'); if(qa) qa.style.display=gs.length?'':'none';
+    /* 🧹 منع تكرار أي بلاطة اختصار سريع */
+    var seen={}; document.querySelectorAll('.quick-action').forEach(function(t){ var l=((t.querySelector('.quick-action-label')||{}).textContent||'').trim(); if(!l) return; if(seen[l]){ t.remove(); } else { seen[l]=1; } });
+    /* 🎖️ زر بارز في الصفحة الرئيسية للطالب الليدر */
+    if(gs.length){
+      if(!document.getElementById('leaderHomeBtn')){
+        var host=document.getElementById('section-overview')||document.querySelector('.content-area');
+        if(host){
+          var wrap=document.createElement('div'); wrap.id='leaderHomeBtn'; wrap.style.cssText='margin:10px 0;';
+          wrap.innerHTML='<button class="btn btn-warning w-full" style="padding:14px;font-weight:900;font-size:15px;" onclick="window.showSection(\'leader\')">🎖️ أنت ليدر مجموعة '+gs[0].name+' — سجّل الحضور وصوّر السبورة</button>';
+          var first=host.querySelector('.card,.modern-card,.attention-card');
+          if(first&&first.parentNode) first.parentNode.insertBefore(wrap,first); else host.appendChild(wrap);
+        if(!document.getElementById('leaderQuickTile')){
+          var tileHost=null;
+          document.querySelectorAll('h3,.card-title,.section-title').forEach(function(h){ if((h.textContent||'').indexOf('اختصارات سريعة')>=0){ tileHost=h.closest('.card')||h.parentNode; } });
+          if(tileHost){ var grid=tileHost.querySelector('div[style*="grid"]')||tileHost;
+            var tile=document.createElement('button'); tile.id='leaderQuickTile'; tile.type='button'; tile.className='quick-action'; tile.style.cssText='background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;';
+            tile.innerHTML='<div class="quick-action-icon">🎖️</div><div class="quick-action-label">أنا الليدر</div>';
+            tile.onclick=function(){ window.showSection('leader'); };
+            grid.appendChild(tile); }
+        }
+        }
+      }
+    } else {
+      var old=document.getElementById('leaderHomeBtn'); if(old) old.remove();
+    }
+    if(!gs.length) return;
+    document.querySelectorAll('.sub-row,.card,.attention-card').forEach(function(el){
+      if(el.querySelector('.ldMark')) return;
+      var t=el.textContent||''; if(t.length>400) return;
+      for(var i=0;i<gs.length;i++){ if(gs[i].name&&t.indexOf(gs[i].name)>=0){ var s=document.createElement('span'); s.className='ldMark'; s.textContent=' 🎖️ ليدر'; s.style.cssText='font-size:10px;font-weight:800;color:#facc15;'; var strong=el.querySelector('strong')||el; strong.appendChild(s); break; } }
+    });
+  }catch(e){}
+},900);
+build(); setTimeout(build,1200); setTimeout(build,2600);
+})();
+</script>
 </body>
 </html>

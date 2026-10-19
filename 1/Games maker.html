@@ -1,0 +1,2683 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Habash Games Labs Platform - نسخة منظمة</title>
+
+  <!-- Tailwind للتطوير السريع -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- خط تجوال -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- React -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background: #05020D;
+      color: white;
+    }
+
+    .gold-text {
+      background: linear-gradient(90deg, #F5D76E, #F59E0B, #F5D76E);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .glass {
+      backdrop-filter: blur(18px);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+    }
+
+    .glass-gold {
+      backdrop-filter: blur(18px);
+      background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(139,92,246,0.08));
+      border: 1px solid rgba(245,158,11,0.22);
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    @keyframes glowIn {
+      0% { opacity: 0; transform: translateY(14px) scale(0.97); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .animate-float { animation: float 3s ease-in-out infinite; }
+    .animate-glow-in { animation: glowIn 0.35s ease; }
+
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 999px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useRef } = React;
+
+    /* =========================================================
+       1) البيانات الأساسية والثوابت
+    ========================================================= */
+
+    const LAB_COLORS = [
+      "#8B5CF6",
+      "#F59E0B",
+      "#10B981",
+      "#06B6D4",
+      "#EC4899",
+      "#6366F1",
+      "#F97316",
+      "#84CC16"
+    ];
+
+    const LAB_GRADIENTS = [
+      "from-violet-500 to-indigo-600",
+      "from-amber-400 to-orange-500",
+      "from-emerald-400 to-teal-500",
+      "from-cyan-400 to-sky-500",
+      "from-pink-500 to-rose-500",
+      "from-violet-500 to-purple-600",
+      "from-lime-400 to-green-500",
+      "from-orange-400 to-red-500"
+    ];
+
+    const DEFAULT_SUBJECTS = [
+      {
+        id: "science",
+        name: "العلوم",
+        icon: "FlaskConical",
+        color: "#8B5CF6",
+        gradient: "from-violet-500 to-indigo-600"
+      },
+      {
+        id: "math",
+        name: "الرياضيات",
+        icon: "Calculator",
+        color: "#F59E0B",
+        gradient: "from-amber-400 to-orange-500"
+      },
+      {
+        id: "arabic",
+        name: "العربية",
+        icon: "BookOpen",
+        color: "#10B981",
+        gradient: "from-emerald-400 to-teal-500"
+      },
+      {
+        id: "english",
+        name: "الإنجليزية",
+        icon: "Languages",
+        color: "#06B6D4",
+        gradient: "from-cyan-400 to-sky-500"
+      }
+    ];
+
+    const GAME_TYPES = [
+      {
+        id: "train",
+        name: "قطار المعرفة",
+        emoji: "🚂",
+        cat: "fast",
+        color: "#8B5CF6",
+        desc: "دخان fluid + قضبان تلمع",
+        idea: "قطار يمر بمحطات نيون وكل محطة سؤال. السرعة تزيد مع الإجابات الصحيحة.",
+        how: "اختر الإجابة قبل وصول القطار للمحطة. كل إجابة صحيحة تزيد السرعة وتضيف عربة.",
+        goal: "مراجعة سريعة للمصطلحات مع إثارة الحركة"
+      },
+      {
+        id: "wheel",
+        name: "عجلة الحظ",
+        emoji: "🎡",
+        cat: "fast",
+        color: "#F59E0B",
+        desc: "LED ينبض + زجاج",
+        idea: "عجلة مقسمة قطاعات مضيئة بتباطؤ فيزيائي حقيقي. القطاع الفائز يفتح سؤال.",
+        how: "اضغط لف، انتظر توقف العجلة، أجب على سؤال القطاع.",
+        goal: "كسر روتين الحفظ بعشوائية محفزة"
+      },
+      {
+        id: "rocket",
+        name: "سباق الصواريخ",
+        emoji: "🚀",
+        cat: "fast",
+        color: "#06B6D4",
+        desc: "ذيل نار 4 طبقات + كويكبات",
+        idea: "صاروخك يطير بين كويكبات متحركة ونجوم شهاب. الوقود ينقص مع الخطأ.",
+        how: "أجب صح لزيادة الوقود. الكويكبات تتحرك وتحتاج تفادي بصري.",
+        goal: "تشويق فضائي لربط المفاهيم"
+      },
+      {
+        id: "catcher",
+        name: "صائد الإجابات",
+        emoji: "⚛️",
+        cat: "fast",
+        color: "#EC4899",
+        desc: "سلو موشن + زووم عدسة",
+        idea: "إجابات طائرة في فقاعات. عند اقتراب الصحيحة يحدث تباطؤ 50% وزووم.",
+        how: "القط الإجابة الصحيحة من بين الطائرة. تلميح: الصحيحة تلمع أخضر عند القرب.",
+        goal: "تركيز بصري وسرعة قرار"
+      },
+      {
+        id: "bool",
+        name: "صح و غلط",
+        emoji: "✅",
+        cat: "fast",
+        color: "#10B981",
+        desc: "تيك توك كروت + كومبو نار",
+        idea: "كارت يظهر بعبارة، اسحبه يمين إذا صح، شمال إذا غلط. كومبو 5 يشتعل.",
+        how: "اسحب الكارت يمين/شمال. كومبو يحسب ويظهر نار.",
+        goal: "مراجعة سريعة للمعلومات الثابتة"
+      },
+      {
+        id: "cannon",
+        name: "مدفع المعلومات",
+        emoji: "💥",
+        cat: "fast",
+        color: "#EF4444",
+        desc: "مسار منقط + ارتداد مدفع",
+        idea: "مدفع يطلق قذائف على أهداف متحركة (الإجابات). مسار متوقع منقط قبل الإطلاق.",
+        how: "اختر الهدف (الإجابة) واضبط الزاوية، أطلق.",
+        goal: "ربط الفيزياء بالاختيار"
+      },
+      {
+        id: "tower",
+        name: "برج التحدي",
+        emoji: "🏗️",
+        cat: "think",
+        color: "#10B981",
+        desc: "طوب يتكسر + غبار كثيف",
+        idea: "كل إجابة صحيحة تضيف طوبة. الخطأ يهز البرج ويكسر آخر طوبة.",
+        how: "أجب لتبني برجك. حافظ على التوازن عبر إجابات متتالية.",
+        goal: "بناء معرفي تراكمي"
+      },
+      {
+        id: "maze",
+        name: "متاهة المعرفة",
+        emoji: "🌀",
+        cat: "think",
+        color: "#6366F1",
+        desc: "مصباح يدوي + فخاخ متحركة",
+        idea: "متاهة بإضاءة مصباح يتبع اللاعب. أبواب مغلقة تفتح بأسئلة، وفخاخ تتحرك.",
+        how: "تحرك بالأسهم. افتح الأبواب بالإجابة. تجنب الفخاخ.",
+        goal: "استكشاف وتذكر خريطة مفاهيم"
+      },
+      {
+        id: "memory",
+        name: "ذاكرة الأبطال",
+        emoji: "🧠",
+        cat: "think",
+        color: "#F97316",
+        desc: "قلب 3D + انعكاس وظل",
+        idea: "شبكة كروت مقلوبة. كل كارت سؤال أو إجابة. اقلب اثنين متطابقين.",
+        how: "اقلب كارتين. إذا تطابقا يبقيان مكشوفين.",
+        goal: "ربط السؤال بالإجابة بذاكرة بصرية"
+      },
+      {
+        id: "cards",
+        name: "بطاقات الاختيارات",
+        emoji: "🃏",
+        cat: "think",
+        color: "#8B5CF6",
+        desc: "كازينو نيون + فليب",
+        idea: "4 بطاقات كازينو تطفو، كل بطاقة اختيار. تنقلب بتأثير 3D عند اختيارها.",
+        how: "اختر بطاقة، تشاهد انقلابها ومعرفة الصح من الخطأ.",
+        goal: "اختيار جماعي بتأثير بصري فاخر"
+      },
+      {
+        id: "pairs",
+        name: "المتشابهات",
+        emoji: "👯",
+        cat: "think",
+        color: "#EC4899",
+        desc: "مغناطيس + قلوب",
+        idea: "عمود أسئلة وعمود إجابات. اسحب خط منحني من السؤال للإجابة.",
+        how: "اضغط سؤال ثم اضغط إجابته الصحيحة لرسم خط قزحي.",
+        goal: "مطابقة دقيقة"
+      },
+      {
+        id: "crossword",
+        name: "الكلمات المتقاطعة",
+        emoji: "🔤",
+        cat: "think",
+        color: "#06B6D4",
+        desc: "صحيفة + تلميحات",
+        idea: "شبكة متقاطعة تولد تلقائي من الإجابات. كل خلية تنور أخضر عند الكتابة الصحيحة.",
+        how: "اكتب الحروف في الخلايا. التلميحات على الجانب.",
+        goal: "تثبيت مصطلحات قصيرة"
+      },
+      {
+        id: "fill",
+        name: "أكمل الفراغ",
+        emoji: "✍️",
+        cat: "think",
+        color: "#F59E0B",
+        desc: "سبورة طباشير + توهج",
+        idea: "جملة بها فراغ ينبض. بنك كلمات يطفو، اسحب الكلمة للفراغ.",
+        how: "اختر من البنك أو اكتب. الفراغ يتوهج عند الملء الصحيح.",
+        goal: "إكمال سياق لغوي"
+      },
+      {
+        id: "connect",
+        name: "لعبة الوصل",
+        emoji: "🔗",
+        cat: "think",
+        color: "#8B5CF6",
+        desc: "قوس قزح + جسيمات تمشي",
+        idea: "وصل المصطلح بتعريفه بخط Bezier قزحي مع جسيمات تتحرك على الخط.",
+        how: "اضغط مصطلح ثم تعريفه. خط قزحي يثبت الوصل.",
+        goal: "ربط مفهومي عميق"
+      }
+    ];
+
+    const SPECIFIC_SETTINGS_SCHEMA = {
+      train: [
+        { key: "speed", label: "سرعة القطار", type: "select", options: [
+          { value: "slow", label: "بطيء" },
+          { value: "medium", label: "متوسط" },
+          { value: "fast", label: "سريع" },
+          { value: "ultra", label: "فائق" }
+        ]},
+        { key: "cars", label: "عدد العربات", type: "range", min: 3, max: 10 },
+        { key: "track", label: "نوع السكة", type: "select", options: [
+          { value: "desert", label: "صحراء" },
+          { value: "space", label: "فضاء" },
+          { value: "forest", label: "غابة" }
+        ]}
+      ],
+      wheel: [
+        { key: "sectors", label: "عدد القطاعات", type: "range", min: 4, max: 12 },
+        { key: "duration", label: "مدة اللف (ثواني)", type: "range", min: 3, max: 10 }
+      ],
+      rocket: [
+        { key: "speed", label: "سرعة الصاروخ", type: "range", min: 1, max: 10 },
+        { key: "density", label: "كثافة الكويكبات", type: "range", min: 1, max: 10 },
+        { key: "gravity", label: "الجاذبية", type: "range", min: 1, max: 5 }
+      ],
+      catcher: [
+        { key: "speed", label: "السرعة", type: "range", min: 1, max: 10 },
+        { key: "simultaneous", label: "عدد العناصر الطائرة", type: "range", min: 1, max: 8 },
+        { key: "slowmo", label: "سلو موشن", type: "checkbox" }
+      ],
+      bool: [
+        { key: "speed", label: "السرعة", type: "range", min: 1, max: 10 },
+        { key: "count", label: "عدد الكروت", type: "range", min: 5, max: 30 }
+      ],
+      cannon: [
+        { key: "gravity", label: "الجاذبية", type: "range", min: 1, max: 5 },
+        { key: "targetSpeed", label: "سرعة الأهداف", type: "range", min: 1, max: 5 }
+      ],
+      tower: [
+        { key: "difficulty", label: "الصعوبة", type: "select", options: [
+          { value: "easy", label: "سهل" },
+          { value: "medium", label: "متوسط" },
+          { value: "hard", label: "صعب" }
+        ]},
+        { key: "weight", label: "وزن الطوبة", type: "range", min: 1, max: 10 }
+      ],
+      maze: [
+        { key: "size", label: "حجم المتاهة", type: "select", options: [
+          { value: "small", label: "صغير" },
+          { value: "medium", label: "متوسط" },
+          { value: "large", label: "كبير" }
+        ]},
+        { key: "traps", label: "فخاخ متحركة", type: "checkbox" },
+        { key: "light", label: "إضاءة مصباح", type: "checkbox" }
+      ],
+      memory: [
+        { key: "grid", label: "حجم الشبكة", type: "select", options: [
+          { value: "3x3", label: "3×3" },
+          { value: "4x4", label: "4×4" },
+          { value: "5x5", label: "5×5" }
+        ]},
+        { key: "peek", label: "ثواني النظر", type: "range", min: 0, max: 5 }
+      ],
+      cards: [
+        { key: "duration", label: "مدة الانقلاب", type: "range", min: 1, max: 5 },
+        { key: "heart", label: "تأثير القلب", type: "checkbox" }
+      ],
+      pairs: [
+        { key: "pairs", label: "عدد الأزواج", type: "range", min: 4, max: 10 },
+        { key: "line", label: "نوع الخط", type: "select", options: [
+          { value: "curve", label: "منحني" },
+          { value: "straight", label: "مستقيم" }
+        ]}
+      ],
+      crossword: [
+        { key: "size", label: "حجم الشبكة", type: "range", min: 8, max: 16 },
+        { key: "firstLetter", label: "إظهار أول حرف", type: "checkbox" }
+      ],
+      fill: [
+        { key: "bank", label: "بنك الكلمات", type: "select", options: [
+          { value: "shuffle", label: "عشوائي" },
+          { value: "static", label: "ثابت" }
+        ]},
+        { key: "allowTyping", label: "السماح بالكتابة", type: "checkbox" }
+      ],
+      connect: [
+        { key: "pairs", label: "عدد الأزواج", type: "range", min: 4, max: 10 },
+        { key: "line", label: "نوع الخط", type: "select", options: [
+          { value: "curve", label: "منحني" },
+          { value: "straight", label: "مستقيم" }
+        ]}
+      ]
+    };
+
+    const INITIAL_CATEGORIES = [
+      {
+        id: "c1",
+        labId: "science",
+        name: "المادة وخواصها",
+        color: "#8B5CF6",
+        desc: "الدرس الأول",
+        icon: "Atom",
+        createdAt: Date.now()
+      },
+      {
+        id: "c2",
+        labId: "science",
+        name: "الذرة",
+        color: "#06B6D4",
+        desc: "الدرس الثاني",
+        icon: "Dna",
+        createdAt: Date.now()
+      }
+    ];
+
+    const INITIAL_QUESTIONS = [
+      {
+        id: "q1",
+        labId: "science",
+        categoryId: "c1",
+        text: "ما هي المادة؟",
+        options: ["كل ما له كتلة وحجم", "الضوء فقط", "الصوت", "الفراغ"],
+        correct: 0
+      },
+      {
+        id: "q2",
+        labId: "science",
+        categoryId: "c1",
+        text: "حالات المادة الأساسية",
+        options: ["صلبة سائلة غازية", "واحدة فقط", "اثنتان", "خمس"],
+        correct: 0
+      },
+      {
+        id: "q3",
+        labId: "science",
+        categoryId: "c2",
+        text: "مركز الذرة",
+        options: ["النواة", "الإلكترون", "المدار", "الضوء"],
+        correct: 0
+      }
+    ];
+
+    /* =========================================================
+       2) دوال مساعدة
+    ========================================================= */
+
+    function cx(...classes) {
+      return classes.filter(Boolean).join(" ");
+    }
+
+    function makeId(prefix) {
+      return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    }
+
+    function makeGameCode() {
+      const part = Math.random().toString(36).slice(2, 6).toUpperCase();
+      const stamp = Date.now().toString().slice(-3);
+      return `H-${part}-${stamp}`;
+    }
+
+    function shuffleArray(array) {
+      const copy = [...array];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function getDefaultGameSettings() {
+      return {
+        title: "لعبة درس جديد",
+        desc: "مراجعة سريعة ممتعة",
+        timerEnabled: true,
+        timerSeconds: 60,
+        attempts: "infinite",
+        lives: 3,
+        points: 10,
+        speedBonus: true,
+        shuffle: true,
+        hints: false,
+        mode: "play",
+        visual: true,
+        qCount: 8
+      };
+    }
+
+    function getSpecificSettings(gameId) {
+      const defaults = {
+        train: { speed: "medium", cars: 5, track: "desert" },
+        wheel: { sectors: 8, duration: 5 },
+        rocket: { speed: 6, density: 5, gravity: 2 },
+        catcher: { speed: 4, simultaneous: 4, slowmo: true },
+        bool: { speed: 4, count: 10 },
+        cannon: { gravity: 3, targetSpeed: 3 },
+        tower: { difficulty: "medium", weight: 5 },
+        maze: { size: "medium", traps: true, light: true },
+        memory: { grid: "4x4", peek: 3 },
+        cards: { duration: 2, heart: true },
+        pairs: { pairs: 6, line: "curve" },
+        crossword: { size: 12, firstLetter: false },
+        fill: { bank: "shuffle", allowTyping: true },
+        connect: { pairs: 5, line: "curve" }
+      };
+
+      return defaults[gameId] || {};
+    }
+
+    function getGameType(gameId) {
+      return GAME_TYPES.find(g => g.id === gameId) || GAME_TYPES[0];
+    }
+
+    function getSubjectIconEmoji(iconName) {
+      const map = {
+        FlaskConical: "🧪",
+        Calculator: "🧮",
+        BookOpen: "📖",
+        Languages: "🌐",
+        Atom: "⚛️",
+        Dna: "🧬",
+        Layers: "🧩"
+      };
+      return map[iconName] || "✨";
+    }
+
+    /* =========================================================
+       3) مكونات صغيرة مشتركة
+    ========================================================= */
+
+    function Toast({ message }) {
+      if (!message) return null;
+
+      return (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-full bg-white text-black text-sm font-black shadow-2xl border border-amber-400/30 animate-glow-in">
+          {message}
+        </div>
+      );
+    }
+
+    function Modal({ title, onClose, children, maxWidth = "max-w-lg" }) {
+      return (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xl flex items-center justify-center p-4">
+          <div className={cx(
+            "w-full rounded-3xl bg-[#120E24] border border-amber-500/20 p-6 shadow-2xl max-h-[90vh] overflow-auto animate-glow-in",
+            maxWidth
+          )}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-black">{title}</h3>
+              <button
+                onClick={onClose}
+                className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center"
+              >
+                ✕
+              </button>
+            </div>
+            {children}
+          </div>
+        </div>
+      );
+    }
+
+    function Field({ label, children }) {
+      return (
+        <div>
+          <label className="block text-xs font-bold text-white/60 mb-2">{label}</label>
+          {children}
+        </div>
+      );
+    }
+
+    function EmptyState({ emoji, title, desc, actionText, onAction }) {
+      return (
+        <div className="rounded-[28px] glass-gold p-10 text-center border-dashed">
+          <div className="text-6xl animate-float">{emoji}</div>
+          <div className="mt-4 font-black text-xl">{title}</div>
+          <div className="text-white/50 text-sm mt-2 max-w-xl mx-auto">{desc}</div>
+
+          {actionText && (
+            <button
+              onClick={onAction}
+              className="mt-6 h-12 px-8 rounded-full bg-gradient-to-l from-amber-400 to-orange-500 text-black font-black"
+            >
+              {actionText}
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    function SpecificSettingsFields({ gameId, settings, onChange }) {
+      const schema = SPECIFIC_SETTINGS_SCHEMA[gameId] || [];
+
+      if (!schema.length) {
+        return (
+          <div className="text-[12px] text-white/60 p-4 rounded-2xl bg-white/5 border border-white/10">
+            لا توجد إعدادات خاصة إضافية لهذا النوع حاليًا.
+          </div>
+        );
+      }
+
+      return (
+        <div className="grid gap-4">
+          {schema.map(field => {
+            const value = settings[field.key];
+
+            return (
+              <div key={field.key}>
+                <div className="text-[12px] font-bold text-white/70 mb-2">{field.label}</div>
+
+                {field.type === "select" && (
+                  <select
+                    value={value ?? ""}
+                    onChange={e => onChange(field.key, e.target.value)}
+                    className="w-full h-11 rounded-2xl bg-black/30 border border-white/10 px-4 text-sm"
+                  >
+                    {field.options.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                )}
+
+                {field.type === "range" && (
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="range"
+                      min={field.min}
+                      max={field.max}
+                      value={value ?? field.min}
+                      onChange={e => onChange(field.key, Number(e.target.value))}
+                      className="flex-1 accent-amber-500"
+                    />
+                    <span className="text-sm font-bold min-w-8 text-center">{value}</span>
+                  </div>
+                )}
+
+                {field.type === "checkbox" && (
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(value)}
+                      onChange={e => onChange(field.key, e.target.checked)}
+                      className="accent-amber-500"
+                    />
+                    تفعيل
+                  </label>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    /* =========================================================
+       4) الخلفية المتحركة
+    ========================================================= */
+
+    function ParticleBackground() {
+      const canvasRef = useRef(null);
+
+      useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext("2d");
+        let animationFrame;
+
+        const particles = Array.from({ length: 80 }, () => ({
+          x: Math.random() * window.innerWidth,
+          y: Math.random() * window.innerHeight,
+          vx: (Math.random() - 0.5) * 0.5,
+          vy: (Math.random() - 0.5) * 0.5,
+          r: Math.random() * 2 + 0.5,
+          hue: 250 + Math.random() * 80
+        }));
+
+        const resize = () => {
+          canvas.width = window.innerWidth;
+          canvas.height = window.innerHeight;
+        };
+
+        resize();
+        window.addEventListener("resize", resize);
+
+        const draw = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+          gradient.addColorStop(0, "rgba(10, 5, 25, 1)");
+          gradient.addColorStop(0.5, "rgba(18, 8, 35, 1)");
+          gradient.addColorStop(1, "rgba(30, 15, 5, 1)");
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          particles.forEach(p => {
+            p.x += p.vx;
+            p.y += p.vy;
+
+            if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+            if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fillStyle = `hsla(${p.hue}, 90%, 70%, 0.75)`;
+            ctx.fill();
+          });
+
+          animationFrame = requestAnimationFrame(draw);
+        };
+
+        draw();
+
+        return () => {
+          cancelAnimationFrame(animationFrame);
+          window.removeEventListener("resize", resize);
+        };
+      }, []);
+
+      return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />;
+    }
+
+    function Background() {
+      return (
+        <div className="fixed inset-0 pointer-events-none">
+          <ParticleBackground />
+          <div
+            className="absolute inset-0 opacity-40"
+            style={{
+              background: "radial-gradient(900px 600px at 14% 12%, rgba(139,92,246,0.22), transparent), radial-gradient(700px 500px at 88% 84%, rgba(245,158,11,0.16), transparent)"
+            }}
+          />
+        </div>
+      );
+    }
+
+    /* =========================================================
+       5) مشغل اللعبة
+    ========================================================= */
+
+    function GamePlayer({ game, lab, questions, onClose, showToast }) {
+      const [currentIndex, setCurrentIndex] = useState(0);
+      const [score, setScore] = useState(0);
+      const [lives, setLives] = useState(game.general.lives);
+      const [attemptsLeft, setAttemptsLeft] = useState(
+        typeof game.general.attempts === "number" ? game.general.attempts : Infinity
+      );
+      const [combo, setCombo] = useState(0);
+      const [feedback, setFeedback] = useState(null);
+      const [timeLeft, setTimeLeft] = useState(
+        game.general.timerEnabled ? game.general.timerSeconds : 0
+      );
+
+      const question = questions[currentIndex];
+      const gameType = getGameType(game.gameId);
+
+      useEffect(() => {
+        if (!game.general.timerEnabled) return;
+
+        const timer = setInterval(() => {
+          setTimeLeft(prev => Math.max(0, prev - 1));
+        }, 1000);
+
+        return () => clearInterval(timer);
+      }, [game.general.timerEnabled]);
+
+      useEffect(() => {
+        if (game.general.timerEnabled && timeLeft === 0) {
+          showToast("انتهى الوقت ⏱️");
+          onClose();
+        }
+      }, [timeLeft]);
+
+      if (!question) {
+        return null;
+      }
+
+      const answer = optionIndex => {
+        if (feedback) return;
+
+        const isCorrect = optionIndex === question.correct;
+        let gained = 0;
+        let nextLives = lives;
+        let nextAttempts = attemptsLeft;
+
+        if (isCorrect) {
+          const bonus = game.general.speedBonus && game.general.timerEnabled
+            ? Math.max(0, Math.floor(timeLeft / 15))
+            : 0;
+
+          gained = game.general.points + bonus;
+          setScore(s => s + gained);
+          setCombo(c => c + 1);
+          setFeedback("correct");
+          showToast(`إجابة صحيحة +${gained} ⭐`);
+        } else {
+          nextLives = lives - 1;
+          nextAttempts = typeof game.general.attempts === "number" ? attemptsLeft - 1 : Infinity;
+
+          setCombo(0);
+          setLives(nextLives);
+          setAttemptsLeft(nextAttempts);
+          setFeedback("wrong");
+          showToast("إجابة خاطئة ❌");
+        }
+
+        setTimeout(() => {
+          setFeedback(null);
+
+          if (!isCorrect) {
+            if (nextLives <= 0) {
+              showToast("انتهت الأرواح 💔");
+              onClose();
+              return;
+            }
+
+            if (typeof game.general.attempts === "number" && nextAttempts <= 0) {
+              showToast("انتهت المحاولات ❌");
+              onClose();
+              return;
+            }
+          }
+
+          if (currentIndex < questions.length - 1) {
+            setCurrentIndex(i => i + 1);
+          } else {
+            const finalScore = score + gained;
+            showToast(`انتهت اللعبة 🎉 نتيجتك: ${finalScore}`);
+            onClose();
+          }
+        }, 750);
+      };
+
+      return (
+        <div className="fixed inset-0 z-[80] bg-[#05020D] flex flex-col">
+          {/* شريط علوي */}
+          <div className="h-16 backdrop-blur-xl bg-black/30 border-b border-amber-500/15 flex items-center justify-between px-5 shrink-0 relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-black font-black text-xl">
+                {gameType.emoji}
+              </div>
+              <div>
+                <div className="font-bold text-[13px]">
+                  {game.title} • {lab?.name}
+                </div>
+                <div className="text-[11px] text-white/50">
+                  {gameType.name} • {game.general.mode} • {game.code}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="px-3 py-1 rounded-full bg-black/40 border border-white/10 text-[11px]">
+                ⏱️ {game.general.timerEnabled ? `${timeLeft}ث` : "∞"}
+              </div>
+              <div className="px-3 py-1 rounded-full bg-black/40 border border-white/10 text-[11px]">
+                💖 {lives}
+              </div>
+              <div className="px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/20 text-amber-300 text-[11px]">
+                ⭐ {score}
+              </div>
+              <button
+                onClick={onClose}
+                className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          {/* جسم اللعبة */}
+          <div className="flex-1 relative overflow-hidden">
+            <Background />
+
+            <div className="relative z-10 h-full flex flex-col p-5 max-w-[760px] mx-auto w-full">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex gap-2">
+                  <span className="px-3 py-1 rounded-full bg-black/40 border border-white/10 text-[11px]">
+                    {currentIndex + 1}/{questions.length}
+                  </span>
+                  <span className="px-3 py-1 rounded-full bg-black/40 border border-white/10 text-[11px]">
+                    كومبو {combo} {combo >= 3 ? "🔥" : ""}
+                  </span>
+                </div>
+
+                <div className="flex gap-1">
+                  {Array.from({ length: lives }).map((_, i) => (
+                    <span key={i} className="text-[16px]">❤️</span>
+                  ))}
+                </div>
+              </div>
+
+              {/* شريط تقدم القطار فقط كمثال */}
+              {game.gameId === "train" && (
+                <div className="mb-4">
+                  <div className="h-[4px] rounded-full bg-white/10 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-amber-400 to-orange-500"
+                      style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
+                    />
+                  </div>
+                  <div className="flex gap-1 mt-2">
+                    {Array.from({ length: Math.min(game.specific.cars || 5, currentIndex + 1) }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="w-10 h-6 rounded bg-violet-500/40 border border-white/10 flex items-center justify-center text-[10px]"
+                      >
+                        📦
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="rounded-[24px] bg-[#120E24]/90 border border-amber-500/15 p-6 backdrop-blur-xl shadow-2xl">
+                <div className="text-[10px] text-amber-300 mb-2 tracking-widest flex items-center gap-2">
+                  <span>{gameType.emoji}</span>
+                  <span>{gameType.name}</span>
+                  {game.general.visual && <span>• اهتزاز بصري</span>}
+                </div>
+
+                <h3 className="text-[18px] md:text-[20px] font-bold leading-relaxed">
+                  {question.text}
+                </h3>
+
+                {game.general.hints && (
+                  <div className="mt-3 p-2 rounded-[10px] bg-violet-500/10 border border-violet-500/20 text-[11px] text-violet-200">
+                    💡 تلميح: الإجابة الصحيحة تبدأ بـ "{question.options[question.correct].slice(0, 2)}..."
+                  </div>
+                )}
+
+                <div className="grid gap-2.5 mt-5">
+                  {question.options.map((option, index) => (
+                    <button
+                      key={index}
+                      onClick={() => answer(index)}
+                      className={cx(
+                        "h-[52px] rounded-full font-bold text-[14px] px-5 text-right flex items-center justify-between transition-all shadow hover:scale-[1.02]",
+                        feedback === null && "bg-white text-[#0F0A1E] hover:bg-white/90",
+                        feedback !== null && index === question.correct && "bg-emerald-500 text-white",
+                        feedback === "wrong" && index !== question.correct && "bg-red-500/20 text-red-200",
+                        feedback === "correct" && index !== question.correct && "bg-white/20 text-white/60"
+                      )}
+                    >
+                      <span>{option}</span>
+                      <span className="w-7 h-7 rounded-full bg-black/10 flex items-center justify-center text-[11px]">
+                        {String.fromCharCode(65 + index)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-auto pt-6 flex justify-between text-[11px] text-white/40">
+                <span>
+                  محاولات {typeof game.general.attempts === "number" ? attemptsLeft : "∞"} • نقاط {game.general.points} لكل سؤال
+                </span>
+                <span>
+                  {game.categoryIds.length} قسم • {game.general.qCount} سؤال
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* =========================================================
+       6) منشئ اللعبة
+    ========================================================= */
+
+    function GameBuilder({
+      subjects,
+      categories,
+      questions,
+      editingGame,
+      onClose,
+      onSave,
+      showToast
+    }) {
+      const [step, setStep] = useState(1);
+      const [labId, setLabId] = useState(editingGame?.labId || null);
+      const [categoryIds, setCategoryIds] = useState(editingGame?.categoryIds || []);
+      const [gameId, setGameId] = useState(editingGame?.gameId || "train");
+      const [general, setGeneral] = useState(editingGame?.general || getDefaultGameSettings());
+      const [specific, setSpecific] = useState(editingGame?.specific || getSpecificSettings("train"));
+      const [qCount, setQCount] = useState(editingGame?.general?.qCount || 8);
+
+      const labCategories = categories.filter(c => c.labId === labId);
+      const availableQuestions = questions.filter(q =>
+        categoryIds.length
+          ? categoryIds.includes(q.categoryId)
+          : q.labId === labId
+      );
+
+      const changeGameId = id => {
+        setGameId(id);
+        setSpecific(getSpecificSettings(id));
+      };
+
+      const updateGeneral = (key, value) => {
+        setGeneral(prev => ({ ...prev, [key]: value }));
+      };
+
+      const updateSpecific = (key, value) => {
+        setSpecific(prev => ({ ...prev, [key]: value }));
+      };
+
+      const toggleCategory = id => {
+        setCategoryIds(prev =>
+          prev.includes(id)
+            ? prev.filter(x => x !== id)
+            : [...prev, id]
+        );
+      };
+
+      const handleSave = () => {
+        if (!labId) {
+          showToast("اختر المختبر أولاً");
+          return;
+        }
+
+        if (!categoryIds.length) {
+          showToast("اختر قسم واحد على الأقل");
+          return;
+        }
+
+        if (!availableQuestions.length) {
+          showToast("لا توجد أسئلة كافية في الأقسام المختارة");
+          return;
+        }
+
+        onSave({
+          labId,
+          categoryIds,
+          gameId,
+          general: {
+            ...general,
+            qCount
+          },
+          specific
+        });
+      };
+
+      return (
+        <div className="fixed inset-0 z-[70] bg-[#05020D] flex flex-col overflow-hidden">
+          <Background />
+
+          {/* Header */}
+          <div className="relative z-10 h-[72px] flex items-center justify-between px-6 border-b border-amber-500/15 backdrop-blur-xl bg-black/20">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-black font-black">
+                🎮
+              </div>
+              <div>
+                <div className="font-black text-[14px]">استوديو إنشاء لعبة الدرس • نسخة منظمة</div>
+                <div className="text-[11px] text-white/50">4 خطوات • إعدادات تفصيلية • معاينة فورية</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="hidden md:flex items-center gap-2">
+                {[1, 2, 3, 4].map(s => (
+                  <div
+                    key={s}
+                    className={cx(
+                      "w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-black border transition-all",
+                      step >= s
+                        ? "bg-amber-500 text-black border-amber-500 shadow-lg"
+                        : "bg-white/5 border-white/10 text-white/40"
+                    )}
+                  >
+                    {s}
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={onClose}
+                className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          {/* Body */}
+          <div className="relative z-10 flex-1 overflow-auto p-4 md:p-8">
+            <div className="max-w-[1240px] mx-auto grid lg:grid-cols-[1.2fr_0.8fr] gap-6">
+              {/* Left panel */}
+              <div className="rounded-[28px] bg-[#120E24]/90 border border-amber-500/15 backdrop-blur-xl p-6 md:p-8 shadow-2xl">
+                {/* STEP 1 */}
+                {step === 1 && (
+                  <div>
+                    <h3 className="text-[22px] font-black mb-2">الخطوة 1 — اختر المادة والمختبر</h3>
+                    <p className="text-white/50 text-[13px] mb-6">
+                      كل مختبر يحتوي أقسام دروس. اختر المختبر الذي تريد إنشاء اللعبة فيه.
+                    </p>
+
+                    <div className="grid md:grid-cols-2 gap-3">
+                      {subjects.map(subject => {
+                        const active = labId === subject.id;
+
+                        return (
+                          <button
+                            key={subject.id}
+                            onClick={() => {
+                              setLabId(subject.id);
+                              setCategoryIds([]);
+                            }}
+                            className={cx(
+                              "text-right p-5 rounded-[18px] border flex items-center gap-4 transition-all",
+                              active
+                                ? "bg-white text-black border-white shadow-xl"
+                                : "bg-white/5 border-white/10 hover:border-amber-400/30"
+                            )}
+                          >
+                            <div className={cx(
+                              "w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center text-2xl",
+                              subject.gradient
+                            )}>
+                              {getSubjectIconEmoji(subject.icon)}
+                            </div>
+
+                            <div>
+                              <div className="font-black">{subject.name}</div>
+                              <div className="text-[11px] opacity-60">
+                                {categories.filter(c => c.labId === subject.id).length} قسم • {" "}
+                                {questions.filter(q => q.labId === subject.id).length} سؤال
+                              </div>
+                            </div>
+
+                            {active && <span className="mr-auto">✓</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <button
+                      onClick={() => setStep(2)}
+                      disabled={!labId}
+                      className="mt-8 w-full h-14 rounded-full bg-gradient-to-l from-amber-400 to-orange-500 text-black font-black disabled:opacity-30"
+                    >
+                      التالي: اختيار الأقسام →
+                    </button>
+                  </div>
+                )}
+
+                {/* STEP 2 */}
+                {step === 2 && (
+                  <div>
+                    <h3 className="text-[22px] font-black mb-2">الخطوة 2 — اختر الأقسام وعدد الأسئلة</h3>
+                    <p className="text-white/50 text-[13px] mb-6">
+                      يمكنك اختيار أكثر من قسم. مثال: الدرس 1 + الدرس 2 لمراجعة شاملة.
+                    </p>
+
+                    <div className="grid gap-3 max-h-[360px] overflow-auto pr-1">
+                      {labCategories.length === 0 ? (
+                        <div className="text-[13px] text-amber-300 p-4 rounded-[14px] bg-amber-500/10 border border-amber-500/20">
+                          لا يوجد أقسام في هذا المختبر، أنشئ أقسام أولاً من تبويب الأقسام.
+                        </div>
+                      ) : (
+                        labCategories.map(category => {
+                          const count = questions.filter(q => q.categoryId === category.id).length;
+                          const active = categoryIds.includes(category.id);
+
+                          return (
+                            <label
+                              key={category.id}
+                              className={cx(
+                                "flex items-center gap-4 p-4 rounded-[16px] border cursor-pointer transition-all",
+                                active
+                                  ? "bg-amber-500/10 border-amber-400/30"
+                                  : "bg-white/5 border-white/10 hover:border-white/20"
+                              )}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={active}
+                                onChange={() => toggleCategory(category.id)}
+                                className="w-5 h-5 accent-amber-500"
+                              />
+
+                              <div
+                                className="w-10 h-10 rounded-[10px] flex items-center justify-center text-white"
+                                style={{ background: category.color }}
+                              >
+                                🧩
+                              </div>
+
+                              <div className="flex-1">
+                                <div className="font-bold text-[14px]">{category.name}</div>
+                                <div className="text-[11px] text-white/50">
+                                  {count} سؤال • {category.desc || "بدون وصف"}
+                                </div>
+                              </div>
+
+                              <span className="text-[11px] px-2 py-1 rounded-full bg-white/10">
+                                {count} س
+                              </span>
+                            </label>
+                          );
+                        })
+                      )}
+                    </div>
+
+                    <div className="mt-6 grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[12px] font-bold mb-2 block">
+                          عدد الأسئلة في الجولة: {qCount}
+                        </label>
+                        <input
+                          type="range"
+                          min={2}
+                          max={20}
+                          value={qCount}
+                          onChange={e => setQCount(Number(e.target.value))}
+                          className="w-full accent-amber-500"
+                        />
+                      </div>
+
+                      <div className="p-3 rounded-[14px] bg-white/5 border border-white/10 text-[12px]">
+                        <div>
+                          مجموع الأسئلة المتاحة: {availableQuestions.length}
+                        </div>
+                        <div className="text-white/50 mt-1">
+                          سيتم سحب {Math.min(qCount, availableQuestions.length)} سؤال عشوائيًا
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-8 flex gap-3">
+                      <button
+                        onClick={() => setStep(1)}
+                        className="flex-1 h-14 rounded-full bg-white/5 border border-white/10 font-bold"
+                      >
+                        ← رجوع
+                      </button>
+                      <button
+                        onClick={() => setStep(3)}
+                        disabled={!categoryIds.length}
+                        className="flex-[2] h-14 rounded-full bg-gradient-to-l from-amber-400 to-orange-500 text-black font-black disabled:opacity-30"
+                      >
+                        التالي: نوع اللعبة →
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP 3 */}
+                {step === 3 && (
+                  <div>
+                    <h3 className="text-[22px] font-black mb-2">الخطوة 3 — اختر نوع اللعبة • 14 لعبة</h3>
+                    <p className="text-white/50 text-[13px] mb-6">
+                      كل لعبة لها فكرة وطريقة لعب وهدف تعليمي.
+                    </p>
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-[460px] overflow-auto pr-1">
+                      {GAME_TYPES.map(game => {
+                        const active = gameId === game.id;
+
+                        return (
+                          <button
+                            key={game.id}
+                            onClick={() => changeGameId(game.id)}
+                            className={cx(
+                              "text-right rounded-[20px] border p-4 flex flex-col gap-2 transition-all",
+                              active
+                                ? "bg-white text-black border-white shadow-xl scale-[1.02]"
+                                : "bg-[#1A1232] border-white/10 hover:border-amber-400/30 hover:-translate-y-1"
+                            )}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="text-[36px] animate-float">{game.emoji}</div>
+                              <span className={cx(
+                                "text-[10px] px-2 py-1 rounded-full border",
+                                active ? "bg-black text-white border-black" : "bg-white/5 border-white/10"
+                              )}>
+                                {game.cat === "fast" ? "سريعة ⚡" : "تفكير 🧠"}
+                              </span>
+                            </div>
+
+                            <div className="font-black text-[14px] mt-2">{game.name}</div>
+                            <div className="text-[11px] opacity-60 mt-1">{game.desc}</div>
+
+                            {active && (
+                              <div className="mt-2 text-[10px] px-2 py-1 rounded-full bg-amber-500 text-black inline-block">
+                                مختارة ✓
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="mt-8 flex gap-3">
+                      <button
+                        onClick={() => setStep(2)}
+                        className="flex-1 h-14 rounded-full bg-white/5 border border-white/10 font-bold"
+                      >
+                        ← رجوع
+                      </button>
+                      <button
+                        onClick={() => setStep(4)}
+                        className="flex-[2] h-14 rounded-full bg-gradient-to-l from-amber-400 to-orange-500 text-black font-black"
+                      >
+                        التالي: الإعدادات التفصيلية →
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP 4 */}
+                {step === 4 && (
+                  <div>
+                    <h3 className="text-[22px] font-black mb-2">الخطوة 4 — إعدادات اللعبة التفصيلية ⚙️</h3>
+                    <p className="text-white/50 text-[13px] mb-6">
+                      إعدادات عامة لكل الألعاب + إعدادات خاصة بنوع اللعبة المختار.
+                    </p>
+
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {/* General */}
+                      <div className="space-y-5">
+                        <div className="p-4 rounded-[16px] bg-white/5 border border-white/10">
+                          <div className="font-black text-[13px] mb-3">إعدادات عامة</div>
+
+                          <div className="space-y-3">
+                            <input
+                              value={general.title}
+                              onChange={e => updateGeneral("title", e.target.value)}
+                              placeholder="عنوان اللعبة"
+                              className="w-full h-11 rounded-full bg-black/30 border border-white/10 px-4 text-[13px]"
+                            />
+
+                            <textarea
+                              value={general.desc}
+                              onChange={e => updateGeneral("desc", e.target.value)}
+                              placeholder="وصف قصير"
+                              rows={2}
+                              className="w-full rounded-[14px] bg-black/30 border border-white/10 p-3 text-[12px] resize-none"
+                            />
+
+                            <div className="grid grid-cols-2 gap-2">
+                              <label className="flex items-center gap-2 text-[12px]">
+                                <input
+                                  type="checkbox"
+                                  checked={general.timerEnabled}
+                                  onChange={e => updateGeneral("timerEnabled", e.target.checked)}
+                                  className="accent-amber-500"
+                                />
+                                مؤقت ⏱️
+                              </label>
+
+                              <select
+                                value={general.timerSeconds}
+                                onChange={e => updateGeneral("timerSeconds", Number(e.target.value))}
+                                className="h-9 rounded-full bg-black/30 border border-white/10 px-3 text-[12px]"
+                              >
+                                <option value={30}>30ث</option>
+                                <option value={60}>60ث</option>
+                                <option value={120}>120ث</option>
+                                <option value={180}>180ث</option>
+                                <option value={300}>300ث</option>
+                              </select>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="text-[11px]">المحاولات</label>
+                                <select
+                                  value={String(general.attempts)}
+                                  onChange={e => updateGeneral(
+                                    "attempts",
+                                    e.target.value === "infinite" ? "infinite" : Number(e.target.value)
+                                  )}
+                                  className="w-full h-9 rounded-full bg-black/30 border border-white/10 px-3 text-[12px]"
+                                >
+                                  <option value="infinite">لا نهائي</option>
+                                  <option value="3">3</option>
+                                  <option value="5">5</option>
+                                  <option value="10">10</option>
+                                </select>
+                              </div>
+
+                              <div>
+                                <label className="text-[11px]">الأرواح 💖</label>
+                                <select
+                                  value={general.lives}
+                                  onChange={e => updateGeneral("lives", Number(e.target.value))}
+                                  className="w-full h-9 rounded-full bg-black/30 border border-white/10 px-3 text-[12px]"
+                                >
+                                  <option value={3}>3 قلوب</option>
+                                  <option value={5}>5 قلوب</option>
+                                </select>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="text-[11px]">نقاط لكل سؤال</label>
+                                <input
+                                  type="number"
+                                  value={general.points}
+                                  onChange={e => updateGeneral("points", Number(e.target.value) || 0)}
+                                  className="w-full h-9 rounded-full bg-black/30 border border-white/10 px-3 text-[12px]"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="text-[11px]">وضع اللعب</label>
+                                <select
+                                  value={general.mode}
+                                  onChange={e => updateGeneral("mode", e.target.value)}
+                                  className="w-full h-9 rounded-full bg-black/30 border border-white/10 px-3 text-[12px]"
+                                >
+                                  <option value="play">لعب ممتع 🎮</option>
+                                  <option value="exam">امتحان جاد 📝</option>
+                                  <option value="review">مراجعة هادئة 📚</option>
+                                </select>
+                              </div>
+                            </div>
+
+                            <div className="flex gap-3 flex-wrap">
+                              <label className="flex items-center gap-1.5 text-[11px]">
+                                <input
+                                  type="checkbox"
+                                  checked={general.shuffle}
+                                  onChange={e => updateGeneral("shuffle", e.target.checked)}
+                                  className="accent-violet-500"
+                                />
+                                خلط الأسئلة
+                              </label>
+
+                              <label className="flex items-center gap-1.5 text-[11px]">
+                                <input
+                                  type="checkbox"
+                                  checked={general.hints}
+                                  onChange={e => updateGeneral("hints", e.target.checked)}
+                                  className="accent-violet-500"
+                                />
+                                تلميحات
+                              </label>
+
+                              <label className="flex items-center gap-1.5 text-[11px]">
+                                <input
+                                  type="checkbox"
+                                  checked={general.speedBonus}
+                                  onChange={e => updateGeneral("speedBonus", e.target.checked)}
+                                  className="accent-amber-500"
+                                />
+                                نقاط سرعة
+                              </label>
+
+                              <label className="flex items-center gap-1.5 text-[11px]">
+                                <input
+                                  type="checkbox"
+                                  checked={general.visual}
+                                  onChange={e => updateGeneral("visual", e.target.checked)}
+                                  className="accent-amber-500"
+                                />
+                                اهتزاز/وميض بصري
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="p-4 rounded-[16px] bg-amber-500/10 border border-amber-500/20">
+                          <div className="font-black text-[13px] mb-3">
+                            إعدادات خاصة: {getGameType(gameId).name}
+                          </div>
+
+                          <SpecificSettingsFields
+                            gameId={gameId}
+                            settings={specific}
+                            onChange={updateSpecific}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Preview */}
+                      <div className="space-y-4">
+                        <div className="rounded-[18px] bg-black/40 border border-amber-500/15 p-4">
+                          <div className="text-[12px] font-black mb-3">
+                            معاينة فورية • تأثير الإعدادات
+                          </div>
+
+                          <div className="relative rounded-[16px] overflow-hidden border border-white/10 h-[220px] bg-gradient-to-br from-violet-900/30 to-amber-900/20 flex items-center justify-center">
+                            <div className="text-center">
+                              <div className="text-[48px] animate-float">
+                                {getGameType(gameId).emoji}
+                              </div>
+                              <div className="mt-2 font-black text-[13px]">
+                                {general.title || "عنوان اللعبة"}
+                              </div>
+                              <div className="text-[11px] text-white/50 mt-1">
+                                {general.desc || "وصف اللعبة"}
+                              </div>
+
+                              <div className="flex gap-1 justify-center mt-3">
+                                {Array.from({ length: general.lives }).map((_, i) => (
+                                  <span
+                                    key={i}
+                                    className="text-[14px] animate-float"
+                                    style={{ animationDelay: `${i * 0.15}s` }}
+                                  >
+                                    ❤️
+                                  </span>
+                                ))}
+                              </div>
+
+                              <div className="mt-2 flex justify-center gap-1.5">
+                                <span className="px-2 py-0.5 rounded-full bg-white/10 text-[10px]">
+                                  ⏱️ {general.timerEnabled ? `${general.timerSeconds}ث` : "∞"}
+                                </span>
+                                <span className="px-2 py-0.5 rounded-full bg-white/10 text-[10px]">
+                                  ⭐ {general.points} نقطة
+                                </span>
+                                <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px]">
+                                  {gameId}
+                                </span>
+                              </div>
+                            </div>
+
+                            {general.visual && (
+                              <div className="absolute inset-0 border-2 border-amber-400/20 rounded-[16px] animate-pulse pointer-events-none" />
+                            )}
+                          </div>
+
+                          <div className="mt-3 text-[11px] text-white/40">
+                            كل تغيير في الإعدادات يظهر فورًا هنا.
+                          </div>
+                        </div>
+
+                        <div className="rounded-[16px] bg-violet-500/10 border border-violet-500/20 p-3 text-[11px] text-violet-200">
+                          💡 نصيحة: اجعل المؤقت 60 ثانية للمراجعة السريعة، و180 ثانية للامتحان الجاد.
+                        </div>
+
+                        <div className="rounded-[16px] bg-white/5 border border-white/10 p-3">
+                          <div className="text-[11px] font-bold mb-2">ملخص اللعبة</div>
+                          <div className="text-[11px] text-white/60 space-y-1">
+                            <div>المادة: {subjects.find(s => s.id === labId)?.name}</div>
+                            <div>
+                              الأقسام: {
+                                categoryIds
+                                  .map(id => categories.find(c => c.id === id)?.name)
+                                  .filter(Boolean)
+                                  .join(" + ") || "لم يتم الاختيار"
+                              }
+                            </div>
+                            <div>الأسئلة: {qCount} • النوع: {getGameType(gameId).name}</div>
+                            <div>الكود المتوقع: H-XXXX • سيتم توليده تلقائيًا</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-8 flex gap-3">
+                      <button
+                        onClick={() => setStep(3)}
+                        className="flex-1 h-14 rounded-full bg-white/5 border border-white/10 font-bold"
+                      >
+                        ← رجوع
+                      </button>
+
+                      <button
+                        onClick={handleSave}
+                        className="flex-[2] h-14 rounded-full bg-gradient-to-l from-emerald-400 to-teal-500 text-black font-black text-[15px] shadow-xl"
+                      >
+                        🚀 إنشاء اللعبة وحفظها • {availableQuestions.length} سؤال جاهز
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Right panel */}
+              <div className="hidden lg:block">
+                <div className="sticky top-4 rounded-[22px] bg-[#120E24]/80 border border-white/10 p-5 backdrop-blur-xl">
+                  <div className="font-black text-[14px] mb-3">دليل سريع لكل لعبة</div>
+
+                  <div className="space-y-3 max-h-[70vh] overflow-auto pr-1">
+                    {GAME_TYPES.map(game => (
+                      <div
+                        key={game.id}
+                        className={cx(
+                          "p-3 rounded-[14px] border text-[11px]",
+                          gameId === game.id
+                            ? "bg-amber-500/10 border-amber-400/30"
+                            : "bg-white/5 border-white/10"
+                        )}
+                      >
+                        <div className="flex items-center gap-2 font-black text-[12px]">
+                          <span className="text-[16px]">{game.emoji}</span>
+                          {game.name}
+                        </div>
+                        <div className="mt-1 text-white/60">
+                          💡 {game.idea.slice(0, 90)}...
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* =========================================================
+       7) التطبيق الرئيسي
+    ========================================================= */
+
+    function App() {
+      /* -----------------------------
+         الحالة العامة
+      ----------------------------- */
+
+      const [subjects, setSubjects] = useState(DEFAULT_SUBJECTS);
+      const [categories, setCategories] = useState(INITIAL_CATEGORIES);
+      const [questions, setQuestions] = useState(INITIAL_QUESTIONS);
+      const [games, setGames] = useState([]);
+      const [challenges, setChallenges] = useState([]);
+
+      const [activeLabId, setActiveLabId] = useState(null);
+      const [tab, setTab] = useState("sections");
+      const [toast, setToast] = useState("");
+
+      const [isLabModalOpen, setLabModalOpen] = useState(false);
+      const [newLabName, setNewLabName] = useState("");
+
+      const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
+      const [editingCategory, setEditingCategory] = useState(null);
+      const [categoryForm, setCategoryForm] = useState({
+        name: "",
+        color: "#8B5CF6",
+        desc: ""
+      });
+
+      const [isQuestionModalOpen, setQuestionModalOpen] = useState(false);
+      const [editingQuestion, setEditingQuestion] = useState(null);
+      const [questionForm, setQuestionForm] = useState({
+        categoryId: "",
+        text: "",
+        options: ["", "", "", ""],
+        correct: 0
+      });
+
+      const [isBuilderOpen, setBuilderOpen] = useState(false);
+      const [editingGame, setEditingGame] = useState(null);
+      const [playerState, setPlayerState] = useState(null);
+      const [categoryFilter, setCategoryFilter] = useState("all");
+
+      const toastTimer = useRef(null);
+
+      /* -----------------------------
+         بيانات مشتقة
+      ----------------------------- */
+
+      const activeLab = subjects.find(s => s.id === activeLabId) || null;
+
+      const labCategories = useMemo(() =>
+        activeLabId ? categories.filter(c => c.labId === activeLabId) : [],
+        [categories, activeLabId]
+      );
+
+      const labQuestions = useMemo(() =>
+        activeLabId ? questions.filter(q => q.labId === activeLabId) : [],
+        [questions, activeLabId]
+      );
+
+      const filteredQuestions = useMemo(() =>
+        categoryFilter === "all"
+          ? labQuestions
+          : labQuestions.filter(q => q.categoryId === categoryFilter),
+        [labQuestions, categoryFilter]
+      );
+
+      const labGames = useMemo(() =>
+        activeLabId ? games.filter(g => g.labId === activeLabId) : [],
+        [games, activeLabId]
+      );
+
+      /* -----------------------------
+         دوال مساعدة داخل التطبيق
+      ----------------------------- */
+
+      const showToast = message => {
+        setToast(message);
+        if (toastTimer.current) clearTimeout(toastTimer.current);
+        toastTimer.current = setTimeout(() => setToast(""), 2300);
+      };
+
+      const enterLab = id => {
+        setActiveLabId(id);
+        setTab("sections");
+        setCategoryFilter("all");
+        showToast(`دخول ${subjects.find(s => s.id === id)?.name || "المختبر"}`);
+
+        setTimeout(() => {
+          document.getElementById("lab-studio")?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+      };
+
+      const createLab = () => {
+        if (!newLabName.trim()) {
+          showToast("اكتب اسم المختبر");
+          return;
+        }
+
+        const id = makeId("lab");
+        const index = subjects.length % LAB_GRADIENTS.length;
+
+        setSubjects(prev => [
+          ...prev,
+          {
+            id,
+            name: newLabName.trim(),
+            icon: "FlaskConical",
+            color: LAB_COLORS[index],
+            gradient: LAB_GRADIENTS[index]
+          }
+        ]);
+
+        setNewLabName("");
+        setLabModalOpen(false);
+        showToast("تم إنشاء المختبر ✨");
+      };
+
+      const saveCategory = () => {
+        if (!activeLabId || !categoryForm.name.trim()) {
+          showToast("اكتب اسم القسم");
+          return;
+        }
+
+        if (editingCategory) {
+          setCategories(prev =>
+            prev.map(c =>
+              c.id === editingCategory.id
+                ? { ...c, ...categoryForm }
+                : c
+            )
+          );
+          showToast("تم تعديل القسم ✓");
+        } else {
+          setCategories(prev => [
+            ...prev,
+            {
+              id: makeId("cat"),
+              labId: activeLabId,
+              icon: "Layers",
+              createdAt: Date.now(),
+              ...categoryForm
+            }
+          ]);
+          showToast("تم حفظ القسم 📚");
+        }
+
+        setCategoryModalOpen(false);
+        setEditingCategory(null);
+        setCategoryForm({ name: "", color: "#8B5CF6", desc: "" });
+      };
+
+      const deleteCategory = id => {
+        setCategories(prev => prev.filter(c => c.id !== id));
+        setQuestions(prev => prev.filter(q => q.categoryId !== id));
+        showToast("تم حذف القسم");
+      };
+
+      const saveQuestion = () => {
+        if (!activeLabId) return;
+
+        if (!questionForm.categoryId || !questionForm.text.trim() || questionForm.options.some(o => !o.trim())) {
+          showToast("أكمل كل الحقول");
+          return;
+        }
+
+        if (editingQuestion) {
+          setQuestions(prev =>
+            prev.map(q =>
+              q.id === editingQuestion.id
+                ? { ...q, ...questionForm }
+                : q
+            )
+          );
+          showToast("تم تعديل السؤال ✓");
+        } else {
+          setQuestions(prev => [
+            ...prev,
+            {
+              id: makeId("q"),
+              labId: activeLabId,
+              ...questionForm
+            }
+          ]);
+          showToast("تمت إضافة السؤال 🎉");
+        }
+
+        setQuestionModalOpen(false);
+        setEditingQuestion(null);
+        setQuestionForm({
+          categoryId: "",
+          text: "",
+          options: ["", "", "", ""],
+          correct: 0
+        });
+      };
+
+      const deleteQuestion = id => {
+        setQuestions(prev => prev.filter(q => q.id !== id));
+        showToast("تم حذف السؤال");
+      };
+
+      const openBuilder = (game = null) => {
+        setEditingGame(game);
+        setBuilderOpen(true);
+      };
+
+      const saveBuiltGame = data => {
+        const code = editingGame?.code || makeGameCode();
+
+        const game = {
+          id: editingGame?.id || makeId("bg"),
+          createdAt: editingGame?.createdAt || Date.now(),
+          code,
+          title: data.general.title,
+          desc: data.general.desc,
+          ...data
+        };
+
+        if (editingGame) {
+          setGames(prev => prev.map(g => g.id === editingGame.id ? game : g));
+          showToast("تم تحديث اللعبة 🛠️");
+        } else {
+          setGames(prev => [...prev, game]);
+          showToast(`تم إنشاء اللعبة 🚀 كود ${code}`);
+        }
+
+        setBuilderOpen(false);
+        setEditingGame(null);
+        setTab("mygames");
+      };
+
+      const startGame = game => {
+        let qs = questions.filter(q => game.categoryIds.includes(q.categoryId));
+
+        if (game.general.shuffle) {
+          qs = shuffleArray(qs);
+        }
+
+        qs = qs.slice(0, game.general.qCount);
+
+        if (!qs.length) {
+          showToast("لا توجد أسئلة كافية في الأقسام المختارة");
+          return;
+        }
+
+        setPlayerState({
+          game,
+          questions: qs,
+          lab: subjects.find(s => s.id === game.labId)
+        });
+      };
+
+      const createChallenge = game => {
+        setChallenges(prev => [
+          ...prev,
+          {
+            id: makeId("ch"),
+            gameId: game.id,
+            code: game.code,
+            plays: 0
+          }
+        ]);
+
+        showToast(`تم إنشاء التحدي 🏆 كود ${game.code}`);
+      };
+
+      const copyCode = code => {
+        navigator.clipboard?.writeText(code);
+        showToast(`تم نسخ الكود: ${code}`);
+      };
+
+      /* -----------------------------
+         الواجهة
+      ----------------------------- */
+
+      return (
+        <div className="min-h-screen text-white overflow-clip">
+          <Background />
+
+          {/* Header */}
+          <header className="sticky top-0 z-30 backdrop-blur-2xl bg-[#05020D]/70 border-b border-amber-500/10">
+            <div className="max-w-[1280px] mx-auto h-[72px] px-6 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-[14px] bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center font-black shadow-lg border border-amber-400/20 relative overflow-hidden">
+                  <span className="relative z-10">H</span>
+                </div>
+
+                <div className="leading-none">
+                  <div className="text-[10px] tracking-[0.28em] gold-text font-black">
+                    HABASH ULTRA STUDIO
+                  </div>
+                  <div className="font-black text-[17px] flex items-center gap-1">
+                    مختبرات هباش
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500 text-black">
+                      نسخة منظمة
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => openBuilder()}
+                  className="hidden md:flex h-10 px-5 rounded-full bg-gradient-to-l from-amber-400 to-orange-500 text-black text-[13px] font-black items-center gap-2 shadow-lg"
+                >
+                  🎮 إنشاء لعبة درس
+                </button>
+
+                <div className="h-10 px-4 rounded-full glass-gold flex items-center gap-2 text-[11px]">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  {subjects.length} مختبر • {questions.length} سؤال • {games.length} لعبة
+                </div>
+
+                {activeLabId && (
+                  <button
+                    onClick={() => setActiveLabId(null)}
+                    className="h-10 px-4 rounded-full bg-white text-black text-[13px] font-bold"
+                  >
+                    ← الرئيسية
+                  </button>
+                )}
+              </div>
+            </div>
+          </header>
+
+          {/* Main */}
+          <main className="relative max-w-[1280px] mx-auto px-4 md:px-6">
+            {/* Hero */}
+            <section className="pt-12 pb-10 text-center relative">
+              <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full glass-gold text-[11px] mb-6">
+                👑 منصة تعليمية فاخرة • نسخة قابلة للتعديل
+              </div>
+
+              <h1 className="text-[44px] md:text-[70px] font-black tracking-tight leading-[0.95]">
+                اختار <span className="gold-text">المادة</span> لتبدأ
+              </h1>
+
+              <p className="mt-5 text-white/50 text-[15px] md:text-[18px] max-w-[720px] mx-auto">
+                هذا الكود منظم ليسهل عليك التعديل: بيانات، مكونات، مودالات، ومنشئ ألعاب.
+              </p>
+            </section>
+
+            {/* Labs */}
+            <section className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-8">
+              {subjects.map(subject => {
+                const questionCount = questions.filter(q => q.labId === subject.id).length;
+                const categoryCount = categories.filter(c => c.labId === subject.id).length;
+                const gameCount = games.filter(g => g.labId === subject.id).length;
+                const active = activeLabId === subject.id;
+
+                return (
+                  <button
+                    key={subject.id}
+                    onClick={() => enterLab(subject.id)}
+                    className={cx(
+                      "group text-right relative rounded-[30px] border p-7 md:p-8 flex items-center gap-6 backdrop-blur-xl transition-all duration-300 overflow-hidden",
+                      active
+                        ? "bg-white text-black border-white shadow-2xl scale-[1.01]"
+                        : "bg-[#120E24]/80 border-amber-500/15 hover:border-amber-400/30 hover:-translate-y-1.5"
+                    )}
+                  >
+                    <div className={cx(
+                      "w-[90px] h-[90px] rounded-[22px] flex items-center justify-center shadow-xl shrink-0 bg-gradient-to-br border border-white/10 text-4xl",
+                      subject.gradient
+                    )}>
+                      {getSubjectIconEmoji(subject.icon)}
+                    </div>
+
+                    <div className="flex-1 min-w-0 relative">
+                      <div className="font-black text-[24px] md:text-[28px] leading-none flex items-center gap-2">
+                        {subject.name}
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                      </div>
+
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        <span className={cx(
+                          "text-[11px] px-2.5 py-1 rounded-full border",
+                          active ? "bg-black/5 border-black/10 text-black/60" : "bg-white/5 border-white/10"
+                        )}>
+                          {questionCount} سؤال
+                        </span>
+
+                        <span className={cx(
+                          "text-[11px] px-2.5 py-1 rounded-full border",
+                          active
+                            ? "bg-amber-500 text-black border-amber-500"
+                            : "bg-amber-500/10 border-amber-500/20 text-amber-300"
+                        )}>
+                          {categoryCount} قسم
+                        </span>
+
+                        <span className={cx(
+                          "text-[11px] px-2.5 py-1 rounded-full border",
+                          active
+                            ? "bg-violet-500 text-white border-violet-500"
+                            : "bg-violet-500/10 border-violet-500/20 text-violet-300"
+                        )}>
+                          {gameCount} لعبة
+                        </span>
+                      </div>
+
+                      <div className="mt-3 inline-flex gap-2">
+                        <span className={cx(
+                          "px-3 py-1 rounded-full text-[11px] font-black",
+                          active ? "bg-black text-white" : "bg-white text-black"
+                        )}>
+                          {active ? "مفتوح في الاستوديو" : "دخول الاستوديو ✨"}
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </section>
+
+            {/* Add lab */}
+            <button
+              onClick={() => setLabModalOpen(true)}
+              className="w-full mb-8 h-[84px] rounded-[26px] border-2 border-dashed border-amber-500/20 bg-white/[0.02] hover:bg-amber-500/[0.06] hover:border-amber-400/40 flex items-center justify-center gap-3 text-[18px] font-black transition-all"
+            >
+              <span className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-black flex items-center justify-center text-[22px] shadow-lg">
+                +
+              </span>
+              إضافة مختبر جديد فاخر
+            </button>
+
+            {/* Studio */}
+            {activeLab && (
+              <div id="lab-studio" className="pb-28 pt-8 border-t border-amber-500/10 mt-4 animate-glow-in">
+                <div className="flex flex-wrap items-center gap-4 mb-6">
+                  <div className={cx(
+                    "w-14 h-14 rounded-2xl bg-gradient-to-br flex items-center justify-center border border-amber-400/20 text-2xl",
+                    activeLab.gradient
+                  )}>
+                    {getSubjectIconEmoji(activeLab.icon)}
+                  </div>
+
+                  <h2 className="text-[28px] md:text-[36px] font-black">
+                    مختبر {activeLab.name}{" "}
+                    <span className="gold-text text-[18px]">STUDIO</span>
+                  </h2>
+
+                  <div className="flex gap-2 mr-auto">
+                    <button
+                      onClick={() => openBuilder()}
+                      className="h-11 px-6 rounded-full bg-gradient-to-l from-amber-400 to-orange-500 text-black font-black text-[14px] flex items-center gap-2 shadow-lg"
+                    >
+                      🎮 إنشاء لعبة درس
+                    </button>
+                  </div>
+                </div>
+
+                {/* Tabs */}
+                <div className="flex gap-2 mb-8 overflow-auto p-1">
+                  {[
+                    { id: "sections", label: "الأقسام / الدروس", count: labCategories.length },
+                    { id: "questions", label: "الأسئلة", count: labQuestions.length },
+                    { id: "mygames", label: "ألعابي المنشأة", count: labGames.length },
+                    { id: "challenges", label: "التحديات والأكواد", count: challenges.length }
+                  ].map(item => {
+                    const active = tab === item.id;
+
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => setTab(item.id)}
+                        className={cx(
+                          "h-12 px-5 rounded-full border flex items-center gap-2 text-[13px] font-bold whitespace-nowrap transition-all",
+                          active
+                            ? "bg-white text-black border-white shadow-xl scale-105"
+                            : "bg-[#1A1232]/70 border-white/10 hover:border-amber-400/30 text-white/70 hover:text-white"
+                        )}
+                      >
+                        {item.label}
+                        <span className={cx(
+                          "px-2 py-0.5 rounded-full text-[10px]",
+                          active ? "bg-black text-white" : "bg-white/10"
+                        )}>
+                          {item.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Sections tab */}
+                {tab === "sections" && (
+                  <div>
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="font-black text-[20px]">الأقسام - دروس المادة</h3>
+
+                      <button
+                        onClick={() => {
+                          setEditingCategory(null);
+                          setCategoryForm({ name: "", color: "#8B5CF6", desc: "" });
+                          setCategoryModalOpen(true);
+                        }}
+                        className="h-10 px-5 rounded-full bg-white text-black font-black text-[13px]"
+                      >
+                        ➕ قسم جديد
+                      </button>
+                    </div>
+
+                    {labCategories.length === 0 ? (
+                      <EmptyState
+                        emoji="📚"
+                        title="لا يوجد أقسام بعد"
+                        desc='أنشئ قسم لكل درس: مثلاً "الدرس 1: المادة" ثم أضف أسئلة له.'
+                        actionText="إنشاء أول قسم"
+                        onAction={() => setCategoryModalOpen(true)}
+                      />
+                    ) : (
+                      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {labCategories.map(category => {
+                          const count = questions.filter(q => q.categoryId === category.id).length;
+
+                          return (
+                            <div
+                              key={category.id}
+                              className="rounded-[24px] bg-[#150F2A] border border-amber-500/10 p-5 relative overflow-hidden group hover:border-amber-400/30 hover:-translate-y-1 transition-all"
+                            >
+                              <div className="relative flex items-start gap-4">
+                                <div
+                                  className="w-14 h-14 rounded-[14px] flex items-center justify-center text-white font-black text-xl"
+                                  style={{ background: category.color }}
+                                >
+                                  🧩
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-black text-[16px]">{category.name}</div>
+                                  <div className="text-[12px] text-white/50 mt-1">
+                                    {category.desc || "بدون وصف"}
+                                  </div>
+
+                                  <div className="flex gap-2 mt-3 flex-wrap">
+                                    <span className="text-[10px] px-2 py-1 rounded-full bg-white/5 border border-white/10">
+                                      {count} سؤال
+                                    </span>
+                                    <span className="text-[10px] px-2 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300">
+                                      {new Date(category.createdAt).toLocaleDateString("ar-EG")}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="flex flex-col gap-1.5">
+                                  <button
+                                    onClick={() => {
+                                      setEditingCategory(category);
+                                      setCategoryForm({
+                                        name: category.name,
+                                        color: category.color,
+                                        desc: category.desc
+                                      });
+                                      setCategoryModalOpen(true);
+                                    }}
+                                    className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center"
+                                  >
+                                    ✏️
+                                  </button>
+
+                                  <button
+                                    onClick={() => deleteCategory(category.id)}
+                                    className="w-8 h-8 rounded-full bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center"
+                                  >
+                                    🗑️
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Questions tab */}
+                {tab === "questions" && (
+                  <div>
+                    <div className="flex flex-wrap items-center gap-3 mb-6">
+                      <h3 className="font-black text-[20px]">
+                        الأسئلة • {filteredQuestions.length} سؤال
+                      </h3>
+
+                      <div className="flex gap-2 mr-auto">
+                        <select
+                          value={categoryFilter}
+                          onChange={e => setCategoryFilter(e.target.value)}
+                          className="h-10 rounded-full bg-[#1A1232] border border-white/10 px-4 text-[13px]"
+                        >
+                          <option value="all">كل الأقسام</option>
+                          {labCategories.map(category => (
+                            <option key={category.id} value={category.id}>
+                              {category.name}
+                            </option>
+                          ))}
+                        </select>
+
+                        <button
+                          onClick={() => {
+                            setEditingQuestion(null);
+                            setQuestionForm({
+                              categoryId: labCategories[0]?.id || "",
+                              text: "",
+                              options: ["", "", "", ""],
+                              correct: 0
+                            });
+                            setQuestionModalOpen(true);
+                          }}
+                          className="h-10 px-5 rounded-full bg-gradient-to-l from-emerald-500 to-teal-500 text-white font-black text-[13px]"
+                        >
+                          ➕ أضف سؤال
+                        </button>
+                      </div>
+                    </div>
+
+                    {filteredQuestions.length === 0 ? (
+                      <EmptyState
+                        emoji="📦"
+                        title="لا توجد أسئلة هنا"
+                        desc="اختر قسم ثم أضف أسئلة تنتمي له."
+                      />
+                    ) : (
+                      <div className="grid gap-3">
+                        {filteredQuestions.map(question => {
+                          const category = categories.find(c => c.id === question.categoryId);
+
+                          return (
+                            <div
+                              key={question.id}
+                              className="rounded-[18px] bg-white text-[#0F0A1E] p-4 flex gap-3 shadow-xl hover:shadow-2xl transition group"
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span
+                                    className="text-[10px] px-2 py-0.5 rounded-full text-white font-bold"
+                                    style={{ background: category?.color || "#8B5CF6" }}
+                                  >
+                                    {category?.name || "بدون قسم"}
+                                  </span>
+                                </div>
+
+                                <div className="font-bold text-[14px] leading-relaxed">
+                                  {question.text}
+                                </div>
+
+                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                  {question.options.map((option, index) => (
+                                    <span
+                                      key={index}
+                                      className={cx(
+                                        "inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full border",
+                                        index === question.correct
+                                          ? "bg-emerald-500 text-white border-emerald-500 font-bold"
+                                          : "bg-black/5 border-black/10 text-black/60"
+                                      )}
+                                    >
+                                      {index === question.correct ? "✓" : "•"} {option.slice(0, 26)}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="flex flex-col gap-2 shrink-0">
+                                <button
+                                  onClick={() => {
+                                    setEditingQuestion(question);
+                                    setQuestionForm({
+                                      categoryId: question.categoryId,
+                                      text: question.text,
+                                      options: [...question.options],
+                                      correct: question.correct
+                                    });
+                                    setQuestionModalOpen(true);
+                                  }}
+                                  className="w-8 h-8 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center"
+                                >
+                                  ✏️
+                                </button>
+
+                                <button
+                                  onClick={() => deleteQuestion(question.id)}
+                                  className="w-8 h-8 rounded-full bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Games tab */}
+                {tab === "mygames" && (
+                  <div>
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="font-black text-[20px]">
+                        ألعابي المنشأة • {labGames.length} لعبة
+                      </h3>
+
+                      <button
+                        onClick={() => openBuilder()}
+                        className="h-10 px-5 rounded-full bg-white text-black font-black text-[13px]"
+                      >
+                        + إنشاء لعبة
+                      </button>
+                    </div>
+
+                    {labGames.length === 0 ? (
+                      <EmptyState
+                        emoji="🎮"
+                        title="لم تنشئ أي لعبة درس بعد"
+                        desc="أنشئ لعبة لكل درس: اختار الأقسام، نوع اللعبة، الإعدادات، ثم احفظها."
+                        actionText="🎮 افتح استوديو إنشاء الألعاب"
+                        onAction={() => openBuilder()}
+                      />
+                    ) : (
+                      <div className="grid md:grid-cols-2 gap-5">
+                        {labGames.map(game => {
+                          const gameType = getGameType(game.gameId);
+                          const categoryNames = game.categoryIds
+                            .map(id => categories.find(c => c.id === id)?.name)
+                            .filter(Boolean)
+                            .join(" + ");
+
+                          return (
+                            <div
+                              key={game.id}
+                              className="group relative rounded-[26px] bg-[#150F2A] border border-amber-500/15 p-5 overflow-hidden hover:border-amber-400/30 hover:-translate-y-1 hover:shadow-2xl transition-all"
+                            >
+                              <div className="relative flex gap-4">
+                                <div className="w-16 h-16 rounded-[16px] bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-[32px] shadow-xl animate-float">
+                                  {gameType.emoji}
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-black text-[16px] flex items-center gap-2">
+                                    {game.title}
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500 text-black">
+                                      {gameType.name}
+                                    </span>
+                                  </div>
+
+                                  <div className="text-[12px] text-white/50 mt-1">
+                                    {game.desc}
+                                  </div>
+
+                                  <div className="flex flex-wrap gap-1.5 mt-2">
+                                    <span className="text-[10px] px-2 py-1 rounded-full bg-white/5 border border-white/10">
+                                      📚 {categoryNames || "بدون قسم"}
+                                    </span>
+                                    <span className="text-[10px] px-2 py-1 rounded-full bg-white/5 border border-white/10">
+                                      ❓ {game.general.qCount} سؤال
+                                    </span>
+                                    <span className="text-[10px] px-2 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300">
+                                      ⏱️ {game.general.timerEnabled ? `${game.general.timerSeconds}ث` : "بدون مؤقت"}
+                                    </span>
+                                    <span className="text-[10px] px-2 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300">
+                                      💖 {game.general.lives} أرواح
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="relative mt-4 grid grid-cols-4 gap-2">
+                                <button
+                                  onClick={() => startGame(game)}
+                                  className="h-10 rounded-full bg-white text-black font-black text-[12px] flex items-center justify-center gap-1 hover:scale-105 transition"
+                                >
+                                  ▶ تشغيل
+                                </button>
+
+                                <button
+                                  onClick={() => openBuilder(game)}
+                                  className="h-10 rounded-full bg-white/5 border border-white/10 text-[12px] font-bold hover:bg-white/10"
+                                >
+                                  تعديل
+                                </button>
+
+                                <button
+                                  onClick={() => copyCode(game.code)}
+                                  className="h-10 rounded-full bg-white/5 border border-white/10 text-[12px] font-bold flex items-center justify-center gap-1 hover:bg-white/10"
+                                >
+                                  📋 {game.code}
+                                </button>
+
+                                <button
+                                  onClick={() => setGames(prev => prev.filter(g => g.id !== game.id))}
+                                  className="h-10 rounded-full bg-red-500/10 border border-red-500/20 text-red-300 text-[12px]"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Challenges tab */}
+                {tab === "challenges" && (
+                  <div>
+                    <h3 className="font-black text-[20px] mb-6">
+                      نظام التحديات • أكواد دخول للطلاب
+                    </h3>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="rounded-[22px] bg-[#120E24] border border-white/10 p-6">
+                        <div className="font-black text-[15px] mb-3">إنشاء تحدي جديد</div>
+                        <div className="text-[12px] text-white/50 mb-4">
+                          اختر لعبة من ألعابك، سيتم استخدام كود اللعبة كتحدٍ.
+                        </div>
+
+                        {labGames.length === 0 ? (
+                          <div className="text-[12px] text-amber-300">
+                            أنشئ لعبة أولاً لتوليد تحدي
+                          </div>
+                        ) : (
+                          <div className="grid gap-2">
+                            {labGames.slice(0, 5).map(game => (
+                              <div
+                                key={game.id}
+                                className="flex items-center gap-3 p-3 rounded-[14px] bg-white/5 border border-white/10"
+                              >
+                                <div className="text-[22px]">
+                                  {getGameType(game.gameId).emoji}
+                                </div>
+
+                                <div className="flex-1">
+                                  <div className="font-bold text-[13px]">{game.title}</div>
+                                  <div className="text-[11px] text-white/40">{game.code}</div>
+                                </div>
+
+                                <button
+                                  onClick={() => createChallenge(game)}
+                                  className="h-8 px-4 rounded-full bg-amber-500 text-black text-[11px] font-black"
+                                >
+                                  إنشاء تحدي
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="rounded-[22px] bg-[#120E24] border border-white/10 p-6">
+                        <div className="font-black text-[15px] mb-3">
+                          أكواد نشطة • لوحة الصدارة
+                        </div>
+
+                        {challenges.length === 0 ? (
+                          <div className="text-[12px] text-white/40">
+                            لا يوجد تحديات نشطة
+                          </div>
+                        ) : (
+                          <div className="grid gap-2 max-h-[320px] overflow-auto">
+                            {challenges.map(challenge => {
+                              const game = games.find(g => g.id === challenge.gameId);
+
+                              return (
+                                <div
+                                  key={challenge.id}
+                                  className="flex items-center gap-3 p-3 rounded-[14px] bg-white/[0.03] border border-white/5"
+                                >
+                                  <span className="px-2 py-1 rounded-full bg-amber-500 text-black text-[11px] font-black">
+                                    {challenge.code}
+                                  </span>
+                                  <span className="text-[12px] flex-1">
+                                    {game?.title || "لعبة"}
+                                  </span>
+                                  <span className="text-[11px] text-white/40">
+                                    {challenge.plays} لعب
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        <div className="mt-4 p-3 rounded-[12px] bg-violet-500/10 border border-violet-500/20 text-[11px] text-violet-200">
+                          الطالب يدخل الكود في شاشة البداية → يلعب اللعبة → نقاطه تسجل في لوحة الصدارة المحلية.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Footer */}
+            <footer className="relative border-t border-amber-500/10 py-6 text-center text-[11px] text-white/30 mt-12">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center font-black text-[11px]">
+                  H
+                </div>
+                <span className="gold-text font-black">HABASH ULTRA STUDIO - نسخة منظمة</span>
+              </div>
+              نسخة قابلة للتعديل • تصميم منظم • بيانات منفصلة • مكونات منفصلة
+            </footer>
+          </main>
+
+          {/* Lab modal */}
+          {isLabModalOpen && (
+            <Modal title="مختبر جديد فاخر" onClose={() => setLabModalOpen(false)}>
+              <input
+                value={newLabName}
+                onChange={e => setNewLabName(e.target.value)}
+                placeholder="اسم المختبر مثلاً: التاريخ"
+                className="w-full h-14 rounded-full bg-white/[0.06] border border-white/10 px-6 text-[15px] font-bold focus:outline-none focus:border-amber-400/40"
+              />
+
+              <button
+                onClick={createLab}
+                className="mt-6 w-full h-[56px] rounded-full bg-gradient-to-l from-amber-400 to-orange-500 text-black font-black shadow-lg"
+              >
+                إنشاء المختبر 🚀
+              </button>
+            </Modal>
+          )}
+
+          {/* Category modal */}
+          {isCategoryModalOpen && (
+            <Modal
+              title={editingCategory ? "تعديل القسم" : "قسم / درس جديد"}
+              onClose={() => {
+                setCategoryModalOpen(false);
+                setEditingCategory(null);
+              }}
+            >
+              <div className="space-y-4">
+                <input
+                  value={categoryForm.name}
+                  onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                  placeholder="اسم الدرس مثلاً: الدرس 1: المادة وخواصها"
+                  className="w-full h-14 rounded-full bg-white/[0.06] border border-white/10 px-6 text-[14px] font-bold focus:outline-none focus:border-amber-400/40"
+                />
+
+                <textarea
+                  value={categoryForm.desc}
+                  onChange={e => setCategoryForm({ ...categoryForm, desc: e.target.value })}
+                  placeholder="وصف قصير للدرس"
+                  rows={2}
+                  className="w-full rounded-[18px] bg-white/[0.06] border border-white/10 p-4 text-[13px] focus:outline-none focus:border-amber-400/40 resize-none"
+                />
+
+                <div>
+                  <div className="text-[12px] font-bold mb-2">لون القسم</div>
+                  <div className="flex gap-2 flex-wrap">
+                    {LAB_COLORS.map(color => (
+                      <button
+                        key={color}
+                        onClick={() => setCategoryForm({ ...categoryForm, color })}
+                        className={cx(
+                          "w-10 h-10 rounded-full border-2",
+                          categoryForm.color === color ? "border-white scale-110" : "border-white/10"
+                        )}
+                        style={{ background: color }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  onClick={saveCategory}
+                  className="w-full h-[56px] rounded-full bg-white text-black font-black"
+                >
+                  💾 حفظ القسم
+                </button>
+              </div>
+            </Modal>
+          )}
+
+          {/* Question modal */}
+          {isQuestionModalOpen && (
+            <Modal
+              title={editingQuestion ? "تعديل السؤال" : "سؤال جديد للقسم"}
+              onClose={() => {
+                setQuestionModalOpen(false);
+                setEditingQuestion(null);
+              }}
+              maxWidth="max-w-xl"
+            >
+              <div className="space-y-4">
+                <Field label="القسم / الدرس">
+                  <select
+                    value={questionForm.categoryId}
+                    onChange={e => setQuestionForm({ ...questionForm, categoryId: e.target.value })}
+                    className="w-full h-12 rounded-full bg-white/[0.06] border border-white/10 px-5 text-[14px] font-bold focus:outline-none"
+                  >
+                    <option value="">اختر القسم</option>
+                    {labCategories.map(category => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+
+                <Field label="نص السؤال">
+                  <textarea
+                    value={questionForm.text}
+                    onChange={e => setQuestionForm({ ...questionForm, text: e.target.value })}
+                    placeholder="اكتب سؤالك هنا..."
+                    rows={3}
+                    className="w-full rounded-2xl bg-white/[0.06] border border-white/10 p-4 text-[15px] font-medium focus:outline-none resize-none"
+                  />
+                </Field>
+
+                {questionForm.options.map((option, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <button
+                      onClick={() => setQuestionForm({ ...questionForm, correct: index })}
+                      className={cx(
+                        "w-10 h-10 rounded-full border-2 flex items-center justify-center font-black transition",
+                        questionForm.correct === index
+                          ? "bg-emerald-500 border-emerald-500 text-white shadow-lg"
+                          : "bg-white/5 border-white/10 text-white/40 hover:border-white/20"
+                      )}
+                    >
+                      {questionForm.correct === index ? "✓" : String.fromCharCode(65 + index)}
+                    </button>
+
+                    <input
+                      value={option}
+                      onChange={e => {
+                        const options = [...questionForm.options];
+                        options[index] = e.target.value;
+                        setQuestionForm({ ...questionForm, options });
+                      }}
+                      placeholder={`اختيار ${index + 1}`}
+                      className="flex-1 h-12 rounded-full bg-white/[0.06] border border-white/10 px-5 text-[14px] focus:outline-none"
+                    />
+                  </div>
+                ))}
+
+                <button
+                  onClick={saveQuestion}
+                  className="w-full h-[56px] rounded-full bg-gradient-to-l from-violet-600 to-indigo-600 text-white font-black text-[16px] shadow-lg hover:scale-[1.01] transition"
+                >
+                  💾 حفظ السؤال
+                </button>
+              </div>
+            </Modal>
+          )}
+
+          {/* Game builder */}
+          {isBuilderOpen && (
+            <GameBuilder
+              subjects={subjects}
+              categories={categories}
+              questions={questions}
+              editingGame={editingGame}
+              onClose={() => {
+                setBuilderOpen(false);
+                setEditingGame(null);
+              }}
+              onSave={saveBuiltGame}
+              showToast={showToast}
+            />
+          )}
+
+          {/* Game player */}
+          {playerState && (
+            <GamePlayer
+              game={playerState.game}
+              lab={playerState.lab}
+              questions={playerState.questions}
+              onClose={() => setPlayerState(null)}
+              showToast={showToast}
+            />
+          )}
+
+          {/* Toast */}
+          <Toast message={toast} />
+        </div>
+      );
+    }
+
+    /* =========================================================
+       8) تشغيل التطبيق
+    ========================================================= */
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

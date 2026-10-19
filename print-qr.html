@@ -447,7 +447,7 @@ body.pdf-capture .cm{display:block!important;border-style:solid!important;border
       <button class="btn-action btn-ghost-action" onclick="window.showPreview()">👁️ معاينة</button>
       <button class="btn-action btn-warning-action" onclick="window.downloadAllAsZip()">📦 ZIP</button>
       <button class="btn-action btn-success-action" onclick="window.exportCSV()">📊 CSV</button>
-      <button class="btn-action btn-ghost-action" onclick="window.selectAll()">✅ تحديد الكل</button>
+   <a href="door-poster.html" target="_blank" class="btn-action btn-success-action" style="text-decoration:none;">🚪 تصميم بوستر الباب</a><button class="btn-action btn-ghost-action" onclick="window.selectAll()">✅ تحديد الكل</button>
       <button class="btn-action btn-ghost-action" onclick="window.deselectAll()">❌ إلغاء</button>
     </div>
   </div>
@@ -484,6 +484,7 @@ body.pdf-capture .cm{display:block!important;border-style:solid!important;border
 <script src="js/firebase-service.js"></script>
 <script src="js/data-service.js"></script>
 <script src="js/operations-service.js"></script>
+<script src="js/scope-guard.js"></script>
 <script src="js/ui-helpers.js"></script>
 <script src="js/drive-service.js"></script>
 <script src="js/theme-manager.js"></script>
@@ -497,11 +498,12 @@ const qrData=(code,type='student')=>{
   return SITE_BASE+'student-qr.html?code='+encodeURIComponent(code);
 };
 const qrImg=(code,size,type='student')=>{
-  const url=type==='group'?(allCards.find(c=>c.code===code)?.whatsappLink||SITE_BASE):qrData(code,type);
+  const url=type==='group'?((window.allCards||[]).find(c=>c.code===code)?.whatsappLink||SITE_BASE):qrData(code,type);
   return 'https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data='+encodeURIComponent(url)+'&bgcolor=ffffff&color=0f172a&margin=12';
 };
 let currentUser=null,currentShape='vertical',currentPageSize='a4',autoFill=true,manualPerPage=12,cardsPerPage=12;
-let selectedCards=new Set(),allCards=[],sheetsCount=0,branding={};
+let selectedCards=new Set(),sheetsCount=0,branding={};
+window.allCards=[];
 window._curPage=1; window._viewAll=false; window._overrideList=null; window.__tmpAll=0;
 
 /* 🆕 متغيرات الحجم المخصص */
@@ -509,6 +511,7 @@ let customSize={w:52,h:72,qr:30,colsAuto:true,cols:4};
 
 function toast(m,t){ if(typeof ThemeManager?.toast==='function') ThemeManager.toast(m,t||'info'); }
 function val(id){ var e=document.getElementById(id); return e?e.value:''; }
+function lockedTeacher(){ try{ if(currentUser&&currentUser.role==='assistant'&&window.ScopedData) return ScopedData.linkedTeacherId(); }catch(e){} return null; }
 function norm(s){ return String(s==null?'':s).toLowerCase().replace(/[\u064B-\u0652]/g,'').replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/\s+/g,' ').trim(); }
 function uniq(a){ return a.filter(function(x,i){ return a.indexOf(x)===i; }); }
 function stageLabel(k){ try{ return ((typeof EduFlowConfig!=='undefined'?EduFlowConfig.educationLevels:{})[k]||{}).nameAr||k; }catch(e){ return k; } }
@@ -672,6 +675,8 @@ function scopeGroups(){
 function teacherFilteredGroups(){
   var gs=scopeGroups();
   var ft=val('prTeacher');
+var __lk=lockedTeacher(); if(__lk){ ft=__lk; teachers=teachers.filter(function(t){return t.id===__lk;}); }
+if(currentUser&&currentUser.role==='center'&&window.ScopedData){ var __ids={}; ScopedData.teachers().forEach(function(t){__ids[t.id]=1;}); teachers=teachers.filter(function(t){return __ids[t.id];}); }
   if(ft) gs=gs.filter(function(g){ return g.teacherId===ft; });
   return gs;
 }
@@ -699,6 +704,8 @@ window.refreshSmartFilters=function(){
   var gsAll=scopeGroups();
   var teachers=(DataService.getTeachers?DataService.getTeachers():[]);
   var ft=val('prTeacher');
+var __lk=lockedTeacher(); if(__lk){ ft=__lk; teachers=teachers.filter(function(t){return t.id===__lk;}); }
+if(currentUser&&currentUser.role==='center'&&window.ScopedData){ var __ids={}; ScopedData.teachers().forEach(function(t){__ids[t.id]=1;}); teachers=teachers.filter(function(t){return __ids[t.id];}); }
   ft=fillSel('prTeacher', teachers.map(function(t){
     return {v:t.id, l:'👨‍🏫 '+t.name+' · '+gsAll.filter(function(g){return g.teacherId===t.id;}).length+' مجموعة'};
   }), ft, 'كل المدرسين');
@@ -730,6 +737,7 @@ window.refreshSmartFilters=function(){
     return {v:g.id,l:g.name+' · 👥 '+stuCount(g.id)+(g.center?' · 🏢 '+g.center:'')+(g.grade?' · 📚 '+g.grade:'')+tName};
   }));
   fillSel('prGroup',items,fgid,null);
+var __s=document.getElementById('prTeacher'),__l2=lockedTeacher(); if(__s&&__l2){ __s.value=__l2; __s.disabled=true; __s.title='مقفول على الأستاذ المرتبط بيك'; }
 };
 window.onFilterChange=function(){ window.refreshSmartFilters(); refresh(true); };
 window.onGroupSearch=function(){ window.refreshSmartFilters(); };
@@ -744,7 +752,7 @@ function buildCards(){
   if(type==='students'||type==='all'){
     var list;
     if(gid!=='all') list=(DataService.getStudentsByGroup?DataService.getStudentsByGroup(gid):[]);
-    else list=(DataService.getStudents?DataService.getStudents():[]);
+    else list=(currentUser&&currentUser.role==='center'&&window.ScopedData)?ScopedData.students():(DataService.getStudents?DataService.getStudents():[]);
     if(ft){
       var tGroups={};
       (DataService.getGroups?DataService.getGroups():[]).forEach(function(g){ if(g.teacherId===ft) tGroups[g.id]=1; });
@@ -800,7 +808,7 @@ function paint(sheets){
 }
 function refresh(resetPage){
   try{
-    allCards=buildCards();
+    window.allCards=buildCards();
     var sheets;
     if(autoFill){
       var cols=colsAuto(); setCols(cols);
@@ -903,7 +911,7 @@ window.toggleCompact=function(on){ document.body.classList.toggle('compact-print
 window.toggleSelection=function(id,on){ if(on)selectedCards.add(id);else selectedCards.delete(id); var el=document.querySelector('.qr-card[data-id="'+id+'"]'); if(el)el.classList.toggle('selected',on); updateStats(); };
 window.selectAll=function(){ allCards.forEach(function(c){selectedCards.add(c.id);}); document.querySelectorAll('.card-checkwrap input').forEach(function(i){i.checked=true;}); document.querySelectorAll('.qr-card').forEach(function(c){c.classList.add('selected');}); updateStats(); };
 window.deselectAll=function(){ selectedCards.clear(); document.querySelectorAll('.card-checkwrap input').forEach(function(i){i.checked=false;}); document.querySelectorAll('.qr-card').forEach(function(c){c.classList.remove('selected');}); updateStats(); };
-window.goBack=function(){ if(document.referrer&&document.referrer.includes(location.origin))history.back(); else location.href=(currentUser?.role==='teacher'?'teacher-dashboard.html':'assistant-dashboard.html'); };
+window.goBack=function(){ if(document.referrer&&document.referrer.includes(location.origin))history.back(); else location.href=(currentUser?.role==='teacher'?'teacher-dashboard.html':currentUser?.role==='center'?'center-dashboard.html':'assistant-dashboard.html'); };
 document.getElementById('themeToggle').onclick=function(){
   var cur=document.body.getAttribute('data-theme')==='dark'?'light':'dark';
   document.body.setAttribute('data-theme',cur);
@@ -1196,6 +1204,7 @@ async function generateCardImage(card){
     img.onerror=function(){reject(new Error('فشل تحميل الباركود'));};
   });
 }
+
 window.exportCSV=function(){
   if(!allCards.length) return;
   var headers=['النوع','الاسم','الكود','البيانات','الرابط'];
@@ -1258,8 +1267,9 @@ window.exportCSV=function(){
     refresh(true);
     // 🆕 تحديث المعاينة الحية بعد تحميل البطاقات
     if(currentShape==='custom') setTimeout(updateSizePreview,300);
-  }catch(e){ console.error('boot',e); }
+    }catch(e){ console.error('boot',e); }
 })();
+
 </script>
 </body>
 </html>

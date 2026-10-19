@@ -319,7 +319,9 @@
 <script src="js/config.js"></script>
 <script src="js/firebase-service.js"></script>
 <script src="js/data-service.js"></script>
+<script src="js/legendary-core.js"></script>
 <script src="js/operations-service.js"></script>
+<script src="js/scope-guard.js"></script>
 <script src="js/ui-helpers.js"></script>
 <script src="js/drive-service.js"></script>
 <script src="js/theme-manager.js"></script>
@@ -329,9 +331,14 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
 <script src="js/push-service.js"></script>
 <script src="js/billing/core.js"></script>
+<script src="js/legendary-money.js"></script>
+<script src="js/legendary-comms.js"></script>
+<script src="js/legendary-shield.js"></script>
+<script src="js/legendary-exams.js"></script>
 <script src="js/billing/notify-rules.js"></script>
 <script src="js/billing/ui-ledger-select.js"></script>
 <script src="js/ledger-ui.js"></script>
+<script src="js/attendance-engine.js"></script>
 <script src="js/engagement-core.js"></script>
 <script src="js/interactive-games.js"></script>
 <script src="js/footer-injector.js"></script>
@@ -394,11 +401,11 @@ buildMenu(); showSection('overview');
 
 function buildMenu(){
 var menu=[
-{s:'الرئيسية',items:[{id:'overview',l:'نظرة عامة',i:'📊'},{id:'mySchedule',l:'الجدول الأسبوعي',i:'🗓️'}]},
-{s:'إدارة المجموعات',items:[{id:'groups',l:'مجموعاتي',i:'👥'},{id:'students',l:'طلابي',i:'🎓'},{id:'attendance',l:'الحضور',i:'📋'},{id:'calendar',l:'التقويم',i:'📆'}]},
-{s:'التقييم',items:[{id:'homework',l:'الواجبات',i:'📝'},{id:'exams',l:'الامتحانات',i:'🎓'},{id:'grades-report',l:'تقرير الدرجات',i:'📊'}]},
-{s:'🚀 التحفيز',items:[{id:'quickEval',l:'التقييم السريع',i:'⚡'},{id:'battles',l:'معارك المجموعات',i:'⚔️'}]},
-{s:'المحتوى',items:[{id:'videos',l:'الفيديوهات',i:'🎬'},{id:'classPosts',l:'بوستات الحصة',i:'📰'},{id:'challenges',l:'المسابقات',i:'🏆'},{id:'interactive',l:'مواد تفاعلية',i:'🧩'},{id:'materials',l:'المواد',i:'📦'},{id:'myStore',l:'مذكراتي وكتبي',i:'📚'}]},
+{s:'الرئيسية',items:[{id:'overview',l:'نظرة عامة',i:'📊'},{id:'mySchedule',l:'الجدول الأسبوعي',i:'🗓️'},{id:'attendance',l:'الحضور',i:'📋'}]},
+{s:'إدارة المجموعات',items:[{id:'groups',l:'مجموعاتي',i:'👥'},{id:'students',l:'طلابي',i:'🎓'},{id:'calendar',l:'التقويم',i:'📆'}]},
+{s:'التقييم',items:[{id:'quickEval',l:'التقييم السريع',i:'⚡'},{id:'homework',l:'الواجبات',i:'📝'},{id:'exams',l:'الامتحانات',i:'🎓'},{id:'grades-report',l:'تقرير الدرجات',i:'📊'}]},
+{s:'المحتوى',items:[{id:'classPosts',l:'بوستات الحصة',i:'📰'},{id:'videos',l:'الفيديوهات',i:'🎬'},{id:'interactive',l:'مواد تفاعلية',i:'🧩'},{id:'materials',l:'المواد',i:'📦'},{id:'myStore',l:'مذكراتي وكتبي',i:'📚'}]},
+{s:'🚀 التحفيز',items:[{id:'battles',l:'معارك المجموعات',i:'⚔️'},{id:'challenges',l:'المسابقات',i:'🏆'},{id:'payclaims', l:'طلبات الدفع', i:'💵'}]},
 {s:'الحساب',items:[{id:'settings',l:'الإعدادات',i:'⚙️'}]}
 ];
 document.getElementById('sidebarNav').innerHTML=menu.map(function(sec){ return '<div class="sidebar-section"><div class="sidebar-section-title">'+sec.s+'</div>'+sec.items.map(function(it){ return '<div class="sidebar-item" data-section="'+it.id+'" onclick="showSection(\''+it.id+'\')"><span class="sidebar-item-icon">'+it.i+'</span><span class="sidebar-item-label">'+it.l+'</span></div>'; }).join('')+'</div>'; }).join('');
@@ -2482,6 +2489,180 @@ return r;
 };
 }
 setInterval(autoLoadQuickEval,4000);
+})();
+</script>
+<script>
+/* ============ 💵 إعترضات الدفع + ✋ إعترضات الحضور + 🎖️ الليدرز — 3 صفحات بفلاتر ============ */
+(function(){
+function cur(){ try{ return (typeof currentUser!=='undefined'&&currentUser)?currentUser:((window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null);}catch(e){return null;} }
+function db(){ return (window.DataService&&DataService._getData)?DataService._getData():{}; }
+function myGids(){
+  var u=cur(); if(!u) return null;
+  if(u.role==='admin'||u.role==='super_admin') return null;
+  var gs=(window.ScopedData&&ScopedData.groups)?ScopedData.groups():[];
+  return gs.map(function(g){return g.id;});
+}
+function scopedGroupsList(){
+  var u=cur();
+  if(window.ScopedData&&ScopedData.groups) return ScopedData.groups();
+  return (DataService.getGroups?DataService.getGroups():[]).filter(function(g){
+    if(!u||u.role==='admin'||u.role==='super_admin') return true;
+    if(u.role==='teacher') return g.teacherId===u.id;
+    var t=null; try{ t=window.getMyTeacherId?window.getMyTeacherId():null; }catch(e){}
+    return g.teacherId===t;
+  });
+}
+var F={pay:{st:'pending',g:''},dis:{st:'pending',g:''},led:{g:'',as:''}};
+function build(){
+  var u=cur(); if(!u||['assistant','teacher','admin','super_admin'].indexOf(u.role)<0) return;
+  var ca=document.querySelector('.content-area'); if(!ca) return;
+  if(!document.getElementById('section-payclaims')){
+    var s1=document.createElement('section'); s1.className='section'; s1.id='section-payclaims';
+    s1.innerHTML='<div class="section-header"><div><h2 class="section-title">💵 إعترضات الدفع</h2><p class="text-sm text-muted">طلاب سجلوا إنهم دفعوا الشهرية — اعتمد أو ارفض</p></div><button class="btn btn-ghost btn-sm" onclick="window.renderPayClaims()">🔄</button></div>'+
+    '<div class="card" style="padding:10px;margin-bottom:10px;"><div style="display:flex;gap:8px;flex-wrap:wrap;"><select id="pfSt" class="form-select" style="max-width:160px;" onchange="window.__fPay()"><option value="pending">🕒 معلقة</option><option value="approved">✅ معتمدة</option><option value="rejected">❌ مرفوضة</option><option value="">📋 الكل</option></select><select id="pfG" class="form-select" style="max-width:220px;" onchange="window.__fPay()"></select></div></div>'+
+    '<div id="payClaimsHost"></div>';
+    ca.appendChild(s1);
+  }
+  if(!document.getElementById('section-disputes')){
+    var s2=document.createElement('section'); s2.className='section'; s2.id='section-disputes';
+    s2.innerHTML='<div class="section-header"><div><h2 class="section-title">✋ إعترضات الحضور</h2><p class="text-sm text-muted">طلاب معترضين على غياب مسجل — راجع وقرّر</p></div><button class="btn btn-ghost btn-sm" onclick="window.renderDisputes()">🔄</button></div>'+
+    '<div class="card" style="padding:10px;margin-bottom:10px;"><div style="display:flex;gap:8px;flex-wrap:wrap;"><select id="dfSt" class="form-select" style="max-width:160px;" onchange="window.__fDis()"><option value="pending">🕒 معلقة</option><option value="resolved">✅ محسومة</option><option value="">📋 الكل</option></select><select id="dfG" class="form-select" style="max-width:220px;" onchange="window.__fDis()"></select></div></div>'+
+    '<div id="disputesHost"></div>';
+    ca.appendChild(s2);
+  }
+  if(!document.getElementById('section-leaders')){
+    var s3=document.createElement('section'); s3.className='section'; s3.id='section-leaders';
+    s3.innerHTML='<div class="section-header"><div><h2 class="section-title">🎖️ ليدرز المجموعات</h2><p class="text-sm text-muted">عيّن ليدر لكل مجموعة — المسؤول: المساعد المرتبط</p></div><button class="btn btn-ghost btn-sm" onclick="window.renderLeaders()">🔄</button></div>'+
+    '<div class="card" style="padding:10px;margin-bottom:10px;"><div style="display:flex;gap:8px;flex-wrap:wrap;"><select id="lfG" class="form-select" style="max-width:220px;" onchange="window.__fLed()"></select><select id="lfAs" class="form-select" style="max-width:180px;" onchange="window.__fLed()"><option value="">📋 الكل</option><option value="yes">🎖️ ليها ليدر</option><option value="no">⬜ من غير ليدر</option></select></div></div>'+
+    '<div id="leadersHost"></div>';
+    ca.appendChild(s3);
+  }
+  var nav=document.getElementById('sidebarNav');
+  if(nav){
+    if(!nav.querySelector('[data-section="payclaims"]')){ var a=nav.querySelector('[data-section="monthly"]')||nav.querySelector('[data-section="ledger"]'); var i1='<div class="sidebar-item" data-section="payclaims" onclick="window.showSection(\'payclaims\')"><span class="sidebar-item-icon">💵</span><span class="sidebar-item-label">إعترضات الدفع</span></div>'; if(a) a.insertAdjacentHTML('afterend',i1); else nav.insertAdjacentHTML('beforeend',i1); }
+    if(!nav.querySelector('[data-section="disputes"]')){ var b=nav.querySelector('[data-section="payclaims"]'); var i2='<div class="sidebar-item" data-section="disputes" onclick="window.showSection(\'disputes\')"><span class="sidebar-item-icon">✋</span><span class="sidebar-item-label">إعترضات الحضور</span></div>'; if(b) b.insertAdjacentHTML('afterend',i2); else nav.insertAdjacentHTML('beforeend',i2); }
+    if(!nav.querySelector('[data-section="leaders"]')){ var c2=nav.querySelector('[data-section="disputes"]'); var i3='<div class="sidebar-item" data-section="leaders" onclick="window.showSection(\'leaders\')"><span class="sidebar-item-icon">🎖️</span><span class="sidebar-item-label">ليدرز المجموعات</span></div>'; if(c2) c2.insertAdjacentHTML('afterend',i3); else nav.insertAdjacentHTML('beforeend',i3); }
+  }
+  if(typeof window.showSection==='function'&&!window.__pcHook2){ window.__pcHook2=1; var os=window.showSection; window.showSection=function(id){ var r=os.apply(this,arguments); if(id==='payclaims') setTimeout(window.renderPayClaims,80); if(id==='disputes') setTimeout(window.renderDisputes,80); if(id==='leaders') setTimeout(window.renderLeaders,80); return r; }; }
+  fillGroupFilters();
+}
+function fillGroupFilters(){
+  var gs=scopedGroupsList();
+  var opts='<option value="">👥 كل المجموعات</option>'+gs.map(function(g){return '<option value="'+g.id+'">'+g.name+'</option>';}).join('');
+  ['pfG','dfG','lfG'].forEach(function(id){ var el=document.getElementById(id); if(el&&!el.__filled){ el.innerHTML=opts; el.__filled=1; } });
+}
+window.__fPay=function(){ F.pay.st=(document.getElementById('pfSt')||{}).value||''; F.pay.g=(document.getElementById('pfG')||{}).value||''; window.renderPayClaims(); };
+window.__fDis=function(){ F.dis.st=(document.getElementById('dfSt')||{}).value||''; F.dis.g=(document.getElementById('dfG')||{}).value||''; window.renderDisputes(); };
+window.__fLed=function(){ F.led.g=(document.getElementById('lfG')||{}).value||''; F.led.as=(document.getElementById('lfAs')||{}).value||''; window.renderLeaders(); };
+window.renderPayClaims=function(){
+  var host=document.getElementById('payClaimsHost'); if(!host) return;
+  var gids=myGids();
+  var list=(db().paymentClaims||[]).filter(function(c){ return (!gids||gids.indexOf(c.groupId)>=0)&&(!F.pay.st||c.status===F.pay.st)&&(!F.pay.g||c.groupId===F.pay.g); });
+  list.sort(function(a,b){return String(b.createdAt||'').localeCompare(String(a.createdAt||''));});
+  host.innerHTML=list.length?list.map(function(c){
+    var s=DataService.getUserById?DataService.getUserById(c.studentId):null;
+    var g=(DataService.getGroups?DataService.getGroups():[]).find(function(x){return x.id===c.groupId;});
+    var badge=c.status==='approved'?'<span class="badge badge-success">✅ معتمدة</span>':c.status==='rejected'?'<span class="badge badge-danger">❌ مرفوضة</span>':'<span class="badge badge-warning">🕒 معلقة</span>';
+    return '<div class="sub-row" style="padding:10px;"><div style="flex:1;"><strong>'+(s?s.name:'-')+'</strong> <span class="badge badge-info">'+c.amount+' ج.م</span> '+badge+'<div class="text-xs text-muted">'+(g?g.name:'')+' · شهر '+(c.month||String(c.createdAt).slice(0,7))+' · '+({cash:'كاش',vodafone:'فودافون كاش',instapay:'إنستا باي'}[c.method]||c.method)+' · '+String(c.createdAt).slice(0,10)+(c.receiptImage?' · 📷 إيصال':'')+'</div>'+(c.receiptImage?'<img src="'+c.receiptImage+'" style="width:64px;height:64px;object-fit:cover;border-radius:8px;margin-top:6px;cursor:pointer;" onclick="window.openImageZoom&&window.openImageZoom(this.src)">':'')+'</div>'+(c.status==='pending'?'<div style="display:flex;gap:6px;"><button class="btn btn-success btn-sm" onclick="Ops.resolvePaymentClaim(\''+c.id+'\',true,(currentUser||{}).id).then(window.renderPayClaims)">✅ اعتماد</button><button class="btn btn-danger btn-sm" onclick="Ops.resolvePaymentClaim(\''+c.id+'\',false,(currentUser||{}).id).then(window.renderPayClaims)">❌ رفض</button></div>':'')+'</div>';
+  }).join(''):'<div class="card" style="text-align:center;padding:24px;"><div style="font-size:40px;">✅</div><strong>مفيش طلبات مطابقة للفلتر</strong></div>';
+};
+window.renderDisputes=function(){
+  var host=document.getElementById('disputesHost'); if(!host) return;
+  var d=db(); var gids=myGids();
+  var list=(d.attendanceDisputes||d.disputes||[]).filter(function(x){ return (!gids||gids.indexOf(x.gid||x.groupId)>=0)&&(!F.dis.st||(x.status||'pending')===F.dis.st)&&(!F.dis.g||(x.gid||x.groupId)===F.dis.g); });
+  host.innerHTML=list.length?list.map(function(x){
+    var s=DataService.getUserById?DataService.getUserById(x.sid||x.studentId):null;
+    var g=(DataService.getGroups?DataService.getGroups():[]).find(function(gr){return gr.id===(x.gid||x.groupId);});
+    var st=x.status||'pending';
+    return '<div class="sub-row" style="border-right:3px solid var(--warning);padding:10px;"><div style="flex:1;"><strong>'+(s?s.name:'-')+'</strong><div class="text-xs text-muted">'+(g?g.name:'')+' · 📅 '+x.date+' · السبب: '+(x.reason||'أنا كنت حاضر')+'</div></div>'+(st==='pending'?'<div style="display:flex;gap:6px;"><button class="btn btn-success btn-sm" onclick="window.resolveDispute(\''+x.id+'\',true)">✓ كان حاضر</button><button class="btn btn-danger btn-sm" onclick="window.resolveDispute(\''+x.id+'\',false)">✗ تأكيد الغياب</button></div>':'<span class="badge '+(st==='resolved'||st==='accepted'?'badge-success':'badge-danger')+'">'+(st==='resolved'||st==='accepted'?'✅ محسومة':'❌ مرفوضة')+'</span>')+'</div>';
+  }).join(''):'<div class="card" style="text-align:center;padding:24px;"><div style="font-size:40px;">✋</div><strong>مفيش اعتراضات حضور</strong></div>';
+};
+window.renderLeaders=function(){
+  var host=document.getElementById('leadersHost'); if(!host) return;
+  var u=cur(); if(!(u.role==='assistant'||u.role==='admin'||u.role==='super_admin')){ host.innerHTML='<p class="text-muted">تعيين الليدر مسؤولية المساعد المرتبط بالأستاذ</p>'; return; }
+  var gs=scopedGroupsList().filter(function(g){ return (!F.led.g||g.id===F.led.g)&&(F.led.as==='yes'?!!g.leaderId:F.led.as==='no'?!g.leaderId:true); });
+  host.innerHTML=gs.length?gs.map(function(g){
+    var sts=(DataService.getStudentsByGroup?DataService.getStudentsByGroup(g.id):[]);
+    var lead=g.leaderId?(DataService.getUserById?DataService.getUserById(g.leaderId):null):null;
+    return '<div class="sub-row" style="padding:10px;"><div style="flex:1;"><strong>'+g.name+'</strong>'+(lead?' <span class="badge badge-warning">🎖️ '+lead.name+'</span>':' <span class="badge badge-muted">⬜ بدون ليدر</span>')+'<div class="text-xs text-muted">👥 '+sts.length+' طالب</div></div><select class="form-select ldSel" data-gid="'+g.id+'" style="width:180px;"><option value="">— بدون ليدر —</option>'+sts.map(function(s){return '<option value="'+s.id+'" '+(g.leaderId===s.id?'selected':'')+'>'+s.name+'</option>';}).join('')+'</select><button class="btn btn-primary btn-sm" onclick="window.saveLeader(this)">💾</button></div>';
+  }).join(''):'<p class="text-muted">مفيش مجموعات مطابقة للفلتر</p>';
+};
+window.saveLeader=function(btn){
+  var sel=btn.parentNode.querySelector('.ldSel');
+  Ops.setGroupLeader(sel.getAttribute('data-gid'), sel.value||null).then(function(){ if(window.safeToast) window.safeToast('✅ تم حفظ الليدر','success'); window.renderLeaders(); });
+};
+build(); setTimeout(build,1200); setTimeout(build,2600);
+setInterval(function(){ var a=document.querySelector('.section.active'); if(!a) return; if(a.id==='section-payclaims') window.renderPayClaims(); if(a.id==='section-disputes') window.renderDisputes(); if(a.id==='section-leaders') window.renderLeaders(); },15000);
+})();
+</script>
+<script>
+/* ============ 👁️ إصلاح "رؤية كـ" — نسخة مستقلة ============ */
+(function(){
+  function applyVid(){
+    try{
+      var vid=new URLSearchParams(location.search).get('viewas');
+      if(!vid) return false;
+      var u=(window.DataService&&DataService.getUsers?DataService.getUsers():[]).find(function(x){return x.id===vid;});
+      if(!u) return false;
+      window.__VIEWAS_USER=u;
+      if(window.AuthService){ AuthService.getCurrentUser=function(){ return window.__VIEWAS_USER; }; }
+      try{ currentUser=u; }catch(e){}
+      return true;
+    }catch(e){ return false; }
+  }
+  function refreshUI(){
+    try{
+      var u=window.__VIEWAS_USER; if(!u) return;
+      var n=document.getElementById('userName')||document.querySelector('.sidebar-user-name'); if(n) n.textContent=u.name||'';
+      var a=document.getElementById('userAvatar')||document.querySelector('.sidebar-user-avatar'); if(a) a.textContent=(u.name||'؟').charAt(0);
+      var r=document.querySelector('.sidebar-user-role'); if(r) r.textContent={student:'طالب',teacher:'أستاذ',assistant:'مساعد',admin:'أدمن',center:'مدير سنتر',parent:'ولي أمر'}[u.role]||u.role;
+      if(window.renderAll) window.renderAll();
+      if(window.loadCommand) window.loadCommand();
+      if(window.loadWorkspace) window.loadWorkspace();
+      if(window.loadOverview) window.loadOverview();
+      if(window.loadMyScheduleBoard) window.loadMyScheduleBoard();
+    }catch(e){}
+  }
+  function boot(){
+    var t=0;
+    var iv=setInterval(function(){
+      t+=300;
+      if(applyVid()){ clearInterval(iv); setTimeout(refreshUI,400); setTimeout(refreshUI,1500); }
+      else if(t>9000) clearInterval(iv);
+    },300);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
+})();
+</script>
+<script>
+/* ============ 🗓️ جدول المساعد: لوحة SB بتعديل في نطاق أستاذه بس ============ */
+(function(){
+  function scopedGroups(){
+    if(window.ScopedData&&ScopedData.groups) return ScopedData.groups();
+    var t=window.getMyTeacher?window.getMyTeacher():null;
+    if(!t) return [];
+    return (DataService.getGroupsByTeacher?DataService.getGroupsByTeacher(t.id):[]);
+  }
+  window.loadMyScheduleBoard=function(){
+    var host=document.getElementById('myScheduleBoard'); if(!host) return;
+    var gs=scopedGroups();
+    if(!gs.length){ host.innerHTML='<div class="card" style="text-align:center;padding:30px;"><div style="font-size:40px;">⚠️</div><strong>مش مرتبط بأستاذ لسه</strong></div>'; return; }
+    if(window.SB&&SB.renderBoard){
+      host.innerHTML='<div class="filter-info" style="margin-bottom:10px;">🗓️ جدول أستاذك — اسحب أي حصة لتعديل موعدها (أي تعديل بيتسجل وبيتبلغ الأدمن)</div><div id="asSbBoard"></div>';
+      SB.renderBoard('asSbBoard', gs);
+    } else host.innerHTML='<p class="text-muted">محرك الجدول مش محمل</p>';
+  };
+  function ensureMenu(){
+    var nav=document.getElementById('sidebarNav'); if(!nav||nav.querySelector('[data-section="mySchedule"]')) return;
+    var a=nav.querySelector('[data-section="attendance"]')||nav.querySelector('[data-section="teachers"]');
+    var it='<div class="sidebar-item" data-section="mySchedule" onclick="window.showSection(\'mySchedule\')"><span class="sidebar-item-icon">🗓️</span><span class="sidebar-item-label">جدولي الأسبوعي</span></div>';
+    if(a) a.insertAdjacentHTML('afterend',it); else nav.insertAdjacentHTML('beforeend',it);
+  }
+  if(typeof window.showSection==='function'&&!window.__asSbHook){
+    window.__asSbHook=1; var os=window.showSection;
+    window.showSection=function(id){ var r=os.apply(this,arguments); if(id==='mySchedule') setTimeout(window.loadMyScheduleBoard,120); return r; };
+  }
+  ensureMenu(); setTimeout(ensureMenu,1200); setTimeout(ensureMenu,2600);
 })();
 </script>
 </body>

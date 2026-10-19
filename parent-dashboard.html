@@ -426,6 +426,7 @@
 </section>
 
 
+
 <!-- 📊 درجات ابني -->
 <section class="section" id="section-grades">
 <div class="section-header">
@@ -500,6 +501,7 @@
 <script src="js/config.js"></script>
 <script src="js/firebase-service.js"></script>
 <script src="js/data-service.js"></script>
+<script src="js/legendary-core.js"></script>
 <script src="js/ui-helpers.js"></script>
 <script src="js/drive-service.js"></script>
 <script src="js/theme-manager.js"></script>
@@ -757,12 +759,19 @@ window.buildMenu = function(){
       {id:'attendance',l:'حضور ابني',i:'📋'},
       {id:'payments',l:'المدفوعات',i:'💰'},
       {id:'activity',l:'سجل النشاط',i:'📜'}
+    ]},
+    {s:'المزيد',items:[
+      {id:'teachers',l:'تعرّف على الأساتذة',i:'🌟', href:'teachers-showcase.html'}
     ]}
   ];
   const nav = document.getElementById('sidebarNav');
   if(nav) nav.innerHTML = menu.map(sec =>
     '<div class="sidebar-section"><div class="sidebar-section-title">' + sec.s + '</div>' +
-    sec.items.map(it => '<div class="sidebar-item" data-section="' + it.id + '" onclick="window.showSection(\'' + it.id + '\')"><span class="sidebar-item-icon">' + it.i + '</span><span class="sidebar-item-label">' + it.l + '</span></div>').join('') +
+    sec.items.map(it => {
+      // إذا كان هناك رابط (href) نفتح في تبويب جديد، غير ذلك نستخدم showSection
+      const action = it.href ? `window.open('${it.href}','_blank')` : `window.showSection('${it.id}')`;
+      return '<div class="sidebar-item" data-section="' + it.id + '" onclick="' + action + '"><span class="sidebar-item-icon">' + it.i + '</span><span class="sidebar-item-label">' + it.l + '</span></div>';
+    }).join('') +
     '</div>'
   ).join('');
 };
@@ -1180,38 +1189,100 @@ window.renderActivity = function(){
   if(!activeChild) return;
   const el = document.getElementById('activityList'); if(!el) return;
   const ts = window.myTeachers();
-  const gids = ts.map(t => t.group.id);
+  const gids = ts.map(t => t.group && t.group.id).filter(Boolean);
+  const d = db();
   const events = [];
-
-  (DataService?.getSubmissions ? DataService.getSubmissions({studentId:activeChild.id}) : []).forEach(s => {
-    const h = DataService?.getHomeworkById ? DataService.getHomeworkById(s.homeworkId) : null;
-    if(h && gids.includes(h.groupId)){
-      events.push({type:'hw', icon:'📝', title:h.title, sub:'واجب — ' + (s.status === 'graded' ? 'مُصحّح' : 'مسلّم'), date:s.submittedAt || s.createdAt, score:s.score, max:h.totalPoints, teacherName:ts.find(t => t.group.id === h.groupId)?.teacher?.name});
-    }
+  
+  function isReleased(rec, att){
+    if(!att) return false;
+    if(att.status === 'approved') return true;
+    var pol = rec.releasePolicy || 'approve';
+    if(pol === 'instant' && typeof att.score === 'number') return true;
+    return false;
+  }
+  
+  /* واجبات */
+  (d.submissions || []).filter(s => s.studentId === activeChild.id).forEach(s => {
+    const h = (d.homework || []).find(x => x.id === s.homeworkId);
+    if(!h || !gids.includes(h.groupId)) return;
+    const released = isReleased(h, s);
+    const score = typeof s.score === 'number' ? s.score : null;
+    const max = s.maxScore || h.totalPoints || 100;
+    const pct = (score !== null && max > 0) ? Math.round((score / max) * 100) : null;
+    const teacher = ts.find(t => t.group && t.group.id === h.groupId);
+    events.push({
+      type:'hw', 
+      icon: released ? (pct >= 75 ? '🏆' : '📝') : '🕒', 
+      title: h.title, 
+      sub: 'واجب — ' + (released ? 'مُصدّر' : (score !== null ? 'قيد المراجعة' : 'مسلّم')),
+      date: s.submittedAt || s.createdAt, 
+      score: score, 
+      max: max, 
+      pct: pct,
+      released: released,
+      teacherName: teacher?.teacher?.name
+    });
   });
-
-  (DataService?.getExamAttempts ? DataService.getExamAttempts({studentId:activeChild.id}) : []).forEach(a => {
-    const e = DataService?.getExamById ? DataService.getExamById(a.examId) : null;
-    if(e && gids.includes(e.groupId)){
-      events.push({type:'exam', icon:'🎓', title:e.title, sub:'امتحان', date:a.submittedAt || a.createdAt, score:a.score, max:a.maxScore, teacherName:ts.find(t => t.group.id === e.groupId)?.teacher?.name});
-    }
+  
+  /* امتحانات */
+  (d.examAttempts || []).filter(a => a.studentId === activeChild.id).forEach(a => {
+    const e = (d.exams || []).find(x => x.id === a.examId);
+    if(!e || !gids.includes(e.groupId)) return;
+    const released = isReleased(e, a);
+    const score = typeof a.score === 'number' ? a.score : null;
+    const max = a.maxScore || e.totalPoints || 100;
+    const pct = (score !== null && max > 0) ? Math.round((score / max) * 100) : null;
+    const teacher = ts.find(t => t.group && t.group.id === e.groupId);
+    events.push({
+      type:'exam', 
+      icon: released ? (pct >= 75 ? '🏆' : '🎓') : '🕒', 
+      title: e.title, 
+      sub: 'امتحان — ' + (released ? 'مُصدّر' : (score !== null ? 'قيد المراجعة' : 'مسلّم')),
+      date: a.submittedAt || a.createdAt, 
+      score: score, 
+      max: max, 
+      pct: pct,
+      released: released,
+      teacherName: teacher?.teacher?.name
+    });
   });
-
-  (DataService?.getAttendance ? DataService.getAttendance() : []).forEach(a => {
+  
+  /* حضور */
+  (d.attendance || []).forEach(a => {
     if(!gids.includes(a.groupId)) return;
-    const r = a.records?.find(r => r.studentId === activeChild.id);
+    const r = (a.records || []).find(r => r.studentId === activeChild.id);
     if(!r) return;
-    events.push({type:'att', icon:r.status === 'present' ? '✓' : r.status === 'late' ? '⏰' : '✗', title:'حصة ' + a.groupName, sub:r.status === 'present' ? 'حاضر' : r.status === 'late' ? 'متأخر' : 'غائب', date:a.date, teacherName:ts.find(t => t.group.id === a.groupId)?.teacher?.name});
+    const teacher = ts.find(t => t.group && t.group.id === a.groupId);
+    events.push({
+      type:'att', 
+      icon: r.status === 'present' ? '✓' : r.status === 'late' ? '⏰' : '✗', 
+      title: 'حصة ' + (a.groupName || ''), 
+      sub: r.status === 'present' ? 'حاضر' : r.status === 'late' ? 'متأخر' : 'غائب', 
+      date: a.date, 
+      teacherName: teacher?.teacher?.name
+    });
   });
-
+  
   events.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
-  if(!events.length){ el.innerHTML = '<p class="text-muted" style="text-align:center;padding:20px">لا نشاط مسجل بعد</p>'; return; }
-
-  el.innerHTML = '<div class="modern-card">' + events.slice(0, 30).map(ev =>
-    '<div class="sub-row"><div style="flex:1"><strong>' + ev.icon + ' ' + ev.title + '</strong><div class="text-xs text-muted" style="margin-top:4px">' + ev.sub + ' · ' + (ev.teacherName || '') + ' · 📅 ' + (ev.date || '') + '</div></div>' +
-    (ev.score !== undefined && ev.score !== null ? '<span class="grade-badge ' + (Math.round((ev.score / ev.max) * 100) >= 75 ? 'success' : Math.round((ev.score / ev.max) * 100) >= 50 ? 'warning' : 'danger') + '">' + Math.round((ev.score / ev.max) * 100) + '%</span>' : '') +
-    '</div>'
-  ).join('') + '</div>';
+  if(!events.length){ 
+    el.innerHTML = '<div class="modern-card"><p class="text-muted" style="text-align:center;padding:20px">لا نشاط مسجل بعد</p></div>'; 
+    return; 
+  }
+  
+  el.innerHTML = '<div class="modern-card">' + events.slice(0, 40).map(ev => {
+    let scoreHtml = '';
+    if(ev.score !== undefined && ev.score !== null && ev.max){
+      const pct = ev.pct !== null ? ev.pct : Math.round((ev.score / ev.max) * 100);
+      const gradeClass = pct >= 75 ? 'success' : pct >= 50 ? 'warning' : 'danger';
+      if(ev.released){
+        scoreHtml = '<span class="grade-badge ' + gradeClass + '">' + pct + '%</span><div class="text-xs text-muted" style="margin-top:2px;text-align:left">' + ev.score + '/' + ev.max + '</div>';
+      } else {
+        scoreHtml = '<span class="grade-badge muted">🕒</span><div class="text-xs text-muted" style="margin-top:2px;text-align:left">' + ev.score + '/' + ev.max + ' (مراجعة)</div>';
+      }
+    }
+    return '<div class="sub-row"><div style="flex:1"><strong>' + ev.icon + ' ' + ev.title + '</strong><div class="text-xs text-muted" style="margin-top:4px">' + ev.sub + ' · ' + (ev.teacherName || '') + ' · 📅 ' + (ev.date ? new Date(ev.date).toLocaleDateString('ar-EG') : '') + '</div></div>' +
+      '<div style="text-align:left">' + scoreHtml + '</div></div>';
+  }).join('') + '</div>';
 };
 
 /* ==========================================================
@@ -1251,20 +1322,27 @@ window.renderTeachersCards = function(){
     socialsHtml += '</div>';
     if(!hasSocials) socialsHtml = '';
     
-    /* 💰 Billing cycle-aware من محرك الدفتر */
-    let billingHtml = '';
-    if(fee > 0){
-      if(rem > 0 && st.complete){ 
-        billingHtml = '<div class="billing-alert"><div><div class="title" style="font-weight:700;color:var(--danger);font-size:12px">💰 مستحقات الدورة الحالية</div><div>متبقي: <span class="amount">'+rem+' '+(EduFlowConfig?.billing?.currency || 'ج.م')+'</span></div></div></div>'; 
-      } else if(paid >= fee && fee > 0){ 
-        billingHtml = '<div class="billing-ok"><div class="icon">✅</div><div style="font-weight:700;color:var(--success);font-size:13px">الدورة الحالية مسددة بالكامل</div></div>'; 
-      } else if(st.complete){
-        billingHtml = '<div class="billing-alert" style="background:linear-gradient(135deg,#fef3c7,#fde68a);border-color:var(--warning)"><div><div class="title" style="font-weight:700;color:var(--warning);font-size:12px">💰 مطلوب '+fee+' '+(EduFlowConfig?.billing?.currency || 'ج.م')+'</div><div>الدورة اكتملت ('+st.done+'/'+st.required+')</div></div></div>';
-      }
-    }
-    if(g.frozen){
-      billingHtml = '<div class="billing-alert" style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);border-color:var(--info)"><div><div class="title" style="font-weight:700;color:var(--info);font-size:12px">🧊 العد موقوف من '+(g.frozenSince||'-')+'</div><div>حصص فترة الوقف مش بتتحسب</div></div></div>' + billingHtml;
-    }
+ /* 💰 Billing cycle-aware — يظهر دايماً لو فيه فلوس مستحقة */
+let billingHtml = '';
+if(fee > 0){
+  if(rem > 0 && st.complete){ 
+    /* الدورة كملت ومفيش دفعة كاملة */
+    billingHtml = '<div class="billing-alert"><div><div class="title" style="font-weight:700;color:var(--danger);font-size:12px">💰 مستحقات الدورة الحالية</div><div>متبقي: <span class="amount">'+rem+' '+(EduFlowConfig?.billing?.currency || 'ج.م')+'</span></div></div></div>'; 
+  } else if(paid >= fee && fee > 0){ 
+    billingHtml = '<div class="billing-ok"><div class="icon">✅</div><div style="font-weight:700;color:var(--success);font-size:13px">الدورة الحالية مسددة بالكامل</div></div>'; 
+  } else if(st.complete){
+    billingHtml = '<div class="billing-alert" style="background:linear-gradient(135deg,#fef3c7,#fde68a);border-color:var(--warning)"><div><div class="title" style="font-weight:700;color:var(--warning);font-size:12px">💰 مطلوب '+fee+' '+(EduFlowConfig?.billing?.currency || 'ج.م')+'</div><div>الدورة اكتملت ('+st.done+'/'+st.required+')</div></div></div>';
+  } else if(paid > 0 && paid < fee){
+    /* 🆕 مقدم جزء من الفلوس */
+    billingHtml = '<div class="billing-alert" style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);border-color:var(--info)"><div><div class="title" style="font-weight:700;color:var(--info);font-size:12px">💵 مقدم '+paid+' من '+fee+' '+(EduFlowConfig?.billing?.currency || 'ج.م')+'</div><div>متبقي: <span class="amount" style="color:var(--info)">'+(fee-paid)+' '+(EduFlowConfig?.billing?.currency || 'ج.م')+'</span> — تستحق عند اكتمال الدورة</div></div></div>';
+  } else if(st.done >= 4 && fee > 0){
+    /* 🆕 تحذير مبكر: لما يبقى نص الحصص اتعملت */
+    billingHtml = '<div class="billing-alert" style="background:linear-gradient(135deg,#fef3c7,#fde68a);border-color:var(--warning)"><div><div class="title" style="font-weight:700;color:var(--warning);font-size:12px">📢 تنبيه: الشهرية ('+fee+' '+(EduFlowConfig?.billing?.currency || 'ج.م')+')</div><div>هتستحق عند اكتمال الدورة ('+st.done+'/'+st.required+')</div></div></div>';
+  }
+}
+if(g.frozen){
+  billingHtml = '<div class="billing-alert" style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);border-color:var(--info)"><div><div class="title" style="font-weight:700;color:var(--info);font-size:12px">🧊 العد موقوف من '+(g.frozenSince||'-')+'</div><div>حصص فترة الوقف مش بتتحسب</div></div></div>' + billingHtml;
+}
     
     return '<div class="teacher-card float-in">' +
       '<div class="teacher-head">' +
@@ -1305,30 +1383,35 @@ window.renderActionItems = function(){
   });
   if(absentYesterday > 0) alerts.push({icon:'⚠️', text:'ابنك غاب '+absentYesterday+' حصة أمس', type:'danger'});
   
-  /* 📝 واجبات ناقصة */
-  const gids = ts.map(t => t.group?.id).filter(Boolean);
-  const allHw = DataService?.getHomework ? DataService.getHomework() : [];
-  const allSubs = DataService?.getSubmissions ? DataService.getSubmissions({studentId:activeChild.id}) : [];
-  const activeHw = allHw.filter(h => gids.includes(h.groupId) && !h.paper);
-  const missingHw = activeHw.filter(h => !allSubs.some(s => s.homeworkId === h.id));
-  if(missingHw.length > 0) alerts.push({icon:'📝', text:'لديه '+missingHw.length+' واجب لم يتم تسليمهما', type:'warning'});
-  
-  /* 💰 دفعات متأخرة — دورة-واعية من محرك الدفتر */
-  let totalOverdue = 0;
-  ts.forEach(t => {
-    const g = t.group; if(!g) return;
-    const fee = g.monthlyFee || 0; if(!fee) return;
-    cyclesList(g).forEach(c => {
-      const st = ledState(g.id, c.ck); if(!st) return;
-      if(!st.complete) return;
-      const paid = paidForCycle(activeChild.id, g.id, c.ck, c.ym);
-      const rem = Math.max(0, fee - paid);
-      if(rem > 0) totalOverdue += rem;
-    });
+/* 💰 دفعات مستحقة — دورة-واعية من محرك الدفتر (شامل حتى اللي لسه مكملش) */
+let totalOverdue = 0;
+let partialPaid = 0;
+let upcomingDue = 0;
+ts.forEach(t => {
+  const g = t.group; if(!g) return;
+  const fee = g.monthlyFee || 0; if(!fee) return;
+  cyclesList(g).forEach(c => {
+    const st = ledState(g.id, c.ck); if(!st) return;
+    const paid = paidForCycle(activeChild.id, g.id, c.ck, c.ym);
+    const rem = Math.max(0, fee - paid);
+    if(st.complete && rem > 0){
+      totalOverdue += rem;
+    } else if(!st.complete && paid > 0 && paid < fee){
+      partialPaid += (fee - paid);
+    } else if(!st.complete && paid === 0 && st.done >= 4){
+      upcomingDue += fee;
+    }
   });
-  if(totalOverdue > 0){
-    alerts.push({icon:'💰', text:'دفعات مستحقة بقيمة '+totalOverdue+' '+(EduFlowConfig?.billing?.currency || 'ج.م'), type:'danger'});
-  }
+});
+if(totalOverdue > 0){
+  alerts.push({icon:'💰', text:'دفعات مستحقة بقيمة '+totalOverdue+' '+(EduFlowConfig?.billing?.currency || 'ج.م')+' — يجب السداد', type:'danger'});
+}
+if(partialPaid > 0){
+  alerts.push({icon:'💵', text:'مقدم '+partialPaid+' '+(EduFlowConfig?.billing?.currency || 'ج.م')+' — تستحق عند اكتمال الدورة', type:'warning'});
+}
+if(upcomingDue > 0){
+  alerts.push({icon:'📢', text:'شهرية قادمة بقيمة '+upcomingDue+' '+(EduFlowConfig?.billing?.currency || 'ج.م')+' — جهّز المبلغ', type:'warning'});
+}
   
   /* 🧊 مجموعات مجمدة — تنبيه مهم */
   const frozenGroups = ts.filter(t => t.group && t.group.frozen);
@@ -1349,7 +1432,7 @@ window.renderActionItems = function(){
 window.renderUpcoming = function(){
   if(!activeChild) return;
   const el = document.getElementById('upcomingList'); if(!el) return;
-  const ts = window.myTeachers(); const gids = ts.map(t => t.group.id);
+  const ts = window.myTeachers(); const gids = ts.map(t => t.group && t.group.id).filter(Boolean);
   const items = [];
   const allChallenges = DataService?.getChallenges ? DataService.getChallenges({}) : [];
   const activeChallenges = allChallenges.filter(c => { if(c.status !== 'active') return false; if(!c.targetType || c.targetType === 'all') return true; if(c.targetType === 'group' && gids.includes(c.targetValue)) return true; if(c.targetType === 'grade' && activeChild.grade === c.targetValue) return true; return false; });
@@ -1371,7 +1454,7 @@ window.renderOverview = function(){
     const ts = window.myTeachers();
     window.renderActionItems();
     const allAtt = DataService?.getAttendance ? DataService.getAttendance() : [];
-    const groupIds = ts.map(t => t.group.id);
+    const groupIds = ts.map(t => t.group && t.group.id).filter(Boolean);
     const month = new Date().toISOString().slice(0, 7);
     /* 🧮 حضور دورة-واعي (متزامن مع الدفتر: التصفير والتجميد بيأثروا فوراً) */
     let attended=0, absent=0, late=0, attTotal=0, cancelledCount=0, sessionsRequired=0;
@@ -1471,7 +1554,9 @@ window.renderOverview = function(){
         }
         groupEntries.forEach(([groupId, data]) => {
           const photo = data.teacherPhoto ? window.driveThumb(data.teacherPhoto) : '';
-          html += '<div style="margin-bottom:16px;padding-top:16px;border-top:1px solid var(--border)"><h4 style="margin-bottom:10px;font-size:14px">' + (photo ? '<img src="' + photo + '" style="width:24px;height:24px;border-radius:50%;vertical-align:middle;margin-left:6px" onerror="this.style.display=\'none\'">' : '') + ' ' + data.groupName + '</h4><div class="my-rank-box"><div class="my-rank-number">#' + data.rank + '</div><div style="font-size:12px;color:var(--text-muted);margin-top:4px">من ' + data.total + ' طالب</div><div style="margin-top:8px;font-family:var(--font-en);font-weight:900;color:var(--primary);font-size:18px">' + data.points + ' نقطة</div></div>' +
+          const gg = (DataService.getGroups ? DataService.getGroups() : []).find(x => x.id === groupId) || {};
+          const tName = gg.teacherId ? ((DataService.getUserById ? DataService.getUserById(gg.teacherId) : null) || {}).name : (data.teacherName || '');
+          html += '<div style="margin-bottom:16px;padding-top:16px;border-top:1px solid var(--border)"><h4 style="margin-bottom:10px;font-size:14px">' + (photo ? '<img src="' + photo + '" style="width:24px;height:24px;border-radius:50%;vertical-align:middle;margin-left:6px" onerror="this.style.display=\'none\'">' : '') + ' ' + data.groupName + '</h4><div class="text-xs text-muted" style="margin-bottom:10px">👨‍🏫 ' + (tName || '-') + ' · 🏢 ' + (gg.center || '-') + ' · 📚 ' + (gg.grade || '-') + '</div><div class="my-rank-box"><div class="my-rank-number">#' + data.rank + '</div><div style="font-size:12px;color:var(--text-muted);margin-top:4px">من ' + data.total + ' طالب</div><div style="margin-top:8px;font-family:var(--font-en);font-weight:900;color:var(--primary);font-size:18px">' + data.points + ' نقطة</div></div>' +
             (data.top3 && data.top3.length ? '<div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:8px">🏆 أول 3 في المجموعة:</div>' + data.top3.map(r => '<div class="leader-row"><div class="rank ' + (r.rank === 1 ? 'rank-1' : r.rank === 2 ? 'rank-2' : r.rank === 3 ? 'rank-3' : 'rank-other') + '">' + r.rank + '</div><div style="flex:1"><strong>' + r.name + (r.studentId === activeChild.id ? ' (ابنك)' : '') + '</strong><div class="text-xs text-muted">' + (r.code || '') + '</div></div><div style="font-family:var(--font-en);font-weight:900;color:var(--primary)">' + r.points + '</div></div>').join('') : '') +
             '</div>';
         });
@@ -1517,10 +1602,10 @@ window.openGradeDetails = function(type, id){
     answersHtml += questions.map((q, i) => {
       const ans = answers.find(a => a.questionId === q.id);
       const userAns = ans ? (ans.answer !== undefined ? ans.answer : 'لا توجد إجابة') : 'لم يجيب';
-      const isCorrect = ans && (String(ans.answer ?? '').trim().toLowerCase() === String(q.correctAnswer ?? '').trim().toLowerCase());
+      const isCorrect = ans && (String(ans.answer ?? '').trim().toLowerCase() === String(q.correct ?? '').trim().toLowerCase());
       let optHtml = '';
-      if(q.type === 'mcq' && q.options) optHtml = '<div class="text-xs" style="margin-top:4px"><span style="color:' + (isCorrect ? 'var(--success)' : 'var(--danger)') + '">إجابته: ' + (q.options[userAns] || userAns) + '</span><br><span style="color:var(--success)">الصحيحة: ' + (q.options[q.correctAnswer] || q.correctAnswer) + '</span></div>';
-      else if(q.type === 'truefalse') optHtml = '<div class="text-xs" style="margin-top:4px"><span style="color:' + (isCorrect ? 'var(--success)' : 'var(--danger)') + '">إجابته: ' + userAns + '</span><br><span style="color:var(--success)">الصحيحة: ' + q.correctAnswer + '</span></div>';
+      if(q.type === 'mcq' && q.options) optHtml = '<div class="text-xs" style="margin-top:4px"><span style="color:' + (isCorrect ? 'var(--success)' : 'var(--danger)') + '">إجابته: ' + (q.options[userAns] || userAns) + '</span><br><span style="color:var(--success)">الصحيحة: ' + (q.options[q.correct] || q.correct) + '</span></div>';
+      else if(q.type === 'truefalse') optHtml = '<div class="text-xs" style="margin-top:4px"><span style="color:' + (isCorrect ? 'var(--success)' : 'var(--danger)') + '">إجابته: ' + userAns + '</span><br><span style="color:var(--success)">الصحيحة: ' + q.correct + '</span></div>';
       else if(q.type === 'essay') optHtml = '<div class="text-xs" style="margin-top:4px;padding:8px;background:var(--surface-hover);border-radius:6px"><strong>إجابته:</strong> ' + (ans?.text || userAns) + '<br>' + (ans?.score !== undefined ? '<strong>الدرجة:</strong> ' + ans.score + '/' + q.points : '') + '</div>';
       return '<div class="sub-row ' + (isCorrect ? 'graded' : 'missing') + '"><div style="flex:1"><strong>س' + (i + 1) + ': ' + (q.text || '') + '</strong>' + optHtml + '</div><span class="badge ' + (isCorrect ? 'badge-success' : 'badge-danger') + '">' + (isCorrect ? '✓' : '✗') + '</span></div>';
     }).join('');
@@ -1530,44 +1615,132 @@ window.openGradeDetails = function(type, id){
   const body = '<div class="modal-header"><h3 class="modal-title">' + (type === 'hw' ? '📝' : '🎓') + ' ' + title + '</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div style="text-align:center;margin-bottom:16px"><div class="grade-badge ' + gradeClass + '" style="font-size:24px;padding:12px 24px">' + pct + '%</div><div class="text-muted" style="margin-top:8px">الدرجة: ' + score + ' من ' + max + '</div></div>' + answersHtml + feedbackHtml + '</div>';
   if(typeof ThemeManager?.openModal === 'function') ThemeManager.openModal(body, 'modal-lg');
 };
-
 window.loadGrades = function(){
   try{
     if(!activeChild) return;
     window.renderTeacherPicker('gradesTeacherPicker');
-    const ts = window.myTeachers();
-    const filteredTs = selectedTeacherId ? ts.filter(t => t.teacher?.id === selectedTeacherId) : ts;
-    const gids = filteredTs.map(t => t.group.id);
-    const subs = (DataService?.getSubmissions ? DataService.getSubmissions({studentId:activeChild.id}) : []).filter(s => { const h = DataService.getHomeworkById(s.homeworkId); return h && gids.includes(h.groupId); });
-    const gh = subs.filter(s => s.status === 'graded');
-    const avgHw = gh.length ? Math.round(gh.reduce((a, x) => a + (x.score || 0), 0) / gh.length) : 0;
-    const atts = (DataService?.getExamAttempts ? DataService.getExamAttempts({studentId:activeChild.id}) : []).filter(a => { const e = DataService.getExamById(a.examId); return e && gids.includes(e.groupId); });
-    const ge = atts.filter(a => a.status === 'approved' || a.status === 'graded');
-    const avgEx = ge.length ? Math.round(ge.reduce((a, x) => a + (x.score || 0), 0) / ge.length) : 0;
+    
+    /* 🛡️ فلتر الأساتذة الصالحين فقط (اللي عندهم group حقيقي) */
+    const ts = window.myTeachers().filter(t => t && t.group && t.group.id);
+    const filteredTs = selectedTeacherId ? ts.filter(t => t.teacher && t.teacher.id === selectedTeacherId) : ts;
+    const gids = filteredTs.map(t => t.group.id).filter(Boolean);
+    const d = db();
+    
+    if(!gids.length){
+      const gsEl = document.getElementById('gradeStats');
+      if(gsEl) gsEl.innerHTML = '<div class="stat-mini-box" style="grid-column:1/-1"><div class="stat-mini-value">-</div><div class="stat-mini-label">لا مجموعات مسجلة</div></div>';
+      const hwEl = document.getElementById('pHwGrades');
+      const exEl = document.getElementById('pExGrades');
+      if(hwEl) hwEl.innerHTML = '<p class="text-muted" style="text-align:center;padding:20px">لا مجموعات مسجلة لابنك بعد</p>';
+      if(exEl) exEl.innerHTML = '<p class="text-muted" style="text-align:center;padding:20px">لا مجموعات مسجلة لابنك بعد</p>';
+      return;
+    }
+    
+    /* 🎯 محرك التصحيح المتسامح — نفس اللي بيشتغل في legendary-exams.js */
+    function gradeAnswers(qs, ans){
+      var total = 0;
+      (qs||[]).forEach(function(q){
+        if(q.type === 'essay' || q.type === 'short') return;
+        var a = (ans||[]).find(function(x){ return x.questionId === q.id; });
+        if(!a || a.answer == null || a.answer === '') return;
+        if(String(a.answer).trim() === String(q.correct).trim()) total += (q.points || 1);
+      });
+      return total;
+    }
+    function isReleased(rec, att){
+      if(!att) return false;
+      if(att.status === 'approved') return true;
+      if(att.autoGraded) return true;
+      return (rec.releasePolicy || 'approve') === 'instant' && typeof att.score === 'number';
+    }
+    
+    /* 🧮 إعادة حساب الدرجات تلقائياً لو كانت صفر غلط */
+    const subs = (d.submissions || []).filter(s => 
+      s.studentId === activeChild.id && 
+      (d.homework||[]).some(h => h.id === s.homeworkId && gids.includes(h.groupId))
+    );
+    const atts = (d.examAttempts || []).filter(a => 
+      a.studentId === activeChild.id && 
+      (d.exams||[]).some(e => e.id === a.examId && gids.includes(e.groupId))
+    );
+    
+    /* 🆕 إعادة تصحيح فوري للامتحانات اللي درجتها 0 غلط */
+    let regraded = 0;
+    atts.forEach(a => {
+      if(a.score === 0 && a.status !== 'approved' && a.answers && a.answers.length){
+        const e = (d.exams||[]).find(x => x.id === a.examId);
+        if(e && e.questions && e.questions.length){
+          const computed = gradeAnswers(e.questions, a.answers);
+          if(computed > 0){
+            a.score = computed;
+            a.maxScore = e.questions.reduce((s,q) => s + (q.points||1), 0) || e.totalPoints || 100;
+            a.autoRegraded = true;
+            regraded++;
+          }
+        }
+      }
+    });
+    if(regraded > 0){
+      DataService._saveData(d);
+      console.log('🧮 تم إعادة تصحيح ' + regraded + ' محاولة تلقائياً');
+    }
+    
+    const gradedHw = subs.filter(s => { const h=(d.homework||[]).find(x=>x.id===s.homeworkId); return h && isReleased(h,s); });
+    const gradedEx = atts.filter(a => { const e=(d.exams||[]).find(x=>x.id===a.examId); return e && isReleased(e,a); });
+    const avgHw = gradedHw.length ? Math.round(gradedHw.reduce((s,x)=>s+((x.score||0)/(x.maxScore||100)*100),0)/gradedHw.length) : 0;
+    const avgEx = gradedEx.length ? Math.round(gradedEx.reduce((s,x)=>s+((x.score||0)/(x.maxScore||100)*100),0)/gradedEx.length) : 0;
+    const pend = (subs.length-gradedHw.length)+(atts.length-gradedEx.length);
+
     const gsEl = document.getElementById('gradeStats');
-    if(gsEl) gsEl.innerHTML = '<div class="stat-mini-box"><div class="stat-mini-value">' + gh.length + '</div><div class="stat-mini-label">واجب مُصحّح</div></div><div class="stat-mini-box"><div class="stat-mini-value">' + avgHw + '%</div><div class="stat-mini-label">متوسط الواجبات</div></div><div class="stat-mini-box"><div class="stat-mini-value">' + ge.length + '</div><div class="stat-mini-label">امتحان مُسلّم</div></div><div class="stat-mini-box"><div class="stat-mini-value">' + avgEx + '%</div><div class="stat-mini-label">متوسط الامتحانات</div></div>';
+    if(gsEl) gsEl.innerHTML =
+      '<div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--success)">'+gradedHw.length+'</div><div class="stat-mini-label">✅ واجب مُصدّر</div></div>'+
+      '<div class="stat-mini-box"><div class="stat-mini-value">'+avgHw+'%</div><div class="stat-mini-label">متوسط الواجبات</div></div>'+
+      '<div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--success)">'+gradedEx.length+'</div><div class="stat-mini-label">✅ امتحان مُصدّر</div></div>'+
+      '<div class="stat-mini-box"><div class="stat-mini-value">'+avgEx+'%</div><div class="stat-mini-label">متوسط الامتحانات</div></div>'+
+      '<div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--warning)">'+pend+'</div><div class="stat-mini-label">🕒 قيد المراجعة</div></div>';
+
     const hwEl = document.getElementById('pHwGrades');
     if(hwEl) hwEl.innerHTML = subs.length ? subs.map(s => {
-      const h = DataService.getHomeworkById(s.homeworkId); if(!h) return '';
-      const teacherForHw = ts.find(t => t.group.id === h.groupId);
-      const photo = teacherForHw?.teacher?.photoUrl ? window.driveThumb(teacherForHw.teacher.photoUrl) : '';
-      const pct = h && h.totalPoints ? Math.round(s.score / h.totalPoints * 100) : (s.score || 0);
-      const gradeClass = pct >= 75 ? 'success' : pct >= 50 ? 'warning' : s.status === 'graded' ? 'danger' : 'muted';
-      return '<div class="sub-row clickable ' + (s.status === 'graded' ? 'graded' : 'pending') + '" onclick="window.openGradeDetails(\'hw\', \'' + s.id + '\')"><div style="flex:1"><strong>' + h.title + ' ' + (h.paper ? '<span class="badge badge-info">📄 ورقي</span>' : '') + '</strong><div class="text-xs text-muted" style="margin-top:4px">' + (photo ? '<img src="' + photo + '" style="width:16px;height:16px;border-radius:50%" onerror="this.style.display=\'none\'">' : '') + ' ' + (teacherForHw?.teacher?.name || '-') + ' · 📅 ' + (h.deadline || '-') + '</div></div><div style="text-align:left">' + (s.status === 'graded' ? '<span class="grade-badge ' + gradeClass + '">' + pct + '%</span><div class="text-xs text-muted" style="margin-top:4px">' + (s.score || 0) + '/' + (h.totalPoints || 100) + '</div>' : '<span class="grade-badge muted">⏳</span>') + '</div></div>';
-    }).join('') : '<p class="text-muted" style="text-align:center;padding:20px">لا واجبات</p>';
+      const h = (d.homework||[]).find(x => x.id === s.homeworkId); if(!h) return '';
+      const tch = ts.find(t => t.group && t.group.id === h.groupId);
+      const max = s.maxScore || h.totalPoints || 100;
+      const score = typeof s.score === 'number' ? s.score : null;
+      const rel = isReleased(h, s);
+      const pct = (score !== null) ? Math.round(score/max*100) : null;
+      let st;
+      if(rel && pct !== null) st = '<span class="grade-badge '+(pct>=75?'success':pct>=50?'warning':'danger')+'">'+pct+'%</span><div class="text-xs text-muted" style="margin-top:4px">'+score+'/'+max+'</div>';
+      else if(score !== null) st = '<span class="grade-badge muted">🕒</span><div class="text-xs text-muted" style="margin-top:4px">'+score+'/'+max+'</div>';
+      else if(s.submittedAt) st = '<span class="grade-badge muted">📤 مسلّم</span>';
+      else st = '<span class="grade-badge muted">⏳</span>';
+      return '<div class="sub-row clickable '+(rel?'graded':'pending')+'" onclick="window.openGradeDetails(\'hw\',\''+s.id+'\')"><div style="flex:1"><strong>'+h.title+(h.paper?' <span class="badge badge-info">📄 ورقي</span>':'')+'</strong><div class="text-xs text-muted" style="margin-top:4px">👨‍🏫 '+(tch&&tch.teacher?tch.teacher.name:'-')+' · 📅 '+(h.deadline||'-')+'</div></div><div style="text-align:left">'+st+'</div></div>';
+    }).join('') : '<p class="text-muted" style="text-align:center;padding:20px">لا واجبات مسجلة</p>';
+
     const exEl = document.getElementById('pExGrades');
     if(exEl) exEl.innerHTML = atts.length ? atts.map(a => {
-      const e = DataService.getExamById(a.examId); if(!e) return '';
-      const teacherForEx = ts.find(t => t.group.id === e.groupId);
-      const photo = teacherForEx?.teacher?.photoUrl ? window.driveThumb(teacherForEx.teacher.photoUrl) : '';
-      const mx = a.maxScore || e?.totalPoints || 100; const pct = mx ? Math.round(a.score / mx * 100) : 0;
-      const gradeClass = pct >= 75 ? 'success' : pct >= 50 ? 'warning' : (a.status === 'approved' || a.status === 'graded') ? 'danger' : 'muted';
-      const modeLabel = e?.mode === 'home' ? '🏠 منزلي' : e?.mode === 'class' ? '🏫 حصة (بكود)' : '📝 ورقي';
-      return '<div class="sub-row clickable ' + ((a.status === 'approved' || a.status === 'graded') ? 'graded' : 'pending') + '" onclick="window.openGradeDetails(\'ex\', \'' + a.id + '\')"><div style="flex:1"><strong>' + (e?.title || '-') + '</strong><div class="text-xs text-muted" style="margin-top:4px">' + (photo ? '<img src="' + photo + '" style="width:16px;height:16px;border-radius:50%" onerror="this.style.display=\'none\'">' : '') + ' ' + (teacherForEx?.teacher?.name || '-') + ' · ' + modeLabel + '</div></div><div style="text-align:left">' + ((a.status === 'approved' || a.status === 'graded') ? '<span class="grade-badge ' + gradeClass + '">' + pct + '%</span><div class="text-xs text-muted" style="margin-top:4px">' + (a.score || 0) + '/' + mx + '</div>' : '<span class="grade-badge muted">⏳</span>') + '</div></div>';
-    }).join('') : '<p class="text-muted" style="text-align:center;padding:20px">لا امتحانات</p>';
-  }catch(e){ console.error('loadGrades error', e); }
+      const e = (d.exams||[]).find(x => x.id === a.examId); if(!e) return '';
+      const tch = ts.find(t => t.group && t.group.id === e.groupId);
+      const max = a.maxScore || e.totalPoints || 100;
+      const score = typeof a.score === 'number' ? a.score : null;
+      const rel = isReleased(e, a);
+      const pct = (score !== null) ? Math.round(score/max*100) : null;
+      let st;
+      if(rel && pct !== null){
+        var em = pct>=85?'🏆':pct>=75?'🌟':pct>=50?'👍':'💪';
+        st = '<span class="grade-badge '+(pct>=75?'success':pct>=50?'warning':'danger')+'">'+em+' '+pct+'%'+((e.releasePolicy==='instant')?' ⚡':'')+'</span><div class="text-xs text-muted" style="margin-top:4px">'+score+'/'+max+'</div>';
+      }
+      else if(score !== null) st = '<span class="grade-badge muted">🕒</span><div class="text-xs text-muted" style="margin-top:4px">'+score+'/'+max+' (مراجعة)</div>';
+      else if(a.submittedAt) st = '<span class="grade-badge muted">📤 مسلّم</span>';
+      else st = '<span class="grade-badge muted">⏳ لم يدخل</span>';
+      return '<div class="sub-row clickable '+(rel?'graded':'pending')+'" onclick="window.openGradeDetails(\'ex\',\''+a.id+'\')"><div style="flex:1"><strong>'+(e.title||'-')+'</strong><div class="text-xs text-muted" style="margin-top:4px">👨‍🏫 '+(tch&&tch.teacher?tch.teacher.name:'-')+' · '+(e.mode==='home'?'🏠 منزلي':e.mode==='class'?'🏫 حصة':'📝 ورقي')+'</div></div><div style="text-align:left">'+st+'</div></div>';
+    }).join('') : '<p class="text-muted" style="text-align:center;padding:20px">لا امتحانات مسجلة</p>';
+  }catch(e){
+    console.error('loadGrades error', e);
+    const hwEl = document.getElementById('pHwGrades');
+    const exEl = document.getElementById('pExGrades');
+    if(hwEl) hwEl.innerHTML = '<p class="text-muted" style="text-align:center;padding:20px">⚠️ خطأ: '+e.message+'</p>';
+    if(exEl) exEl.innerHTML = '<p class="text-muted" style="text-align:center;padding:20px">⚠️ خطأ: '+e.message+'</p>';
+  }
 };
-
 /* ==========================================================
    📋 Attendance
    ========================================================== */
@@ -1670,14 +1843,31 @@ setInterval(()=>{
         if(!m) return;
         const tid = m[1];
         const t = (DataService.getUserById ? DataService.getUserById(tid) : null);
-        const link = window.supportWaLink ? window.supportWaLink(tid) : '';
+        let link = '';
+        
+        /* 🎯 fallback 1: supportWaLink للأستاذ */
+        if(window.supportWaLink){ try{ link = window.supportWaLink(tid) || ''; }catch(e){} }
+        
+        /* 🎯 fallback 2: رقم الأستاذ الشخصي */
+        if(!link && t){
+          const phone = String(t.phone || t.whatsapp || '').replace(/\D/g,'');
+          if(phone.length >= 10){
+            const cleanPhone = phone.startsWith('20') ? phone : ('2' + phone);
+            link = 'https://wa.me/' + cleanPhone + '?text=' + encodeURIComponent('السلام عليكم أستاذ ' + (t.name||'') + '، ولي أمر الطالب ' + (activeChild?.name||''));
+          }
+        }
+        
         const row = document.createElement('div'); row.className = 'tchSupRow';
         row.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-top:10px';
-        row.innerHTML = (link ? '<a href="' + link + '" target="_blank" class="btn btn-success btn-sm" style="flex:1">💬 تواصل مع تيم أ. ' + ((t && t.name) ? t.name.split(' ')[0] : '') + '</a>' : '<span class="badge badge-muted" style="align-self:center">💬 دعم الأستاذ مش مسجل — استخدم دعم المنصة</span>');
+        if(link){
+          row.innerHTML = '<a href="' + link + '" target="_blank" class="btn btn-success btn-sm" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;"><span>💬</span><span>تواصل مع أ. ' + ((t && t.name) ? t.name.split(' ')[0] : 'الأستاذ') + '</span></a>';
+        } else {
+          row.innerHTML = '<span class="badge badge-muted" style="align-self:center;flex:1;text-align:center;padding:8px;">💬 رقم الأستاذ غير متاح — استخدم دعم المنصة بالأسفل</span>';
+        }
         const actions = card.querySelector('.teacher-actions');
         if(actions) actions.parentNode.insertBefore(row, actions); else card.appendChild(row);
       });
-    }catch(e){}
+    }catch(e){ console.error('tchSupRow',e); }
   }
   run(); setInterval(run, 3000);
 })();
@@ -1686,6 +1876,10 @@ setInterval(()=>{
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}</script>
 <script src="js/footer-injector.js"></script>
 <script src="js/billing/core.js"></script>
+<script src="js/legendary-money.js"></script>
+<script src="js/legendary-comms.js"></script>
+<script src="js/legendary-shield.js"></script>
+<script src="js/legendary-exams.js"></script>
 <script src="js/billing/notify-rules.js"></script>
 <script src="js/operations-service.js"></script>
 <script>
@@ -1699,5 +1893,6 @@ window.addEventListener('ledger-sync', function(){
   }catch(e){}
 });
 </script>
+<script src="js/student-results.js"></script>
 </body>
 </html>

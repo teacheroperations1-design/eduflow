@@ -88,6 +88,7 @@ body{background:radial-gradient(1200px 600px at 80% -10%,rgba(99,102,241,.14),tr
 </div>
 <div class="kpis" id="kpiRow"></div>
 <div class="kpis" id="kpiRow2" style="margin-top:-4px"></div>
+<div class="kpis" id="kpiRow3" style="margin-top:-4px"></div>
 <div class="grid2">
 <div class="panel" style="border-color:var(--warning)"><div class="ptitle">⚠️ تنبيهات الدورات <span id="cyclesChip" class="chip" style="background:var(--warning-bg);color:var(--warning);"></span></div><div id="cyclesAlerts" style="max-height:360px;overflow-y:auto"></div></div>
 <div class="panel" style="border-color:var(--info)"><div class="ptitle">🛒 طلبات المتجر المعلقة <span id="storeChip" class="chip" style="background:var(--info-bg);color:var(--info);"></span></div><div id="storePending" style="max-height:360px;overflow-y:auto"></div></div>
@@ -100,6 +101,14 @@ body{background:radial-gradient(1200px 600px at 80% -10%,rgba(99,102,241,.14),tr
 <div class="panel"><div class="ptitle">✅ الحصص اللي خلصت — حسب الأستاذ (<span id="doneCount">0</span>)</div><div id="doneByTeacher" style="max-height:360px;overflow-y:auto"></div></div>
 <div class="panel"><div class="ptitle">📚 حالة المجموعات النهارده (اتأخذت / اتلغت)</div><div id="groupStatus" style="max-height:360px;overflow-y:auto"></div></div>
 <div class="panel" style="border-color:var(--success)"><div class="ptitle">📡 حصص اليوم لحظياً <span id="msChip" class="chip" style="background:var(--success-bg);color:var(--success);"></span></div><div id="monitorSessions" style="max-height:360px;overflow-y:auto"></div></div>
+</div>
+<div class="grid2">
+<div class="panel" style="border-color:var(--info)"><div class="ptitle">💵 طلبات الدفع المعلقة <span id="claimsChip" class="chip" style="background:var(--info-bg);color:var(--info);"></span></div><div id="claimsBox" style="max-height:320px;overflow-y:auto"></div></div>
+<div class="panel" style="border-color:var(--warning)"><div class="ptitle">✋ اعتراضات الحضور <span id="dispChip" class="chip" style="background:var(--warning-bg);color:var(--warning);"></span></div><div id="dispBox" style="max-height:320px;overflow-y:auto"></div></div>
+</div>
+<div class="grid2">
+<div class="panel" style="border-color:var(--success)"><div class="ptitle">🎖️ نشاط الليدرز اليوم <span id="leadChip" class="chip" style="background:var(--success-bg);color:var(--success);"></span></div><div id="leadBox" style="max-height:320px;overflow-y:auto"></div></div>
+<div class="panel"><div class="ptitle">📡 الأحداث الحية (باركود/باب/دفع) <span id="lfChip" class="chip" style="background:var(--primary-bg);color:var(--primary);"></span></div><div class="feed" id="liveFeedBox" style="max-height:320px;"></div></div>
 </div>
 <div class="grid2b">
 <div class="panel"><div class="ptitle">🔖 تفاصيل الباركود <select id="bcGroupSel" class="form-select" style="max-width:230px" onchange="renderBcDetail()"></select></div><div id="bcDetail"></div></div>
@@ -225,6 +234,10 @@ var d=db(); var ev=[];
 (d.scheduleChangeLog||[]).forEach(function(e){ if(e.at) ev.push({at:e.at,ic:'🗓️',tx:'تعديل موعد: '+e.groupName+' → '+e.newDay+' '+f12(e.newTime)}); });
 (d.pendingRegistrations||d.registrations||[]).forEach(function(r){ if(r.createdAt) ev.push({at:r.createdAt,ic:'⏳',tx:'طلب تسجيل: '+(r.studentName||r.name||'')}); });
 (d.attendance||[]).forEach(function(a){ if(a.createdAt) ev.push({at:a.createdAt,ic:'📋',tx:'حضور مسلّم: '+a.groupName}); });
+(d.paymentClaims||[]).forEach(function(c){ if(c.createdAt) ev.push({at:c.createdAt,ic:'💵',tx:'طلب دفعة: '+stuName(c.studentId)+' — '+c.amount+' ج.م ('+(c.status==='pending'?'معلق':c.status)+')'}); });
+(d.attendanceDisputes||d.disputes||[]).forEach(function(x){ if(x.createdAt) ev.push({at:x.createdAt,ic:'✋',tx:'اعتراض حضور: '+stuName(x.sid||x.studentId)+' — '+x.date}); });
+(d.classPosts||[]).forEach(function(p){ if(p.byLeader&&p.createdAt) ev.push({at:p.createdAt,ic:'📸',tx:'سبورة ليدر: '+p.title}); });
+(d.liveFeed||[]).forEach(function(f){ ev.push({at:f.at,ic:({'barcode-login':'🎟️','checkin':'🚪','leader-attendance':'🎖️','payment':'💵'}[f.type]||'📡'),tx:f.name+(f.extra?' — '+f.extra:'')}); });
 ev.sort(function(a,b){ return new Date(b.at)-new Date(a.at); });
 return ev;
 }
@@ -290,6 +303,21 @@ kpi('',''+sto.revenue+' ج.م','💵 إيرادات المتجر',''+sto.deliver
 kpi('',''+sto.approved+'','🧊 محجوزة حالياً','بانتظار الاستلام')+
 kpi(sto.lowStock>0?'':'','<span style="color:var(--warning);">'+sto.lowStock+'</span>','📉 مخزون منخفض','≤ 5 قطع')+
 kpi(sto.outOfStock>0?'':'','<span style="color:var(--danger);">'+sto.outOfStock+'</span>','🚫 نفذ من المخزون','محتاج إعادة تعبئة');
+/* 🆕 صف 3: طلبات الدفع + الاعتراضات + الليدرز + الأحداث الحية */
+var claims=(d.paymentClaims||[]).filter(function(c){return c.status==='pending';});
+var disps=(d.attendanceDisputes||d.disputes||[]).filter(function(x){return (x.status||'pending')==='pending';});
+var leadAtt=(d.attendance||[]).filter(function(a){return a.byLeader&&String(a.date||'')===today;});
+var leadBoard=(d.classPosts||[]).filter(function(p){return p.byLeader&&String(p.createdAt||'').slice(0,10)===today;});
+var liveFeedN=(d.liveFeed||[]).filter(function(f){return Date.now()-new Date(f.at).getTime()<3600000;}).length;
+document.getElementById('kpiRow3').innerHTML=
+kpi(claims.length?'':'','<span style="color:var(--info);">'+claims.length+'</span>','💵 طلبات دفع معلقة','بانتظار اعتماد المساعد')+
+kpi(disps.length?'':'','<span style="color:var(--warning);">'+disps.length+'</span>','✋ اعتراضات حضور','طلاب معترضين على غياب')+
+kpi('',''+leadAtt.length+'','🎖️ حضور سجّله الليدر','اليوم — بانتظار الاعتماد')+
+kpi('',''+leadBoard.length+'','📸 سبورات مرفوعة','من ليدرز المجموعات اليوم')+
+kpi(liveFeedN?'live':'','<span class="'+(liveFeedN?'pulse':'')+'">'+liveFeedN+'</span>','📡 أحداث حية آخر ساعة','باركود/باب/دفع/ليدر')+
+kpi('',''+(d.gamePlays||[]).filter(function(p){return String(p.at||'').slice(0,10)===today;}).length+'','🎮 جلسات لعب اليوم','سبورة + طلاب')+
+kpi('',''+(d.scheduledNotifs||[]).length+'','⏰ إشعارات مجدولة','بانتظار موعدها')+
+kpi('',''+Object.keys(d.notifyEmitted||{}).length+'','🔔 أحداث مُبلّغة','سجل السكانر');
 
 /* 🆕 قسم تنبيهات الدورات */
 var cycHtml='';
@@ -324,6 +352,29 @@ stoHtml='<p class="text-muted" style="text-align:center;padding:20px;">📭 مف
 document.getElementById('storePending').innerHTML=stoHtml;
 document.getElementById('storeChip').textContent=pendingOrders.length+' طلب';
 
+/* 🆕 طلبات الدفع + الاعتراضات + الليدرز + اللايف فيد */
+var claimsList=(d.paymentClaims||[]).filter(function(c){return c.status==='pending';}).sort(function(a,b){return String(b.createdAt||'').localeCompare(String(a.createdAt||''));});
+document.getElementById('claimsChip').textContent=claimsList.length+' طلب';
+document.getElementById('claimsBox').innerHTML=claimsList.length?claimsList.slice(0,12).map(function(c){
+  var g=groups().find(function(x){return x.id===c.groupId;})||{};
+  return '<div class="fitem"><span class="chip" style="background:var(--info-bg);color:var(--info);">'+c.amount+' ج.م</span><strong style="flex:1">'+stuName(c.studentId)+'</strong><span class="mdate">'+(g.name||'')+' · شهر '+(c.month||String(c.createdAt).slice(0,7))+'</span><span class="t">'+String(c.createdAt||'').slice(5,10)+'</span></div>';
+}).join(''):'<p class="text-muted" style="text-align:center;padding:16px;">📭 مفيش طلبات معلقة</p>';
+var dispList=(d.attendanceDisputes||d.disputes||[]).filter(function(x){return (x.status||'pending')==='pending';});
+document.getElementById('dispChip').textContent=dispList.length+' اعتراض';
+document.getElementById('dispBox').innerHTML=dispList.length?dispList.slice(0,12).map(function(x){
+  var g=groups().find(function(gr){return gr.id===(x.gid||x.groupId);})||{};
+  return '<div class="fitem"><span class="chip" style="background:var(--warning-bg);color:var(--warning);">✋</span><strong style="flex:1">'+stuName(x.sid||x.studentId)+'</strong><span class="mdate">'+(g.name||'')+' · 📅 '+x.date+'</span></div>';
+}).join(''):'<p class="text-muted" style="text-align:center;padding:16px;">✅ مفيش اعتراضات معلقة</p>';
+var leadRows=[];
+(d.attendance||[]).forEach(function(a){ if(a.byLeader&&String(a.date||'')===today) leadRows.push({t:a.createdAt||a.date,ic:'📋',tx:'حضور سجله ليدر: '+a.groupName}); });
+(d.classPosts||[]).forEach(function(p){ if(p.byLeader&&String(p.createdAt||'').slice(0,10)===today) leadRows.push({t:p.createdAt,ic:'📸',tx:'سبورة مرفوعة: '+p.title}); });
+leadRows.sort(function(a,b){return String(b.t).localeCompare(String(a.t));});
+document.getElementById('leadChip').textContent=leadRows.length+' حدث';
+document.getElementById('leadBox').innerHTML=leadRows.length?leadRows.slice(0,12).map(function(r){return '<div class="fitem"><span class="t">'+f12(String(r.t).slice(11,16))+'</span><span>'+r.ic+'</span><span style="flex:1">'+r.tx+'</span></div>';}).join(''):'<p class="text-muted" style="text-align:center;padding:16px;">🎖️ مفيش نشاط ليدرز النهارده</p>';
+var lf=(d.liveFeed||[]).slice(0,20);
+var IC={'barcode-login':'🎟️','checkin':'🚪','leader-attendance':'🎖️','payment':'💵','leader-board':'📸','dispute':'✋'};
+document.getElementById('lfChip').textContent=lf.length+' حدث';
+document.getElementById('liveFeedBox').innerHTML=lf.length?lf.map(function(f){return '<div class="fitem"><span class="t">'+new Date(f.at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</span><span>'+(IC[f.type]||'📡')+'</span><strong style="flex:1">'+f.name+'</strong><span class="mdate">'+(f.extra||'')+'</span></div>';}).join(''):'<p class="text-muted" style="text-align:center;padding:16px;">📡 مفيش أحداث حية بعد</p>';
 /* اللايف */
 var lb='';
 live.forEach(function(x){
@@ -420,6 +471,9 @@ document.getElementById('tickerText').textContent=
 '  ·  💰 فواتير مستحقة: '+cyc.due+
 '  ·  ⚠️ إنذار 7: '+cyc.warn+
 '  ·  📦 طلبات متجر معلقة: '+sto.pending+
+'  ·  💵 طلبات دفع معلقة: '+claims.length+
+'  ·  ✋ اعتراضات حضور: '+disps.length+
+'  ·  🎖️ حضور ليدر اليوم: '+leadAtt.length+
 '  ·  💵 إيرادات المتجر: '+sto.revenue+' ج.م'+
 '  ·  📉 مخزون منخفض: '+sto.lowStock+
 '  ·  🚫 نفذ من المخزون: '+sto.outOfStock+

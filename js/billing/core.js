@@ -30,6 +30,8 @@ for(var i=0;i<rs.length;i++){ var f=(rs[i].from||'').slice(0,7), t=rs[i].to?rs[i
 return rs.length?('cycle-'+pad(rs[rs.length-1].n)):m;
 }
 /* 🆕 V3: قائمة دورات المجموعة من المحرك الواحد */
+var DAY_AR={Sunday:'الأحد',Monday:'الإثنين',Tuesday:'الثلاثاء',Wednesday:'الأربعاء',Thursday:'الخميس',Friday:'الجمعة',Saturday:'السبت'};
+function gTimeStr(g){ if(!g) return ''; try{ if(g.schedules&&g.schedules.length) return g.schedules.map(function(s){ return (DAY_AR[s.day]||s.day)+' '+s.time; }).join(' + '); if(g.day) return (DAY_AR[g.day]||g.day)+' '+(g.time||''); }catch(e){} return ''; }
 function cyclesOfGroup(g){
 if(window.LedgerUI&&LedgerUI.cyclesOf){ try{ return LedgerUI.cyclesOf(g); }catch(e){} }
 var rs=(g&&g.cycleRanges)||[];
@@ -69,7 +71,7 @@ function payRec(sid,gid,m){ var g=gById(gid), ck=cycleKeyFor(g,m), p=null; (db()
 
 function monthRow(sid,g,m){
 if(!g)return{month:m,done:0,req:8,fee:0,paid:0,completed:false,rem:0};
-var req=reqOf(g),fee=feeOf(g),done=sessionsOf(sid,g.id,m),paid=paidOf(sid,g.id,m),completed=done>=req;
+var req=reqOf(g),fee=(window.LG&&LG.effFee)?LG.effFee(sid,g):feeOf(g),done=sessionsOf(sid,g.id,m),paid=paidOf(sid,g.id,m),completed=done>=req;
 return{month:m,done:done,req:req,fee:fee,paid:paid,completed:completed,rem:completed?Math.max(0,fee-paid):0};
 }
 function statusOf(sid,g){
@@ -213,7 +215,14 @@ else if(st==='due'){cls+=' due';anyOver=true;txt='💰 شهرية '+BC.monthName
 else if(st==='warning'){cls+=' warning';txt='⚠️ إنذار الدفع ('+sq.done+'/'+sq.req+') — جهّز الشهرية للحصة الجايه';}
 else if(st==='paid'){txt='✅ مسدد — شكراً ليك 🌟';}
 var pct=Math.min(100,Math.round(sq.done/sq.req*100));
-html+='<div class="'+cls+'"><div class="cycle-header"><div class="cycle-title">📚 '+g.name+'</div><div class="cycle-count">'+sq.done+'/'+sq.req+'</div></div>'+
+var tch=t.teacher||null;
+var subj=(tch&&tch.subject)?(' · 📚 '+tch.subject):'';
+var photo=(tch&&tch.photoUrl)?(window.driveThumb?driveThumb(tch.photoUrl):tch.photoUrl):'';
+    html+='<div class="'+cls+'" data-gid="'+g.id+'"><span class="btTeacherRow" style="display:none"></span>'+
+    '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;padding:6px 8px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);border-radius:10px;">'+
+(photo?'<img src="'+photo+'" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.7);" onerror="this.style.display=\'none\'">':'<div style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-weight:900;">'+((tch&&tch.name||'؟').charAt(0))+'</div>')+
+'<div style="flex:1;min-width:0;"><b>👨‍ '+((tch&&tch.name)||'-')+subj+'</b><div style="opacity:.9;font-size:10px;">🏢 '+(g.center||'-')+' · 📅 '+gTimeStr(g)+'</div></div></div>'+
+'<div class="cycle-header"><div class="cycle-title">📚 '+g.name+'</div><div class="cycle-count">'+sq.done+'/'+sq.req+'</div></div>'+
 '<div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:6px;">'+BC.sqHtml(sq)+'</div>'+
 '<div class="cycle-progress"><div class="cycle-progress-bar" style="width:'+pct+'%"></div></div>'+
 '<div class="cycle-meta">'+txt+'</div>'+
@@ -279,7 +288,9 @@ var due=done.reduce(function(s,r){return s+r.fee;},0);
 var paid=done.reduce(function(s,r){return s+Math.min(r.paid,r.fee);},0);
 var rem=done.reduce(function(s,r){return s+r.rem;},0);
 gDue+=due;gPaid+=paid;gRem+=rem;
-html+='<div class="card" style="margin-bottom:14px;"><div class="card-header"><h3 class="card-title">👥 '+g.name+'</h3><span class="text-xs text-muted">👨‍ '+(t.teacher?t.teacher.name:'-')+' · شهرية: '+BC.feeOf(g)+' ج.م · النصاب: '+BC.reqOf(g)+' حصة</span></div><div style="padding:12px;">';
+var tch2=t.teacher||null;
+var photo2=(tch2&&tch2.photoUrl)?(window.driveThumb?driveThumb(tch2.photoUrl):tch2.photoUrl):'';
+html+='<div class="card" style="margin-bottom:14px;"><div class="card-header"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'+(photo2?'<img src="'+photo2+'" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);" onerror="this.style.display=\'none\'">':'')+'<div><h3 class="card-title" style="margin:0;">👥 '+g.name+' <span class="badge badge-primary">'+((tch2&&tch2.subject)||'المادة')+'</span></h3><span class="text-xs text-muted">👨‍ '+(tch2?tch2.name:'-')+' · 🏢 '+(g.center||'-')+' · 📅 '+gTimeStr(g)+'</span></div></div><span class="text-xs text-muted">شهرية: '+BC.feeOf(g)+' ج.م · النصاب: '+BC.reqOf(g)+' حصة</span></div><div style="padding:12px;">';
 if(g.frozen) html+='<div class="filter-info" style="background:var(--warning-bg);color:var(--warning);border-color:var(--warning);margin-bottom:8px;">🧊 العد موقوف من '+(g.frozenSince||'-')+' — حصص فترة الوقف مش محسوبة</div>';
 rows.forEach(function(r){
 var sq=r.legacy?{ev:[],done:0,req:0}:BC.squaresOf(g.id,r.month);

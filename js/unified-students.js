@@ -15,7 +15,7 @@ function nm(x){return String(x||'').toLowerCase().replace(/[\u064B-\u0652]/g,'')
 function words3(x){var w=nm(x).split(' ').filter(Boolean);return w.slice(0,3).join(' ');}
 function students(){return (DataService.getStudents?DataService.getStudents():[]);}
 function groupsAll(){return (DataService.getGroups?DataService.getGroups():[]);}
-function teachersAll(){return (DataService.getTeachers?DataService.getTeachers():[]);}
+function teachersAll(){var all=(DataService.getTeachers?DataService.getTeachers():[]);var u=cur();if(u&&u.role==='center'&&window.ScopedData){var ids={};ScopedData.teachers().forEach(function(t){ids[t.id]=1;});return all.filter(function(t){return ids[t.id];});}return all;}
 function ensOf(sid){try{return (DataService.getStudentTeachers?DataService.getStudentTeachers(sid):[])||[];}catch(e){return [];}}
 function lv(){return (typeof EduFlowConfig!=='undefined'&&EduFlowConfig.educationLevels)?EduFlowConfig.educationLevels:{};}
 function myTeacherId(){try{return window.getMyTeacherId?window.getMyTeacherId():null;}catch(e){return null;}}

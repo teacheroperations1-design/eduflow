@@ -239,27 +239,64 @@ if(typeof window.showSection==='function'&&!window.__psHook){window.__psHook=1;v
 }
 window.psRender();
 }
+
 window.psRender=function(){
 try{
-var sec=document.getElementById('section-pointsStore');if(!sec)return;
-var s=store();cacheStore(s);
-var badge=document.getElementById('psEnabledBadge');var btn=document.getElementById('psToggleBtn');
-if(badge)badge.innerHTML=(s.enabled!==false)?'<span class="badge badge-success">مفعّل للطلاب</span>':'<span class="badge badge-danger">موقوف</span>';
-if(btn){btn.textContent=(s.enabled!==false)?'إيقاف المتجر':'تفعيل المتجر';btn.onclick=function(){var d=db2();d.gamification.store.enabled=(s.enabled===false);save2(d);cacheStore(d.gamification.store);window.psRender();};}
-document.getElementById('psItems').innerHTML=(s.items||[]).length?(s.items||[]).map(function(i){
-return '<div class="card" style="margin:0;padding:12px;text-align:center;">'+(i.imageUrl?'<img src="'+i.imageUrl+'" style="width:100%;height:90px;object-fit:cover;border-radius:10px;margin-bottom:8px;" onerror="this.style.display=\'none\'">':'<div style="height:90px;display:flex;align-items:center;justify-content:center;font-size:34px;background:var(--surface-hover);border-radius:10px;margin-bottom:8px;">'+(i.icon||'🎁')+'</div>')+
-'<strong style="font-size:13px;">'+i.name+'</strong><div class="text-xs text-muted" style="margin:4px 0;">'+(i.cost||0)+' نقطة · مخزون '+(i.stock!=null?i.stock:'∞')+'</div>'+(i.active===false?'<span class="badge badge-muted">موقوف</span>':'')+
-'<div style="display:flex;gap:4px;justify-content:center;margin-top:8px;"><button class="btn btn-ghost btn-sm" onclick="window.psOpenItem(\''+i.id+'\')">✏️</button><button class="btn btn-'+(i.active===false?'success':'danger')+' btn-sm" onclick="window.psToggleItem(\''+i.id+'\')">'+(i.active===false?'تفعيل':'إيقاف')+'</button><button class="btn btn-danger btn-sm" onclick="window.psDelItem(\''+i.id+'\')">🗑</button></div></div>';
-}).join(''):'<div class="card" style="grid-column:1/-1;text-align:center;padding:24px;"><div style="font-size:44px;">🏆</div><strong>مفيش منتجات نقاط</strong><div class="text-xs text-muted">دوس "➕ منتج نقاط" علشان الطلاب تلاقي حاجة تستبدلها</div></div>';
-var d=db2();var orders=[];
-['storeOrders','purchases','orders'].forEach(function(k){(d[k]||[]).forEach(function(o){if(o.cost||o.points||o.type==='points')orders.push(Object.assign({__src:k},o));});});
-orders.sort(function(a,b){return String(b.at||b.createdAt||b.purchasedAt||'').localeCompare(String(a.at||a.createdAt||a.purchasedAt||''));});
-document.getElementById('psOrders').innerHTML=orders.length?orders.slice(0,40).map(function(o){
-var st2=DataService.getUserById?DataService.getUserById(o.studentId):null;
-return '<div class="sub-row" style="padding:8px;"><div style="flex:1;"><strong>'+(st2?st2.name:'-')+'</strong> <span class="badge badge-primary">🏆 '+(o.cost||o.points||0)+' نقطة</span><div class="text-xs text-muted">'+(o.itemName||'')+' · '+new Date(o.at||o.createdAt||o.purchasedAt||Date.now()).toLocaleDateString('ar-EG')+'</div></div><div style="display:flex;gap:4px;align-items:center;"><span class="badge '+(o.status==='delivered'||o.status==='fulfilled'?'badge-success':o.status==='cancelled'?'badge-danger':'badge-warning')+'">'+(o.status||'جديد')+'</span>'+(o.status!=='delivered'&&o.status!=='fulfilled'&&o.status!=='cancelled'?'<button class="btn btn-success btn-sm" onclick="window.psOrder(\''+o.__src+'\',\''+o.id+'\',\'delivered\')">✓ تسليم</button>':'')+(o.status!=='cancelled'?'<button class="btn btn-danger btn-sm" onclick="window.psOrder(\''+o.__src+'\',\''+o.id+'\',\'cancelled\')">✗</button>':'')+'</div></div>';
-}).join(''):'<p class="text-muted" style="text-align:center;padding:14px;">مفيش استبدالات بعد</p>';
-}catch(e){console.error(e);}
+var sec=document.getElementById('section-pointsStore');
+if(!sec) return; // 🛡️ حماية
+
+var s=store();
+cacheStore(s);
+
+var badge=document.getElementById('psEnabledBadge');
+var btn=document.getElementById('psToggleBtn');
+if(badge) badge.innerHTML=(s.enabled!==false)?'<span class="badge badge-success">مفعّل للطلاب</span>':'<span class="badge badge-danger">موقوف</span>';
+if(btn){
+  btn.textContent=(s.enabled!==false)?'إيقاف المتجر':'تفعيل المتجر';
+  btn.onclick=function(){
+    var d=db2();
+    d.gamification.store.enabled=(s.enabled===false);
+    save2(d);
+    cacheStore(d.gamification.store);
+    window.psRender();
+  };
+}
+
+var itemsEl=document.getElementById('psItems');
+if(itemsEl) {
+  itemsEl.innerHTML=(s.items||[]).length?(s.items||[]).map(function(i){
+    return '<div class="card" style="margin:0;padding:12px;text-align:center;">'+(i.imageUrl?'<img src="'+i.imageUrl+'" style="width:100%;height:90px;object-fit:cover;border-radius:10px;margin-bottom:8px;" onerror="this.style.display=\'none\'">':'<div style="height:90px;display:flex;align-items:center;justify-content:center;font-size:34px;background:var(--surface-hover);border-radius:10px;margin-bottom:8px;">'+(i.icon||'🎁')+'</div>')+
+    '<strong style="font-size:13px;">'+i.name+'</strong><div class="text-xs text-muted" style="margin:4px 0;">'+(i.cost||0)+' نقطة · مخزون '+(i.stock!=null?i.stock:'∞')+'</div>'+(i.active===false?'<span class="badge badge-muted">موقوف</span>':'')+
+    '<div style="display:flex;gap:4px;justify-content:center;margin-top:8px;"><button class="btn btn-ghost btn-sm" onclick="window.psOpenItem(\''+i.id+'\')">✏️</button><button class="btn btn-'+(i.active===false?'success':'danger')+' btn-sm" onclick="window.psToggleItem(\''+i.id+'\')">'+(i.active===false?'تفعيل':'إيقاف')+'</button><button class="btn btn-danger btn-sm" onclick="window.psDelItem(\''+i.id+'\')">🗑</button></div></div>';
+  }).join(''):'<div class="card" style="grid-column:1/-1;text-align:center;padding:24px;"><div style="font-size:44px;"></div><strong>مفيش منتجات نقاط</strong><div class="text-xs text-muted">دوس "➕ منتج نقاط" علشان الطلاب تلاقي حاجة تستبدلها</div></div>';
+}
+
+var d=db2();
+var orders=[];
+['storeOrders','purchases','orders'].forEach(function(k){
+  (d[k]||[]).forEach(function(o){
+    if(o.cost||o.points||o.type==='points') orders.push(Object.assign({__src:k},o));
+  });
+});
+orders.sort(function(a,b){
+  return String(b.at||b.createdAt||b.purchasedAt||'').localeCompare(String(a.at||a.createdAt||a.purchasedAt||''));
+});
+
+var ordersEl=document.getElementById('psOrders');
+if(ordersEl) {
+  ordersEl.innerHTML=orders.length?orders.slice(0,40).map(function(o){
+    var st2=DataService.getUserById?DataService.getUserById(o.studentId):null;
+    return '<div class="sub-row" style="padding:8px;"><div style="flex:1;"><strong>'+(st2?st2.name:'-')+'</strong> <span class="badge badge-primary">🏆 '+(o.cost||o.points||0)+' نقطة</span><div class="text-xs text-muted">'+(o.itemName||'')+' · '+new Date(o.at||o.createdAt||o.purchasedAt||Date.now()).toLocaleDateString('ar-EG')+'</div></div><div style="display:flex;gap:4px;align-items:center;"><span class="badge '+(o.status==='delivered'||o.status==='fulfilled'?'badge-success':o.status==='cancelled'?'badge-danger':'badge-warning')+'">'+(o.status||'جديد')+'</span>'+(o.status!=='delivered'&&o.status!=='fulfilled'&&o.status!=='cancelled'?'<button class="btn btn-success btn-sm" onclick="window.psOrder(\''+o.__src+'\',\''+o.id+'\',\'delivered\')">✓ تسليم</button>':'')+(o.status!=='cancelled'?'<button class="btn btn-danger btn-sm" onclick="window.psOrder(\''+o.__src+'\',\''+o.id+'\',\'cancelled\')">✗</button>':'')+'</div></div>';
+  }).join(''):'<p class="text-muted" style="text-align:center;padding:14px;">مفيش استبدالات بعد</p>';
+}
+
+}catch(e){
+  console.error('psRender error:', e);
+}
 };
+
+
+
 window.psToggleItem=function(id){var d=db2();var i=(d.gamification.store.items||[]).find(function(x){return x.id===id;});if(!i)return;i.active=(i.active===false);save2(d);cacheStore(d.gamification.store);window.psRender();};
 window.psDelItem=function(id){if(!confirm('حذف المنتج؟'))return;var d=db2();d.gamification.store.items=(d.gamification.store.items||[]).filter(function(x){return x.id!==id;});save2(d);cacheStore(d.gamification.store);window.psRender();};
 window.psOrder=function(src,id,status){var d=db2();var o=(d[src]||[]).find(function(x){return x.id===id;});if(!o)return;o.status=status;if(status==='delivered'||status==='fulfilled')o.deliveredAt=new Date().toISOString();save2(d);window.psRender();};

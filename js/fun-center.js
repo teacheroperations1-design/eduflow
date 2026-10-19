@@ -227,7 +227,16 @@ Object.keys(lv).forEach(function(k){(lv[k].grades||[]).forEach(function(gr){out.
 var seen={};
 return '<option value="">كل الصفوف</option>'+out.filter(function(g){if(seen[g])return false;seen[g]=1;return true;}).map(function(g){return '<option value="'+g+'" '+(g===sel?'selected':'')+'>'+g+'</option>';}).join('');
 }
-function gradeMatch(gv,fv){gv=String(gv||'').trim();fv=String(fv||'').trim();if(!fv)return true;if(gv===fv)return true;return gv.indexOf(fv)>=0||fv.indexOf(gv)>=0;}
+function gradeMatch(gv,fv){
+  var list=Array.isArray(gv)?gv:(gv?[gv]:[]);
+  var f=String(fv||'').trim();
+  if(!f)return true;
+  if(!list.length)return true;
+  return list.some(function(x){x=String(x||'').trim();return x===f||x.indexOf(f)>=0||f.indexOf(x)>=0;});
+}
+function allGradesList(){var out=[];var lv=(typeof EduFlowConfig!=='undefined'&&EduFlowConfig.educationLevels)?EduFlowConfig.educationLevels:{};Object.keys(lv).forEach(function(k){(lv[k].grades||[]).forEach(function(gr){if(out.indexOf(gr)<0)out.push(gr);});});try{(window.ScopedData&&ScopedData.groups?ScopedData.groups():(DataService.getGroups?DataService.getGroups():[])).forEach(function(g){if(g.grade&&out.indexOf(g.grade)<0)out.push(g.grade);});}catch(e){}return out;}
+window.fcToggleGrade=function(btn){btn.classList.toggle('sel');SND.click();};
+function pickedGrades(){var out=[];document.querySelectorAll('#fcGradesWrap .fc-chip.sel').forEach(function(b){out.push(b.getAttribute('data-grade'));});return out;}
 function normTxt(s){return String(s||'').toLowerCase().replace(/[\u064B-\u0652]/g,'').replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();}
 function quake(){var b=document.getElementById('fcBox');if(b){b.classList.remove('fc-quake');void b.offsetWidth;b.classList.add('fc-quake');}}
 function confetti(){for(var i=0;i<44;i++){var c=document.createElement('div');c.className='fc-conf';c.style.left=(Math.random()*100)+'vw';c.style.background=['#f472b6','#60a5fa','#4ade80','#facc15','#c084fc'][i%5];c.style.animationDelay=(Math.random()*0.8)+'s';document.body.appendChild(c);setTimeout(function(el){return function(){el.remove();};}(c),3300);}}
@@ -442,7 +451,7 @@ function fcCollectGameplay(){
 var s={colors:window._fcSet.colors,theme:window._fcSet.theme};
 Object.keys(window._fcSet).forEach(function(k){if(k==='colors'||k==='theme')return;var el=document.getElementById('fcSet_'+k);s[k]=el?(parseFloat(el.value)||0):window._fcSet[k];});
 window._fcSet=s;
-window._fcMeta={title:(document.getElementById('fcTitle')||{}).value||'',grade:(document.getElementById('fcGrade')||{}).value||'',pub:(document.getElementById('fcPub')||{}).value||'1',maxQ:(document.getElementById('fcMax')||{}).value||10};
+window._fcMeta={title:(document.getElementById('fcTitle')||{}).value||'',grade:(pickedGrades()[0]||''),targetGrades:pickedGrades(),pub:(document.getElementById('fcPub')||{}).value||'1',maxQ:(document.getElementById('fcMax')||{}).value||10};
 window._fcGameplay={
 difficulty:(document.getElementById('fcDifficulty')||{}).value||'medium',
 comboBonus:(document.getElementById('fcComboBonus')||{}).checked,
@@ -492,9 +501,15 @@ var g=window._fcEditG;var s=window._fcSet;var k=window._fcTpl;var gp=window._fcG
 var h='<div class="filter-info">⚙️ إعدادات اللعب — الأساسية + الخاصة بالقالب + التحديات</div>';
 h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">'+
 '<div class="form-group"><label>📛 العنوان *</label><input type="text" id="fcTitle" class="form-input" value="'+(g?g.title:'')+'" oninput="fcPrevUpdate()"></div>'+
-'<div class="form-group"><label>🎓 الصف</label><select id="fcGrade" class="form-select">'+gradeOptions(g?g.grade||'':'')+'</select></div>'+
+'<div class="form-group"><label>🎓 الصفوف المستهدفة (اختيار متعدد)</label><div id="fcGradesWrap" style="display:flex;gap:6px;flex-wrap:wrap;max-height:110px;overflow:auto;padding:6px;background:var(--surface-hover);border-radius:10px;">'+allGradesList().map(function(gr){var on=g&&(((g.targetGrades||[]).indexOf(gr)>=0)||g.grade===gr);return '<button type="button" class="fc-chip '+(on?'sel':'')+'" data-grade="'+gr+'" onclick="window.fcToggleGrade(this)">'+gr+'</button>';}).join('')+'</div><div class="text-xs text-muted" style="margin-top:4px;">سيبها فاضية = كل صفوف نطاقك · اللعبة بتوصل لأي طالب في الصف ده مهما كان سنتره</div></div>'+
 '<div class="form-group"><label>📢 الحالة</label><select id="fcPub" class="form-select"><option value="1" '+((g&&g.status==='published')?'selected':'')+'>منشور للطلاب</option><option value="0" '+((g&&g.status!=='published')?'selected':'')+'>مسودة (سبورة)</option></select></div>'+
 '<div class="form-group"><label>🎯 حد الأسئلة</label><input type="number" id="fcMax" class="form-input" value="'+(g?g.maxQ:10)+'" min="3" max="30"></div></div>';
+if((cur()||{}).role==='center'){
+  h+='<div class="card" style="padding:10px;margin-bottom:10px;border-color:var(--warning);"><strong class="text-sm">🏢 نطاق اللعبة</strong><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">'+
+  '<div class="form-group" style="margin:0;"><label>العالم</label><select id="fcWorld" class="form-select" onchange="window.__fcWorldChange()"><option value="platform">🌐 طلاب المنصة</option><option value="local">🏢 سجلات السنتر (سبورة فقط)</option></select></div>'+
+  '<div class="form-group" style="margin:0;"><label>الأستاذ</label><select id="fcTeacherSel" class="form-select"></select></div></div>'+
+  '<div class="text-xs text-muted" style="margin-top:6px;">🏢 الألعاب الداخلية بتتلعب على الشاشة التفاعلية من داشبوردك بس — مش بتوصل لطلاب المنصة.</div></div>';
+}
 var numKeys=Object.keys(s).filter(function(key){return key!=='colors'&&key!=='theme';});
 h+='<div class="card" style="padding:12px;margin-bottom:10px;background:var(--primary-bg);border-color:var(--primary-border);"><strong style="font-size:13px;">'+TPL[k].i+' إعدادات قالب "'+TPL[k].n+'"</strong><div class="fc-settings-grid" style="margin-top:8px;">'+numKeys.map(function(key){return '<div class="fc-setting-card"><h4>'+(TLAB[key]||key)+'</h4><input type="number" id="fcSet_'+key+'" class="form-input" value="'+s[key]+'" oninput="fcPrevUpdate()"></div>';}).join('')+'</div></div>';
 h+='<div class="card" style="padding:12px;margin-bottom:10px;"><strong style="font-size:13px;">🏆 تحديات ومكافآت</strong><div class="fc-settings-grid" style="margin-top:8px;">'+
@@ -558,7 +573,7 @@ if(gp.comboBonus)gpTxt+='<span class="badge badge-warning" style="margin:2px;">�
 if(gp.streakBonus)gpTxt+='<span class="badge badge-warning" style="margin:2px;">📈 سلسلة</span>';
 if(gp.hintEnabled)gpTxt+='<span class="badge badge-info" style="margin:2px;">💡 تلميحات</span>';
 return '<div style="text-align:center;padding:6px;">'+demoHtml(window._fcTpl)+'</div>'+
-'<div class="card" style="padding:12px;margin-top:10px;"><strong style="font-size:15px;">'+t.i+' '+(m.title||'')+'</strong><div class="text-xs text-muted" style="margin:4px 0;">'+t.n+' · 🎓 '+(m.grade||'كل الصفوف')+' · '+(m.pub==='1'?'📢 منشور':'🔒 مسودة')+' · ❓ '+window._fcQ.length+' سؤال</div><div style="margin-top:6px;">'+setTxt+'</div><div style="margin-top:6px;">'+gpTxt+'</div></div>'+
+'<div class="card" style="padding:12px;margin-top:10px;"><strong style="font-size:15px;">'+t.i+' '+(m.title||'')+'</strong><div class="text-xs text-muted" style="margin:4px 0;">'+t.n+' · 🎓 '+((m.targetGrades&&m.targetGrades.length)?m.targetGrades.join('، '):'كل الصفوف')+' · '+(m.pub==='1'?'📢 منشور':'🔒 مسودة')+' · ❓ '+window._fcQ.length+' سؤال</div><div style="margin-top:6px;">'+setTxt+'</div><div style="margin-top:6px;">'+gpTxt+'</div></div>'+
 '<div class="filter-info" style="margin-top:10px;">🚀 بعد الحفظ: الطلاب يلاقوها في 🎮 الألعاب، وتقدر تشغلها على السبورة فوراً.</div>';
 }
 
@@ -579,6 +594,7 @@ h+='<div style="display:flex;gap:8px;padding:12px 4px 2px;background:var(--surfa
 +'<button class="btn btn-primary" style="flex:1;" onclick="fcNext()">'+(window._fcStep===5?'💾 حفظ وإطلاق 🚀':'التالي ←')+'</button></div>';
 ThemeManager.openModal(h,'modal-lg');
 if(window._fcStep===2||window._fcStep===3)fcPrevUpdate();
+if(window._fcStep===3&&(cur()||{}).role==='center')window.__fcWorldChange&&window.__fcWorldChange();
 if(window._fcStep===4){window.fcTypeChange();window.fcRenderQ();}
 }
 
@@ -687,7 +703,7 @@ localStorage.setItem('fcWizardDraft',JSON.stringify({tpl:window._fcTpl,set:windo
 }
 window.fcClearDraft=function(){try{localStorage.removeItem('fcWizardDraft');}catch(e){}};
 window.fcOpenBuilder=function(editId){
-var g=editId?(db().gameBank||[]).find(function(x){return x.id===editId;}):null;
+var g=editId?fcFindGame(editId):null;
 window._fcEditG=g||null;
 if(g){
 window._fcQ=JSON.parse(JSON.stringify(g.questions||[]));
@@ -726,14 +742,55 @@ f.__draftWrapped=1;window[name]=f;
 ['fcPickTpl2','fcGoStep','fcNext','fcAddQ','fcBulk','fcDelQ','fcMoveQ'].forEach(wrapDraft);
 })();
 
+/* ========== 🧭 نطاق الإنشاء + حقوق التعديل ========== */
+function fcScopeFor(){
+  var u=cur()||{};
+  if(u.role==='teacher')return{owner:u.id,teacherId:u.id,local:false};
+  if(u.role==='assistant'){var tid=null;try{tid=window.getMyTeacherId?window.getMyTeacherId():null;}catch(e){}return{owner:u.id,teacherId:tid||'',local:false};}
+  if(u.role==='center'){
+    var w=(document.getElementById('fcWorld')||{}).value||'platform';
+    var tid2=(document.getElementById('fcTeacherSel')||{}).value||'';
+    return{owner:u.id,teacherId:(w==='local'?'':tid2),local:(w==='local'),centerId:u.centerId||''};
+  }
+  return{owner:u.id,teacherId:'',local:false};
+}
+function canEditGame(g){
+  var u=cur();if(!u)return false;
+  if(u.role==='admin'||u.role==='super_admin')return true;
+  if(g.owner===u.id)return true;
+  if(u.role==='teacher'&&g.teacherId===u.id)return true;
+  return false; /* السنتر والمساعد ميشعدلوش لعبة حد تاني */
+}
+window.fcCanEdit=canEditGame;
+function fcFindGame(id){
+  var d=db();var g=(d.gameBank||[]).find(function(x){return x.id===id;});if(g)return g;
+  var u=cur();if(u&&u.role==='center'){var cl=(d.centerLocal||{})[u.centerId||'none'];g=((cl&&cl.games)||[]).find(function(x){return x.id===id;});}
+  return g||null;
+}
+window.__fcWorldChange=function(){
+  var sel=document.getElementById('fcTeacherSel');if(!sel)return;
+  var w=(document.getElementById('fcWorld')||{}).value||'platform';
+  var u=cur();var opts=[];
+  if(w==='platform'){
+    var cn=u.centerName||'';if(!cn){var c=(db().centers||[]).find(function(x){return x.id===u.centerId;});cn=c?c.name:'';}
+    var tids={};(DataService.getGroups?DataService.getGroups():[]).forEach(function(g){if(g.center===cn&&g.teacherId)tids[g.teacherId]=1;});
+    opts=(DataService.getTeachers?DataService.getTeachers():[]).filter(function(t){return tids[t.id];});
+  }else{
+    var s=(db().centerLocal||{})[u.centerId||'none']||{};opts=s.teachers||[];
+  }
+  sel.innerHTML=opts.length?opts.map(function(t){return '<option value="'+t.id+'">'+t.name+'</option>';}).join(''):'<option value="">لا أساتذة</option>';
+};
 function fcSaveGame(){
 var m=window._fcMeta||{};
 if(!m.title){if(window.safeToast)window.safeToast('ارجع للإعدادات واكتب العنوان','error');window.fcGoStep(3);return;}
 if(!window._fcQ.length){if(window.safeToast)window.safeToast('ضيف أسئلة الأول','error');window.fcGoStep(4);return;}
 var u=cur();var d=db();d.gameBank=d.gameBank||[];
+var sc=fcScopeFor();
+function localStore(){var cid=sc.centerId||'none';d.centerLocal=d.centerLocal||{};d.centerLocal[cid]=d.centerLocal[cid]||{teachers:[],groups:[],students:[],payments:[],attendance:[],tasks:[],notes:[],activity:[],nominations:[],games:[]};d.centerLocal[cid].games=d.centerLocal[cid].games||[];return d.centerLocal[cid].games;}
 var g=window._fcEditG;
-if(!g){g={id:'game_'+Date.now(),owner:(u&&u.role==='teacher')?u.id:'center',createdAt:new Date().toISOString()};d.gameBank.push(g);}
-g.title=m.title;g.template=window._fcTpl;g.grade=m.grade||'';
+if(!g){g={id:'game_'+Date.now(),owner:u.id,createdAt:new Date().toISOString()};(sc.local?localStore():d.gameBank).push(g);}
+g.title=m.title;g.template=window._fcTpl;g.grade=m.grade||'';g.targetGrades=(m.targetGrades||[]).slice();g.targetGrades=m.targetGrades||[];
+g.owner=sc.owner;g.teacherId=sc.teacherId;g.local=sc.local;g.centerId=sc.centerId||'';
 g.status=(m.pub==='1')?'published':'draft';
 g.maxQ=parseInt(m.maxQ)||10;
 g.settings=JSON.parse(JSON.stringify(window._fcSet));
@@ -743,24 +800,28 @@ g.lives=(window._fcSet.lives!=null?window._fcSet.lives:3);
 g.timeLimit=(window._fcSet.perQ!=null?window._fcSet.perQ:0);
 g.pointsPer=(window._fcSet.per!=null?window._fcSet.per:2);
 g.questions=window._fcQ;g.updatedAt=new Date().toISOString();
-saveD(d);cloud('gameBank',g,false);
+saveD(d);if(!sc.local)cloud('gameBank',g,false);
 try{localStorage.removeItem('fcWizardDraft');}catch(e){}
 ThemeManager.closeModal();confetti();SND.win();
 if(window.safeToast)window.safeToast('🚀 اللعبة اتحفظت وانطلقت!','success');
 window.fcRenderStaffGames&&window.fcRenderStaffGames();
 }
+
 window.fcDupGame=function(id){
-var d=db();var g=(d.gameBank||[]).find(function(x){return x.id===id;});if(!g)return;
-var c=JSON.parse(JSON.stringify(g));c.id='game_'+Date.now();c.title=g.title+' (نسخة)';c.createdAt=new Date().toISOString();
-d.gameBank.push(c);saveD(d);cloud('gameBank',c,false);
+var d=db();var g=fcFindGame(id);if(!g)return;
+var c=JSON.parse(JSON.stringify(g));c.id='game_'+Date.now();c.title=g.title+' (نسخة)';c.createdAt=new Date().toISOString();c.owner=(cur()||{}).id;
+if(g.local){var cl=d.centerLocal[(cur()||{}).centerId||'none'];if(cl){cl.games=cl.games||[];cl.games.push(c);}}
+else{d.gameBank.push(c);cloud('gameBank',c,false);}
+saveD(d);
 window.fcRenderStaffGames&&window.fcRenderStaffGames();
 if(window.safeToast)window.safeToast('📋 اتعملت نسخة','success');
 };
 window.fcDelGame=function(id){
 if(!confirm('حذف اللعبة؟'))return;
-var d=db();var g=(d.gameBank||[]).find(function(x){return x.id===id;});
+var d=db();var g=fcFindGame(id);
 d.gameBank=(d.gameBank||[]).filter(function(x){return x.id!==id;});
-saveD(d);if(g)cloud('gameBank',g,true);
+if(g&&g.local){var cl=(d.centerLocal||{})[(cur()||{}).centerId||'none'];if(cl)cl.games=(cl.games||[]).filter(function(x){return x.id!==id;});}
+saveD(d);if(g&&!g.local)cloud('gameBank',g,true);
 window.fcRenderStaffGames&&window.fcRenderStaffGames();
 };
 
@@ -835,6 +896,7 @@ return q;
 window.fcPlay=function(gameId,opts){
 opts=opts||{};
 var raw=(db().gameBank||[]).find(function(x){return x.id===gameId;})||(window.__fcTemp&&window.__fcTemp.id===gameId?window.__fcTemp:null);
+if(!raw){var u0=cur();if(u0&&u0.role==='center'){var cl0=(db().centerLocal||{})[u0.centerId||'none'];raw=((cl0&&cl0.games)||[]).find(function(x){return x.id===gameId;});}}
 if(!raw){if(window.safeToast)window.safeToast('اللعبة مش موجودة','error');return;}
 var game=applyDifficulty(raw);
 game.questions=normalizeQs(game);
@@ -1306,19 +1368,41 @@ ThemeManager.openModal(h,'modal-md');
 
 /* ========== قوائم الألعاب ========== */
 window.fcRenderStudentGames=function(){
-var el=document.getElementById('fcStudentGames');if(!el)return;
-var u=cur(),d=db();if(!u||u.role!=='student')return;
-var list=(d.gameBank||[]).filter(function(g){return g.status==='published'&&(!g.grade||gradeMatch(u&&u.grade,g.grade));});
-el.innerHTML=list.length?list.map(function(g){
+  var el=document.getElementById('fcStudentGames');if(!el)return;
+  var u=cur(),d=db();if(!u||u.role!=='student')return;
+  var myTids=(DataService.getStudentTeachers?DataService.getStudentTeachers(u.id):[]).map(function(t){return t.teacher&&t.teacher.id;}).filter(Boolean);
+  var deletedIds={}; (d.deletedGames||[]).forEach(function(id){ deletedIds[id]=1; });
+  var orphans=[];
+  var labRefs=(function(){ var refs={}; try{ Object.keys(localStorage).forEach(function(k){ var v=localStorage.getItem(k); if(!v||v.indexOf('"questions"')<0) return; var j=JSON.parse(v); var arr=Array.isArray(j)?j:[j]; arr.forEach(function(o){ if(o&&o.questions){ refs[o.id||o.labId||(k+'_'+(o.name||o.title||''))]=1; } }); }); }catch(e){} return refs; })();
+  var list=(d.gameBank||[]).filter(function(g){
+    if(deletedIds[g.id]) return false;
+    if(g.labRef&&!labRefs[g.labRef]){ orphans.push(g); return false; }
+    if(g.labKey&&!window.__labAliveGame(g)){ orphans.push(g); return false; }
+  if(g.status!=='published')return false;
+  if(g.local)return false; /* 🏢 ألعاب السنتر الداخلية مش بتوصل للطلاب */
+  var grades=(g.targetGrades&&g.targetGrades.length)?g.targetGrades:(g.grade?[g.grade]:[]);
+  var gradeOk=!grades.length||!u.grade||grades.indexOf(u.grade)>=0||gradeMatch(grades,u.grade);
+  var scopeOk=!g.teacherId||myTids.indexOf(g.teacherId)>=0;
+  return gradeOk&&scopeOk;
+});
+  if(orphans.length){ /* 🧹 كنس ذاتي: احذف اليتيمة من المنصة والسحابة */
+    d.gameBank=(d.gameBank||[]).filter(function(x){ return !orphans.some(function(o){return o.id===x.id;}); });
+    saveD(d);
+    orphans.forEach(function(o){ try{ if(window.FirebaseService&&FirebaseService._db) FirebaseService.deleteDoc('gameBank',o.id); }catch(e){} });
+  }
+  el.innerHTML=list.length?list.map(function(g){
 var play=(d.gamePlays||[]).find(function(p){return p.gameId===g.id&&p.sid===u.id&&p.scored;});
 var best=(d.gamePlays||[]).filter(function(p){return p.gameId===g.id&&p.sid===u.id;}).reduce(function(a,p){return Math.max(a,p.points||0);},0);
 return '<div class="card fc-game-card" style="margin:0;padding:14px;text-align:center;transition:all .2s;" onmouseover="this.style.transform=\'translateY(-4px)\'" onmouseout="this.style.transform=\'\'"><div class="fc-gicon" style="background:'+(THEMES[themeOf(g)]||THEMES.classic).bg+';"><span class="'+((TPL[g.template]||{}).pv||'')+'">'+(TPL[g.template]||{}).i+'</span></div><strong style="font-size:13px;">'+g.title+'</strong><div class="text-xs text-muted" style="margin:4px 0;">'+(g.questions||[]).length+' سؤال · ⭐'+g.pointsPer+' · ❤️'+g.lives+(g.timeLimit?' · ⏱️'+g.timeLimit+'ث':' · ⏱️ مفتوح')+'</div>'+(play?'<span class="badge badge-success">✓ '+play.points+' نقطة</span>':'<span class="badge badge-primary">🚀 جديد</span>')+(best?'<div class="text-xs" style="margin-top:4px;color:var(--primary);font-weight:800;">🏅 أحسن نتيجة: '+best+'</div>':'')+'<div style="margin-top:8px;display:flex;gap:6px;"><button class="btn btn-primary btn-sm" style="flex:1;" onclick="fcPlay(\''+g.id+'\')">'+(play?'🔁 تدريب':'🎮 العب واكسب')+'</button><button class="btn btn-ghost btn-sm" onclick="fcGameBoard(\''+g.id+'\')">📊</button></div></div>';
 }).join(''):'<div class="card" style="grid-column:1/-1;text-align:center;padding:24px;"><div style="font-size:48px;">🎮</div><strong>مفيش ألعاب منشورة لصفك حالياً</strong></div>';
+  /* 🧹 طرد أي بلاطة ليدر تسللت لشبكة الألعاب */
+  document.querySelectorAll('#fcStudentGames .quick-action, #fcStudentGames #leaderQuickTile, #fcStudentGames #qaLeader').forEach(function(x){ x.remove(); });
 };
+
 window.fcRenderStaffGames=function(){
 var el=document.getElementById('fcStaffGames');if(!el)return;
 var u=cur(),d=db();
-var list=(d.gameBank||[]).filter(function(g){return (u.role==='teacher')?g.owner===u.id:true;});
+var list=(window.fcGamesForRole?window.fcGamesForRole():(d.gameBank||[])).slice().sort(function(a,b){return String(b.updatedAt||b.createdAt||'').localeCompare(String(a.updatedAt||a.createdAt||''));});
 el.innerHTML=list.length?list.map(function(g){
 var plays=(d.gamePlays||[]).filter(function(p){return p.gameId===g.id&&p.sid!=='board';});
 return '<div class="card" style="margin:0;padding:14px;"><div style="display:flex;justify-content:space-between;"><div><div class="fc-gicon" style="width:56px;height:56px;margin:0 0 6px;font-size:26px;border-radius:14px;background:'+(THEMES[themeOf(g)]||THEMES.classic).bg+';"><span class="'+((TPL[g.template]||{}).pv||'')+'">'+(TPL[g.template]||{}).i+'</span></div><strong>'+g.title+'</strong><div class="text-xs text-muted">'+(g.questions||[]).length+' سؤال · '+(g.grade||'كل الصفوف')+' · ❤️'+g.lives+' · '+(g.timeLimit?g.timeLimit+'ث':'مفتوح')+'</div></div><span class="badge '+(g.status==='published'?'badge-success':'badge-muted')+'">'+(g.status==='published'?'📢 منشور':'🔒 مسودة')+'</span></div><div class="text-xs text-muted" style="margin:8px 0;">👥 '+plays.length+' لاعب · 🖥️ '+(d.gamePlays||[]).filter(function(p){return p.gameId===g.id&&p.sid==='board';}).length+' جلسة سبورة</div><div style="display:flex;gap:6px;flex-wrap:wrap;"><button class="btn btn-primary btn-sm" onclick="fcPlay(\''+g.id+'\',{board:true,score:false})">🖥️ السبورة</button><button class="btn btn-ghost btn-sm" onclick="fcPlay(\''+g.id+'\',{score:false})">🧪</button><button class="btn btn-ghost btn-sm" onclick="fcGameBoard(\''+g.id+'\')">📊</button><button class="btn btn-secondary btn-sm" onclick="fcOpenBuilder(\''+g.id+'\')">✏️</button><button class="btn btn-ghost btn-sm" onclick="fcDupGame(\''+g.id+'\')">📋</button><button class="btn btn-danger btn-sm" onclick="fcDelGame(\''+g.id+'\')">🗑</button></div></div>';
@@ -1452,7 +1536,7 @@ function buildStaff(){
 var u=cur();if(!u||['teacher','assistant','admin','super_admin'].indexOf(u.role)<0)return;
 if(!document.getElementById('section-fcGamesStaff')){
 var sec=document.createElement('section');sec.className='section';sec.id='section-fcGamesStaff';
-sec.innerHTML='<div class="section-header"><div><h2 class="section-title">🎮 مصنع الألعاب</h2><p class="text-sm text-muted">14 قالب + سبورة + ليدربورد + نشر للطلاب</p></div><div style="display:flex;gap:8px;"><button class="btn btn-success btn-sm" onclick="window.fcOpenBuilder()">🏭 لعبة جديدة</button><button class="btn btn-ghost btn-sm" onclick="window.openEngagementManager()">🎯 التحفيز</button></div></div>'+
+sec.innerHTML='<div class="section-header"><div><h2 class="section-title">🎮 مصنع الألعاب</h2><p class="text-sm text-muted">14 قالب + سبورة + ليدربورد + نشر للطلاب</p></div><div style="display:flex;gap:8px;"><button class="btn btn-success btn-sm" onclick="location.href=\'games-lab.html\'">🏭 إنشاء لعبة (المعمل)</button><button class="btn btn-ghost btn-sm" onclick="window.openEngagementManager()">🎯 التحفيز</button></div></div>'+
 '<div class="filter-bar" style="margin-bottom:12px;"><button class="filter-btn active" onclick="window.fcStaffTab(\'games\',this)">🎮 الألعاب والسبورة</button><button class="filter-btn" onclick="window.fcStaffTab(\'results\',this)">📊 النتائج والترتيب</button></div>'+
 '<div id="fcTabGames"><div id="fcStaffGames" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;"></div></div>'+
 '<div id="fcTabResults" style="display:none;"><div id="fcStaffResults"></div></div>';
@@ -1475,6 +1559,31 @@ if(r)r.style.display=(k==='results')?'':'none';
 if(btn)btn.parentNode.querySelectorAll('.filter-btn').forEach(function(b){b.classList.toggle('active',b===btn);});
 if(k==='games')window.fcRenderStaffGames();
 if(k==='results')window.fcRenderStaffResults();
+};
+/* ========== 🌐 ألعاب كل دور بنطاقه ========== */
+window.__labAliveGame=function(g){
+  if(!g||!g.labKey) return true;
+  var v=null; try{ v=localStorage.getItem(g.labKey); }catch(e){ return true; }
+  if(v===null) return false; /* مخزن المعمل نفسه ات مسح = اللعبة اتحذفت */
+  try{ var j=JSON.parse(v); var arr=Array.isArray(j)?j:[j];
+    return arr.some(function(o){ if(!o||!o.questions) return false; var r=o.id||o.labId||(g.labKey+'_'+(o.name||o.title||'')); return r===g.labRef; });
+  }catch(e){ return true; }
+};
+window.fcGamesForRole=function(){
+  var u=cur(),d=db();if(!u)return[];
+  var bank=(d.gameBank||[]).filter(window.__labAliveGame);
+  var localG=[];
+  if(u.role==='center'){var cl=(d.centerLocal||{})[u.centerId||'none'];localG=((cl&&cl.games)||[]).map(function(g){g.local=true;return g;});}
+  if(u.role==='admin'||u.role==='super_admin')return bank.concat(localG);
+  if(u.role==='teacher')return bank.filter(function(g){return g.owner===u.id||g.teacherId===u.id;}).concat(localG);
+  if(u.role==='assistant'){
+    var tid=null;try{tid=window.getMyTeacherId?window.getMyTeacherId():null;}catch(e){}
+    return bank.filter(function(g){return g.owner===u.id||g.teacherId===tid;}).concat(localG);
+  }
+  /* center */
+  var cn=u.centerName||'';if(!cn){var c=(d.centers||[]).find(function(x){return x.id===u.centerId;});cn=c?c.name:'';}
+  var tids={};(DataService.getGroups?DataService.getGroups():[]).forEach(function(g2){if(g2.center===cn&&g2.teacherId)tids[g2.teacherId]=1;});
+  return bank.filter(function(g){return g.owner===u.id||tids[g.teacherId];}).concat(localG);
 };
 function hook(){
 if(typeof window.showSection==='function'&&!window.__fcHook2){
@@ -1505,8 +1614,24 @@ first.parentNode.insertBefore(b,first.nextSibling);
 }catch(e){}
 }
 
+/* ============ 🗑 كنس الألعاب اللي اتحذفت من المعمل (بيشتغل في أي داشبورد) ============ */
+function pruneOrphanLabGames(){
+  try{
+    var refs={}; var anyLab=false;
+    Object.keys(localStorage).forEach(function(k){
+      var v=localStorage.getItem(k); if(!v||v.indexOf('"questions"')<0) return;
+      var j=JSON.parse(v); var arr=Array.isArray(j)?j:[j];
+      if(arr.length&&arr[0]&&arr[0].questions){ anyLab=true; arr.forEach(function(o){ refs[o.id||o.labId||(k+'_'+(o.name||o.title||''))]=1; }); }
+    });
+    if(!anyLab) return;
+    var d=db(); var removed=[];
+    d.gameBank=(d.gameBank||[]).filter(function(g){ if(g.labRef&&!refs[g.labRef]){ removed.push(g); return false; } return true; });
+    if(removed.length){ saveD(d); removed.forEach(function(g){ try{ if(window.FirebaseService&&FirebaseService._db) FirebaseService.deleteDoc('gameBank',g.id); }catch(e){} }); }
+  }catch(e){}
+}
 function init(){
-var u=cur();if(!u)return;
+  pruneOrphanLabGames(); setInterval(pruneOrphanLabGames,30000);
+  var u=cur();if(!u)return;
 if(u.role==='student'){streakBonus(u.id);buildStudent();hook();window.fcRenderStudentGames();renderPtTabs();setTimeout(function(){buildStudent();window.fcRenderStudentGames();},1200);}
 else{buildStaff();hook();window.fcRenderStaffGames();setTimeout(function(){buildStaff();window.fcRenderStaffGames();},1200);}
 }

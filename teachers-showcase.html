@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>أساتذتنا المتميزون | EduFlow</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0f1e; --surface:#101828; --surface-hover:#1a2436; --surface-glass:rgba(16,24,40,.7);
+  --border:#263449; --text:#e5e7eb; --text-secondary:#cbd5e1; --text-muted:#8b98ab;
+  --primary:#6366f1; --primary-light:#818cf8; --primary-bg:rgba(99,102,241,.15);
+  --success:#10b981; --success-bg:rgba(16,185,129,.15);
+  --accent:#ec4899; --accent-bg:rgba(236,72,153,.15);
+  --shadow:0 10px 40px rgba(0,0,0,.3);
+  --grad:linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#ec4899 100%);
+}
+[data-theme="light"]{
+  --bg:#f8fafc; --surface:#ffffff; --surface-hover:#f1f5f9; --surface-glass:rgba(255,255,255,.8);
+  --border:#e2e8f0; --text:#0f172a; --text-secondary:#475569; --text-muted:#64748b;
+  --primary:#4f46e5; --primary-light:#6366f1; --primary-bg:rgba(79,70,229,.08);
+  --success:#059669; --success-bg:rgba(5,150,105,.08);
+  --shadow:0 10px 40px rgba(99,102,241,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Cairo','Tajawal',sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;
+  overflow-x:hidden;transition:background .4s,color .4s;
+  background-image:
+    radial-gradient(at 80% 0%,rgba(99,102,241,.18) 0px,transparent 50%),
+    radial-gradient(at 10% 100%,rgba(236,72,153,.12) 0px,transparent 50%),
+    radial-gradient(at 50% 50%,rgba(139,92,246,.08) 0px,transparent 50%);
+  background-attachment:fixed;
+}
+
+/* ===== Floating orbs ===== */
+.orb{position:fixed;border-radius:50%;filter:blur(80px);opacity:.4;pointer-events:none;z-index:0;}
+.orb-1{width:400px;height:400px;background:#6366f1;top:-100px;right:-100px;animation:orbFloat 18s ease-in-out infinite;}
+.orb-2{width:500px;height:500px;background:#ec4899;bottom:-200px;left:-200px;animation:orbFloat 22s ease-in-out infinite reverse;}
+.orb-3{width:300px;height:300px;background:#8b5cf6;top:40%;left:30%;animation:orbFloat 15s ease-in-out infinite;}
+@keyframes orbFloat{
+  0%,100%{transform:translate(0,0) scale(1);}
+  33%{transform:translate(60px,-80px) scale(1.1);}
+  66%{transform:translate(-40px,60px) scale(.9);}
+}
+
+/* ===== Nav ===== */
+.nav{
+  position:fixed;top:20px;right:20px;left:20px;z-index:100;
+  display:flex;justify-content:space-between;align-items:center;
+  background:var(--surface-glass);backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--border);border-radius:20px;
+  padding:10px 18px;box-shadow:var(--shadow);
+  animation:navIn .8s ease;
+}
+@keyframes navIn{from{opacity:0;transform:translateY(-20px);}to{opacity:1;transform:none;}}
+.nav-brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:15px;}
+.nav-brand .logo-img{width:38px;height:38px;border-radius:10px;object-fit:cover;box-shadow:0 4px 14px rgba(99,102,241,.4);}
+.nav-brand .logo-fallback{width:38px;height:38px;border-radius:10px;background:var(--grad);display:none;align-items:center;justify-content:center;font-size:20px;}
+.nav-actions{display:flex;gap:8px;}
+.btn{padding:8px 16px;border-radius:10px;border:none;font-family:inherit;font-weight:700;font-size:12px;cursor:pointer;transition:all .25s;display:inline-flex;align-items:center;gap:6px;}
+.btn-icon{width:38px;height:38px;padding:0;justify-content:center;}
+.btn-ghost{background:var(--surface-hover);color:var(--text);border:1px solid var(--border);}
+.btn-ghost:hover{border-color:var(--primary);color:var(--primary);transform:translateY(-2px);}
+.btn-primary{background:var(--grad);color:#fff;box-shadow:0 6px 16px rgba(99,102,241,.35);}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(99,102,241,.5);}
+
+/* ===== Hero ===== */
+.hero{
+  position:relative;z-index:1;min-height:70vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:140px 20px 60px;text-align:center;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--primary-bg);border:1px solid var(--primary);
+  color:var(--primary-light);padding:8px 18px;border-radius:999px;
+  font-weight:800;font-size:13px;margin-bottom:20px;
+  animation:badgeIn 1s ease .2s both;
+}
+.hero-badge .pulse{width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 0 0 var(--success);animation:pulse 2s infinite;}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(16,185,129,.7);}70%{box-shadow:0 0 0 10px rgba(16,185,129,0);}100%{box-shadow:0 0 0 0 rgba(16,185,129,0);}}
+@keyframes badgeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+
+.hero h1{
+  font-size:clamp(36px,6vw,72px);font-weight:900;line-height:1.15;
+  margin:0 0 20px;max-width:900px;
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:titleIn 1s ease .4s both;
+  letter-spacing:-1px;
+}
+@keyframes titleIn{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:none;}}
+.hero p{
+  font-size:clamp(15px,2vw,18px);color:var(--text-secondary);
+  line-height:2;max-width:680px;margin:0 auto 30px;
+  animation:descIn 1s ease .6s both;
+}
+@keyframes descIn{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:none;}}
+
+.hero-ctas{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;animation:ctasIn 1s ease .8s both;}
+@keyframes ctasIn{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:none;}}
+.btn-lg{padding:14px 26px;font-size:15px;border-radius:14px;}
+.btn-success{background:linear-gradient(135deg,#10b981,#059669);color:#fff;box-shadow:0 8px 20px rgba(16,185,129,.35);}
+.btn-success:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(16,185,129,.5);}
+
+/* Stats */
+.hero-stats{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:14px;
+  max-width:720px;margin:40px auto 0;
+  animation:statsIn 1s ease 1s both;
+}
+@keyframes statsIn{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:none;}}
+@media(max-width:640px){.hero-stats{grid-template-columns:repeat(2,1fr);}}
+.stat-card{
+  background:var(--surface-glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--border);border-radius:18px;padding:18px 14px;
+  transition:all .3s;position:relative;overflow:hidden;
+}
+.stat-card::before{
+  content:'';position:absolute;top:0;right:0;left:0;height:3px;background:var(--grad);
+  transform:scaleX(0);transform-origin:right;transition:transform .4s;
+}
+.stat-card:hover{transform:translateY(-6px);border-color:var(--primary);box-shadow:0 12px 32px rgba(99,102,241,.25);}
+.stat-card:hover::before{transform:scaleX(1);transform-origin:left;}
+.stat-card b{display:block;font-size:clamp(22px,3vw,32px);font-weight:900;color:var(--primary);font-family:'Tajawal',sans-serif;line-height:1;}
+.stat-card span{font-size:12px;color:var(--text-muted);font-weight:700;margin-top:4px;display:block;}
+
+/* ===== Section Titles ===== */
+.sec{position:relative;z-index:1;padding:60px 20px;max-width:1400px;margin:0 auto;}
+.sec-header{text-align:center;margin-bottom:40px;}
+.sec-tag{
+  display:inline-block;background:var(--primary-bg);color:var(--primary-light);
+  padding:6px 16px;border-radius:999px;font-size:12px;font-weight:800;
+  margin-bottom:14px;letter-spacing:.5px;
+}
+.sec-title{font-size:clamp(26px,4vw,42px);font-weight:900;margin:0 0 12px;}
+.sec-title span{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.sec-sub{color:var(--text-muted);font-size:15px;max-width:560px;margin:0 auto;line-height:1.9;}
+
+/* ===== Teachers Grid (Centered) ===== */
+.tgrid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(300px,340px));
+  gap:24px;
+  justify-content: center;
+  justify-items: center; /* لمحاذاة الكارت في منتصف مساحة العمود تماماً */
+}
+.tcard{
+  background:var(--surface);border:1px solid var(--border);border-radius:24px;
+  overflow:hidden;position:relative;transition:all .4s cubic-bezier(.2,.8,.2,1);
+  opacity:0;transform:translateY(40px);
+  width: 100%;
+  max-width: 340px; /* تحديد عرض أقصى لضمان الشكل الجميل في المنتصف */
+}
+.tcard.show{opacity:1;transform:none;}
+.tcard:hover{transform:translateY(-10px) scale(1.02);box-shadow:0 25px 60px rgba(99,102,241,.25);border-color:var(--primary);}
+
+.tcard-bg{
+  position:absolute;top:0;right:0;left:0;height:120px;
+  background:var(--grad);opacity:.9;
+}
+.tcard-bg::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 80% 20%,rgba(255,255,255,.3),transparent 50%);
+}
+
+.tcard-status{
+  position:absolute;top:14px;left:14px;z-index:3;
+  background:rgba(255,255,255,.95);color:#059669;
+  padding:5px 12px;border-radius:99px;font-size:11px;font-weight:800;
+  display:flex;align-items:center;gap:5px;
+  box-shadow:0 4px 12px rgba(0,0,0,.15);
+}
+.tcard-status::before{content:'';width:6px;height:6px;border-radius:50%;background:#059669;animation:pulse 1.5s infinite;}
+
+.photo-wrap{
+  position:relative;z-index:2;margin:40px auto 0;
+  width:110px;height:110px;border-radius:50%;
+  border:5px solid #fff;
+  box-shadow:0 10px 30px rgba(0,0,0,.3);
+  overflow:hidden;
+  background:var(--grad);
+  transition:all .4s;
+}
+.photo-wrap img{width:100%;height:100%;object-fit:cover;transition:transform .4s;}
+.tcard:hover .photo-wrap{transform:scale(1.08) rotate(-3deg);}
+.tcard:hover .photo-wrap img{transform:scale(1.1);}
+.photo-wrap .av{width:100%;height:100%;display:none;align-items:center;justify-content:center;font-size:40px;font-weight:900;color:#fff;}
+
+.tcard-body{padding:18px 22px 24px;text-align:center;position:relative;z-index:1;}
+.tcard h3{font-size:19px;font-weight:900;margin:0 0 4px;}
+.tcard .subject{
+  display:inline-block;background:var(--primary-bg);color:var(--primary-light);
+  padding:3px 12px;border-radius:99px;font-size:12px;font-weight:800;margin-bottom:14px;
+}
+
+.centers{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin:10px 0;}
+.center-chip{
+  background:var(--success-bg);border:1px solid rgba(16,185,129,.3);color:var(--success);
+  padding:4px 10px;border-radius:99px;font-size:11px;font-weight:800;
+  display:inline-flex;align-items:center;gap:4px;
+}
+
+.bio{color:var(--text-secondary);font-size:12.5px;line-height:1.8;margin:12px 0;min-height:38px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+
+.tbtns{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:14px;}
+.tbtn{
+  padding:8px 14px;border-radius:10px;font-size:12px;font-weight:800;
+  text-decoration:none;display:inline-flex;gap:5px;align-items:center;
+  border:none;cursor:pointer;font-family:inherit;transition:all .25s;
+}
+.tbtn.wa{background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;box-shadow:0 4px 12px rgba(37,211,102,.3);}
+.tbtn.wa:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(37,211,102,.5);}
+.tbtn.ghost{background:var(--surface-hover);color:var(--text);border:1px solid var(--border);}
+.tbtn.ghost:hover{border-color:var(--primary);color:var(--primary);}
+
+/* ===== Features grid ===== */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;}
+.fcard{
+  background:var(--surface);border:1px solid var(--border);border-radius:20px;
+  padding:26px;position:relative;overflow:hidden;transition:all .4s;
+}
+.fcard::before{
+  content:'';position:absolute;top:-50%;right:-50%;width:200%;height:200%;
+  background:radial-gradient(circle,rgba(99,102,241,.15) 0%,transparent 70%);
+  opacity:0;transition:opacity .4s;
+}
+.fcard:hover{transform:translateY(-8px);border-color:var(--primary);box-shadow:0 20px 50px rgba(99,102,241,.2);}
+.fcard:hover::before{opacity:1;}
+.fcard .ic{
+  font-size:36px;margin-bottom:14px;display:inline-block;
+  width:60px;height:60px;border-radius:14px;background:var(--primary-bg);
+  display:flex;align-items:center;justify-content:center;
+  transition:all .3s;
+}
+.fcard:hover .ic{transform:scale(1.1) rotate(-5deg);background:var(--grad);}
+.fcard h3{font-size:17px;font-weight:900;margin:0 0 8px;position:relative;z-index:1;}
+.fcard p{color:var(--text-muted);font-size:13.5px;line-height:1.9;position:relative;z-index:1;}
+
+/* ===== Steps ===== */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;position:relative;}
+@media(max-width:800px){.steps{grid-template-columns:1fr;}}
+.step{
+  background:var(--surface);border:1px solid var(--border);border-radius:22px;
+  padding:30px 22px;text-align:center;position:relative;overflow:hidden;
+  transition:all .4s;
+}
+.step::before{
+  content:'';position:absolute;inset:0;background:var(--grad);
+  opacity:0;transition:opacity .3s;z-index:0;
+}
+.step:hover{transform:translateY(-6px);border-color:transparent;color:#fff;box-shadow:0 20px 50px rgba(99,102,241,.3);}
+.step:hover::before{opacity:1;}
+.step:hover *{color:#fff !important;}
+.step > *{position:relative;z-index:1;}
+.step .n{
+  width:56px;height:56px;border-radius:50%;background:var(--grad);color:#fff;
+  font-weight:900;font-size:22px;display:flex;align-items:center;justify-content:center;
+  margin:0 auto 16px;box-shadow:0 8px 20px rgba(99,102,241,.4);
+  font-family:'Tajawal',sans-serif;
+}
+.step h4{font-size:16px;font-weight:900;margin:0 0 8px;}
+.step p{font-size:13px;color:var(--text-muted);line-height:1.9;}
+
+/* ===== CTA Box ===== */
+.cta-box{
+  position:relative;z-index:1;
+  background:var(--grad);border-radius:30px;
+  padding:60px 30px;text-align:center;color:#fff;
+  overflow:hidden;box-shadow:0 30px 80px rgba(99,102,241,.4);
+  max-width:1000px;margin:0 auto;
+}
+.cta-box::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 20% 20%,rgba(255,255,255,.25),transparent 50%),
+             radial-gradient(circle at 80% 80%,rgba(236,72,153,.3),transparent 50%);
+}
+.cta-box > *{position:relative;z-index:1;}
+.cta-box h2{font-size:clamp(24px,4vw,40px);font-weight:900;margin:0 0 14px;}
+.cta-box p{max-width:520px;margin:0 auto 26px;line-height:1.9;opacity:.95;}
+.cta-box .btn{background:#fff;color:var(--primary);box-shadow:0 8px 24px rgba(0,0,0,.2);}
+.cta-box .btn:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(0,0,0,.3);}
+
+/* ===== Reveal ===== */
+.rv{opacity:0;transform:translateY(30px);transition:all .8s cubic-bezier(.2,.7,.3,1);}
+.rv.in{opacity:1;transform:none;}
+
+/* ===== Unified Footer ===== */
+.unified-footer{
+  position:relative;z-index:1;
+  background:var(--surface);border-top:1px solid var(--border);
+  padding:50px 20px 30px;margin-top:80px;
+}
+.footer-brand-icon{font-size:36px;margin-bottom:12px;display:block;}
+.footer-brand-name{font-size:20px;font-weight:900;margin:0 0 10px;color:var(--text);}
+.footer-desc{color:var(--text-muted);font-size:14px;line-height:1.9;margin:0 0 24px;max-width:600px;margin-inline:auto;}
+.footer-copy{
+  font-size:12px;color:var(--text-muted);
+  border-top:1px solid var(--border);padding-top:20px;margin-top:20px;
+  display:flex;justify-content:center;align-items:center;gap:6px;
+}
+
+/* ===== Loader ===== */
+.loader{text-align:center;padding:60px;grid-column:1/-1;}
+.loader .spinner{
+  width:60px;height:60px;border:4px solid var(--border);
+  border-top-color:var(--primary);border-radius:50%;
+  margin:0 auto 16px;animation:spin 1s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.empty{text-align:center;padding:60px 20px;grid-column:1/-1;}
+.empty .icon{font-size:72px;margin-bottom:16px;opacity:.4;}
+</style>
+</head>
+<body data-theme="dark">
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<!-- Nav -->
+<div class="nav">
+  <div class="nav-brand">
+    <!-- تم إزالة src="" لمنع اختفاء اللوغو فور التحميل -->
+    <img id="navLogo" class="logo-img" alt="Logo" onerror="this.style.display='none'; document.getElementById('navLogoFallback').style.display='flex';">
+    <div id="navLogoFallback" class="logo-fallback">🎓</div>
+    <span id="navBrand">EduFlow</span>
+  </div>
+  <div class="nav-actions">
+    <button class="btn btn-icon btn-ghost" id="themeToggle" title="تبديل الوضع">🌙</button>
+    <a href="login.html" class="btn btn-ghost">🔐 دخول</a>
+    <a id="navWa" href="#" class="btn btn-success">💬 سجّل الآن</a>
+  </div>
+</div>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-badge"><span class="pulse"></span> منصة التعلم الذكي</div>
+  <h1 id="heroTitle">تعلّم مع نخبة الأساتذة<br>في مكان واحد</h1>
+  <p id="heroDesc">منصة متكاملة بتربط الطالب بالأستاذ وولي الأمر — متابعة لحظية، حضور ذكي، ودرجات شفافة. اختار أستاذك وابدأ رحلة التفوق.</p>
+  <div class="hero-ctas">
+    <a id="ctaWa" href="#" class="btn btn-lg btn-success">💬 سجّل عبر واتساب</a>
+    <a href="login.html" class="btn btn-lg btn-ghost">🔐 دخول الطلاب</a>
+  </div>
+  <div class="hero-stats">
+    <div class="stat-card"><b data-count id="cT">0</b><span>أستاذ متميز</span></div>
+    <div class="stat-card"><b data-count id="cG">0</b><span>مجموعة نشطة</span></div>
+    <div class="stat-card"><b data-count id="cS">0</b><span>طالب مشترك</span></div>
+    <div class="stat-card"><b data-count id="cC">0</b><span>سنتر/فرع</span></div>
+  </div>
+</section>
+
+<!-- Teachers -->
+<section class="sec rv">
+  <div class="sec-header">
+    <span class="sec-tag">👨‍🏫 فريقنا</span>
+    <h2 class="sec-title">نخبة <span>الأساتذة</span></h2>
+    <p class="sec-sub">اختار أستاذك من أفضل المعلمين في تخصصاتهم</p>
+  </div>
+  <div class="tgrid" id="tGrid"><div class="loader"><div class="spinner"></div><div>جاري تحميل الأساتذة...</div></div></div>
+</section>
+
+<!-- Features -->
+<section class="sec rv">
+  <div class="sec-header">
+    <span class="sec-tag">✨ ليه تختارنا</span>
+    <h2 class="sec-title">تجربة تعليمية <span>مختلفة تماماً</span></h2>
+    <p class="sec-sub">كل اللي محتاجه الطالب والأستاذ وولي الأمر في مكان واحد</p>
+  </div>
+  <div class="fgrid">
+    <div class="fcard"><div class="ic">📱</div><h3>حضور ذكي</h3><p>امسح باركود القاعة وحضورك يتسجل لحظياً — من غير ورق أو نسيان.</p></div>
+    <div class="fcard"><div class="ic">🏆</div><h3>نظام تحفيز</h3><p>نقاط وشارات وصندوق هدايا ومعارك بين المجموعات — الطالب يحب يجي.</p></div>
+    <div class="fcard"><div class="ic">📊</div><h3>متابعة لحظية</h3><p>درجات وحضور وشهرية لحظة بلحظة — الطالب وولي الأمر عارفين كل حاجة.</p></div>
+    <div class="fcard"><div class="ic">🎬</div><h3>محتوى تفاعلي</h3><p>فيديوهات شرح، مواد تفاعلية، وامتحانات أونلاين لكل حصة.</p></div>
+    <div class="fcard"><div class="ic">💰</div><h3>شهرية واضحة</h3><p>نظام دورات ذكي بيحسب الحصص فعلياً ويوضح لك إمتى تدفع.</p></div>
+    <div class="fcard"><div class="ic">💬</div><h3>تواصل مباشر</h3><p>واتساب مباشر مع الأستاذ وجروبات منظمة لكل مجموعة.</p></div>
+    <div class="fcard"><div class="ic">📈</div><h3>تقارير ذكية</h3><p>تحليلات دقيقة لمستوى الطالب وتقدمه طوال الشهر الدراسي.</p></div>
+    <div class="fcard"><div class="ic">🛡️</div><h3>حماية وخصوصية</h3><p>بياناتك وبيانات ابنك مؤمنة بأعلى معايير الأمان والخصوصية.</p></div>
+    <div class="fcard"><div class="ic">🎧</div><h3>دعم فني متواصل</h3><p>فريق دعم جاهز لمساعدتك في أي وقت لحل أي استفسار.</p></div>
+  </div>
+</section>
+
+<!-- Steps -->
+<section class="sec rv">
+  <div class="sec-header">
+    <span class="sec-tag">🚀 ابدأ في دقيقة</span>
+    <h2 class="sec-title">٣ خطوات <span>وبس</span></h2>
+    <p class="sec-sub">التسجيل سهل، والمتابعة مستمرة، والنتائج مضمونة</p>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="n">1</div><h4>📍 اشترك في مجموعة</h4><p>اختار الأستاذ والصف والمجموعة اللي تناسبك، وسجّل في ثواني.</p></div>
+    <div class="step"><div class="n">2</div><h4>📱 امسح واحضر</h4><p>كل حصة امسح باركود القاعة — حضورك ونقاطك اتسجلوا أوتوماتيك.</p></div>
+    <div class="step"><div class="n">3</div><h4>📈 تابع وتفوّق</h4><p>درجاتك وشهريتك ومكافآتك قدامك لحظة بلحظة.</p></div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="sec rv">
+  <div class="cta-box">
+    <h2>جاهز تبدأ حكايتك معانا؟ ✨</h2>
+    <p>ابعتلنا على واتساب دلوقتي وهنرشّحك لأنسب مجموعة لمستواك — أو ادخل مباشرة لو انت من طلابنا.</p>
+    <a id="ctaWa2" href="#" class="btn btn-lg">💬 كلمنا على واتساب</a>
+  </div>
+</section>
+
+<!-- Unified Footer -->
+<footer class="unified-footer" id="foot">
+  <div style="max-width:800px;margin:0 auto;text-align:center;">
+    <span class="footer-brand-icon">🎓</span>
+    <h3 class="footer-brand-name" id="footerBrand">منصة هباش جروب</h3>
+    <p class="footer-desc">
+      منصة تعليمية متكاملة لإدارة المراكز التعليمية والسناتر.<br>
+      نربط بين الطالب، ولي الأمر، والأستاذ في تجربة سلسة ومبتكرة.
+    </p>
+    <div class="footer-copy">
+      © <span id="yr"></span> جميع الحقوق محفوظة · Habbash Group
+    </div>
+  </div>
+</footer>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="js/config.js"></script>
+<script src="js/firebase-service.js"></script>
+<script src="js/data-service.js"></script>
+<script>
+window.driveThumb=window.driveThumb||function(url){try{if(!url)return'';var u=String(url);var m=u.match(/\/d\/([\w-]+)/)||u.match(/[?&]id=([\w-]+)/);return m?'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w400':u;}catch(e){return url||'';}};
+
+/* ===== Theme Toggle ===== */
+(function(){
+  var saved=localStorage.getItem('teachersTheme')||'dark';
+  document.documentElement.setAttribute('data-theme',saved);
+  var btn=document.getElementById('themeToggle');
+  function updateIcon(){btn.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'☀️':'🌙';}
+  updateIcon();
+  btn.onclick=function(){
+    var cur=document.documentElement.getAttribute('data-theme');
+    var nx=cur==='dark'?'light':'dark';
+    document.documentElement.setAttribute('data-theme',nx);
+    localStorage.setItem('teachersTheme',nx);
+    updateIcon();
+  };
+})();
+
+/* ===== Reveal on scroll ===== */
+var io=('IntersectionObserver' in window)?new IntersectionObserver(function(es){
+  es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+},{threshold:.1}):null;
+document.querySelectorAll('.rv').forEach(function(el){io?io.observe(el):el.classList.add('in');});
+
+/* ===== Counters ===== */
+function anim(el,target){
+  var s=null;
+  function step(t){if(!s)s=t;var p=Math.min(1,(t-s)/1400);var e=1-Math.pow(1-p,3);el.textContent=Math.round(target*e);if(p<1)requestAnimationFrame(step);}
+  requestAnimationFrame(step);
+}
+document.getElementById('yr').textContent=new Date().getFullYear();
+
+/* ===== Load data ===== */
+(async function(){
+  try{
+    if(DataService&&DataService.init) await DataService.init();
+    var b=(DataService.getBranding?DataService.getBranding():{})||{};
+    
+    // Fix Logo: تعيين المصدر فقط إذا كان موجوداً، وإلا إظهار البديل فوراً
+    var logoUrl = b.logoUrl ? (window.driveThumb ? window.driveThumb(b.logoUrl) : b.logoUrl) : (b.logo || '');
+    if(logoUrl) {
+      document.getElementById('navLogo').src = logoUrl;
+    } else {
+      document.getElementById('navLogo').style.display = 'none';
+      document.getElementById('navLogoFallback').style.display = 'flex';
+    }
+
+    if(b.name){
+      document.getElementById('navBrand').textContent=b.name;
+      document.getElementById('heroTitle').innerHTML='تعلّم مع نخبة الأساتذة<br>في <span style="background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;">'+b.name+'</span>';
+      document.getElementById('footerBrand').textContent = 'منصة ' + (b.name || 'هباش جروب');
+    }
+    
+    // Fix WhatsApp Button: البحث في عدة حقول محتملة لضمان ظهور الزر
+    var tn=String(b.whatsappSupport || b.supportPhone || b.whatsapp || '').replace(/\D/g,'');
+    var msg=encodeURIComponent('السلام عليكم، حابب أستفسر عن الاشتراك في المنصة 🎓');
+    if(tn){
+      var href='https://wa.me/2'+tn+'?text='+msg;
+      document.getElementById('navWa').href=href;
+      document.getElementById('ctaWa').href=href;
+      document.getElementById('ctaWa2').href=href;
+    } else {
+      document.getElementById('navWa').style.display='none';
+      document.getElementById('ctaWa').style.display='none';
+      document.getElementById('ctaWa2').style.display='none';
+    }
+
+    var ts=(DataService.getTeachers?DataService.getTeachers():[]);
+    var gs=(DataService.getGroups?DataService.getGroups():[]);
+    var stu=(DataService.getStudents?DataService.getStudents():[]);
+    var centers={};gs.forEach(function(g){if(g.center)centers[g.center]=1;});
+
+    /* Counters animation */
+    setTimeout(function(){
+      anim(document.getElementById('cT'),ts.length);
+      anim(document.getElementById('cG'),gs.length);
+      anim(document.getElementById('cS'),stu.length);
+      anim(document.getElementById('cC'),Object.keys(centers).length);
+    },600);
+
+    var grid=document.getElementById('tGrid');
+    if(!ts.length){
+      grid.innerHTML='<div class="empty"><div class="icon">👨‍🏫</div><h3>لا أساتذة حالياً</h3><p style="color:var(--text-muted);">سيتم إضافة الأساتذة قريباً</p></div>';
+      return;
+    }
+
+    grid.innerHTML=ts.map(function(t,i){
+      var mine=gs.filter(function(g){return g.teacherId===t.id;});
+      var centersObj={};
+      mine.forEach(function(g){if(g.center) centersObj[g.center]=1;});
+      var cenList=Object.keys(centersObj);
+      var photo=t.photoUrl?driveThumb(t.photoUrl):'';
+
+      var btns='';
+      // إصلاح زر الواتساب للمدرس
+      var waNum = t.supportPhone || t.whatsapp || t.phone || '';
+      if(waNum) btns+='<a class="tbtn wa" href="https://wa.me/2'+String(waNum).replace(/\D/g,'')+'" target="_blank">💬 واتساب</a>';
+      if(mine[0]&&mine[0].whatsappLink)btns+='<a class="tbtn ghost" href="'+mine[0].whatsappLink+'" target="_blank">📱 جروب</a>';
+      if(t.socials&&t.socials.facebook)btns+='<a class="tbtn ghost" href="'+t.socials.facebook+'" target="_blank">📘</a>';
+      if(t.socials&&t.socials.youtube)btns+='<a class="tbtn ghost" href="'+t.socials.youtube+'" target="_blank">📺</a>';
+
+      return '<div class="tcard" style="transition-delay:'+(i*0.06)+'s;">'+
+        '<div class="tcard-bg"></div>'+
+        '<span class="tcard-status">متاح الآن</span>'+
+        '<div class="photo-wrap">'+
+          (photo ? '<img src="'+photo+'" loading="lazy" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';">' : '') +
+          '<div class="av" style="'+(photo?'display:none;':'display:flex;')+'">'+(t.name||'؟').charAt(0)+'</div>'+
+        '</div>'+
+        '<div class="tcard-body">'+
+        '<h3>'+t.name+'</h3>'+
+        '<div class="subject">📚 '+(t.subject||'مواد متعددة')+'</div>'+
+        // تم إزالة قسم الإحصائيات (المجموعات والطلاب)
+        (cenList.length?'<div class="centers">'+cenList.map(function(c){return '<span class="center-chip">🏢 '+c+'</span>';}).join('')+'</div>':'')+
+        '<div class="bio">'+(t.bio||'أستاذ متخصص في '+(t.subject||'التدريس')+' — خبرة واسعة وشغف بنجاح الطلاب.')+'</div>'+
+        '<div class="tbtns">'+(btns||'<span class="center-chip">للاستفسار: زرار واتساب فوق 👆</span>')+'</div>'+
+        '</div></div>';
+    }).join('');
+
+    /* Staggered reveal for cards */
+    setTimeout(function(){
+      var io2=('IntersectionObserver' in window)?new IntersectionObserver(function(es){
+        es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('show');io2.unobserve(e.target);}});
+      },{threshold:.1}):null;
+      document.querySelectorAll('.tcard').forEach(function(el){
+        io2?io2.observe(el):el.classList.add('show');
+      });
+    },100);
+  }catch(e){
+    document.getElementById('tGrid').innerHTML='<div class="empty"><div class="icon">⚠️</div><h3>خطأ في التحميل</h3><p style="color:var(--text-muted);">'+e.message+'</p></div>';
+  }
+})();
+</script>
+</body>
+</html>

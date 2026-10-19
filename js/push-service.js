@@ -47,11 +47,19 @@ function foreground(){
   try{
     firebase.messaging().onMessage(function(p){
       var n=p.notification||{}, d=p.data||{};
+      var id=d.id||n.tag||('p'+Date.now());
+      /* 🔒 نفس قفل notify-service: ميتعرضش مرتين */
+      try{
+        var fired=JSON.parse(localStorage.getItem('eduNotifyFired')||'{}');
+        if(fired['P|'+id]) return;
+        fired['P|'+id]=Date.now();
+        var ks=Object.keys(fired); if(ks.length>400){ ks.slice(0,200).forEach(function(k){delete fired[k];}); }
+        localStorage.setItem('eduNotifyFired',JSON.stringify(fired));
+      }catch(e){}
       var title=n.title||d.title||'🔔 إشعار جديد';
       var body=n.body||d.body||'';
-      toast(title+' — '+body,'info');
+      toast(title+' — '+body,'info');           /* 🎯 toast داخلي بس — الـ Notification الرسمية مسؤولية notify-service */
       try{ if(window.renderFloatNotifs) window.renderFloatNotifs(); }catch(e){}
-      try{ if(Notification.permission==='granted') new Notification(title,{body:body,icon:'/icon-192.png'}); }catch(e){}
     });
   }catch(e){}
 }
@@ -138,37 +146,41 @@ window.PushService.testPush=function(){
   if(!u){ console.warn('مش مسجل دخول'); return Promise.resolve(); }
   return sendPush({to:u.id,title:'🔔 اختبار Push من EduFlow',body:'لو الإشعار ده وصلك فالسيستم شغال 100% 🎉',tag:'test',page:pageForUid(u.id)});
 };
+
 function hook(){
   try{
     if(!window.DataService||typeof DataService.addNotification!=='function') return;
-    
-    /* 🆕 استخدم نفس الـ Event Bus */
     if(!DataService.__notifyListeners) DataService.__notifyListeners=[];
-    
-    /* سجل الـ listener بتاعنا */
+    if(DataService.__pushListenerAdded) return;
+    DataService.__pushListenerAdded=1;
     DataService.__notifyListeners.push(function(payload){
       try{
-        if(payload&&payload.targetUserId){
-          sendPush({
-            to:payload.targetUserId,
-            title:payload.title||'🔔 إشعار جديد',
-            body:payload.message||'',
-            tag:payload.type||'general',
-            page:pageForUid(payload.targetUserId)
-          });
-        }
+        /* 🎯 push للمستهدف بس — ومفيش push من غير مستقبل محدد */
+        if(!payload||!payload.targetUserId) return;
+        sendPush({
+          to:payload.targetUserId,
+          id:payload.id||'',
+          title:payload.title||'🔔 إشعار جديد',
+          body:payload.message||'',
+          tag:payload.type||'general',
+          page:pageForUid(payload.targetUserId)
+        });
       }catch(e){}
     });
-    
-    /* لو مش لسه عملنا الـ master hook، نعمله */
-    if(!DataService.__notifyMasterHooked){
+    /* 🛡️ لو notify-service مش موجود خالص، نركّب master hook بـ dedup بسيط */
+    if(!DataService.__notifyMasterHooked&&!window.__notifyServiceLoaded){
       DataService.__notifyMasterHooked=true;
       var orig=DataService.addNotification.bind(DataService);
+      var seen={};
       DataService.addNotification=function(n){
+        try{
+          if(n){ var k=(n.targetUserId||'')+'|'+(n.title||'')+'|'+(n.message||'');
+            var now=Date.now();
+            if(seen[k]&&now-seen[k]<6*3600*1000) return Promise.resolve(null);
+            seen[k]=now; }
+        }catch(e){}
         var r=orig(n);
-        (DataService.__notifyListeners||[]).forEach(function(listener){
-          try{ listener(n); }catch(e){}
-        });
+        (DataService.__notifyListeners||[]).forEach(function(L){ try{ L(n); }catch(e){} });
         return r;
       };
     }

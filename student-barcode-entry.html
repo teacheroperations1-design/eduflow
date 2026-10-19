@@ -423,6 +423,7 @@ function directLogin(student) {
     // 3. حفظ في sessionStorage كبديل
     try {
       sessionStorage.setItem('eduflow_user', JSON.stringify(student));
+       try{ window.pushLiveFeed && pushLiveFeed('barcode-login', student.name, student.code||''); }catch(e){}
       sessionStorage.setItem('eduflow_session', JSON.stringify(sessionData));
     } catch(e) {}
     

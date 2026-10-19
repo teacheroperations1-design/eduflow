@@ -938,15 +938,24 @@ window.hideResult = function() {
    ================================================================ */
 window.directLoginToStudent = function(student) {
   try {
-    // 🎯 التوجيه لصفحة student-barcode-entry.html (مش الداشبورد مباشرة)
-    // الصفحة دي هتتحقق من أول مرة وتعرض البيانات والباسورد
-    const targetUrl = 'student-barcode-entry.html?code=' + encodeURIComponent(student.code || student.id);
+    try{ window.pushLiveFeed&&pushLiveFeed('barcode-login', student.name, student.code||''); }catch(e){}
+    // 🎯 فحص: هل الطالب دخل قبل كده؟
+    const key = 'eduflow_student_' + student.id;
+    const hasEnteredBefore = localStorage.getItem(key);
     
-    safeToast('✅ أهلاً ' + student.name, 'success');
-    
-    setTimeout(() => {
-      window.location.href = targetUrl;
-    }, 500);
+    if (!hasEnteredBefore) {
+      // أول مرة: اعرض التفاصيل
+      localStorage.setItem(key, new Date().toISOString());
+      const targetUrl = 'student-barcode-entry.html?code=' + encodeURIComponent(student.code || student.id);
+      safeToast('✅ أهلاً ' + student.name + ' (أول دخول)', 'success');
+      setTimeout(() => { window.location.href = targetUrl; }, 500);
+    } else {
+      // مش أول مرة: روح للداشبورد مباشرة
+      sessionStorage.setItem('eduflow_viewas', JSON.stringify(student));
+      const targetUrl = 'student-dashboard.html?viewas=' + encodeURIComponent(student.id);
+      safeToast('✅ أهلاً ' + student.name + ' (دخول سريع)', 'success');
+      setTimeout(() => { window.location.href = targetUrl; }, 300);
+    }
     
   } catch (e) {
     console.error('directLoginToStudent error:', e);

@@ -1,33 +1,40 @@
-// sw.js — كاش ذكي PWA (نسخة نهائية)
-const CACHE_VERSION = 'eduflow-pwa-v12';
+// sw.js — كاش ذكي PWA (نسخة v13 نظيفة — بدون FCM،Push بيتعامل في firebase-messaging-sw.js)
+const CACHE_VERSION = 'eduflow-pwa-v13';
 const CORE = [
   './',
   'login.html', 'register.html', 'hesetak.html', 'about.html',
   'student-dashboard.html', 'student-qr.html', 'exam-taker.html', 'qr-scan.html', 'print-qr.html',
   'assistant-dashboard.html', 'admin-dashboard.html', 'teacher-dashboard.html', 'teachers-operations.html',
-  'parent-dashboard.html', 'manifest.json',
+  'parent-dashboard.html', 'center-dashboard.html', 'checkin.html',
+  'teachers-showcase.html', 'about-teachers.html', 'door-poster.html',
+  'manifest.json', 'icon-192.png', 'icon-512.png',
   'css/eduflow-theme.css',
   'js/config.js', 'js/firebase-service.js', 'js/data-service.js', 'js/operations-service.js',
   'js/ui-helpers.js', 'js/drive-service.js', 'js/theme-manager.js', 'js/auth-service.js',
-  'js/footer-injector.js', 'js/schedule-board.js'
+  'js/footer-injector.js', 'js/schedule-board.js', 'js/scope-guard.js',
+  'js/ledger-ui.js', 'js/billing/core.js', 'js/legendary-exams.js', 'js/legendary-center.js',
+  'js/notify-service.js', 'js/store-center.js'
 ];
-
-// 🎯 صفحات أوفلاين احتياطية
 const OFFLINE_PAGE = './login.html';
 
+/* 🛡️ حفظ آمن في الكاش — مش هيرمي NetworkError تاني أبداً */
+function safePut(cache, req, res){
+  try{
+    if(!res || !res.ok || res.type !== 'basic') return;
+    cache.put(req, res).catch(function(){});
+  }catch(e){}
+}
+
 self.addEventListener('install', e => {
-  console.log('[SW] Installing:', CACHE_VERSION);
-  self.skipWaiting(); // تفعيل فوري
+  self.skipWaiting();
   e.waitUntil(
-    caches.open(CACHE_VERSION)
-      .then(c => Promise.allSettled(
-        CORE.map(u => c.add(u).catch(err => console.warn('[SW] cache failed:', u, err.message)))
-      ))
+    caches.open(CACHE_VERSION).then(c =>
+      Promise.allSettled(CORE.map(u => c.add(u).catch(()=>{})))
+    )
   );
 });
 
 self.addEventListener('activate', e => {
-  console.log('[SW] Activating:', CACHE_VERSION);
   e.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE_VERSION).map(k => caches.delete(k)))
@@ -38,96 +45,46 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
+  let url; try { url = new URL(req.url); } catch { return; }
 
-  let url;
-  try { url = new URL(req.url); } catch { return; }
-
-  // 🚫 تجاهل Firebase و Google APIs (مش هنكاشها)
-  if (
-    url.hostname.includes('googleapis') ||
-    url.hostname.includes('gstatic') ||
-    url.hostname.includes('firebase') ||
-    url.hostname.includes('firestore') ||
-    url.hostname.includes('identitytoolkit') ||
-    url.hostname.includes('drive.google.com')
-  ) {
-    // حاول الشبكة، لو فشل ارجع فارغ
+  /* 🚫 خارجي (Firebase/Google/Drive): شبكة بس، من غير كاش ومن غير أخطاء */
+  if (url.origin !== location.origin) {
     e.respondWith(fetch(req).catch(() => new Response('', { status: 503 })));
     return;
   }
 
-  // 🔥 طلبات من نفس الـ origin فقط
-  if (url.origin !== location.origin) return;
-
-  // 📄 صفحات HTML: Network-First مع Fallback للأوفلاين
+  /* 📄 صفحات HTML: Network-First + fallback أوفلاين */
   if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
     e.respondWith(
       fetch(req, { cache: 'no-store' })
         .then(res => {
           const copy = res.clone();
-          caches.open(CACHE_VERSION).then(c => c.put(req, copy));
+          caches.open(CACHE_VERSION).then(c => safePut(c, req, copy));
           return res;
         })
-        .catch(() =>
-          caches.match(req)
-            .then(hit => hit || caches.match(OFFLINE_PAGE))
-        )
+        .catch(() => caches.match(req).then(hit => hit || caches.match(OFFLINE_PAGE)))
     );
     return;
   }
 
-  // 🖼️ صور / خطوط / JS / CSS: Cache-First + Stale-While-Revalidate
+  /* 🖼️ أصول: Cache-First + تحديث بالخلفية */
   e.respondWith(
     caches.match(req).then(hit => {
-      const fetchPromise = fetch(req)
-        .then(res => {
-          if (res && res.ok) {
-            const copy = res.clone();
-            caches.open(CACHE_VERSION).then(c => c.put(req, copy));
-          }
-          return res;
-        })
-        .catch(() => hit);
-      return hit || fetchPromise;
+      const net = fetch(req).then(res => {
+        const copy = res.clone();
+        caches.open(CACHE_VERSION).then(c => safePut(c, req, copy));
+        return res;
+      }).catch(() => hit);
+      return hit || net;
     })
   );
 });
 
-// 📢 استماع لرسائل من الصفحة (مثل: "احذف الكاش")
+/* 📢 أوامر من الصفحة */
 self.addEventListener('message', e => {
   if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
   if (e.data && e.data.type === 'CLEAR_CACHE') {
     caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
       .then(() => e.source.postMessage({ type: 'CACHE_CLEARED' }));
   }
-});
-/* ============ 📲 FCM background push ============ */
-importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
-try{
-  firebase.initializeApp({
-    apiKey:"نفس_القيم_من_js/config.js",
-    authDomain:"...", projectId:"...", storageBucket:"...",
-    messagingSenderId:"...", appId:"..."
-  });
-  firebase.messaging().onBackgroundMessage(function(payload){
-    var n=payload.notification||{}, d=payload.data||{};
-    self.registration.showNotification(n.title||d.title||'🔔 إشعار جديد',{
-      body:n.body||d.body||'',
-      icon:d.icon||n.icon||'/icon-192.png',
-      badge:'/icon-192.png',
-      tag:d.tag||'eduflow-push',
-      data:{url:d.url||'/'}
-    });
-  });
-}catch(e){ console.error('FCM SW init failed',e); }
-self.addEventListener('notificationclick',function(ev){
-  try{
-    ev.notification.close();
-    var url=(ev.notification.data&&ev.notification.data.url)||'/';
-    ev.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(function(list){
-      for(var i=0;i<list.length;i++){ if(list[i].url.indexOf(url)!==-1) return list[i].focus(); }
-      return clients.openWindow(url);
-    }));
-  }catch(e){}
 });

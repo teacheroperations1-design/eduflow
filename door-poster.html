@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مصمم بوستر الحضور | EduFlow</title>
+<link rel="stylesheet" href="css/eduflow-theme.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root {
+    --primary: #6366f1;
+    --bg: #f1f5f9;
+    --surface: #ffffff;
+    --text: #0f172a;
+    --border: #e2e8f0;
+  }
+  body {
+    margin: 0;
+    font-family: 'Cairo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 20px;
+  }
+  .designer-layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  @media (max-width: 900px) {
+    .designer-layout { grid-template-columns: 1fr; }
+  }
+  
+  /* لوحة التحكم */
+  .controls-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    height: fit-content;
+    position: sticky;
+    top: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+  .controls-panel h3 {
+    margin-top: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+    color: var(--primary);
+  }
+  .form-group { margin-bottom: 16px; }
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: #475569;
+  }
+  .form-input, .form-select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #f8fafc;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+  .form-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
+  .btn {
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 10px;
+    transition: all 0.2s;
+    font-size: 15px;
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+  }
+  .btn-success {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+  }
+  .btn-ghost {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid var(--border);
+  }
+  .btn:hover { transform: translateY(-2px); opacity: 0.95; }
+
+  /* منطقة المعاينة */
+  .preview-area {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    background: #e2e8f0;
+    padding: 40px 20px;
+    border-radius: 16px;
+    overflow: auto;
+  }
+  
+  /* تصميم البوستر الفعلي (نسبة A4) */
+  #posterCanvas {
+    width: 595px; /* عرض A4 تقريباً عند 72 DPI */
+    min-height: 842px; /* ارتفاع A4 */
+    background: #ffffff;
+    color: #0f172a;
+    border-radius: 8px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+  
+  /* شريط علوي ملون */
+  .poster-top-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 12px;
+    background: linear-gradient(90deg, var(--theme-color, #6366f1), #8b5cf6, #ec4899);
+  }
+
+  .poster-icon { font-size: 64px; margin-bottom: 16px; }
+  .poster-title {
+    font-size: 36px;
+    font-weight: 900;
+    margin: 0 0 8px;
+    color: #1e293b;
+    line-height: 1.2;
+  }
+  .poster-subtitle {
+    font-size: 18px;
+    color: #64748b;
+    margin-bottom: 32px;
+    font-weight: 600;
+  }
+  
+  .qr-frame {
+    background: #fff;
+    padding: 16px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(99, 102, 241, 0.15);
+    border: 2px solid #e2e8f0;
+    margin-bottom: 32px;
+    transition: all 0.3s;
+  }
+  .qr-frame img {
+    display: block;
+    /* الحجم يتحكم فيه عبر JS */
+  }
+  
+  .poster-steps {
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    border-radius: 16px;
+    padding: 24px;
+    width: 100%;
+    max-width: 450px;
+    text-align: right;
+  }
+  .poster-steps h4 {
+    margin: 0 0 16px;
+    color: var(--theme-color, #6366f1);
+    font-size: 20px;
+  }
+  .step-item {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #334155;
+  }
+  .step-num {
+    width: 28px;
+    height: 28px;
+    background: var(--theme-color, #6366f1);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .poster-footer {
+    margin-top: auto;
+    padding-top: 24px;
+    font-size: 14px;
+    color: #94a3b8;
+    font-weight: 600;
+    line-height: 1.6;
+  }
+
+  /* إعدادات الطباعة: إخفاء كل شيء ما عدا البوستر */
+  @media print {
+    body * { visibility: hidden; }
+    #posterCanvas, #posterCanvas * { visibility: visible; }
+    #posterCanvas {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      border: none;
+      box-shadow: none;
+      border-radius: 0;
+    }
+    @page { margin: 0; size: A4 portrait; }
+  }
+</style>
+</head>
+<body>
+
+<div class="designer-layout">
+  <!-- لوحة التحكم -->
+  <div class="controls-panel">
+    <h3>⚙️ إعدادات البوستر</h3>
+    
+    <div class="form-group">
+      <label>عنوان المجموعة / السنتر</label>
+      <input type="text" id="pTitle" class="form-input" value="مجموعة أ. محمد سعد" oninput="updatePoster()">
+    </div>
+    
+    <div class="form-group">
+      <label>الرسالة الترحيبية</label>
+      <input type="text" id="pSubtitle" class="form-input" value="سجّل حضورك في ثانية!" oninput="updatePoster()">
+    </div>
+
+    <div class="form-group">
+      <label>رابط الحضور (URL)</label>
+      <input type="text" id="pUrl" class="form-input" value="https://eduflow-nine-dusky.vercel.app/checkin.html" oninput="updatePoster()">
+      <small style="color:#64748b; font-size:11px; display:block; margin-top:4px;">💡 يمكنك إضافة ?gid=ID في النهاية لتوجيه مجموعة معينة</small>
+    </div>
+
+    <div class="form-group">
+      <label>حجم الباركود (بكسل)</label>
+      <input type="range" id="pQrSize" min="200" max="500" value="300" style="width:100%;" oninput="updatePoster()">
+      <div style="text-align:center; font-size:12px; color:#64748b; margin-top:4px;"><span id="qrSizeVal">300</span> px</div>
+    </div>
+
+    <div class="form-group">
+      <label>لون الثيم الرئيسي</label>
+      <input type="color" id="pColor" value="#6366f1" style="width:100%; height:40px; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; padding:4px;" oninput="updatePoster()">
+    </div>
+
+    <div class="form-group">
+      <label>نص التذييل (Footer)</label>
+      <input type="text" id="pFooter" class="form-input" value="EduFlow by Habbash Group" oninput="updatePoster()">
+    </div>
+
+    <hr style="border:0; border-top:1px solid #e2e8f0; margin: 20px 0;">
+
+    <button class="btn btn-primary" onclick="window.print()">🖨️ طباعة البوستر (A4)</button>
+    <button class="btn btn-success" onclick="downloadPoster()">📥 تحميل كصورة (PNG)</button>
+    <a href="print-qr.html" class="btn btn-ghost">← العودة لطباعة أكواد الطلاب</a>
+  </div>
+
+  <!-- منطقة المعاينة -->
+  <div class="preview-area">
+    <div id="posterCanvas">
+      <div class="poster-top-bar"></div>
+      <h1 class="poster-title" id="outTitle">مجموعة أ. محمد سعد</h1>
+      <p class="poster-subtitle" id="outSubtitle">سجّل حضورك في ثانية!</p>
+      
+      <div class="qr-frame">
+        <img id="outQr" src="" alt="QR Code">
+      </div>
+
+      <div class="poster-steps">
+        <h4>٣ خطوات بسيطة:</h4>
+        <div class="step-item">
+          <span class="step-num">1</span>
+          <span>افتح كاميرا الموبايل وامسح الكود أعلاه.</span>
+        </div>
+        <div class="step-item">
+          <span class="step-num">2</span>
+          <span>إذا كنت طالباً مسجلاً، سيتم تسجيل حضورك فوراً.</span>
+        </div>
+        <div class="step-item">
+          <span class="step-num">3</span>
+          <span>إذا كنت جديداً، ستظهر لك تفاصيل الاشتراك والأساتذة.</span>
+        </div>
+      </div>
+
+      <div class="poster-footer" id="outFooter">
+        🕐 نافذة الحضور تفتح قبل الحصة بـ 30 دقيقة وتغلق بعدها.<br>
+        <span id="outFooterText">EduFlow by Habbash Group</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// تحديث فوري للمعاينة
+function updatePoster() {
+  const title = document.getElementById('pTitle').value;
+  const subtitle = document.getElementById('pSubtitle').value;
+  const url = document.getElementById('pUrl').value;
+  const color = document.getElementById('pColor').value;
+  const qrSize = document.getElementById('pQrSize').value;
+  const footer = document.getElementById('pFooter').value;
+
+  document.getElementById('outTitle').textContent = title || 'عنوان المجموعة';
+  document.getElementById('outSubtitle').textContent = subtitle || 'رسالة ترحيبية';
+  document.getElementById('outFooterText').textContent = footer || 'EduFlow';
+  document.getElementById('qrSizeVal').textContent = qrSize;
+  
+  // تحديث متغيرات CSS للألوان
+  document.documentElement.style.setProperty('--theme-color', color);
+  
+  // تحديث الباركود (نستخدم API خارجي موثوق لتوليد QR)
+  const encodedUrl = encodeURIComponent(url || 'https://eduflow-nine-dusky.vercel.app/checkin.html');
+  // إزالة علامة # من اللون لضمان عمل الـ API
+  const cleanColor = color.replace('#', '');
+  document.getElementById('outQr').src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodedUrl}&color=${cleanColor}&bgcolor=ffffff&margin=10`;
+}
+
+// تحميل البوستر كصورة عالية الجودة
+function downloadPoster() {
+  const poster = document.getElementById('posterCanvas');
+  // إزالة الظل مؤقتاً للحصول على صورة أنظف
+  const originalShadow = poster.style.boxShadow;
+  poster.style.boxShadow = 'none';
+  
+  // استخدام html2canvas بمقياس 2 للحصول على دقة عالية
+  html2canvas(poster, { scale: 2, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
+    poster.style.boxShadow = originalShadow;
+    const link = document.createElement('a');
+    link.download = 'بوستر-الحضور-EduFlow.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+}
+
+// تشغيل أولي لضبط القيم
+updatePoster();
+</script>
+</body>
+</html>

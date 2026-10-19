@@ -537,7 +537,7 @@ document.getElementById('themeToggle')?.addEventListener('click', function() {
 /* ============ 🧠 تذكر آخر دخول + متابعة الجلسة القائمة ============ */
 (function(){
 "use strict";
-function dashFor(role){ return {student:'student-dashboard.html',teacher:'teacher-dashboard.html',assistant:'assistant-dashboard.html',admin:'admin-dashboard.html',super_admin:'admin-dashboard.html',parent:'parent-dashboard.html'}[role]||'student-dashboard.html'; }
+function dashFor(role){ return {student:'student-dashboard.html',teacher:'teacher-dashboard.html',assistant:'assistant-dashboard.html',admin:'admin-dashboard.html',super_admin:'admin-dashboard.html',parent:'parent-dashboard.html',center:'center-dashboard.html'}[role]||'student-dashboard.html'; }
 /* 1) لو الجلسة لسه موجودة → كمّل بيها عادي من غير ما تسأل */
 try{
   var raw=sessionStorage.getItem('eduflow_user')||localStorage.getItem('eduflow_user');

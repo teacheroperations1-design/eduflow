@@ -323,7 +323,11 @@ const Ops = {
     for (const rule of rules) {
       if (rule.trigger === 'attendance_submitted' && context.type === 'attendance_submitted') {
         const att = (d.attendance || []).find(a => a.id === context.attendanceId);
-        if (att) {
+        d.automationSent = d.automationSent || {};
+        const sentKey = 'att_' + context.attendanceId;
+        if (att && !d.automationSent[sentKey]) {
+          d.automationSent[sentKey] = Date.now();
+          DataService._saveData(d);
           const assistants = (d.users || []).filter(u => u.role === 'assistant' && this.inScope(u.id, { groupId: att.groupId }));
           for (const a of assistants) {
             await DataService.addNotification({
@@ -454,11 +458,15 @@ async triggerCycleCheck(studentId, groupId, afterSession) {
     const d = DataService._getData();
     const existingInvoice = (d.payments || []).find(p =>
       p.studentId === studentId && p.groupId === groupId && 
-      p.cycleStart === cycle.cycleStartDate && p.status !== 'paid'
+      p.cycleStart === cycle.cycleStartDate
     );
     
-    // إنذار عند الحصة قبل الأخيرة
-    if (sessionsDone === sessionsRequired - 1) {
+    // إنذار عند الحصة قبل الأخيرة (مرة واحدة لكل دورة)
+    d.cycleAlerts = d.cycleAlerts || {};
+    const alertKey = studentId + '|' + groupId + '|' + (cycle.cycleStartDate || '') + '|warn';
+    if (sessionsDone === sessionsRequired - 1 && !d.cycleAlerts[alertKey]) {
+      d.cycleAlerts[alertKey] = new Date().toISOString();
+      DataService._saveData(d);
       await DataService.addNotification({
         title: '⚠️ تنبيه: الحصة الجاية الدفع',
         message: `وصلت للحصة ${cycle.sessionsDone} من ${cycle.sessionsRequired} في مجموعة ${g?.name || ''}. الحصة القادمة هتكون موعد دفع الشهرية (${g?.monthlyFee || 0} جنيه).`,
@@ -769,7 +777,7 @@ async addManualSessionsForBilling(groupId, studentId, month, sessionsCount, reas
     };
     d.manualPoints.push(item);
     DataService._saveData(d);
-    if (window.FirebaseService?._db) await FirebaseService.saveDoc('manualPoints', id, item);
+    if (window.FirebaseService && FirebaseService._db) FirebaseService.saveDoc('manualPoints', id, item).catch(function(){});
     const student = DataService.getUserById(studentId);
     await this.log(awardedBy, 'إضافة نقاط يدوية', `${points} نقطة للطالب ${student?.name || studentId} - السبب: ${reason}`);
     await DataService.addNotification({
@@ -784,7 +792,7 @@ async addManualSessionsForBilling(groupId, studentId, month, sessionsCount, reas
 // 🆕 فحص الطلاب اللي فاتت فترة السماح عليهم
 async runOverdueGraceScan() {
   try {
-    const d = this._getData();
+    const d = DataService._getData();
     const groups = DataService.getGroups ? DataService.getGroups() : [];
     const students = DataService.getStudents ? DataService.getStudents() : [];
     let overdueCount = 0;
@@ -1296,6 +1304,141 @@ async recordEmergencySession(groupId, date, addedBy) {
       return (DataService._getData().whatsappTemplates || this.defaultWhatsAppTemplates()).find(t => t.id === id) || null;
     } catch (e) { return null; }
   },
+  /* ============ 🧹 كنس البيانات القديمة ============ */
+  async purgeOldData(monthsToKeep = 6) {
+    try {
+      const d = DataService._getData();
+      const cutoff = new Date();
+      cutoff.setMonth(cutoff.getMonth() - monthsToKeep);
+      const cutoffStr = cutoff.toISOString();
+      
+      let purged = { points: 0, attendance: 0, notifications: 0, homework: 0, exams: 0 };
+      
+      // مسح النقاط القديمة
+      d.manualPoints = (d.manualPoints || []).filter(mp => {
+        const keep = mp.awardedAt >= cutoffStr;
+        if (!keep) purged.points++;
+        return keep;
+      });
+      
+      d.interactionPoints = (d.interactionPoints || []).filter(ip => {
+        const keep = ip.awardedAt >= cutoffStr;
+        if (!keep) purged.points++;
+        return keep;
+      });
+      
+      // مسح الحضور القديم
+      d.attendance = (d.attendance || []).filter(a => {
+        const keep = a.date >= cutoffStr.slice(0, 10);
+        if (!keep) purged.attendance++;
+        return keep;
+      });
+      
+      // مسح الإشعارات القديمة
+      d.notifications = (d.notifications || []).filter(n => {
+        const keep = n.createdAt >= cutoffStr;
+        if (!keep) purged.notifications++;
+        return keep;
+      });
+      
+      // مسح الواجبات والامتحانات القديمة (غير النشطة)
+      d.homework = (d.homework || []).filter(hw => {
+        const keep = hw.deadline >= cutoffStr || hw.status === 'active';
+        if (!keep) purged.homework++;
+        return keep;
+      });
+      
+      d.exams = (d.exams || []).filter(ex => {
+        const keep = ex.dueDate >= cutoffStr || ex.status === 'active';
+        if (!keep) purged.exams++;
+        return keep;
+      });
+      
+      DataService._saveData(d);
+      
+      if (window.FirebaseService && FirebaseService._db) {
+        await FirebaseService.saveMeta('lastPurge', { at: new Date().toISOString(), monthsToKeep, purged });
+      }
+      
+      return { success: true, purged, monthsToKeep };
+    } catch (e) {
+      console.error('purgeOldData error:', e);
+      return { success: false, message: e.message };
+    }
+  },
+  
+  /* ============ 🎖️ ليدر المجموعة + 💵 طلبات دفع الطلاب ============ */
+  async setGroupLeader(groupId, studentId){
+    const d = DataService._getData();
+    const g = (d.groups||[]).find(x=>x.id===groupId); if(!g) return {success:false,message:'المجموعة مش موجودة'};
+    g.leaderId = studentId || null;
+    DataService._saveData(d);
+    if (window.FirebaseService && FirebaseService._db) await FirebaseService.saveDoc('groups', groupId, g);
+    if(studentId){ await DataService.addNotification({targetUserId:studentId,title:'🎖️ مبروك! أنت ليدر المجموعة',message:'بقيت مسؤول تسجيل الحضور وتصوير السبورة لمجموعة '+g.name,type:'general',priority:'high',meta:{event:'general'}}); }
+    return {success:true};
+  },
+  async leaderSubmitAttendance(groupId, records, leaderId){
+    const d = DataService._getData();
+    const g = (d.groups||[]).find(x=>x.id===groupId); if(!g) return {success:false};
+    const today = new Date().toISOString().slice(0,10);
+    d.attendance = d.attendance||[];
+    d.attendance = d.attendance.filter(a=>!(a.groupId===groupId&&a.date===today&&a.status==='pending'));
+    const rec = {id:'att_'+groupId+'_'+today, groupId, groupName:g.name, date:today, status:'pending', records, byLeader:leaderId, createdAt:new Date().toISOString()};
+    d.attendance.push(rec);
+    DataService._saveData(d);
+    if (window.FirebaseService && FirebaseService._db) await FirebaseService.saveDoc('attendance', rec.id, rec);
+    const targets = new Set(); if(g.teacherId) targets.add(g.teacherId);
+    (d.users||[]).forEach(u=>{ if(u.role==='assistant'){ const a=this.getAssignment(u.id); if(a&&a.teacherId===g.teacherId) targets.add(u.id); } });
+    for(const tid of targets){ await DataService.addNotification({targetUserId:tid,title:'🎖️ حضور مسجل من الليدر',message:'ليدر مجموعة '+g.name+' سجل حضور اليوم — بانتظار اعتمادك',type:'attendance',priority:'high',meta:{event:'absent',refId:rec.id}}); }
+    return {success:true,id:rec.id};
+  },
+  async leaderSubmitBoard(groupId, images, note, leaderId){
+    const d = DataService._getData();
+    const g = (d.groups||[]).find(x=>x.id===groupId); if(!g) return {success:false};
+    const today = new Date().toISOString().slice(0,10);
+    d.classPosts = d.classPosts||[];
+    const post = {id:'cp_'+Date.now(), groupId, title:'📸 سبورة حصة '+today, content: note||'ما تم شرحه في الحصة (بواسطة الليدر)', boardImages: images||[], images: images||[], createdBy: leaderId, byLeader:true, date:today, createdAt:new Date().toISOString(), status:'published'};
+    d.classPosts.push(post);
+    DataService._saveData(d);
+    if (window.FirebaseService && FirebaseService._db) await FirebaseService.saveDoc('classPosts', post.id, post);
+    const targets = new Set(); if(g.teacherId) targets.add(g.teacherId);
+    (d.users||[]).forEach(u=>{ if(u.role==='assistant'){ const a=this.getAssignment(u.id); if(a&&a.teacherId===g.teacherId) targets.add(u.id); } });
+    for(const tid of targets){ await DataService.addNotification({targetUserId:tid,title:'📸 سبورة الحصة اترفعت',message:'ليدر مجموعة '+g.name+' رفع '+((images||[]).length)+' صورة للسبورة'+(note?' — '+note:''),type:'general',priority:'medium',meta:{event:'post_new',refId:post.id}}); }
+    return {success:true,id:post.id};
+  },
+  async submitPaymentClaim(studentId, groupId, amount, method, receiptImage, month){
+    const d = DataService._getData(); d.paymentClaims = d.paymentClaims||[];
+    const claim = {id:'pc_'+Date.now(), studentId, groupId, amount:+amount||0, method:method||'cash', receiptImage:receiptImage||'', month:month||new Date().toISOString().slice(0,7), status:'pending', createdAt:new Date().toISOString()};
+    d.paymentClaims.push(claim);
+    DataService._saveData(d);
+    if (window.FirebaseService && FirebaseService._db) await FirebaseService.saveDoc('paymentClaims', claim.id, claim);
+    const g = (d.groups||[]).find(x=>x.id===groupId);
+    const s = DataService.getUserById(studentId);
+    const targets = new Set(); if(g&&g.teacherId) targets.add(g.teacherId);
+    (d.users||[]).forEach(u=>{ if(u.role==='assistant'){ const a=this.getAssignment(u.id); if(a&&g&&a.teacherId===g.teacherId) targets.add(u.id); } if(u.role==='admin'||u.role==='super_admin') targets.add(u.id); });
+    for(const tid of targets){ await DataService.addNotification({targetUserId:tid,title:'💵 طالب سجل دفعة',message:(s?s.name:'طالب')+' قال إنه دفع '+amount+' ج.م لمجموعة '+(g?g.name:'')+' — محتاج اعتمادك',type:'payment',priority:'high',meta:{event:'payment_received',refId:claim.id}}); }
+    return {success:true,id:claim.id};
+  },
+  async resolvePaymentClaim(claimId, approve, byId){
+    const d = DataService._getData();
+    const c = (d.paymentClaims||[]).find(x=>x.id===claimId); if(!c) return {success:false};
+    c.status = approve?'approved':'rejected'; c.resolvedBy = byId; c.resolvedAt = new Date().toISOString();
+    if(approve){
+      const month = c.month || new Date().toISOString().slice(0,7);
+      d.payments = d.payments||[];
+      let p = d.payments.find(x=>x.studentId===c.studentId&&x.groupId===c.groupId&&x.month===month);
+      if(!p){ p={id:'pay_'+c.studentId+'_'+c.groupId+'_'+month, studentId:c.studentId, groupId:c.groupId, month, amount:0, paidAmount:0, status:'paid', history:[]}; d.payments.push(p); }
+      p.history = p.history||[];
+      p.history.push({date:new Date().toISOString(), amount:c.amount, method:c.method, by:byId, claimId:c.id});
+      p.paidAmount = (p.paidAmount||0)+c.amount;
+      p.amount = Math.max(p.amount||0, p.paidAmount);
+      p.status = 'paid';
+    }
+    DataService._saveData(d);
+    if (window.FirebaseService && FirebaseService._db) await FirebaseService.saveDoc('paymentClaims', c.id, c);
+    await DataService.addNotification({targetUserId:c.studentId,title:approve?'✅ تم اعتماد دفعتك':'❌ طلب الدفع مرفوض',message:approve?'تم تسجيل '+c.amount+' ج.م في دفاتر المنصة':'راجع السنتر لتأكيد الدفعة',type:'payment',priority:'high',meta:{event:'payment_received',refId:c.id}});
+    return {success:true};
+  },
 
   async addWhatsAppTemplate(data) {
     try {
@@ -1607,3 +1750,17 @@ cb&&cb(Ops.supportContact());
 }).catch(function(){ cb&&cb(Ops.supportContact()); });
 }catch(e){ cb&&cb(null); }
 };
+/* 🛡️ منع تكرار الإشعارات */
+(function(){
+  if(!window.DataService||typeof DataService.addNotification!=='function'||DataService.__dedup) return;
+  DataService.__dedup=true;
+  var orig=DataService.addNotification.bind(DataService), recent={};
+  DataService.addNotification=function(n){
+    try{
+      var key=[n&&n.targetUserId,n&&n.type,n&&n.title,n&&n.message].join('|'), now=Date.now();
+      if(recent[key]&&now-recent[key]<30000) return Promise.resolve(null);
+      recent[key]=now;
+    }catch(e){}
+    return orig.apply(this,arguments);
+  };
+})();

@@ -1,0 +1,2104 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>سبورة علوم اولي إعدادي - ✨</title>
+<style>
+/* ============================================
+   1) الأساسيات العامة
+   ============================================ */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg-dark-1: #070D1F;
+  --bg-dark-2: #0B1934;
+  --bg-dark-3: #0E224E;
+  --accent-sky: #38BDF8;
+  --accent-violet: #8B5CF6;
+  --accent-emerald: #10B981;
+  --accent-amber: #F59E0B;
+  --border-soft: rgba(255,255,255,0.1);
+}
+
+html, body {
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: 'Tajawal', 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+  background:
+    radial-gradient(900px 600px at 20% -10%, rgba(56,189,248,0.16), transparent 60%),
+    radial-gradient(700px 500px at 90% 0%, rgba(139,92,246,0.14), transparent 60%),
+    linear-gradient(180deg, var(--bg-dark-1) 0%, var(--bg-dark-2) 35%, var(--bg-dark-3) 100%);
+  background-attachment: fixed;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+::selection { background: rgba(14,165,233,0.3); }
+
+::-webkit-scrollbar { height: 7px; width: 7px; }
+::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.35); border-radius: 10px; }
+::-webkit-scrollbar-track { background: rgba(15,23,42,0.5); }
+
+/* ============================================
+   2) الحركات والأنيميشن
+   ============================================ */
+@keyframes fadeSlide {
+  0% { opacity: 0; transform: translateY(18px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes pop {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+@keyframes dash { to { stroke-dashoffset: -20; } }
+@keyframes pulseSoft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+@keyframes ping {
+  75%, 100% { transform: scale(2); opacity: 0; }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-dash { animation: dash 2s linear infinite; }
+.animate-pop { animation: pop 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+
+/* ============================================
+   3) الهيدر
+   ============================================ */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  backdrop-filter: blur(24px);
+  background: rgba(7,13,31,0.8);
+  border-bottom: 1px solid var(--border-soft);
+  width: 100%;
+}
+
+.header-inner {
+     max-width: 100%;
+  margin: 0 auto;
+  padding: 16px 40px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.logo-box {
+  width: 52px; height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--accent-sky), var(--accent-violet));
+  border: 1px solid rgba(255,255,255,0.2);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 30px rgba(56,189,248,0.5);
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.header-title { font-weight: 900; font-size: 26px; letter-spacing: -0.5px; }
+
+.header-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; align-items: center; }
+
+.badge {
+  font-size: 11px; font-weight: 700;
+  padding: 4px 12px; border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  background: rgba(255,255,255,0.1);
+}
+.badge.sky { color: #BAE6FD; background: rgba(14,165,233,0.1); border-color: rgba(56,189,248,0.2); }
+.badge.violet { color: #DDD6FE; background: rgba(139,92,246,0.1); border-color: rgba(196,181,253,0.2); }
+.badge.emerald { color: #A7F3D0; background: rgba(16,185,129,0.1); border-color: rgba(110,231,183,0.2); }
+.badge.amber { color: #FDE68A; background: rgba(251,191,36,0.2); border-color: rgba(252,211,77,0.3); }
+
+.header-side { margin-right: auto; display: flex; align-items: center; gap: 8px; }
+
+/* ============================================
+   4) شريط التبويبات
+   ============================================ */
+.tabs-wrap {    max-width: 100%; margin: 0 auto; padding: 0 28px 16px; width: 100%; }
+
+.tabs {
+  display: flex; gap: 10px;
+  overflow-x: auto; padding-bottom: 8px;
+  scrollbar-width: thin;
+  width: 100%;
+}
+
+.tab-btn {
+  white-space: nowrap;
+  padding: 12px 20px;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  font-weight: 900; font-size: 13px;
+  display: flex; align-items: center; gap: 10px;
+  transition: all 0.3s; cursor: pointer;
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.7);
+  font-family: inherit; flex-shrink: 0;
+}
+
+.tab-btn:hover {
+  background: rgba(255,255,255,0.12);
+  color: #fff; border-color: rgba(255,255,255,0.2);
+  transform: scale(1.02);
+}
+
+.tab-btn.active {
+  background: #fff; color: #0F172A;
+  border-color: #fff;
+  box-shadow: 0 0 30px rgba(255,255,255,0.4);
+  transform: scale(1.04);
+}
+
+.tab-icon {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid var(--border-soft);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; transition: all 0.3s;
+}
+
+.tab-btn.active .tab-icon {
+  background: #0F172A; color: #fff; border-color: #0F172A;
+}
+
+.tab-count {
+  font-size: 10px; background: #0F172A; color: #fff;
+  padding: 2px 6px; border-radius: 999px;
+}
+
+.status-line {
+  margin-top: 8px; font-size: 11px; font-weight: 700;
+  color: rgba(255,255,255,0.4);
+  display: flex; align-items: center; gap: 8px;
+}
+
+.status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent-sky);
+  animation: pulseSoft 2s infinite;
+}
+
+/* ============================================
+   5) منطقة المحتوى الرئيسية
+   ============================================ */
+.content-area {
+     max-width: 100%;
+  margin: 0 auto;
+  padding: 12px 28px 28px;
+  width: 100%;
+  flex: 1;
+}
+
+.main-card {
+  border-radius: 32px;
+  border: 1px solid var(--border-soft);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.05), 0 20px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08);
+  background: linear-gradient(135deg, rgba(14,31,66,0.9), rgba(10,20,48,0.9));
+  backdrop-filter: blur(24px);
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+.glow-1 {
+  pointer-events: none; position: absolute;
+  top: -96px; right: -96px;
+  width: 320px; height: 320px;
+  background: linear-gradient(135deg, rgba(56,189,248,0.2), rgba(37,99,235,0.2));
+  border-radius: 50%; filter: blur(60px);
+}
+
+.glow-2 {
+  pointer-events: none; position: absolute;
+  bottom: -96px; left: -96px;
+  width: 360px; height: 360px;
+  background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(217,70,239,0.1));
+  border-radius: 50%; filter: blur(70px);
+}
+
+.top-line {
+  pointer-events: none; position: absolute;
+  top: 0; left: 50%; transform: translateX(-50%);
+  width: 80%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(125,211,252,0.4), transparent);
+}
+
+.card-content {
+  position: relative;
+  padding: 20px 36px 36px;
+  width: 100%;
+  animation: fadeSlide 0.55s cubic-bezier(0.22,1,0.36,1);
+}
+
+.section-head {
+  display: flex; flex-wrap: wrap;
+  align-items: center; gap: 12px;
+  margin-bottom: 8px;
+}
+
+.section-num {
+  width: 40px; height: 40px;
+  border-radius: 14px;
+  background: #fff; color: #0F172A;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.section-title {
+  font-weight: 900; font-size: 30px;
+  display: flex; align-items: center; gap: 12px;
+}
+
+/* ============================================
+   6) كروت التعريفات الذهبية
+   ============================================ */
+.golden-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px; margin-top: 24px;
+}
+
+.golden-card {
+  position: relative;
+  border-radius: 24px;
+  border: 1px solid var(--border-soft);
+  background: linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
+  padding: 1px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  transition: all 0.5s;
+}
+
+.golden-card:hover {
+  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+  transform: translateY(-6px) scale(1.02);
+}
+
+.golden-inner {
+  border-radius: 23px;
+  background: linear-gradient(135deg, #10244D, #0B1936);
+  padding: 20px; height: 100%;
+  position: relative; overflow: hidden;
+}
+
+.golden-glow {
+  position: absolute; top: 0; right: 0;
+  width: 128px; height: 128px;
+  border-radius: 50%; filter: blur(30px); opacity: 0.3;
+}
+
+.golden-head {
+  display: flex; align-items: flex-start;
+  justify-content: space-between;
+  position: relative; z-index: 10;
+}
+
+.golden-icon {
+  width: 44px; height: 44px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid rgba(255,255,255,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transition: all 0.5s;
+}
+
+.golden-card:hover .golden-icon { transform: rotate(8deg) scale(1.1); }
+
+.golden-formula {
+  font-family: monospace; font-size: 10px;
+  background: #fff; color: #0F172A;
+  padding: 4px 10px; border-radius: 999px;
+  font-weight: 900;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.golden-title { font-weight: 900; font-size: 19px; margin-top: 16px; }
+
+.golden-desc {
+  font-size: 13px; line-height: 1.9;
+  margin-top: 8px; font-weight: 700;
+  color: rgba(186,230,253,0.7);
+}
+
+.golden-progress {
+  margin-top: 16px; height: 4px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.1);
+  overflow: hidden;
+}
+
+.golden-progress-bar {
+  height: 100%; width: 0;
+  transition: width 0.7s;
+}
+
+.golden-card:hover .golden-progress-bar { width: 100%; }
+
+/* ============================================
+   7) قسم تركيب الذرة
+   ============================================ */
+.atom-layout {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 24px; align-items: start;
+}
+
+.atom-panel {
+  border-radius: 28px;
+  background: #08152E;
+  border: 1px solid rgba(56,189,248,0.2);
+  padding: 20px;
+  box-shadow: 0 0 40px rgba(14,165,233,0.15);
+  position: relative; overflow: hidden;
+}
+
+.atom-dots-bg {
+  position: absolute; inset: 0; opacity: 0.4;
+  background-image: radial-gradient(rgba(125,211,252,0.15) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+.element-picker {
+  display: flex; gap: 8px;
+  flex-wrap: wrap; margin-bottom: 20px;
+  position: relative; z-index: 10;
+}
+
+.elem-btn {
+  padding: 8px 14px; border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  font-weight: 900; font-size: 12px;
+  transition: all 0.3s; cursor: pointer;
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.7);
+  font-family: inherit;
+  display: flex; flex-direction: column;
+  align-items: center; line-height: 1;
+}
+
+.elem-btn:hover {
+  background: rgba(255,255,255,0.15);
+  color: #fff; border-color: rgba(255,255,255,0.2);
+}
+
+.elem-btn.active {
+  background: #fff; color: #0F172A;
+  border-color: #fff;
+  box-shadow: 0 0 20px rgba(255,255,255,0.5);
+  transform: scale(1.05);
+}
+
+.elem-btn small { font-size: 9px; opacity: 0.7; margin-top: 4px; }
+
+.atom-svg-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.particles-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.particle-card {
+  border-radius: 22px; padding: 20px;
+  backdrop-filter: blur(10px);
+  transition: transform 0.3s;
+}
+
+.particle-card:hover { transform: scale(1.02); }
+
+.particle-card.proton {
+  border: 1px solid rgba(252,211,77,0.2);
+  background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(249,115,22,0.1));
+}
+.particle-card.neutron {
+  border: 1px solid rgba(203,213,225,0.1);
+  background: rgba(255,255,255,0.05);
+}
+.particle-card.electron {
+  border: 1px solid rgba(125,211,252,0.2);
+  background: linear-gradient(135deg, rgba(14,165,233,0.2), rgba(59,130,246,0.1));
+}
+
+.particle-symbol {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; color: #0F172A;
+}
+.particle-symbol.p { background: #FBBF24; }
+.particle-symbol.n { background: #CBD5E1; }
+.particle-symbol.e { background: #38BDF8; }
+
+.particle-name { font-weight: 900; margin-top: 12px; }
+.particle-desc { font-size: 12px; margin-top: 4px; font-weight: 700; line-height: 1.8; opacity: 0.7; }
+
+/* ============================================
+   8) قسم التوزيع الإلكتروني
+   ============================================ */
+.config-layout {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 20px; align-items: stretch;
+}
+
+.levels-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px; margin-top: 24px;
+  position: relative; z-index: 10;
+}
+
+.level-box {
+  border-radius: 18px;
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-soft);
+  padding: 12px; text-align: center;
+  transition: background 0.3s;
+}
+
+.level-box:hover { background: rgba(255,255,255,0.1); }
+
+.level-name { font-size: 11px; color: #BAE6FD; font-weight: 700; }
+.level-n { font-weight: 900; margin-top: 4px; }
+.level-cap { font-size: 12px; font-weight: 900; color: #A5F3FC; margin-top: 4px; }
+
+.level-bar {
+  margin-top: 8px; height: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.1);
+  overflow: hidden;
+}
+
+.level-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #38BDF8, #67E8F9);
+  transition: width 0.5s;
+}
+
+.slider-panel {
+  margin-top: 32px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 20px;
+  border: 1px solid var(--border-soft);
+  padding: 16px;
+  display: flex; align-items: center; gap: 16px;
+  position: relative; z-index: 10;
+}
+
+.slider-panel input[type="range"] {
+  width: 100%; accent-color: var(--accent-sky);
+  height: 8px; margin-top: 8px;
+}
+
+.z-display {
+  width: 80px; height: 80px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #38BDF8, #2563EB);
+  border: 2px solid rgba(186,230,253,0.5);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  box-shadow: 0 0 20px rgba(56,189,248,0.6);
+  flex-shrink: 0;
+}
+
+.z-display .label { font-size: 10px; opacity: 0.7; font-weight: 700; }
+.z-display .value { font-weight: 900; font-size: 30px; }
+
+.config-chips {
+  margin-top: 16px;
+  display: flex; flex-wrap: wrap; gap: 8px;
+  position: relative; z-index: 10;
+}
+
+.chip {
+  padding: 8px 16px; border-radius: 999px;
+  background: rgba(14,165,233,0.2);
+  border: 1px solid rgba(125,211,252,0.3);
+  color: #E0F2FE; font-weight: 900; font-size: 14px;
+}
+
+.chip.total { background: #fff; color: #0F172A; }
+
+/* ============================================
+   9) قسم الجدول الدوري
+   ============================================ */
+.periodic-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px; margin-bottom: 20px;
+}
+
+.legend-item {
+  border-radius: 14px; border: 1px solid;
+  padding: 8px 12px;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; font-weight: 900;
+}
+
+.legend-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  animation: pulseSoft 2s infinite;
+}
+
+.periodic-table {
+  border-radius: 28px;
+  background: #0E1B36;
+  border: 1px solid var(--border-soft);
+  padding: 16px 24px 24px;
+  box-shadow: 0 0 60px rgba(59,130,246,0.15);
+  overflow-x: auto;
+}
+
+.periodic-grid {
+  min-width: 760px;
+  display: grid;
+  grid-template-columns: 36px repeat(18, 1fr);
+  gap: 4px;
+}
+
+.group-num {
+  text-align: center; font-size: 10px;
+  font-weight: 900; color: rgba(255,255,255,0.3);
+  padding: 4px;
+}
+
+.period-label {
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.1);
+  border-radius: 8px; color: #fff;
+  font-weight: 900; font-size: 12px;
+}
+
+.empty-cell {
+  height: 58px; border-radius: 12px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.03);
+}
+
+.element-cell {
+  height: 58px; border-radius: 12px;
+  border: 2px solid;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  position: relative;
+  transition: all 0.3s; cursor: pointer;
+  font-family: inherit;
+}
+
+.element-cell:hover {
+  transform: scale(1.08); z-index: 10;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+
+.element-cell.selected {
+  transform: scale(1.12);
+  box-shadow: 0 0 0 4px rgba(255,255,255,0.4), 0 0 20px rgba(255,255,255,0.6);
+  z-index: 20;
+}
+
+.element-cell .sym { font-weight: 900; font-size: 15px; }
+.element-cell .num { font-size: 9px; font-weight: 700; opacity: 0.7; }
+.element-cell .name { font-size: 8px; font-weight: 900; opacity: 0.6; margin-top: 2px; }
+
+.element-info {
+  border-radius: 20px;
+  background: linear-gradient(135deg, #fff, #F8FAFC);
+  border: 2px solid #E2E8F0;
+  padding: 16px;
+  display: flex; align-items: center; gap: 16px;
+  animation: fadeSlide 0.4s ease;
+  margin-top: 20px; color: #0F172A;
+}
+
+.element-info-box {
+  width: 64px; height: 64px;
+  border-radius: 16px; border: 2px solid;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ============================================
+   10) قسم الفلزات واللافلزات
+   ============================================ */
+.types-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.type-card {
+  border-radius: 24px; border: 2px solid;
+  padding: 20px; position: relative; overflow: hidden;
+  transition: all 0.3s;
+}
+
+.type-card:hover { transform: scale(1.03); box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
+
+.type-card .top-bar {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 4px;
+}
+
+.type-icon { font-size: 30px; }
+.type-title { font-weight: 900; font-size: 18px; margin-top: 8px; }
+
+.type-cond {
+  margin-top: 8px; display: inline-flex;
+  padding: 4px 10px; border-radius: 999px;
+  background: #fff; border: 1px solid #E2E8F0;
+  font-size: 11px; font-weight: 900;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.type-desc { font-size: 12px; margin-top: 12px; font-weight: 700; color: #475569; line-height: 1.7; }
+
+.type-examples {
+  font-size: 11px; margin-top: 12px;
+  font-family: monospace;
+  background: #0F172A; color: #fff;
+  padding: 4px 8px; border-radius: 999px;
+  display: inline-block;
+}
+
+/* ============================================
+   11) قسم الحجم والخواص
+   ============================================ */
+.props-tabs {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  padding: 6px; border-radius: 999px;
+  background: #0F172A; width: fit-content;
+}
+
+.props-tab {
+  padding: 10px 20px; border-radius: 999px;
+  font-weight: 900; font-size: 13px;
+  transition: all 0.3s; cursor: pointer;
+  border: none; background: transparent;
+  color: rgba(255,255,255,0.6);
+  font-family: inherit;
+}
+
+.props-tab:hover { color: #fff; background: rgba(255,255,255,0.1); }
+
+.props-tab.active {
+  background: #fff; color: #0F172A;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transform: scale(1.05);
+}
+
+.props-display {
+  border-radius: 28px;
+  background: linear-gradient(135deg, #0B1A33, #122A5A);
+  border: 1px solid var(--border-soft);
+  padding: 24px 32px;
+  position: relative; overflow: hidden;
+  box-shadow: 0 0 80px rgba(37,99,235,0.2);
+  margin-top: 20px;
+}
+
+.props-dots {
+  position: absolute; inset: 0; opacity: 0.3;
+  background-image: radial-gradient(rgba(148,163,184,0.15) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.props-info-cards {
+  margin-top: 32px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 12px;
+  position: relative; z-index: 10;
+}
+
+.info-card {
+  border-radius: 18px;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-soft);
+  padding: 16px;
+}
+
+.info-card h5 { font-weight: 900; font-size: 14px; }
+.info-card p { font-size: 12px; opacity: 0.7; margin-top: 8px; line-height: 1.8; font-weight: 700; }
+
+/* ============================================
+   12) قسم المادة والمخاليط
+   ============================================ */
+.matter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.matter-card {
+  border-radius: 24px; border: 2px solid;
+  padding: 24px; transition: all 0.3s;
+  background: #fff; color: #0F172A;
+}
+
+.matter-card:hover {
+  box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+  transform: translateY(-4px);
+}
+
+.matter-card.blue { background: linear-gradient(135deg, #F0F9FF, #DBEAFE); border-color: #BAE6FD; }
+.matter-card.amber { background: linear-gradient(135deg, #FFFBEB, #FEF3C7); border-color: #FDE68A; }
+
+.matter-icon {
+  width: 48px; height: 48px;
+  border-radius: 14px; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+}
+
+.matter-title { font-weight: 900; font-size: 18px; margin-top: 16px; }
+.matter-desc { font-size: 13px; margin-top: 8px; color: #475569; font-weight: 700; line-height: 1.8; }
+
+.matter-tags {
+  margin-top: 12px; font-size: 11px;
+  padding: 6px 12px; border-radius: 999px;
+  display: inline-block; font-weight: 700;
+}
+
+/* ============================================
+   13) الكويز
+   ============================================ */
+.quiz-section {
+  margin-top: 40px;
+  border-radius: 32px;
+  background: linear-gradient(135deg, #0B1220, #162A52);
+  border: 1px solid rgba(56,189,248,0.2);
+  padding: 24px 32px 32px;
+  box-shadow: 0 0 80px rgba(14,165,233,0.2);
+  position: relative; overflow: hidden;
+}
+
+.quiz-head {
+  display: flex; flex-wrap: wrap;
+  align-items: center; gap: 16px;
+}
+
+.quiz-icon {
+  width: 56px; height: 56px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #FDE047, #F59E0B);
+  border: 2px solid #FEF08A;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 20px rgba(251,191,36,0.6);
+  font-size: 26px;
+}
+
+.quiz-title { font-weight: 900; font-size: 24px; }
+.quiz-sub { font-size: 13px; color: #BAE6FD; font-weight: 700; margin-top: 4px; }
+
+.quiz-stats {
+  margin-right: auto;
+  display: flex; align-items: center; gap: 12px;
+}
+
+.quiz-progress {
+  margin-top: 24px; height: 12px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border-soft);
+  overflow: hidden; padding: 4px;
+}
+
+.quiz-progress-fill {
+  height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, #38BDF8, #A78BFA, #34D399);
+  transition: width 0.7s;
+  box-shadow: 0 0 10px rgba(56,189,248,0.8);
+}
+
+.quiz-layout {
+  margin-top: 32px;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 24px; align-items: start;
+}
+
+.quiz-question {
+  border-radius: 20px;
+  border: 2px solid var(--border-soft);
+  padding: 20px; transition: all 0.3s;
+  background: rgba(255,255,255,0.04);
+  margin-bottom: 16px;
+}
+
+.quiz-question:hover {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.2);
+}
+
+.quiz-question.correct {
+  background: rgba(16,185,129,0.1);
+  border-color: rgba(52,211,153,0.5);
+  box-shadow: 0 0 20px rgba(16,185,129,0.2);
+}
+
+.quiz-question.wrong {
+  background: rgba(239,68,68,0.1);
+  border-color: rgba(248,113,113,0.4);
+}
+
+.q-head { display: flex; gap: 12px; align-items: flex-start; }
+
+.q-num {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 14px;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.6);
+}
+
+.quiz-question.correct .q-num { background: #34D399; color: #fff; }
+.quiz-question.wrong .q-num { background: #F87171; color: #fff; }
+
+.q-text { font-weight: 900; font-size: 15px; line-height: 1.6; }
+
+.q-options { display: grid; gap: 10px; margin-top: 16px; }
+
+.q-option {
+  text-align: right;
+  padding: 12px 16px; border-radius: 14px;
+  border: 2px solid var(--border-soft);
+  font-weight: 700; font-size: 13px;
+  transition: all 0.3s;
+  display: flex; align-items: center; gap: 12px;
+  cursor: pointer;
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.8);
+  font-family: inherit;
+}
+
+.q-option:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.2);
+  color: #fff;
+}
+
+.q-option.selected-correct {
+  background: #10B981; color: #fff;
+  border-color: #34D399;
+  box-shadow: 0 4px 12px rgba(16,185,129,0.4);
+}
+
+.q-option.selected-wrong {
+  background: #EF4444; color: #fff;
+  border-color: #F87171;
+  box-shadow: 0 4px 12px rgba(239,68,68,0.4);
+}
+
+.q-option-letter {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid var(--border-soft);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; flex-shrink: 0;
+}
+
+.q-feedback {
+  margin-top: 12px; font-size: 12px;
+  font-weight: 900; padding: 8px 12px;
+  border-radius: 999px;
+  display: inline-flex; gap: 8px;
+}
+
+.q-feedback.ok {
+  background: rgba(52,211,153,0.2);
+  color: #A7F3D0;
+  border: 1px solid rgba(52,211,153,0.3);
+}
+
+.q-feedback.no {
+  background: rgba(248,113,113,0.2);
+  color: #FECACA;
+  border: 1px solid rgba(248,113,113,0.3);
+}
+
+.quiz-sidebar {
+  position: sticky; top: 112px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+.progress-panel {
+  border-radius: 24px;
+  background: #fff;
+  border: 2px solid #E2E8F0;
+  padding: 24px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  color: #0F172A;
+}
+
+.progress-grid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+
+.progress-cell {
+  height: 48px; border-radius: 12px;
+  border: 2px solid #E2E8F0;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 14px;
+  transition: all 0.3s;
+  background: #F8FAFC; color: #94A3B8;
+}
+
+.progress-cell.correct { background: #10B981; border-color: #34D399; color: #fff; box-shadow: 0 4px 12px rgba(16,185,129,0.4); }
+.progress-cell.wrong { background: #EF4444; border-color: #F87171; color: #fff; }
+
+.btn-primary {
+  margin-top: 20px; width: 100%;
+  border-radius: 999px;
+  background: #0F172A; color: #fff;
+  padding: 14px; font-weight: 900; font-size: 15px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transition: all 0.3s; cursor: pointer;
+  border: none; font-family: inherit;
+}
+
+.btn-primary:hover { background: #000; transform: scale(1.02); }
+
+.btn-secondary {
+  margin-top: 8px; width: 100%;
+  border-radius: 999px;
+  background: #fff; border: 2px solid #E2E8F0;
+  padding: 12px; font-weight: 900; font-size: 14px;
+  transition: all 0.3s; cursor: pointer;
+  font-family: inherit; color: #0F172A;
+}
+
+.btn-secondary:hover { border-color: #0F172A; }
+
+.result-panel {
+  border-radius: 24px;
+  background: linear-gradient(135deg, #FCD34D, #FB923C);
+  border: 2px solid #FDE68A;
+  padding: 24px;
+  box-shadow: 0 0 40px rgba(251,146,60,0.4);
+  animation: pop 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  text-align: center; color: #0F172A;
+}
+
+.result-emoji { font-size: 50px; }
+.result-score { font-weight: 900; font-size: 24px; margin-top: 12px; }
+.result-msg { margin-top: 8px; font-size: 13px; font-weight: 900; line-height: 1.8; }
+
+.result-stars {
+  margin-top: 16px;
+  display: flex; justify-content: center; gap: 8px;
+}
+
+.result-stars span {
+  animation: pop 0.3s ease;
+  font-size: 18px;
+}
+
+.tip-box {
+  border-radius: 20px;
+  background: #0F172A; color: #fff;
+  padding: 16px;
+  border: 1px solid var(--border-soft);
+}
+
+.tip-box h5 {
+  font-weight: 700; font-size: 14px;
+  display: flex; gap: 8px; align-items: center;
+}
+
+.tip-box p { font-size: 12px; margin-top: 8px; line-height: 1.8; opacity: 0.7; font-weight: 700; }
+
+/* ============================================
+   14) الفوتر
+   ============================================ */
+.footer {
+  margin-top: 40px;
+  border-radius: 22px;
+  background: #081229;
+  border: 1px solid var(--border-soft);
+  padding: 20px 24px;
+  display: flex; flex-wrap: wrap; gap: 16px;
+  align-items: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+}
+
+.footer-avatar {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: #fff; color: #0F172A;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 15px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.footer-title { font-weight: 900; font-size: 15px; }
+.footer-sub { font-size: 11px; margin-top: 4px; opacity: 0.5; font-weight: 700; }
+
+.footer-badges {
+  margin-right: auto;
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+
+/* ============================================
+   15) Responsive
+   ============================================ */
+@media (max-width: 1024px) {
+  .atom-layout, .config-layout { grid-template-columns: 1fr; }
+  .particles-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .header-inner { padding: 12px 16px; }
+  .header-title { font-size: 20px; }
+  .header-side { display: none; }
+  .tabs-wrap, .content-area { padding-left: 12px; padding-right: 12px; }
+  .card-content { padding: 16px; }
+  .section-title { font-size: 22px; }
+  .levels-grid { grid-template-columns: repeat(2, 1fr); }
+  .quiz-layout { grid-template-columns: 1fr; }
+  .quiz-stats { width: 100%; justify-content: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<!-- الهيدر -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo-box">⚛️</div>
+    <div>
+      <div class="header-title">سبورة علوم أولي إعدادي ✨</div>
+      <div class="header-badges">
+        <span class="badge">إعداد الأستاذ محمد سعد</span>
+        <span class="badge emerald">تصميم هباش جروب  </span>
+      </div>
+    </div>
+    <div class="header-side">
+      <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.1);border:1px solid var(--border-soft);display:flex;align-items:center;justify-content:center;">⭐</div>
+      <div style="text-align:right;">
+        <div style="font-weight:900;font-size:13px;">العلوم بأسلوب شيق</div>
+        <div style="font-size:11px;opacity:0.5;font-weight:700;margin-top:2px;">7 أقسام + كويز تفاعلي</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs-wrap">
+    <div class="tabs" id="tabsContainer"></div>
+    <div class="status-line">
+      <div class="status-dot"></div>
+      <span id="statusText">تم فتح التعريفات الذهبية</span>
+    </div>
+  </div>
+</header>
+
+<!-- المحتوى الرئيسي -->
+<main class="content-area">
+  <div class="main-card">
+    <div class="glow-1"></div>
+    <div class="glow-2"></div>
+    <div class="top-line"></div>
+    <div class="card-content" id="mainContent"></div>
+  </div>
+
+  <!-- الكويز -->
+  <section class="quiz-section">
+    <div class="quiz-head">
+      <div class="quiz-icon">🏆</div>
+      <div>
+        <div class="quiz-title">  تحدي الدكاترة 🏆</div>
+        <div class="quiz-sub">جاوب على 6 أسئلة وشوف  أنت خبير في العلوم ؟</div>
+      </div>
+      <div class="quiz-stats">
+        <div class="badge" id="scoreDisplay">0 / 6</div>
+        <div class="badge emerald" id="progressDisplay">0% مكتمل</div>
+      </div>
+    </div>
+
+    <div class="quiz-progress">
+      <div class="quiz-progress-fill" id="quizProgressBar" style="width:0%"></div>
+    </div>
+
+    <div class="quiz-layout">
+      <div id="questionsContainer"></div>
+      <div class="quiz-sidebar">
+        <div class="progress-panel">
+          <div style="font-weight:900;font-size:18px;display:flex;gap:8px;align-items:center;">🎓 لوحة التقدم</div>
+          <div class="progress-grid" id="progressGrid"></div>
+          <button class="btn-primary" onclick="showResult()">🎉 اعرض النتيجة النهائية</button>
+          <button class="btn-secondary" onclick="resetQuiz()">إعادة الاختبار</button>
+        </div>
+        <div id="resultPanel"></div>
+        <div class="tip-box">
+          <h5>🔬 نصيحة الأستاذ محمد سعد</h5>
+          <p>العلوم فهم مش حفظ! اربط كل تعريف بمثال من حياتك. الذرة زي نظام شمسي صغير، والجدول الدوري خريطة كنز!</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- الفوتر -->
+  <footer class="footer">
+    <div class="footer-avatar">م س</div>
+    <div>
+      <div class="footer-title">إعداد الأستاذ محمد سعد - علوم الصف الأول الإعدادي</div>
+      <div class="footer-sub">   هباش جروب  •  2026</div>
+    </div>
+    <div class="footer-badges">
+      <span class="badge sky">حل يا فالح </span>
+    </div>
+  </footer>
+</main>
+
+<script>
+/* ============================================
+   البيانات (DATA)
+   ============================================ */
+
+const SECTIONS = [
+  { name: "التعريفات الذهبية", icon: "📖", color: "#FDE68A" },
+  { name: "تركيب الذرة", icon: "🌌", color: "#93C5FD" },
+  { name: "التوزيع الإلكتروني", icon: "🧅", color: "#C4B5FD" },
+  { name: "الجدول الدوري", icon: "🗺️", color: "#6EE7B7" },
+  { name: "الفلزات واللافلزات", icon: "🧲", color: "#FDBA74" },
+  { name: "الحجم والخواص", icon: "⚡", color: "#F9A8D4" },
+  { name: "المادة والمخاليط", icon: "🧪", color: "#67E8F9" }
+];
+
+const GOLDEN_DEFS = [
+  { title: "المادة", desc: "كل ما له كتلة وحجم ويشغل حيز من الفراغ. كل شيء حولنا مادة!", icon: "🧱", color: "#0EA5E9", formula: "Matter" },
+  { title: "الذرة", desc: "أصغر جزء من المادة يمكنه الدخول في التفاعل. متعادلة كهربياً.", icon: "⚛️", color: "#8B5CF6", formula: "Atom" },
+  { title: "العدد الذري", desc: "عدد البروتونات الموجبة = عدد الإلكترونات السالبة. هو بصمة العنصر!", formula: "Z = p⁺ = e⁻", color: "#2563EB" },
+  { title: "العدد الكتلي", desc: "مجموع البروتونات + النيوترونات داخل النواة", formula: "A = p⁺ + n⁰", color: "#DB2777" },
+  { title: "النظائر", desc: "ذرات لنفس العنصر، نفس العدد الذري لكن مختلفة في العدد الكتلي", icon: "👯", color: "#4F46E5" },
+  { title: "أسمدة NPK", desc: "N للخضري، P للجذور، K للإثمار - غذاء النبات المتكامل", icon: "🌱", color: "#059669" },
+  { title: "رقم الدورة", desc: "يساوي عدد مستويات الطاقة المشغولة بالإلكترونات", formula: "الدورة = المستويات", color: "#EA580C" },
+  { title: "رقم المجموعة", desc: "يساوي عدد إلكترونات المستوى الأخير (إلكترونات التكافؤ)", formula: "المجموعة = e⁻ الأخيرة", color: "#7C3AED" },
+  { title: "التكافؤ", desc: "عدد الإلكترونات التي تفقدها أو تكتسبها الذرة لتصل للاستقرار", icon: "🤝", color: "#0D9488" },
+  { title: "الغازات النبيلة", desc: "المجموعة 18، المستوى الأخير مكتمل بـ 8 (He 2). خاملة ومستقرة", icon: "👑", color: "#7C2D12" },
+  { title: "الدورة والمجموعة", desc: "الدورة = صف أفقي (7 دورات)، المجموعة = عمود رأسي (18 مجموعة)", icon: "🗺️", color: "#CA8A04" }
+];
+
+const ATOM_ELEMENTS = [
+  { sym: "H", name: "هيدروجين", z: 1, dist: [1], neutrons: 0, type: "لا فلز" },
+  { sym: "He", name: "هيليوم", z: 2, dist: [2], neutrons: 2, type: "غاز خامل" },
+  { sym: "Li", name: "ليثيوم", z: 3, dist: [2,1], neutrons: 4, type: "فلز قلوي" },
+  { sym: "Na", name: "صوديوم", z: 11, dist: [2,8,1], neutrons: 12, type: "فلز قلوي" },
+  { sym: "Mg", name: "ماغنسيوم", z: 12, dist: [2,8,2], neutrons: 12, type: "قلوي أرضي" },
+  { sym: "Al", name: "ألومنيوم", z: 13, dist: [2,8,3], neutrons: 14, type: "فلز" },
+  { sym: "Cl", name: "كلور", z: 17, dist: [2,8,7], neutrons: 18, type: "هالوجين" },
+  { sym: "Ar", name: "أرجون", z: 18, dist: [2,8,8], neutrons: 22, type: "غاز خامل" },
+  { sym: "K", name: "بوتاسيوم", z: 19, dist: [2,8,8,1], neutrons: 20, type: "فلز قلوي" },
+  { sym: "Ca", name: "كالسيوم", z: 20, dist: [2,8,8,2], neutrons: 20, type: "قلوي أرضي" },
+  { sym: "Br", name: "بروم", z: 35, dist: [2,8,18,7], neutrons: 45, type: "هالوجين" }
+];
+
+const PERIODIC_ELEMENTS = [
+  { sym: "H", n: 1, period: 1, group: 1, cat: "nonmetal", name: "هيدروجين" },
+  { sym: "He", n: 2, period: 1, group: 18, cat: "noble", name: "هيليوم" },
+  { sym: "Li", n: 3, period: 2, group: 1, cat: "alkali", name: "ليثيوم" },
+  { sym: "Be", n: 4, period: 2, group: 2, cat: "alkaline", name: "بريليوم" },
+  { sym: "B", n: 5, period: 2, group: 13, cat: "metalloid", name: "بورون" },
+  { sym: "C", n: 6, period: 2, group: 14, cat: "nonmetal", name: "كربون" },
+  { sym: "N", n: 7, period: 2, group: 15, cat: "nonmetal", name: "نيتروجين" },
+  { sym: "O", n: 8, period: 2, group: 16, cat: "nonmetal", name: "أكسجين" },
+  { sym: "F", n: 9, period: 2, group: 17, cat: "halogen", name: "فلور" },
+  { sym: "Ne", n: 10, period: 2, group: 18, cat: "noble", name: "نيون" },
+  { sym: "Na", n: 11, period: 3, group: 1, cat: "alkali", name: "صوديوم" },
+  { sym: "Mg", n: 12, period: 3, group: 2, cat: "alkaline", name: "ماغنسيوم" },
+  { sym: "Al", n: 13, period: 3, group: 13, cat: "post", name: "ألومنيوم" },
+  { sym: "Si", n: 14, period: 3, group: 14, cat: "metalloid", name: "سيليكون" },
+  { sym: "P", n: 15, period: 3, group: 15, cat: "nonmetal", name: "فوسفور" },
+  { sym: "S", n: 16, period: 3, group: 16, cat: "nonmetal", name: "كبريت" },
+  { sym: "Cl", n: 17, period: 3, group: 17, cat: "halogen", name: "كلور" },
+  { sym: "Ar", n: 18, period: 3, group: 18, cat: "noble", name: "أرجون" },
+  { sym: "K", n: 19, period: 4, group: 1, cat: "alkali", name: "بوتاسيوم" },
+  { sym: "Ca", n: 20, period: 4, group: 2, cat: "alkaline", name: "كالسيوم" },
+  { sym: "Sc", n: 21, period: 4, group: 3, cat: "transition", name: "سكانديوم" },
+  { sym: "Ti", n: 22, period: 4, group: 4, cat: "transition", name: "تيتانيوم" },
+  { sym: "V", n: 23, period: 4, group: 5, cat: "transition", name: "فاناديوم" },
+  { sym: "Cr", n: 24, period: 4, group: 6, cat: "transition", name: "كروم" },
+  { sym: "Mn", n: 25, period: 4, group: 7, cat: "transition", name: "منجنيز" },
+  { sym: "Fe", n: 26, period: 4, group: 8, cat: "transition", name: "حديد" },
+  { sym: "Co", n: 27, period: 4, group: 9, cat: "transition", name: "كوبلت" },
+  { sym: "Ni", n: 28, period: 4, group: 10, cat: "transition", name: "نيكل" },
+  { sym: "Cu", n: 29, period: 4, group: 11, cat: "transition", name: "نحاس" },
+  { sym: "Zn", n: 30, period: 4, group: 12, cat: "transition", name: "خارصين" },
+  { sym: "Ga", n: 31, period: 4, group: 13, cat: "post", name: "جاليوم" },
+  { sym: "Ge", n: 32, period: 4, group: 14, cat: "metalloid", name: "جيرمانيوم" },
+  { sym: "As", n: 33, period: 4, group: 15, cat: "metalloid", name: "زرنيخ" },
+  { sym: "Se", n: 34, period: 4, group: 16, cat: "nonmetal", name: "سيلينيوم" },
+  { sym: "Br", n: 35, period: 4, group: 17, cat: "halogen", name: "بروم" },
+  { sym: "Kr", n: 36, period: 4, group: 18, cat: "noble", name: "كريبتون" }
+];
+
+const ELEMENT_CATEGORIES = {
+  alkali: { bg: "#FECACA", border: "#FCA5A5", text: "#991B1B", label: "القلويات - أحمر فاتح", dot: "#F87171" },
+  alkaline: { bg: "#FED7AA", border: "#FDBA74", text: "#9A3412", label: "القلوية الأرضية - برتقالي", dot: "#FB923C" },
+  transition: { bg: "#BFDBFE", border: "#93C5FD", text: "#1E40AF", label: "الفلزات الانتقالية - أزرق", dot: "#60A5FA" },
+  post: { bg: "#E0E7FF", border: "#C7D2FE", text: "#3730A3", label: "فلزات أخرى", dot: "#A5B4FC" },
+  metalloid: { bg: "#FEF9C3", border: "#FDE68A", text: "#854D0E", label: "أشباه فلزات", dot: "#FACC15" },
+  nonmetal: { bg: "#BBF7D0", border: "#86EFAC", text: "#14532D", label: "لا فلزات - أخضر فاتح", dot: "#6EE7B7" },
+  halogen: { bg: "#A7F3D0", border: "#6EE7B7", text: "#064E3B", label: "الهالوجينات - أخضر", dot: "#10B981" },
+  noble: { bg: "#DDD6FE", border: "#C4B5FD", text: "#4C1D95", label: "الغازات الخاملة - بنفسجي", dot: "#A78BFA" }
+};
+
+const QUIZ_QUESTIONS = [
+  { q: "العدد الذري بيساوي ايه؟", opts: ["عدد النيوترونات فقط", "عدد البروتونات = عدد الإلكترونات", "عدد المستويات", "الكتلة الذرية"], ans: 1 },
+  { q: "الفلز السائل الوحيد في الجدول هو:", opts: ["البروم Br", "الزئبق Hg", "الليثيوم Li", "السيزيوم Cs"], ans: 1 },
+  { q: "رقم المجموعة يعبر عن:", opts: ["عدد البروتونات", "عدد مستويات الطاقة", "عدد إلكترونات المستوى الأخير", "العدد الكتلي"], ans: 2 },
+  { q: "مثال على مخلوط متجانس (محلول):", opts: ["رمل وماء", "زيت وماء", "ماء وملح", "سلطة خضار"], ans: 2 },
+  { q: "في الدورة الواحدة من اليسار لليمين الحجم الذري:", opts: ["يزيد", "يقل بسبب زيادة جذب النواة", "يثبت", "يختفي"], ans: 1 },
+  { q: "أكثر مجموعة نشاطاً في الجدول هي:", opts: ["الغازات الخاملة", "الفلزات القلوية 1A", "الهالوجينات 7A", "الفلزات الانتقالية"], ans: 1 }
+];
+
+/* ============================================
+   الحالة (STATE)
+   ============================================ */
+let currentSection = 0;
+let sectionClicks = Array(SECTIONS.length).fill(0);
+let selectedElement = ATOM_ELEMENTS[5];
+let selectedPeriodic = "Al";
+let currentZ = 13;
+let quizAnswers = Array(QUIZ_QUESTIONS.length).fill(-1);
+let currentPropTab = "size";
+
+// متغيرات أنيميشن الذرة
+let atomAngle = 0;
+let atomAnimId = null;
+
+/* ============================================
+   دوال العرض
+   ============================================ */
+
+function renderTabs() {
+  const container = document.getElementById('tabsContainer');
+  container.innerHTML = SECTIONS.map((s, i) => `
+    <button class="tab-btn ${currentSection === i ? 'active' : ''}" onclick="switchSection(${i})">
+      <span class="tab-icon">${s.icon}</span>
+      <span>${s.name}</span>
+      ${currentSection === i ? '<span style="width:6px;height:6px;border-radius:50%;background:#10B981;animation:pulseSoft 2s infinite;"></span>' : ''}
+      ${sectionClicks[i] > 0 ? `<span class="tab-count">${sectionClicks[i]}</span>` : ''}
+    </button>
+  `).join('');
+}
+
+function switchSection(index) {
+  currentSection = index;
+  sectionClicks[index]++;
+  document.getElementById('statusText').textContent = `تم فتح ${SECTIONS[index].name} • ${new Date().toLocaleTimeString('ar-EG')}`;
+  renderTabs();
+  renderMainContent();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderMainContent() {
+  // إيقاف أنيميشن الذرة القديم لو موجود
+  if (atomAnimId) {
+    cancelAnimationFrame(atomAnimId);
+    atomAnimId = null;
+  }
+
+  const content = document.getElementById('mainContent');
+  const section = SECTIONS[currentSection];
+
+  let innerHTML = `
+    <div class="section-head">
+      <div class="section-num">${currentSection + 1}</div>
+      <h2 class="section-title">
+        <span>${section.icon}</span>
+        ${section.name}
+      </h2>
+      <div style="margin-right:auto;display:flex;gap:8px;">
+        <span class="badge emerald">✨ تفاعلي</span>
+      </div>
+    </div>
+  `;
+
+  if (currentSection === 0) innerHTML += renderGoldenDefs();
+  else if (currentSection === 1) innerHTML += renderAtomSection();
+  else if (currentSection === 2) innerHTML += renderConfigSection();
+  else if (currentSection === 3) innerHTML += renderPeriodicSection();
+  else if (currentSection === 4) innerHTML += renderTypesSection();
+  else if (currentSection === 5) innerHTML += renderPropsSection();
+  else if (currentSection === 6) innerHTML += renderMatterSection();
+
+  content.innerHTML = innerHTML;
+
+  // بدء أنيميشن الذرة لو إحنا في قسم تركيب الذرة
+  if (currentSection === 1) {
+    startAtomAnimation();
+  }
+}
+
+/* ============================================
+   محاكاة الذرة المتحركة (SVG)
+   ============================================ */
+
+function startAtomAnimation() {
+  const svg = document.getElementById('atomSvg');
+  if (!svg) return;
+
+  function animate() {
+    atomAngle += 0.5;
+    updateAtomPositions();
+    atomAnimId = requestAnimationFrame(animate);
+  }
+  animate();
+}
+
+function updateAtomPositions() {
+  const el = selectedElement;
+  const size = 380;
+  const center = size / 2;
+  const levelColors = ["#60A5FA", "#A78BFA", "#34D399", "#FBBF24"];
+
+  el.dist.forEach((electronCount, levelIdx) => {
+    const radius = 46 + levelIdx * 44;
+    const speed = 0.18 + levelIdx * 0.06;
+    const rotation = atomAngle * speed;
+
+    // تدوير المدار
+    const orbit = document.getElementById(`orbit-${levelIdx}`);
+    if (orbit) {
+      orbit.style.transformOrigin = `${center}px ${center}px`;
+      orbit.style.transform = `rotate(${rotation}deg)`;
+    }
+
+    // تحريك الإلكترونات
+    for (let i = 0; i < electronCount; i++) {
+      const baseAngle = (360 / electronCount) * i;
+      const speed2 = 1.2 + levelIdx * 0.45;
+      const angle = baseAngle + atomAngle * speed2;
+      const rad = angle * Math.PI / 180;
+
+      const x = center + radius * Math.cos(rad);
+      const y = center + radius * 0.92 * Math.sin(rad);
+
+      const electron = document.getElementById(`electron-${levelIdx}-${i}`);
+      if (electron) {
+        electron.setAttribute('cx', x);
+        electron.setAttribute('cy', y);
+      }
+
+      // الذيل المتحرك
+      const trail = document.getElementById(`trail-${levelIdx}-${i}`);
+      if (trail) {
+        const trailAngle = (angle - 12) * Math.PI / 180;
+        trail.setAttribute('cx', center + radius * Math.cos(trailAngle));
+        trail.setAttribute('cy', center + radius * 0.92 * Math.sin(trailAngle));
+      }
+    }
+  });
+}
+
+/* ============================================
+   الأقسام
+   ============================================ */
+
+function renderGoldenDefs() {
+  return `
+    <p style="font-size:14px;font-weight:700;color:rgba(186,230,253,0.7);line-height:1.9;">
+      كل كارت هنا مفتاح ذهبي للامتحان.  - إعداد الأستاذ محمد سعد
+    </p>
+    <div class="golden-grid">
+      ${GOLDEN_DEFS.map(d => `
+        <div class="golden-card">
+          <div class="golden-inner">
+            <div class="golden-glow" style="background:${d.color}"></div>
+            <div class="golden-head">
+              <div class="golden-icon">${d.icon || '💡'}</div>
+              ${d.formula ? `<div class="golden-formula">${d.formula}</div>` : ''}
+            </div>
+            <div class="golden-title">${d.title}</div>
+            <div class="golden-desc">${d.desc}</div>
+            <div class="golden-progress">
+              <div class="golden-progress-bar" style="background:linear-gradient(90deg, ${d.color}, #fff)"></div>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderAtomSection() {
+  const el = selectedElement;
+  const size = 380;
+  const center = size / 2;
+  const levelColors = ["#60A5FA", "#A78BFA", "#34D399", "#FBBF24"];
+  const levelNames = ["K", "L", "M", "N"];
+
+  let orbitsHTML = '';
+  let electronsHTML = '';
+  let labelsHTML = '';
+
+  el.dist.forEach((count, levelIdx) => {
+    const radius = 46 + levelIdx * 44;
+    const color = levelColors[levelIdx % 4];
+
+    // المدار
+    orbitsHTML += `
+      <ellipse id="orbit-${levelIdx}" cx="${center}" cy="${center}" rx="${radius}" ry="${radius * 0.92}"
+        fill="none" stroke="${color}" stroke-width="${levelIdx === el.dist.length - 1 ? 2.2 : 1.2}"
+        stroke-dasharray="${levelIdx % 2 === 0 ? '8 7' : '3 8'}" opacity="0.55"/>
+    `;
+
+    // الإلكترونات
+    for (let i = 0; i < count; i++) {
+      const baseAngle = (360 / count) * i;
+      const rad = baseAngle * Math.PI / 180;
+      const x = center + radius * Math.cos(rad);
+      const y = center + radius * 0.92 * Math.sin(rad);
+
+      electronsHTML += `
+        <circle id="trail-${levelIdx}-${i}" cx="${x}" cy="${y}" r="2.5" fill="${color}" opacity="0.35"/>
+        <g>
+          <circle id="electron-${levelIdx}-${i}" cx="${x}" cy="${y}" r="${levelIdx === 0 ? 8 : 7}"
+            fill="url(#eGradLux)" stroke="#0C4A6E" stroke-width="1.2"/>
+        </g>
+      `;
+    }
+
+    // اللافتة
+    labelsHTML += `
+      <g>
+        <rect x="${center + radius + 10}" y="${center - 10}" width="48" height="18" rx="9"
+          fill="rgba(15,23,42,0.9)" stroke="rgba(148,163,184,0.3)"/>
+        <text x="${center + radius + 34}" y="${center + 2}" text-anchor="middle"
+          font-size="11" font-weight="900" fill="#E2E8F0">${levelNames[levelIdx]} • ${count}</text>
+      </g>
+    `;
+  });
+
+  return `
+    <div class="atom-layout">
+      <div class="atom-panel">
+        <div class="atom-dots-bg"></div>
+        <div style="position:relative;z-index:10;">
+          <div class="element-picker">
+            ${ATOM_ELEMENTS.map(e => `
+              <button class="elem-btn ${selectedElement.sym === e.sym ? 'active' : ''}" onclick="selectAtomElement('${e.sym}')">
+                <span>${e.sym} ${e.z}</span>
+                <small>${e.name}</small>
+              </button>
+            `).join('')}
+          </div>
+          <div class="atom-svg-container">
+            <svg id="atomSvg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"
+              style="filter:drop-shadow(0 0 20px rgba(56,189,248,0.35));">
+              <defs>
+                <radialGradient id="nucGradLux" cx="35%" cy="35%">
+                  <stop offset="0%" stop-color="#FEF3C7"/>
+                  <stop offset="25%" stop-color="#FCD34D"/>
+                  <stop offset="70%" stop-color="#F59E0B"/>
+                  <stop offset="100%" stop-color="#D97706"/>
+                </radialGradient>
+                <radialGradient id="eGradLux" cx="40%" cy="30%">
+                  <stop offset="0%" stop-color="#BAE6FD"/>
+                  <stop offset="100%" stop-color="#0EA5E9"/>
+                </radialGradient>
+                <filter id="glowE">
+                  <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                  <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+                <filter id="glowN">
+                  <feGaussianBlur stdDeviation="8" result="cBlur"/>
+                  <feMerge>
+                    <feMergeNode in="cBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+
+              <circle cx="${center}" cy="${center}" r="180" fill="none" stroke="rgba(96,165,250,0.08)" stroke-width="1"/>
+              <circle cx="${center}" cy="${center}" r="140" fill="none" stroke="rgba(96,165,250,0.06)" stroke-width="1"/>
+
+              ${orbitsHTML}
+
+              <g filter="url(#glowN)">
+                <circle cx="${center}" cy="${center}" r="36" fill="url(#nucGradLux)" stroke="#92400E" stroke-width="2" opacity="0.95"/>
+                <circle cx="${center}" cy="${center}" r="46" fill="none" stroke="#FBBF24" stroke-width="1" opacity="0.25" style="animation:ping 2s infinite;"/>
+              </g>
+
+              <text x="${center}" y="${center - 5}" text-anchor="middle" font-size="12" font-weight="900" fill="#78350F">+${el.z} p</text>
+              <text x="${center}" y="${center + 13}" text-anchor="middle" font-size="10" font-weight="800" fill="#92400E">${el.neutrons} n⁰</text>
+
+              ${electronsHTML}
+              ${labelsHTML}
+            </svg>
+          </div>
+          <div style="margin-top:16px;display:flex;justify-content:center;gap:8px;flex-wrap:wrap;">
+            <span class="chip total">${el.name} • ${el.type}</span>
+            <span class="chip">Z = ${el.z}</span>
+            <span class="chip" style="background:rgba(251,191,36,0.2);border-color:rgba(252,211,77,0.3);color:#FDE68A;">توزيع: ${el.dist.join(' - ')}</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="particles-grid">
+          <div class="particle-card proton">
+            <div class="particle-symbol p">p⁺</div>
+            <div class="particle-name">البروتون</div>
+            <div class="particle-desc">كتلة 1u • شحنة +1 • في النواة • يحدد نوع العنصر</div>
+          </div>
+          <div class="particle-card neutron">
+            <div class="particle-symbol n">n⁰</div>
+            <div class="particle-name">النيوترون</div>
+            <div class="particle-desc">كتلة 1u • متعادل • في النواة • يحدد النظائر</div>
+          </div>
+          <div class="particle-card electron">
+            <div class="particle-symbol e">e⁻</div>
+            <div class="particle-name">الإلكترون</div>
+            <div class="particle-desc">كتلة 1/1836 • شحنة -1 • يدور حول النواة • التفاعلات</div>
+          </div>
+        </div>
+        <div style="border-radius:24px;background:#fff;border:2px solid #E2E8F0;padding:24px;box-shadow:0 10px 25px rgba(0,0,0,0.2);color:#0F172A;">
+          <div style="font-weight:900;font-size:18px;display:flex;gap:8px;align-items:center;">
+            🔬 الخلاصة الذهبية - إعداد الأستاذ محمد سعد
+          </div>
+          <ul style="margin-top:16px;display:flex;flex-direction:column;gap:12px;font-size:13px;font-weight:700;line-height:1.9;list-style:disc;padding-right:20px;color:#334155;">
+            <li>الذرة متعادلة كهربياً لأن <span style="background:#0F172A;color:#fff;padding:2px 8px;border-radius:999px;font-size:11px;">عدد البروتونات = عدد الإلكترونات</span></li>
+            <li>شحنة النواة موجبة دائماً (بروتونات موجبة)</li>
+            <li>الكتلة تتركز في النواة (99.9% من كتلة الذرة)</li>
+            <li>مثال الألومنيوم: 13p + 14n في النواة، 13e بتلف: K=2, L=8, M=3 → الدورة 3، المجموعة 13</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderConfigSection() {
+  const caps = [2, 8, 18, 32];
+  const names = ["K", "L", "M", "N"];
+  let remaining = Math.max(1, Math.min(36, currentZ));
+  const dist = [];
+  for (let i = 0; i < caps.length; i++) {
+    const take = Math.min(remaining, caps[i]);
+    dist.push(take);
+    remaining -= take;
+    if (remaining <= 0) break;
+  }
+
+  return `
+    <div class="config-layout">
+      <div style="border-radius:28px;background:linear-gradient(135deg,#112752,#0B1A36);border:1px solid rgba(56,189,248,0.2);padding:24px;box-shadow:0 0 40px rgba(14,165,233,0.15);position:relative;overflow:hidden;">
+        <div style="position:absolute;top:-80px;right:-80px;width:256px;height:256px;background:rgba(14,165,233,0.15);border-radius:50%;filter:blur(40px);"></div>
+        <h4 style="font-weight:900;font-size:20px;display:flex;gap:8px;align-items:center;position:relative;z-index:10;">
+          🧅 قاعدة 2n² - قانون التشبع
+        </h4>
+        <div class="levels-grid">
+          ${caps.map((cap, i) => `
+            <div class="level-box">
+              <div class="level-name">المستوى ${names[i]}</div>
+              <div class="level-n">n = ${i + 1}</div>
+              <div class="level-cap">2n² = ${cap}</div>
+              <div class="level-bar">
+                <div class="level-bar-fill" style="width:${((dist[i] || 0) / cap * 100)}%"></div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="slider-panel">
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:700;color:#BAE6FD;">العدد الذري Z</div>
+            <input type="range" min="1" max="36" value="${currentZ}" oninput="updateZ(this.value)">
+            <div style="display:flex;justify-content:space-between;font-size:10px;opacity:0.4;margin-top:4px;">
+              <span>1</span><span>18</span><span>36</span>
+            </div>
+          </div>
+          <div class="z-display">
+            <span class="label">Z</span>
+            <span class="value">${currentZ}</span>
+          </div>
+        </div>
+        <div class="config-chips">
+          ${dist.map((d, i) => `<span class="chip">${names[i]} = ${d}</span>`).join('')}
+          <span class="chip total">المجموع = ${dist.reduce((a, b) => a + b, 0)}</span>
+        </div>
+      </div>
+      <div style="border-radius:28px;background:#fff;border:1px solid #E2E8F0;padding:20px;box-shadow:0 10px 25px rgba(0,0,0,0.2);display:flex;flex-direction:column;color:#0F172A;">
+        <div style="display:flex;align-items:center;gap:8px;font-weight:900;">✨ محاكاة التوزيع الحي</div>
+        <div style="margin-top:20px;display:flex;flex-direction:column;gap:16px;flex:1;">
+          ${dist.map((d, i) => `
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#0F172A,#334155);color:#fff;border:2px solid #CBD5E1;display:flex;align-items:center;justify-content:center;font-weight:900;box-shadow:0 4px 12px rgba(0,0,0,0.2);">${names[i]}</div>
+              <div style="flex:1;min-height:46px;border-radius:999px;background:#F8FAFC;border:1px solid #E2E8F0;display:flex;align-items:center;padding:6px 12px;gap:6px;flex-wrap:wrap;">
+                ${Array.from({ length: d }).map((_, j) => `
+                  <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#38BDF8,#2563EB);border:1px solid #1D4ED8;box-shadow:0 2px 8px rgba(37,99,235,0.4);display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;font-weight:700;animation:pop 0.4s cubic-bezier(0.34,1.56,0.64,1);animation-delay:${j * 40}ms;">e⁻</div>
+                `).join('')}
+              </div>
+              <span style="font-weight:900;width:32px;height:32px;border-radius:50%;background:#FEF3C7;border:1px solid #FDE68A;display:flex;align-items:center;justify-content:center;color:#92400E;font-size:14px;">${d}</span>
+            </div>
+          `).join('')}
+        </div>
+        <div style="margin-top:20px;padding:16px;border-radius:16px;background:linear-gradient(135deg,#FFFBEB,#FFF7ED);border:1px solid #FDE68A;font-size:13px;line-height:1.8;font-weight:700;color:#334155;">
+          <div style="display:flex;gap:8px;">
+            💡 <span>مثال ذهبي: الألومنيوم Al 13 → K يتشبع بـ 2 (يبقى 11)، L يأخذ 8 (يبقى 3)، M يأخذ 3. إذن 2,8,3 ولهذا هو في الدورة 3 والمجموعة 13 (3A).</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderPeriodicSection() {
+  const selectedEl = PERIODIC_ELEMENTS.find(e => e.sym === selectedPeriodic);
+  const cat = ELEMENT_CATEGORIES[selectedEl?.cat || 'nonmetal'];
+
+  let tableHTML = '<div class="periodic-grid">';
+  tableHTML += '<div></div>';
+  for (let g = 1; g <= 18; g++) {
+    tableHTML += `<div class="group-num">${g}</div>`;
+  }
+
+  for (let p = 1; p <= 4; p++) {
+    tableHTML += `<div class="period-label">${p}</div>`;
+    for (let g = 1; g <= 18; g++) {
+      const el = PERIODIC_ELEMENTS.find(e => e.period === p && e.group === g);
+      if (!el) {
+        tableHTML += '<div class="empty-cell"></div>';
+      } else {
+        const c = ELEMENT_CATEGORIES[el.cat];
+        const isSelected = selectedPeriodic === el.sym;
+        tableHTML += `
+          <button class="element-cell ${isSelected ? 'selected' : ''}"
+            style="background:${c.bg};border-color:${c.border};"
+            onclick="selectPeriodicElement('${el.sym}')">
+            <span class="sym" style="color:${c.text}">${el.sym}</span>
+            <span class="num" style="color:${c.text}">${el.n}</span>
+            <span class="name" style="color:${c.text}">${el.name.slice(0, 6)}</span>
+            ${isSelected ? '<span style="position:absolute;top:-4px;right:-4px;width:12px;height:12px;background:#FACC15;border-radius:50%;border:2px solid #fff;animation:ping 1s infinite;"></span>' : ''}
+          </button>
+        `;
+      }
+    }
+  }
+  tableHTML += '</div>';
+
+  return `
+    <div class="periodic-legend">
+      ${Object.entries(ELEMENT_CATEGORIES).map(([key, c]) => `
+        <div class="legend-item" style="background:${c.bg};border-color:${c.border};color:${c.text};">
+          <span class="legend-dot" style="background:${c.dot}"></span>
+          <span>${c.label}</span>
+        </div>
+      `).join('')}
+    </div>
+    <div class="periodic-table">
+      ${tableHTML}
+      <div style="margin-top:24px;display:flex;flex-wrap:wrap;gap:8px;">
+        <span class="badge">118 عنصر في الجدول الحديث</span>
+        <span class="badge sky">الدورة 1: عنصران فقط • H و He</span>
+        <span class="badge violet">الدورة 4: 18 عنصر - بداية الفلزات الانتقالية</span>
+      </div>
+    </div>
+    ${selectedEl ? `
+      <div class="element-info">
+        <div class="element-info-box" style="background:${cat.bg};border-color:${cat.border};">
+          <span style="font-weight:900;font-size:20px;color:${cat.text};">${selectedEl.sym}</span>
+          <span style="font-size:10px;color:${cat.text};">${selectedEl.n}</span>
+        </div>
+        <div>
+          <div style="font-weight:900;">${selectedEl.name} - ${selectedEl.sym}</div>
+          <div style="font-size:12px;color:#475569;margin-top:4px;font-weight:700;">
+            العدد الذري ${selectedEl.n} • ${cat.label} • الدورة ${selectedEl.period} - المجموعة ${selectedEl.group}
+          </div>
+        </div>
+        <div style="margin-right:auto;display:flex;align-items:center;gap:8px;font-size:11px;background:#0F172A;color:#fff;padding:6px 12px;border-radius:999px;font-weight:700;">
+          ✨ اضغط على أي عنصر لاستكشافه
+        </div>
+      </div>
+    ` : ''}
+  `;
+}
+
+function renderTypesSection() {
+  const types = [
+    { title: "الفلزات", cond: "< 4 إلكترونات في الأخير", ex: "Na, Al, Fe, Cu, K", bg: "linear-gradient(135deg,#FFF7ED,#FFEDD5)", border: "#FED7AA", accent: "#F97316", icon: "🔩", desc: "لمعان • توصيل حرارة وكهرباء • قابلة للطرق" },
+    { title: "اللافلزات", cond: "> 4 (5,6,7)", ex: "O, S, Cl, Br, N", bg: "linear-gradient(135deg,#ECFDF5,#D1FAE5)", border: "#A7F3D0", accent: "#10B981", icon: "💎", desc: "رديئة التوصيل • هشة • لا تلمع" },
+    { title: "الغازات الخاملة", cond: "8 إلكترونات (He 2)", ex: "He, Ne, Ar, Kr", bg: "linear-gradient(135deg,#F5F3FF,#DDD6FE)", border: "#C4B5FD", accent: "#8B5CF6", icon: "👑", desc: "مستوى مكتمل • لا تتفاعل بسهولة • مستقرة" },
+    { title: "أشباه الفلزات", cond: "خواص وسط", ex: "B, Si, Ge, As", bg: "linear-gradient(135deg,#F0F9FF,#E0F2FE)", border: "#BAE6FD", accent: "#0EA5E9", icon: "🧪", desc: "خواص بين الفلز واللافلز • أنصاف نواقل" }
+  ];
+
+  return `
+    <div class="types-grid">
+      ${types.map(t => `
+        <div class="type-card" style="background:${t.bg};border-color:${t.border};">
+          <div class="top-bar" style="background:${t.accent}"></div>
+          <div class="type-icon">${t.icon}</div>
+          <div class="type-title">${t.title}</div>
+          <div class="type-cond">${t.cond}</div>
+          <div class="type-desc">${t.desc}</div>
+          <div class="type-examples">${t.ex}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div style="margin-top:20px;border-radius:24px;background:linear-gradient(135deg,#0F172A,#1E293B);border:1px solid var(--border-soft);padding:24px;display:flex;gap:20px;align-items:flex-start;position:relative;overflow:hidden;box-shadow:0 25px 50px rgba(0,0,0,0.25);">
+      <div style="position:absolute;top:0;right:0;width:288px;height:288px;background:rgba(59,130,246,0.1);border-radius:50%;filter:blur(60px);"></div>
+      <div style="width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,#22D3EE,#2563EB);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:20px;box-shadow:0 0 20px rgba(6,182,212,0.5);flex-shrink:0;">CaCu</div>
+      <div style="position:relative;z-index:10;">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          👑 <span style="font-weight:900;font-size:20px;">معلومة فرعونية فاخرة: الأزرق المصري!</span>
+          <span class="badge amber" style="font-size:10px;">أول صبغة صناعية في التاريخ</span>
+        </div>
+        <div style="font-size:14px;margin-top:8px;color:#CBD5E1;line-height:1.9;font-weight:700;">
+          استخدمه الفراعنة قبل 4000 سنة وما زال لونه ثابت! تركيبه
+          <span style="font-family:monospace;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);padding:4px 10px;border-radius:999px;color:#A5F3FC;font-weight:900;">CaCuSi₄O₁₀</span>
+          – سيليكات كالسيوم ونحاس. سر ثباته هو التركيب البلوري المميز.
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;">
+          <span class="badge">ثابت آلاف السنين</span>
+          <span class="badge">مقاوم للعوامل الجوية</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderPropsSection() {
+  const tabs = [
+    { id: "size", label: "📏 الحجم الذري" },
+    { id: "activity1", label: "🔥 نشاط 1A" },
+    { id: "activity7", label: "⚡ نشاط 7A" },
+    { id: "melt", label: "🌡️ الانصهار" }
+  ];
+
+  let infoText = "";
+  if (currentPropTab === "size") infoText = "في الدورة: الحجم يقل → (زيادة جذب النواة)";
+  else if (currentPropTab === "activity1") infoText = "1A: النشاط يزيد لتحت ↓ Li أقل، Cs أكبر";
+  else if (currentPropTab === "activity7") infoText = "7A: النشاط يقل لتحت ↓ F أنشط واحد";
+  else infoText = "1A يقل لتحت • 7A يزيد لتحت";
+
+  let circlesHTML = '';
+  for (let row = 0; row < 4; row++) {
+    for (let col = 0; col < 7; col++) {
+      let size = 1;
+      if (currentPropTab === "size") size = row === 0 ? 6 - col * 0.7 : col * 0.2 + row * 0.9 + 1;
+      else if (currentPropTab === "activity1") size = row * 0.8 + 1;
+      else if (currentPropTab === "activity7") size = (4 - row) * 0.8 + 0.5;
+      else size = col < 2 ? 4 - row * 0.6 : row * 0.6 + 1;
+
+      const px = 18 + size * 9;
+      let gradient = '';
+      if (currentPropTab === "size") gradient = 'linear-gradient(135deg,#7DD3FC,#2563EB)';
+      else if (currentPropTab === "activity1") gradient = 'linear-gradient(135deg,#FDBA74,#EF4444)';
+      else if (currentPropTab === "activity7") gradient = 'linear-gradient(135deg,#6EE7B7,#0D9488)';
+      else gradient = 'linear-gradient(135deg,#C4B5FD,#9333EA)';
+
+      circlesHTML += `
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="width:${px}px;height:${px}px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);background:${gradient};display:flex;align-items:center;justify-content:center;font-weight:900;font-size:10px;color:#fff;box-shadow:0 0 ${px / 2}px rgba(56,189,248,0.4);transition:all 0.7s;">${row + 1}</div>
+          <div style="font-size:8px;opacity:0.3;font-weight:700;">${row + 1},${col + 1}</div>
+        </div>
+      `;
+    }
+  }
+
+  // الأسهم المتقطعة المتحركة
+  let arrowsHTML = '';
+  if (currentPropTab === "size") {
+    arrowsHTML = `
+      <svg style="position:absolute;top:20px;left:0;width:100%;height:100%;pointer-events:none;" viewBox="0 0 600 300" preserveAspectRatio="none">
+        <defs>
+          <marker id="arrowSky" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+            <polygon points="0 0, 10 4, 0 8" fill="#38BDF8"/>
+          </marker>
+          <linearGradient id="gradLine" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.2"/>
+            <stop offset="100%" stop-color="#38BDF8" stop-opacity="1"/>
+          </linearGradient>
+        </defs>
+        <line x1="30" y1="30" x2="570" y2="30" stroke="url(#gradLine)" stroke-width="3"
+          marker-end="url(#arrowSky)" class="animate-dash" stroke-dasharray="10 8"/>
+        <line x1="560" y1="40" x2="560" y2="270" stroke="#38BDF8" stroke-width="3"
+          marker-end="url(#arrowSky)" stroke-dasharray="10 8" class="animate-dash"/>
+      </svg>
+    `;
+  }
+
+  return `
+    <div class="props-tabs">
+      ${tabs.map(t => `
+        <button class="props-tab ${currentPropTab === t.id ? 'active' : ''}" onclick="switchPropTab('${t.id}')">${t.label}</button>
+      `).join('')}
+    </div>
+    <div class="props-display">
+      <div class="props-dots"></div>
+      ${arrowsHTML}
+      <div style="position:relative;z-index:10;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div style="color:#fff;font-weight:900;font-size:14px;background:rgba(255,255,255,0.1);backdrop-filter:blur(10px);padding:8px 16px;border-radius:999px;border:1px solid var(--border-soft);display:flex;gap:8px;align-items:center;">
+            <span style="width:24px;height:24px;border-radius:50%;background:${currentPropTab === 'size' ? '#38BDF8' : currentPropTab === 'activity1' ? '#FB923C' : currentPropTab === 'activity7' ? '#34D399' : '#A78BFA'};display:flex;align-items:center;justify-content:center;font-size:12px;">
+              ${currentPropTab === 'size' ? '→' : currentPropTab === 'melt' ? '↕' : '↓'}
+            </span>
+            ${infoText}
+          </div>
+        </div>
+        <div style="margin-top:32px;display:grid;grid-template-columns:repeat(7,1fr);gap:12px;min-height:280px;align-items:end;">
+          ${circlesHTML}
+        </div>
+      </div>
+    </div>
+    <div class="props-info-cards">
+      <div class="info-card">
+        <h5 style="color:#BAE6FD;">📏 الحجم الذري</h5>
+        <p>في الدورة: يقل ← زيادة شحنة النواة. في المجموعة: يزيد ↓ زيادة المستويات.</p>
+      </div>
+      <div class="info-card">
+        <h5 style="color:#FDBA74;">🔥 النشاط الكيميائي</h5>
+        <p>1A يزيد لتحت (سهولة الفقد). 7A يقل لتحت (صعوبة الاكتساب). الفلور أنشط عنصر!</p>
+      </div>
+      <div class="info-card">
+        <h5 style="color:#DDD6FE;">🌡️ الانصهار والغليان</h5>
+        <p>1A يقل لتحت (Li صلب، Cs طري). 7A يزيد لتحت (F غاز، I صلب).</p>
+      </div>
+    </div>
+  `;
+}
+
+function renderMatterSection() {
+  return `
+    <div class="matter-grid">
+      <div class="matter-card">
+        <div class="matter-icon" style="background:#0F172A;">🧪</div>
+        <div class="matter-title">المادة النقية</div>
+        <div class="matter-desc">لا يمكن فصلها بطرق فيزيائية. لها خواص ثابتة ومميزة.</div>
+        <div class="matter-tags" style="background:#F1F5F9;border:1px solid #E2E8F0;">مثل: الذهب، السكر النقي، الماس</div>
+      </div>
+      <div class="matter-card blue">
+        <div class="matter-icon" style="background:#0284C7;">🧅</div>
+        <div class="matter-title" style="color:#0C4A6E;">المركب الكيميائي</div>
+        <div class="matter-desc">اتحاد ذرتين أو أكثر بنسب كتلية ثابتة. يحتاج تفاعل كيميائي.</div>
+        <div class="matter-tags" style="background:#0C4A6E;color:#E0F2FE;font-family:monospace;font-size:12px;">H₂O • NaCl • CO₂ • CaCO₃</div>
+      </div>
+      <div class="matter-card amber">
+        <div class="matter-icon" style="background:#D97706;">⭐</div>
+        <div class="matter-title" style="color:#78350F;">العنصر</div>
+        <div class="matter-desc">أبسط صورة للمادة، لا يمكن تحليله لمادتين أبسط بالطرق الكيميائية.</div>
+        <div class="matter-tags" style="background:#FEF3C7;border:1px solid #FDE68A;">Fe, Al, O₂, Au, Ag</div>
+      </div>
+    </div>
+    <div style="margin-top:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;">
+      <div style="border-radius:28px;background:linear-gradient(135deg,#064E3B,#134E4A);border:1px solid rgba(52,211,153,0.2);padding:24px;color:#fff;box-shadow:0 25px 50px rgba(0,0,0,0.25);position:relative;overflow:hidden;">
+        <div style="position:absolute;bottom:-80px;left:-80px;width:320px;height:320px;background:rgba(16,185,129,0.1);border-radius:50%;filter:blur(50px);"></div>
+        <h4 style="font-weight:900;font-size:20px;display:flex;gap:8px;align-items:center;">💧 المخلوط - خلط فيزيائي</h4>
+        <p style="font-size:13px;margin-top:8px;color:rgba(209,250,229,0.8);font-weight:700;line-height:1.8;">
+          مادتين أو أكثر مختلطين فيزيائياً (بدون تفاعل) ويمكن فصلهم بطرق فيزيائية سهلة!
+        </p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;">
+          <div style="border-radius:18px;background:rgba(255,255,255,0.1);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1);padding:16px;">
+            <div style="font-weight:900;font-size:14px;color:#A7F3D0;">متجانس (محلول) 🥤</div>
+            <div style="font-size:11px;opacity:0.6;margin-top:4px;font-weight:700;">لا يمكن تمييز مكوناته بالعين المجردة</div>
+            <div style="margin-top:12px;font-size:12px;background:#fff;color:#064E3B;padding:4px 10px;border-radius:999px;font-weight:700;display:inline-block;">ماء + ملح • شاي • هواء</div>
+          </div>
+          <div style="border-radius:18px;background:rgba(255,255,255,0.1);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1);padding:16px;">
+            <div style="font-weight:900;font-size:14px;color:#FDE68A;">غير متجانس 🥗</div>
+            <div style="font-size:11px;opacity:0.6;margin-top:4px;font-weight:700;">يمكن تمييز مكوناته بسهولة</div>
+            <div style="margin-top:12px;font-size:12px;background:#fff;color:#78350F;padding:4px 10px;border-radius:999px;font-weight:700;display:inline-block;">سلطة • رمل+ماء • زيت+ماء</div>
+          </div>
+        </div>
+      </div>
+      <div style="border-radius:28px;background:#fff;border:2px solid #E2E8F0;padding:24px;box-shadow:0 10px 25px rgba(0,0,0,0.2);color:#0F172A;">
+        <h4 style="font-weight:900;font-size:18px;display:flex;gap:8px;align-items:center;">🧪 طرق الفصل الذكية</h4>
+        <div style="margin-top:16px;display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;gap:12px;align-items:flex-start;border-radius:16px;background:#F8FAFC;border:1px solid #E2E8F0;padding:12px;">
+            <span style="width:40px;height:40px;border-radius:50%;background:#fff;border:2px solid #E2E8F0;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.1);">🔍</span>
+            <div>
+              <b style="font-size:13px;">فيزيائية ⚗️</b>
+              <span style="font-size:12px;margin-right:4px;font-weight:700;">الترشيح، التبخير، المغناطيس، التقطير</span>
+              <div style="font-size:11px;color:#475569;margin-top:8px;line-height:1.8;font-weight:700;">
+                🔹 ملح+ماء: بالتبخير ثم التكثيف<br>
+                🔹 رمل+ماء: بالترشيح<br>
+                🔹 حديد+رمل: بالمغناطيس القوي
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;border-radius:16px;background:linear-gradient(135deg,#FFF7ED,#FFFBEB);border:1px solid #FED7AA;padding:12px;">
+            <span style="width:40px;height:40px;border-radius:50%;background:#fff;border:2px solid #FED7AA;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.1);">🔥</span>
+            <div>
+              <b style="font-size:13px;">كيميائية 🔥</b>
+              <span style="font-size:12px;margin-right:4px;font-weight:700;">التسخين، التحليل الكهربي</span>
+              <div style="font-size:11px;color:#475569;margin-top:8px;line-height:1.8;font-weight:700;">
+                تفكيك المركب لعناصره الأصلية - مثل تحليل الماء كهربياً إلى H₂ و O₂
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ============================================
+   الكويز
+   ============================================ */
+
+function renderQuiz() {
+  const container = document.getElementById('questionsContainer');
+  const letters = ['أ', 'ب', 'جـ', 'د'];
+
+  container.innerHTML = QUIZ_QUESTIONS.map((q, qi) => {
+    const answered = quizAnswers[qi] !== -1;
+    const isCorrect = quizAnswers[qi] === q.ans;
+    let qClass = '';
+    if (answered) qClass = isCorrect ? 'correct' : 'wrong';
+
+    return `
+      <div class="quiz-question ${qClass}">
+        <div class="q-head">
+          <div class="q-num">${qi + 1}</div>
+          <div class="q-text">${q.q}</div>
+        </div>
+        <div class="q-options">
+          ${q.opts.map((opt, oi) => {
+            let optClass = '';
+            if (answered && quizAnswers[qi] === oi) {
+              optClass = oi === q.ans ? 'selected-correct' : 'selected-wrong';
+            }
+            return `
+              <button class="q-option ${optClass}" onclick="answerQuestion(${qi}, ${oi})" ${answered ? 'disabled' : ''}>
+                <span class="q-option-letter">${letters[oi]}</span>
+                ${opt}
+              </button>
+            `;
+          }).join('')}
+        </div>
+        ${answered ? `
+          <div class="q-feedback ${isCorrect ? 'ok' : 'no'}">
+            ${isCorrect ? '✅ برافو! إجابة صحيحة وممتازة' : `❌ الإجابة الصح: ${q.opts[q.ans]}`}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+
+  const progressGrid = document.getElementById('progressGrid');
+  progressGrid.innerHTML = QUIZ_QUESTIONS.map((q, i) => {
+    let cls = '';
+    if (quizAnswers[i] !== -1) {
+      cls = quizAnswers[i] === q.ans ? 'correct' : 'wrong';
+    }
+    return `<div class="progress-cell ${cls}">${i + 1}</div>`;
+  }).join('');
+
+  const score = quizAnswers.filter((a, i) => a === QUIZ_QUESTIONS[i].ans).length;
+  const answeredCount = quizAnswers.filter(a => a !== -1).length;
+  const progress = Math.round(answeredCount / QUIZ_QUESTIONS.length * 100);
+
+  document.getElementById('scoreDisplay').textContent = `${score} / ${QUIZ_QUESTIONS.length}`;
+  document.getElementById('progressDisplay').textContent = `${progress}% مكتمل`;
+  document.getElementById('quizProgressBar').style.width = `${progress}%`;
+}
+
+function answerQuestion(qIndex, optIndex) {
+  if (quizAnswers[qIndex] !== -1) return;
+  quizAnswers[qIndex] = optIndex;
+  renderQuiz();
+}
+
+function showResult() {
+  const score = quizAnswers.filter((a, i) => a === QUIZ_QUESTIONS[i].ans).length;
+  const total = QUIZ_QUESTIONS.length;
+
+  let emoji = '📚';
+  let msg = 'شد حيلك يا بطل! ارجع للسبورة الذكية وراجع من الأول 📚';
+  if (score === total) {
+    emoji = '🏆';
+    msg = 'ما شاء الله! أنت برنس العلوم الحقيقي 🎉 إعداد الأستاذ محمد سعد فخور بيك!';
+  } else if (score >= 4) {
+    emoji = '🌟';
+    msg = 'ممتاز جداً! مستوى رائع، راجع الغلطات البسيطة وهتبقى توب 🔥';
+  } else if (score >= 2) {
+    emoji = '💪';
+    msg = 'كويس! محتاج تراجع التعريفات الذهبية تاني وهتبقى جامد 💪';
+  }
+
+  document.getElementById('resultPanel').innerHTML = `
+    <div class="result-panel">
+      <div class="result-emoji">${emoji}</div>
+      <div class="result-score">درجتك ${score} من ${total}</div>
+      <div class="result-msg">${msg}</div>
+      <div class="result-stars">
+        ${Array.from({ length: score }).map((_, i) => `<span style="animation-delay:${i * 100}ms">⭐</span>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function resetQuiz() {
+  quizAnswers = Array(QUIZ_QUESTIONS.length).fill(-1);
+  document.getElementById('resultPanel').innerHTML = '';
+  renderQuiz();
+}
+
+/* ============================================
+   دوال تفاعلية
+   ============================================ */
+
+function selectAtomElement(sym) {
+  selectedElement = ATOM_ELEMENTS.find(e => e.sym === sym);
+  atomAngle = 0;
+  renderMainContent();
+}
+
+function selectPeriodicElement(sym) {
+  selectedPeriodic = sym;
+  renderMainContent();
+}
+
+function updateZ(value) {
+  currentZ = parseInt(value);
+  renderMainContent();
+}
+
+function switchPropTab(tab) {
+  currentPropTab = tab;
+  renderMainContent();
+}
+
+/* ============================================
+   التشغيل الأولي
+   ============================================ */
+renderTabs();
+renderMainContent();
+renderQuiz();
+</script>
+</body>
+</html>

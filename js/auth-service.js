@@ -215,6 +215,7 @@ const AuthService = {
     const map = {
       super_admin:'admin-dashboard.html', admin:'admin-dashboard.html',
       assistant:'assistant-dashboard.html', teacher:'teacher-dashboard.html',
+      center:'center-dashboard.html',
       student:'student-dashboard.html', parent:'parent-dashboard.html'
     };
     location.href = map[role] || 'login.html';

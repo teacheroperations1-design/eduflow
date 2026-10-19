@@ -13,6 +13,22 @@ function cur(){try{return (typeof currentUser!=='undefined'&&currentUser)?curren
 function cloud(col,o,del){try{if(window.FirebaseService&&FirebaseService._db){if(del)FirebaseService.deleteDoc(col,o.id);else FirebaseService.saveDoc(col,o.id,o);}}catch(e){}}
 function myTeacherId(){try{return window.getMyTeacherId?window.getMyTeacherId():null;}catch(e){return null;}}
 function thumb(u){try{return window.driveThumb?window.driveThumb(u):u;}catch(e){return u;}}
+function allGrades(){
+  var out=[];
+  try{
+    // 1. جرب تجيب الصفوف من إعدادات النظام العامة
+    var lv=(window.EduFlowConfig&&EduFlowConfig.educationLevels)||{};
+    Object.keys(lv).forEach(function(k){
+      (lv[k].grades||[]).forEach(function(g){ if(out.indexOf(g)<0) out.push(g); });
+    });
+    // 2. لو لسه فاضية، استخرج الصفوف من المجموعات الموجودة فعلياً في قاعدة البيانات كخطة بديلة مضمونة
+    if(!out.length && window.DataService && typeof DataService.getGroups==='function'){
+      var gs=DataService.getGroups()||[];
+      gs.forEach(function(g){ if(g.grade && out.indexOf(g.grade)<0) out.push(g.grade); });
+    }
+  }catch(e){}
+  return out.sort(); // ترتيب أبجدي عشان تكون سهلة في الاختيار
+}
 
 /* ========== بناء السكشن ========== */
 function buildSection(){
@@ -111,7 +127,7 @@ ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">📚 '
 '<div class="form-group"><label>الأستاذ</label><select id="ciTeacher" class="form-select"><option value="">عام (المركز)</option>'+teachers.map(function(t){return '<option value="'+t.id+'" '+(((i&&i.teacherId===t.id)||(!i&&tid===t.id))?'selected':'')+'>'+t.name+'</option>';}).join('')+'</select></div>'+
 '<div class="form-group"><label>السعر (ج.م) *</label><input type="number" id="ciPrice" class="form-input" value="'+(i?i.price:0)+'" min="0"></div>'+
 '<div class="form-group"><label>المخزون *</label><input type="number" id="ciStock" class="form-input" value="'+(i?i.stock:10)+'" min="0"></div>'+
-'<div class="form-group"><label>الصف</label><input type="text" id="ciGrade" class="form-input" value="'+(i?i.grade||'':'')+'" placeholder="كل الصفوف"></div>'+
+'<div class="form-group"><label>🎓 الصف (مين هيشوفها في المتجر)</label><select id="ciGrade" class="form-select"><option value="">كل الصفوف</option>'+allGrades().map(function(g){return '<option value="'+g+'" '+((i&&i.grade===g)?'selected':'')+'>'+g+'</option>';}).join('')+'</select><div class="text-xs text-muted" style="margin-top:4px;">لو حددت صف → المذكرة مش هتظهر غير لطلاب الصف ده والمرحلة اللي فوقها.</div></div>'+
 '<div class="form-group"><label>المرحلة</label><input type="text" id="ciStage" class="form-input" value="'+(i?i.stage||'':'')+'" placeholder="اختياري"></div></div>'+
 '<div class="form-group"><label>🔗 رابط صورة (Drive أو URL)</label><input type="text" id="ciImg" class="form-input" value="'+(i?i.imageUrl||'':'')+'"></div>'+
 '<button class="btn btn-primary w-full" onclick="window.scSaveCat(\''+(editId||'')+'\')">💾 حفظ</button></div>','modal-md');
@@ -277,6 +293,10 @@ var nav=document.getElementById('sidebarNav');
 if(nav){var s2={};nav.querySelectorAll('.sidebar-item[data-section]').forEach(function(it){var k=it.getAttribute('data-section');if(s2[k]){it.remove();}else s2[k]=1;});}
 }catch(e){}
 }
+
+
+
+
 
 /* ========== الخطافات: كليك القائمة + showSection + أمان دوري ========== */
 document.addEventListener('click',function(e){
