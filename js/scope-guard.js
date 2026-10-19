@@ -123,6 +123,28 @@ setTimeout(function(){ filterModalSelects(document); filterStudentSelects(docume
   };
 }
 setInterval(function(){ wrapModals(); var m=document.querySelector('.modal-body,#globalModal'); if(m) filterModalSelects(m); },1500);
-wrap(); setTimeout(wrap,800); setTimeout(wrap,2000); setInterval(wrap,5000);
+/* ========== 🔒 قفل الأساتذة والطلاب على النطاق (بيصلح كل الفلاتر والتصفيات مرة واحدة) ========== */
+function wrap2(){
+  if(window.DataService&&!DataService.__scopeWrapped2){
+    DataService.__scopeWrapped2=1;
+    var ot=(DataService.getTeachers)?DataService.getTeachers.bind(DataService):null;
+    if(ot){
+      DataService.getTeachers=function(){
+        var u=cur();
+        if(!u||u.role==='admin'||u.role==='super_admin'||u.role==='student'||u.role==='parent') return ot();
+        return teachers(); /* مساعد/أستاذ/سنتر → نطاقهم بس */
+      };
+    }
+    var osu=(DataService.getStudents)?DataService.getStudents.bind(DataService):null;
+    if(osu){
+      DataService.getStudents=function(){
+        var u=cur();
+        if(!u||u.role==='admin'||u.role==='super_admin'||u.role==='student'||u.role==='parent') return osu();
+        return students(); /* مساعد/أستاذ/سنتر → طلاب نطاقهم بس */
+      };
+    }
+  }
+}
+wrap(); wrap2(); setTimeout(wrap,800); setTimeout(wrap2,800); setTimeout(wrap,2000); setTimeout(wrap2,2000); setInterval(wrap,5000); setInterval(wrap2,5000);
 setTimeout(wrapModals,600); setTimeout(wrapModals,1800);
 })();

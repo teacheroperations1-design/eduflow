@@ -749,7 +749,6 @@ setInterval(function(){ wrapOps(); wrapModal(); wrapQuickEval(); killMysteryFilt
 <script src="js/legendary-shield.js"></script>
 <script src="js/legendary-exams.js"></script>
 <script src="js/schedule-board.js"></script>
-<script src="js/billing/notify-rules.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="js/footer-injector.js"></script>
 <script src="js/camera-helper.js"></script>
@@ -1065,7 +1064,7 @@ try{
 const menu=[
 {s:'الرئيسية',items:[{id:'command',l:'مركز العمليات',i:'🎯'},{id:'inbox',l:'صندوق الوارد',i:'📥'},{id:'attendance',l:'الحضور',i:'📋'},{id:'students',l:'الطلاب',i:'🎓'}]},
 {s:'التشغيل',items:[{id:'teachers',l:'إدارة المجموعات',i:'👨'},{id:'monthly',l:'دفتر التحصيل',i:'📒'},{id:'mySchedule',l:'جدولي الأسبوعي',i:'🗓️'},{id:'makeups',l:'الحصص التعويضية',i:'📅'},{id:'exams',l:'الإنشاء والتجهيز',i:'🛠️'},{id:'grades',l:'الرصد',i:'📝'}]},
-{s:'المالية',items:[{id:'payclaims',l:'طلبات الدفع والليدرز',i:'💵'},{id:'payments',l:'المدفوعات',i:'💵'},{id:'accounting',l:'المحاسبة',i:'🧮'},{id:'expenses',l:'المصروفات',i:'💸'}]},
+{s:'المالية',items:[{id:'payclaims',l:'طلبات الدفع ',i:'💵'},{id:'payments',l:'المدفوعات',i:'💵'},{id:'accounting',l:'المحاسبة',i:'🧮'},{id:'expenses',l:'المصروفات',i:'💸'}]},
 {s:'🚀 التحفيز والذكاء',items:[{id:'quickEval',l:'⚡ التقييم السريع',i:'🎙️'},{id:'battles',l:'⚔️ التحديات والتصفيات',i:'🏆'},{id:'games',l:'مختبرات الألعاب',i:'🎮'},{id:'aiTools',l:'🤖 أدوات الذكاء الاصطناعي',i:'🧠'}]},
 {s:'💰 المتجر',items:[{id:'store',l:'المتجر والجرد',i:'🏪'},{id:'pointsStore',l:'متجر تبديل النقاط',i:'🏆'}]},
 {s:'المحتوى',items:[{id:'classPosts',l:'بوستات الحصة',i:'📰'},{id:'videos',l:'الفيديوهات',i:'🎬'},{id:'interactive',l:'المواد التفاعلية',i:'🧩'},{id:'challenges',l:'المسابقات',i:'🏆'}]},
@@ -7228,51 +7227,28 @@ f.__profExt=1; window.openStudentProfile=f;
 </script>
 
 <script>
-  window.loadMyScheduleBoard=function(){
+ window.loadMyScheduleBoard=function(){
   try{
     var el=document.getElementById('myScheduleBoard'); if(!el) return;
     var tid=window.getMyTeacherId?window.getMyTeacherId():null;
     if(!tid){ el.innerHTML='<div class="card" style="text-align:center;padding:40px;"><div style="font-size:48px;">⚠️</div><strong>مش مرتبط بأي أستاذ</strong><div class="text-sm text-muted" style="margin-top:8px;">كلّم الأدمن يربطك بأستاذ عشان تشوف جدوله وتعدله</div></div>'; return; }
     var t=(DataService.getUserById?DataService.getUserById(tid):null)||{};
-    var gs=(DataService.getGroupsByTeacher?DataService.getGroupsByTeacher(tid):[]);
-    /* 🔒 المساعد يعدل مواعيد بس — مفيش إنشاء مجموعات من اللوحة */
-    if(window.SB&&!SB.__asAddLock){ SB.__asAddLock=1; var oa=SB.addAt; SB.addAt=function(){ if((window.currentUser||{}).role==='assistant'){ window.safeToast('➕ إضافة المجموعات من صفحة المجموعات — هنا تعديل مواعيد بس','warning'); return; } return oa.apply(this,arguments); }; }
-    var q=(document.getElementById('asSbSearch')||{}).value||'';
-    if(q) gs=gs.filter(function(g){return (g.name||'').toLowerCase().indexOf(q.toLowerCase())>=0;});
-    var view=window.__asSbView||'week';
-    el.innerHTML=
-      '<div class="card" style="padding:10px;margin-bottom:10px;">'+
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">'+
-      '<strong style="font-size:13px;">🗓️ جدول '+(t.name||'')+'</strong>'+
-      '<span class="badge badge-info">سحب وإفلات مفعّل — أي تعديل بيتسجل وبيتبلغ الأدمن</span>'+
-      '<button class="btn btn-ghost btn-sm" style="margin-inline-start:auto;" onclick="window.loadMyScheduleBoard()">🔄 تحديث</button></div>'+
-      '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">'+
-      '<button class="btn btn-sm '+(view==='week'?'btn-primary':'btn-ghost')+'" onclick="window.__asSbView=\'week\';window.loadMyScheduleBoard()">📆 أسبوعي</button>'+
-      '<button class="btn btn-sm '+(view==='cards'?'btn-primary':'btn-ghost')+'" onclick="window.__asSbView=\'cards\';window.loadMyScheduleBoard()">🃏 بطاقات</button>'+
-      '<input id="asSbSearch" class="form-input" style="max-width:200px;" placeholder="🔍 بحث بالاسم" value="'+q+'" oninput="window.loadMyScheduleBoard()">'+
-      '</div></div>'+
-      '<div id="asSbConflicts" style="margin-bottom:10px;"></div>'+
-      '<div id="asSbBoard"></div>'+
-      '<div class="card" style="margin-top:12px;"><div class="card-header"><h3 class="card-title">📜 سجل تغييرات المواعيد</h3></div><div id="asSbLog"></div></div>';
-    if(view==='cards'){
-      document.getElementById('asSbBoard').innerHTML=gs.length?gs.map(function(g){
-        var sch=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}];
-        return '<div class="card" style="padding:12px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><div><strong>'+g.name+'</strong><div class="text-xs text-muted">🎓 '+(g.grade||'-')+' · 🏢 '+(g.center||'-')+' · ⏱️ '+(g.duration||60)+' د</div></div><div style="display:flex;gap:4px;flex-wrap:wrap;">'+sch.map(function(s,si){return '<span class="badge badge-info">'+(s.day||'-')+' '+(window.T?T(s.time):s.time)+'</span><button class="btn btn-ghost btn-sm" onclick="SB.openMoveModal(\''+g.id+'\','+si+',\''+s.day+'\',\''+s.time+'\')">✏️</button>';}).join('')+'</div></div></div>';
-      }).join(''):'<p class="text-muted">مفيش مجموعات</p>';
-    } else if(window.SB&&SB.renderBoard){
-      SB.renderBoard('asSbBoard', gs);
-    } else {
-      document.getElementById('asSbBoard').innerHTML='<p class="text-muted">محرك الجدول مش محمل</p>';
-    }
-    if(window.SB&&SB.allConflicts){
-      var rows=SB.allConflicts(gs);
-      document.getElementById('asSbConflicts').innerHTML=rows.length?'<div class="card" style="border-color:rgba(239,68,68,.4);"><div class="card-header"><h3 class="card-title" style="color:var(--danger);">⚠️ تعارضات المواعيد ('+rows.length+')</h3></div>'+rows.slice(0,8).map(function(r){return '<div class="sub-row"><div><strong>'+r.a.name+' ⇆ '+r.b.name+'</strong><div class="text-xs text-muted">'+(r.sa&&r.sa.day||'')+' '+(r.sa&&r.sa.time||'')+' ↔ '+(r.sb&&r.sb.day||'')+' '+(r.sb&&r.sb.time||'')+'</div></div><button class="btn btn-ghost btn-sm" onclick="SB.openMoveModal(\''+r.b.id+'\',0,\''+(r.sb&&r.sb.day)+'\',\''+(r.sb&&r.sb.time)+'\')">✏️ صلّح</button></div>';}).join('')+'</div>':'';
+    if(!window.SB){ el.innerHTML='<div class="card" style="text-align:center;padding:30px;">⚠️ محرك الجدول مش محمل — اتأكد إن سطر schedule-board.js موجود في الصفحة</div>'; return; }
+    el.innerHTML='<div class="filter-info" style="margin-bottom:10px;">🗓️ جدول <strong>'+(t.name||'')+'</strong> — اسحب الحصة لتعديل موعدها (أي تعديل بيتسجل وبيتبلغ الأدمن)</div><div id="asSbBoard"></div><div id="asSbConflicts" style="margin-top:10px;"></div><div class="card" style="margin-top:12px;"><div class="card-header"><h3 class="card-title">📜 سجل تغييرات المواعيد</h3></div><div id="asSbLog"></div></div>';
+    var opts={container:'asSbBoard',editable:true,showTeacher:false,notifyAdmin:true,role:'assistant',teacherFilter:tid,groupFilter:'all',center:'',grade:'',search:''};
+    if(typeof SB.render==='function') SB.render(opts);
+    else if(typeof SB.renderBoard==='function') SB.renderBoard('asSbBoard',(DataService.getGroupsByTeacher?DataService.getGroupsByTeacher(tid):[]));
+    if(SB.allConflicts){
+      var gs=(DataService.getGroupsByTeacher?DataService.getGroupsByTeacher(tid):[]);
+      var rows=SB.allConflicts(gs)||[];
+      document.getElementById('asSbConflicts').innerHTML=rows.length?'<div class="card" style="border-color:rgba(239,68,68,.4);"><div class="card-header"><h3 class="card-title" style="color:var(--danger);">⚠️ تعارضات ('+rows.length+')</h3></div>'+rows.slice(0,8).map(function(r){return '<div class="sub-row"><div><strong>'+r.a.name+' ⇆ '+r.b.name+'</strong></div><button class="btn btn-ghost btn-sm" onclick="SB.openMoveModal(\''+r.b.id+'\',0,\''+(r.sb&&r.sb.day)+'\',\''+(r.sb&&r.sb.time)+'\')">✏️ صلّح</button></div>';}).join('')+'</div>':'';
     }
     var d=DataService._getData();
     var log=(d.scheduleChangeLog||[]).filter(function(l){ var g=(DataService.getGroups?DataService.getGroups():[]).find(function(x){return x.id===l.groupId;}); return g&&g.teacherId===tid; }).slice(-8).reverse();
     document.getElementById('asSbLog').innerHTML=log.length?log.map(function(l){return '<div class="sub-row" style="padding:6px 8px;"><div style="flex:1;"><strong>'+(l.groupName||'')+'</strong><div class="text-xs text-muted">'+(l.oldDay||'')+' '+(l.oldTime||'')+' ← '+(l.newDay||'')+' '+(l.newTime||'')+'</div></div><span class="text-xs text-muted">'+String(l.at||l.createdAt||'').slice(0,10)+'</span></div>';}).join(''):'<p class="text-muted">مفيش تغييرات</p>';
   }catch(e){ console.error('loadMyScheduleBoard',e); }
 };
+
 /* ============ 🛠️ صفحتا الإنشاء والرصد (امتحانات + واجبات) ============ */
 (function(){
 "use strict";
@@ -7378,7 +7354,6 @@ window.delHw=async function(id){ try{ if(!confirm('حذف الواجب؟')) retu
 </script>
 <script src="js/unified-students.js"></script>
 <script src="js/students-page.js"></script>
-<script src="js/games-redirect.js"></script>
 <script>
 /* ============ 💵 إعترضات الدفع + ✋ إعترضات الحضور + 🎖️ الليدرز — 3 صفحات بفلاتر ============ */
 (function(){
@@ -7522,5 +7497,6 @@ setInterval(function(){ var a=document.querySelector('.section.active'); if(!a) 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
 })();
 </script>
+
 </body>
 </html>

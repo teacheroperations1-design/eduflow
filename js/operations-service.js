@@ -11,6 +11,15 @@ const Ops = {
   async init() {
     const d = DataService._getData();
     this.COLLECTIONS.forEach(c => { if (!d[c]) d[c] = []; });
+    /* 🔄 سحب روابط المساعدين من السحابة لو مش موجودة محلياً */
+    try{
+      if (window.FirebaseService && FirebaseService._db) {
+        const snap = await FirebaseService._db.collection('assignments').get();
+        d.assignments = d.assignments || {};
+        snap.forEach(doc => { if (!d.assignments[doc.id]) d.assignments[doc.id] = doc.data(); });
+        DataService._saveData(d);
+      }
+    }catch(e){}
     if (!d.automations?.length) d.automations = this.defaultAutomations();
     if (!d.whatsappTemplates?.length) d.whatsappTemplates = this.defaultWhatsAppTemplates();
     this.migrateAssistants(d);
@@ -122,6 +131,8 @@ const Ops = {
       assignedAt: new Date().toISOString()
     };
     DataService._saveData(d);
+    /* ☁️ مزامنة الربط مع السحابة — عشان View As وأي جهاز تاني يشوفوه */
+    try{ if (window.FirebaseService && FirebaseService._db) await FirebaseService.saveDoc('assignments', userId, d.assignments[userId]); }catch(e){}
     const u = DataService.getUserById(userId);
     if (u) {
       u.assistant = {
