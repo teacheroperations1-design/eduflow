@@ -19,7 +19,15 @@ const FirebaseService = {
       if(!this._app){
         this._app = firebase.apps.length ? firebase.app() : firebase.initializeApp(cfg);
         this._db = firebase.firestore(this._app);
-        try{ firebase.firestore().enablePersistence({ synchronizeTabs:true }).catch(e=>console.warn('Persistence:', e.code)); }catch(e){}
+        try {
+  firebase.firestore().setSettings({
+    cache: firebase.firestore.persistentLocalCache({
+      tabManager: firebase.firestore.persistentMultipleTabManager()
+    })
+  });
+} catch(e) {
+  console.warn('Persistence setup:', e?.message || e?.code);
+}
         console.log('✅ Firebase initialized — project:', cfg.projectId);
       }
       this.connected = navigator.onLine !== false;

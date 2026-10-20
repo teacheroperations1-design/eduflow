@@ -871,8 +871,8 @@ function init(){
     bell();
   },1500);
   setTimeout(scanEvents,2500);
-  setInterval(scanEvents,20000);
-  setInterval(pollFire,15000);
+  setInterval(scanEvents,45000);
+  setInterval(pollFire,30000);
   setTimeout(hookAdd,800); setTimeout(hookAdd,2000);
   injectPolicySection(); setTimeout(injectPolicySection,1000); setTimeout(injectPolicySection,2500);
   document.addEventListener('click',function once(){ ctx(); document.removeEventListener('click',once); });

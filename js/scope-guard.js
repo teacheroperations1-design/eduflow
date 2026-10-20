@@ -37,20 +37,23 @@ function groups(){
   }
   return gs;
 }
+/* 🛡️ مصادر خام غير ملفوفة — تمنع الـ recursion نهائياً */
+function rawStudents(){ try{ return DataService.__rawStudents?DataService.__rawStudents():((DataService.getStudents?DataService.getStudents():[])); }catch(e){ return []; } }
+function rawTeachers(){ try{ return DataService.__rawTeachers?DataService.__rawTeachers():((DataService.getTeachers?DataService.getTeachers():[])); }catch(e){ return []; } }
 function students(){
   var gids={}; groups().forEach(function(g){ gids[g.id]=1; });
   var d=db0(), ids={};
   (d.enrollments||[]).forEach(function(e){ if(e.status==='active'&&gids[e.groupId]) ids[e.studentId]=1; });
-  return (DataService.getStudents?DataService.getStudents():[]).filter(function(s){ return ids[s.id]; });
+  return rawStudents().filter(function(s){ return ids[s.id]; });
+}
+function teachers(){
+  var ids={}; groups().forEach(function(g){ if(g.teacherId) ids[g.teacherId]=1; });
+  return rawTeachers().filter(function(t){ return ids[t.id]; });
 }
 function studentsForTeacher(tid){
   var d=db0(), ids={};
   (DataService.getGroups?DataService.getGroups():[]).forEach(function(g){ if(g.teacherId===tid)(d.enrollments||[]).forEach(function(e){ if(e.groupId===g.id&&e.status==='active') ids[e.studentId]=1; }); });
   return (DataService.getStudents?DataService.getStudents():[]).filter(function(s){ return ids[s.id]; });
-}
-function teachers(){
-  var ids={}; groups().forEach(function(g){ if(g.teacherId) ids[g.teacherId]=1; });
-  return (DataService.getTeachers?DataService.getTeachers():[]).filter(function(t){ return ids[t.id]; });
 }
 window.ScopedData={
   groups:groups, students:students, teachers:teachers,
@@ -122,12 +125,12 @@ setTimeout(function(){ filterModalSelects(document); filterStudentSelects(docume
     return r;
   };
 }
-setInterval(function(){ wrapModals(); var m=document.querySelector('.modal-body,#globalModal'); if(m) filterModalSelects(m); },1500);
 /* ========== 🔒 قفل الأساتذة والطلاب على النطاق (بيصلح كل الفلاتر والتصفيات مرة واحدة) ========== */
 function wrap2(){
   if(window.DataService&&!DataService.__scopeWrapped2){
     DataService.__scopeWrapped2=1;
     var ot=(DataService.getTeachers)?DataService.getTeachers.bind(DataService):null;
+    if(ot&&!DataService.__rawTeachers) DataService.__rawTeachers=ot;
     if(ot){
       DataService.getTeachers=function(){
         var u=cur();
@@ -136,6 +139,7 @@ function wrap2(){
       };
     }
     var osu=(DataService.getStudents)?DataService.getStudents.bind(DataService):null;
+    if(osu&&!DataService.__rawStudents) DataService.__rawStudents=osu;
     if(osu){
       DataService.getStudents=function(){
         var u=cur();

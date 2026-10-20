@@ -367,6 +367,7 @@ if(newly.length){saveD(d);setTimeout(function(){newly.forEach(function(a){if(win
 return '<div class="card" style="padding:14px;"><strong>🏅 شاراتي</strong><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">'+ACH.map(function(a){var ok=!!d.achievements[sid][a.k];return '<span class="fc-badge '+(ok?'unlocked':'locked')+'"><span class="ic">'+a.i+'</span>'+a.l+'</span>';}).join('')+'</div></div>';
 }
 function streakBonus(sid){if(gamesFrozen())return;
+if(window.Ops&&Ops.touchStreak){ return; } /* 🛡️ Ops بيدي مكافأة السلسلة بالفعل — منع الازدواج */
 var c=cfg(),u=DataService.getUserById?DataService.getUserById(sid):null;
 var s=(u&&u.streaks&&u.streaks.attendance)||0;
 var d=db();d.streakBonuses=d.streakBonuses||{};d.streakBonuses[sid]=d.streakBonuses[sid]||{};

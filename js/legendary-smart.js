@@ -14,7 +14,15 @@ function escS(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,
 
 /* ========== 🛡️ 3) حارس النموذج الوسخ ========== */
 var dirty=false;
-function modalOpen(){ var ov=document.getElementById('globalModalOverlay'); return !!(ov&&ov.style.display!=='none'); }
+var _modalCache={v:false,t:0};
+function modalOpen(){
+  var now=Date.now();
+  if(now-_modalCache.t<500) return _modalCache.v;
+  var ov=document.getElementById('globalModalOverlay');
+  _modalCache.v=!!(ov&&ov.style.display!=='none');
+  _modalCache.t=now;
+  return _modalCache.v;
+}
 document.addEventListener('input',function(e){ if(modalOpen()&&e.target.closest&&e.target.closest('.modal-body')) dirty=true; },true);
 document.addEventListener('change',function(e){ if(modalOpen()&&e.target.closest&&e.target.closest('.modal-body')) dirty=true; },true);
 function installGuard(){
@@ -63,7 +71,12 @@ async function gemini(prompt,jsonMode){
 SM.aiGradeEssay=async function(essay,question,maxScore){
   var raw=await gemini('انت مدرس عربي دقيق. قيّم الإجابة دي من 0 لـ '+maxScore+' وارجع JSON بس بالشكل: {"score":رقم,"feedback":"تعليق عربي مختصر"}\nالسؤال: '+question+'\nالإجابة: '+essay,true);
   if(!raw) return null;
-  try{ var m=raw.match(/\{[\s\S]*\}/); if(!m) return null; var o=JSON.parse(m[0]); return {score:Math.max(0,Math.min(maxScore,Math.round(+o.score||0))),feedback:String(o.feedback||'')}; }catch(e){ return null; }
+  try{
+    var o=JSON.parse(raw);
+    return {score:Math.max(0,Math.min(maxScore,Math.round(+o.score||0))),feedback:String(o.feedback||'')};
+  }catch(e){
+    try{ var m=raw.match(/\{[\s\S]*\}/); if(!m) return null; var o2=JSON.parse(m[0]); return {score:Math.max(0,Math.min(maxScore,Math.round(+o2.score||0))),feedback:String(o2.feedback||'')}; }catch(e2){ return null; }
+  }
 };
 SM.aiWaReply=async function(incoming,ctx){
   var raw=await gemini('انت دعم فني لمركز تعليمي اسمه '+(ctx.center||'EduFlow')+'. اكتب رد واتساب عربي ودود ومحترف مختصر (3-5 سطرات) يعتمد على البيانات دي: '+JSON.stringify(ctx)+'\nرسالة ولي الأمر: '+incoming+'\nاكتب الرد مباشرة بدون مقدمات.',false);
@@ -209,7 +222,7 @@ function injectBottomNav(){
     return '<button type="button" onclick="LG.bottomNavGo(\''+it[0]+'\')" style="flex:1;border:none;background:'+(on?'var(--primary-bg)':'transparent')+';color:'+(on?'var(--primary)':'var(--text-muted)')+';border-radius:12px;padding:6px 2px;font-family:inherit;font-size:10px;font-weight:800;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;"><span style="font-size:18px;">'+it[1]+'</span>'+it[2]+'</button>';
   }).join('');
 }
-tick('bottomNav',injectBottomNav,2500);
+tick('bottomNav',injectBottomNav,10000);
 window.addEventListener('resize',injectBottomNav);
 
 /* ========== 📷 9+) ماسح داخلي بالمودال (بدل ما يروح صفحة تانية) ========== */
@@ -251,7 +264,7 @@ function wrapStartScanner(){
 function installAudit(){
   if(!window.DataService||DataService.__lgAudit) return;
   DataService.__lgAudit=1;
-  ['addUser','updateUser','addGroup','updateGroup','deleteGroup','addCenter','deleteCenter','addExam','addHomework'].forEach(function(fn){
+  ['addUser','updateUser','addGroup','updateGroup','addCenter','deleteCenter'].forEach(function(fn){
     if(typeof DataService[fn]!=='function'||DataService[fn].__lgAud) return;
     var o=DataService[fn].bind(DataService);
     DataService[fn]=function(){
@@ -291,5 +304,5 @@ function organize(){
   injectAiKeyCard(); injectDigestBtn(); injectAuditBtn(); injectBottomNav();
 }
 setTimeout(organize,1000);
-tick('smartOrganize',organize,4000);
+tick('smartOrganize',organize,130000);
 })();

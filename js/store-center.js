@@ -295,9 +295,6 @@ if(nav){var s2={};nav.querySelectorAll('.sidebar-item[data-section]').forEach(fu
 }
 
 
-
-
-
 /* ========== الخطافات: كليك القائمة + showSection + أمان دوري ========== */
 document.addEventListener('click',function(e){
 var it=e.target.closest?e.target.closest('.sidebar-item'):null;

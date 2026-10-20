@@ -55,7 +55,8 @@ d.streakClaims=d.streakClaims||{};d.streakClaims[sid]=d.streakClaims[sid]||{};
 [[7,c.streak7],[14,c.streak14],[30,c.streak30]].forEach(function(m){
 if(st>=m[0]&&!d.streakClaims[sid]['m'+m[0]]){
 d.streakClaims[sid]['m'+m[0]]=todayStr();
-addPts(sid,m[1],'🔥 مكافأة سلسلة '+m[0]+' يوم');
+var opsPaid=d.streakMilestones&&d.streakMilestones[sid]&&d.streakMilestones[sid].indexOf(st)>=0;
+if(!opsPaid) addPts(sid,m[1],'🔥 مكافأة سلسلة '+m[0]+' يوم');
 try{if(DataService.addNotification)DataService.addNotification({targetUserId:sid,title:'🔥 سلسلة '+m[0]+' يوم!',message:'مبروك الاستمرارية! +'+m[1]+' نقطة اتضافت لحسابك.',type:'points',priority:'medium',meta:{event:'points'}});}catch(e){}
 try{
 if(sid===(cur()||{}).id&&typeof ThemeManager!=='undefined'&&ThemeManager.openModal&&!window.__streakModalShown){
@@ -96,14 +97,20 @@ saveD(d);
 
 /* ========== 🎲 الكويز اليومي ========== */
 function quizQuestions(sid){
-var c=cfg(),d=db(),pool=[];
-var gids=(DataService.getStudentTeachers?DataService.getStudentTeachers(sid):[]).map(function(t){return t.group.id;});
-(d.exams||[]).forEach(function(e){if(gids.indexOf(e.groupId)>=0)(e.questions||[]).forEach(function(q){if(q.type==='mcq'||q.type==='tf')pool.push({type:q.type,text:q.text,options:q.options||[],correct:q.correctAnswer});});});
-(d.homework||[]).forEach(function(h){if(gids.indexOf(h.groupId)>=0)(h.questions||[]).forEach(function(q){if(q.type==='mcq'||q.type==='tf')pool.push({type:q.type,text:q.text,options:q.options||[],correct:q.correctAnswer});});});
-if(!pool.length)return[];
-var arr=pool.slice(),s=hash(todayStr()+'|'+sid);
-for(var i=arr.length-1;i>0;i--){s=(s*9301+49297)%233280;var j=s%(i+1);var t=arr[i];arr[i]=arr[j];arr[j]=t;}
-return arr.slice(0,c.quizCount);
+  var c=cfg(),d=db(),pool=[];
+  var gids=(DataService.getStudentTeachers?DataService.getStudentTeachers(sid):[]).map(function(t){return t.group.id;});
+  (d.exams||[]).forEach(function(e){if(gids.indexOf(e.groupId)>=0)(e.questions||[]).forEach(function(q){if(q.type==='mcq'||q.type==='tf')pool.push({type:q.type,text:q.text,options:q.options||[],correct:q.correctAnswer});});});
+  (d.homework||[]).forEach(function(h){if(gids.indexOf(h.groupId)>=0)(h.questions||[]).forEach(function(q){if(q.type==='mcq'||q.type==='tf')pool.push({type:q.type,text:q.text,options:q.options||[],correct:q.correctAnswer});});});
+  if(!pool.length)return[];
+  var arr=pool.slice(),s=hash(todayStr()+'|'+sid);
+  for(var i=arr.length-1;i>0;i--){s=(s*9301+49297)%233280;var j=s%(i+1);var t=arr[i];arr[i]=arr[j];arr[j]=t;}
+  var result=arr.slice(0,c.quizCount);
+  // لو الأسئلة أقل من المطلوب، كرر عشوائي لحد ما يوصل للعدد
+  while(result.length<c.quizCount&&pool.length>0){
+    var idx=Math.abs(hash(todayStr()+'|'+sid+'|'+result.length))%pool.length;
+    result.push(pool[idx]);
+  }
+  return result;
 }
 EG.submitDailyQuiz=function(){
 var u=cur();if(!u)return;

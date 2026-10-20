@@ -435,6 +435,11 @@
     <p class="text-sm text-muted">تفاصيل الواجبات والامتحانات</p>
   </div>
 </div>
+<div class="modern-card" style="margin-bottom:12px;">
+  <div class="modern-card-header"><div class="modern-card-title">🧾 كشف النقاط الشهري</div>
+  <div style="display:flex;gap:6px;align-items:center;"><button class="btn btn-ghost btn-sm" onclick="window.psMonth(-1)">◀</button><strong id="psLabel" style="min-width:120px;text-align:center;"></strong><button class="btn btn-ghost btn-sm" onclick="window.psMonth(1)">▶</button></div></div>
+  <div id="psBody"></div>
+</div>
 <div id="gradesTeacherPicker" style="margin-bottom:12px"></div>
 <div class="modern-card">
   <div class="modern-card-header"><div class="modern-card-title">📈 متوسط الأداء</div></div>
@@ -783,7 +788,7 @@ window.showSection = function(id){
     document.querySelectorAll('.sidebar-item').forEach(i => i.classList.toggle('active', i.dataset.section === id));
     const L = {
       overview:window.renderOverview,
-      grades:window.loadGrades,
+      grades:function(){ if(window.loadGrades) window.loadGrades(); if(window.renderPointsStatement) window.renderPointsStatement(); },
       attendance:window.loadAttendance,
       payments:window.loadPayments,
       activity:window.renderActivity
@@ -1615,6 +1620,36 @@ window.openGradeDetails = function(type, id){
   const body = '<div class="modal-header"><h3 class="modal-title">' + (type === 'hw' ? '📝' : '🎓') + ' ' + title + '</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div style="text-align:center;margin-bottom:16px"><div class="grade-badge ' + gradeClass + '" style="font-size:24px;padding:12px 24px">' + pct + '%</div><div class="text-muted" style="margin-top:8px">الدرجة: ' + score + ' من ' + max + '</div></div>' + answersHtml + feedbackHtml + '</div>';
   if(typeof ThemeManager?.openModal === 'function') ThemeManager.openModal(body, 'modal-lg');
 };
+
+/* ============ 🧾 كشف النقاط الشهري ============ */
+window.__psOff=0;
+window.psMonth=function(dir){ window.__psOff=(window.__psOff||0)+dir; if(window.__psOff>0) window.__psOff=0; window.renderPointsStatement(); };
+window.renderPointsStatement=function(){
+  if(!window.activeChild) return;
+  var sid=window.activeChild.id;
+  var now=new Date(); var dt=new Date(now.getFullYear(), now.getMonth()+(window.__psOff||0), 1);
+  var ym=dt.toISOString().slice(0,7);
+  var el=document.getElementById('psLabel'); if(el) el.textContent=dt.toLocaleDateString('ar-EG',{month:'long',year:'numeric'});
+  var d=DataService._getData();
+  var mp=(d.manualPoints||[]).filter(function(m){return m.studentId===sid&&String(m.awardedAt||'').slice(0,7)===ym;});
+  function cat(re){ return mp.filter(function(m){return (m.points||0)>0&&re.test(m.reason||'');}).reduce(function(s,m){return s+m.points;},0); }
+  var cAtt=cat(/حضور|att/i), cHw=cat(/واجب|hw/i), cEx=cat(/امتحان|exam/i), cStk=cat(/سلسلة|streak/i);
+  var cOth=mp.filter(function(m){return (m.points||0)>0&&!/حضور|واجب|امتحان|سلسلة|att|hw|exam|streak/i.test(m.reason||'');}).reduce(function(s,m){return s+m.points;},0);
+  var cNeg=mp.filter(function(m){return (m.points||0)<0;}).reduce(function(s,m){return s+m.points;},0);
+  var cInt=((d.interactionPoints||[]).filter(function(x){return x.studentId===sid&&String(x.awardedAt||'').slice(0,7)===ym;}).reduce(function(s,x){return s+(x.points||0);},0));
+  var cEv=((d.teacherEvaluations||[]).filter(function(x){return x.studentId===sid&&String(x.evaluatedAt||'').slice(0,7)===ym;}).reduce(function(s,x){return s+(x.points||0);},0));
+  var total=cAtt+cHw+cEx+cStk+cOth+cNeg+cInt+cEv;
+  var body=document.getElementById('psBody'); if(!body) return;
+  body.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px;">'+
+   '<div class="stat-mini-box"><div class="stat-mini-value">'+cAtt+'</div><div class="stat-mini-label">📋 حضور</div></div>'+
+   '<div class="stat-mini-box"><div class="stat-mini-value">'+(cHw+cEx)+'</div><div class="stat-mini-label">📝🎓 واجب وامتحان</div></div>'+
+   '<div class="stat-mini-box"><div class="stat-mini-value">'+cEv+'</div><div class="stat-mini-label">⭐ تقييمات</div></div>'+
+   '<div class="stat-mini-box"><div class="stat-mini-value">'+cInt+'</div><div class="stat-mini-label">🌟 تفاعل</div></div>'+
+   '<div class="stat-mini-box"><div class="stat-mini-value">'+(cStk+cOth)+'</div><div class="stat-mini-label">🎁 مكافآت وأخرى</div></div>'+
+   '<div class="stat-mini-box"><div class="stat-mini-value" style="color:var(--danger);">'+cNeg+'</div><div class="stat-mini-label">🛒 مستخدم/مخصوم</div></div>'+
+   '<div class="stat-mini-box" style="border-color:var(--primary);"><div class="stat-mini-value" style="color:var(--primary);">'+total+'</div><div class="stat-mini-label">🏆 صافي الشهر</div></div></div>';
+};
+
 window.loadGrades = function(){
   try{
     if(!activeChild) return;
@@ -1880,7 +1915,6 @@ setInterval(()=>{
 <script src="js/legendary-comms.js"></script>
 <script src="js/legendary-shield.js"></script>
 <script src="js/legendary-exams.js"></script>
-<script src="js/billing/notify-rules.js"></script>
 <script src="js/operations-service.js"></script>
 <script>
 /* ============ 🔄 محرك واحد: اسمع نبضة المزامنة وأعد رسم الصفحة النشطة ============ */

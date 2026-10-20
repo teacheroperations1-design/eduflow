@@ -216,7 +216,7 @@ function neutralize(){
     if(nt!==t)el.textContent=nt;
   });
 }
-setInterval(neutralize,2500);setTimeout(neutralize,800);
+setInterval(neutralize,5000);setTimeout(neutralize,800);
 
 /* 2) الشارة الصغيرة 🌐/ جنب أي اسم أستاذ/مجموعة */
 function badgeize(){
@@ -232,7 +232,7 @@ function badgeize(){
     el.appendChild(sp);
   });
 }
-setInterval(badgeize,3000);setTimeout(badgeize,1200);
+setInterval(badgeize,6000);setTimeout(badgeize,1200);
 
 /* 3) قسم الجدول الأسبوعي للسنتر */
 function buildScheduleSection(){

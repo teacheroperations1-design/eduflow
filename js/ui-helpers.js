@@ -368,5 +368,20 @@ window.pushLiveFeed=function(type,name,extra){
   }
   fix(); setTimeout(fix,1500); setInterval(fix,20000);
 })();
+
+
+/* ============ 📦 حدود تخزين تلقائية ============ */
+(function(){
+  function cap(){
+    try{
+      var d=(window.DataService&&DataService._getData)?DataService._getData():{};
+      var ch=false;
+      function trim(arr,n){ if(arr&&arr.length>n){ arr.splice(0,arr.length-n); ch=true; } }
+      trim(d.barcodeScans,500); trim(d.gamePlays,1000); trim(d.automationLogs,300); trim(d.lootHistory,500); trim(d.scheduleChangeLog,400);
+      if(ch) DataService._saveData(d);
+    }catch(e){}
+  }
+  setTimeout(cap,3000); setInterval(cap,120000);
+})();
 window.UI = UI;
 console.log('✅ UI Helpers loaded with Image Upload System');

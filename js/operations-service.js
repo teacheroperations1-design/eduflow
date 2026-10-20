@@ -478,14 +478,7 @@ async triggerCycleCheck(studentId, groupId, afterSession) {
     if (sessionsDone === sessionsRequired - 1 && !d.cycleAlerts[alertKey]) {
       d.cycleAlerts[alertKey] = new Date().toISOString();
       DataService._saveData(d);
-      await DataService.addNotification({
-        title: '⚠️ تنبيه: الحصة الجاية الدفع',
-        message: `وصلت للحصة ${cycle.sessionsDone} من ${cycle.sessionsRequired} في مجموعة ${g?.name || ''}. الحصة القادمة هتكون موعد دفع الشهرية (${g?.monthlyFee || 0} جنيه).`,
-        targetUserId: studentId,
-        type: 'cycle_warning',
-        priority: 'high',
-        meta: { groupId, cycleNumber: cycle.sessionsDone }
-      });
+        /* 🛡️ إشعار الطالب بيتبعت من notify-service scanner (due_warn) — منع التكرار */
       
       // إشعار إحصائي للأدمن
       const admins = (DataService.getUsers ? DataService.getUsers() : []).filter(u => u.role === 'super_admin' || u.role === 'admin');
@@ -548,14 +541,7 @@ if (sessionsDone >= sessionsRequired && !existingInvoice) {
       }
       
       // إشعار للطالب
-      await DataService.addNotification({
-        title: '💰 فاتورة مستحقة',
-        message: `اكتملت دورة ${cycle.sessionsRequired} حصة في مجموعة ${g?.name || ''}. المبلغ المستحق: ${invoice.amount} جنيه. فترة السماح لحد أول حصة في الدورة الجديدة.`,
-        targetUserId: studentId,
-        type: 'invoice_due',
-        priority: 'high',
-        meta: { invoiceId, amount: invoice.amount }
-      });
+        /* 🛡️ إشعار الطالب بيتبعت من notify-service scanner (due_now) — منع التكرار */
       
       // إشعار إحصائي للأدمن
       const admins = (DataService.getUsers ? DataService.getUsers() : []).filter(u => u.role === 'super_admin' || u.role === 'admin');
@@ -774,16 +760,27 @@ async addManualSessionsForBilling(groupId, studentId, month, sessionsCount, reas
     };
   },
 
-  async addManualPoints(studentId, points, reason, awardedBy, teacherId = null) {
+  async addManualPoints(studentId, points, reason, awardedBy, teacherId = null, dedupeKey = null) {
     const d = DataService._getData();
     if (!d.manualPoints) d.manualPoints = [];
+    const pts = parseInt(points) || 0;
+    /* 🔒 منع ازدواج النقطة لنفس الحدث: نفس المفتاح ميتسجلش مرتين أبداً */
+    if (dedupeKey && (d.manualPoints||[]).some(m => m.dedupeKey === dedupeKey)) return { skipped:true, reason:'duplicate' };
+    /* 📊 سقف يومي 50 نقطة للإضافات الموجبة */
+    if (pts > 0) {
+      const today = new Date().toISOString().slice(0,10);
+      const daySum = arr => (arr||[]).filter(m => m.studentId===studentId && String(m.awardedAt||'').slice(0,10)===today && (m.points||0)>0).reduce((s,m)=>s+(m.points||0),0);
+      const dayTotal = daySum(d.manualPoints) + daySum(d.interactionPoints);
+      if (dayTotal >= 50) return { skipped:true, reason:'daily_cap', dayTotal };
+    }
     const id = 'mp_' + Date.now();
     const item = {
       id, studentId,
-      points: parseInt(points) || 0,
+      points: pts,
       reason: reason || 'نقاط إضافية',
       awardedBy: awardedBy || 'system',
       teacherId: teacherId || null,
+      dedupeKey: dedupeKey || null,
       awardedAt: new Date().toISOString()
     };
     d.manualPoints.push(item);
@@ -791,11 +788,13 @@ async addManualSessionsForBilling(groupId, studentId, month, sessionsCount, reas
     if (window.FirebaseService && FirebaseService._db) FirebaseService.saveDoc('manualPoints', id, item).catch(function(){});
     const student = DataService.getUserById(studentId);
     await this.log(awardedBy, 'إضافة نقاط يدوية', `${points} نقطة للطالب ${student?.name || studentId} - السبب: ${reason}`);
-    await DataService.addNotification({
-      title: '🎁 نقاط جديدة!',
-      message: `حصلت على ${points} نقطة إضافية. السبب: ${reason}`,
-      targetUserId: studentId, type: 'points', priority: 'high'
-    });
+    if(pts>=3 || !/حضور|attendance|تفاعل/i.test(reason||'')){
+      await DataService.addNotification({
+        title: '🎁 نقاط جديدة!',
+        message: `حصلت على ${points} نقطة إضافية. السبب: ${reason}`,
+        targetUserId: studentId, type: 'points', priority: 'high'
+      });
+    }
     return item;
 },
 

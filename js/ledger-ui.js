@@ -1568,8 +1568,19 @@ var present=records.filter(function(r){return r.status==='present';});
 var absent=records.filter(function(r){return r.status==='absent';});
 var awarded=0;
 for(var i=0;i<present.length;i++){
-try{if(typeof Ops!=='undefined'&&Ops.addManualPoints){Ops.addManualPoints(present[i].studentId,attPts,'حضور '+date+' ('+g.name+')',(cur()||{}).id||'');awarded++;}}catch(e){}
-}
+try {
+  if (typeof Ops !== 'undefined' && Ops.addManualPoints) {
+    Ops.addManualPoints(
+      present[i].studentId,
+      attPts,
+      'حضور ' + date + ' (' + g.name + ')',
+      (cur() || {}).id || '',
+      (g.teacherId || null),
+      'att_' + g.id + '_' + date + '_' + present[i].studentId
+    );
+    awarded++;
+  }
+} catch (e) {}}
 present.forEach(function(r){
 try{
 var userData=DataService.getUserById?DataService.getUserById(r.studentId):null;
