@@ -1290,8 +1290,7 @@ ts.forEach(t=>{
 const g=t.group; const teacher=t.teacher;
 const photo=teacher?.photoUrl?`<img src="${window.driveThumb(teacher.photoUrl)}" class="gmc-photo" loading="lazy" onerror="this.outerHTML='<div class=\\'gmc-photo\\' style=\\'display:flex;align-items:center;justify-content:center;background:var(--primary-bg);color:var(--primary);font-size:20px;\\'>👨‍🏫</div>'">`:'<div class="gmc-photo" style="display:flex;align-items:center;justify-content:center;background:var(--primary-bg);color:var(--primary);font-size:20px;">👨‍🏫</div>';
 const myAtt=allAtt.filter(a=>a.status==='approved'&&a.groupId===g.id&&a.records.some(r=>r.studentId===activeStudentId));
-const present=myAtt.filter(a=>a.records.find(r=>r.studentId===activeStudentId)?.status==='present').length;
-const attRate=myAtt.length?Math.round(present/myAtt.length*100):0;
+const myAttF=myAtt.filter(a=>!a.noAtt);const present=myAttF.filter(a=>a.records&&a.records.find(r=>r.studentId===activeStudentId&&r.status==='present')).length;const attRate=myAttF.length?Math.round(present/myAttF.length*100):0;
 const points=(typeof Ops?.getStudentPoints==='function')?Ops.getStudentPoints(activeStudentId,g.id,'all'):0;
 const sched=(g.schedules&&g.schedules.length)?g.schedules.map(s=>`${dayAr(s.day)} ${T(s.time)}`).join(' + '):`${dayAr(g.day)} ${T(g.time)}`;
 const waBtn=g.whatsappLink?`<a href="${g.whatsappLink}" target="_blank" class="wa-btn" style="margin-top:8px;">💬 واتساب المجموعة</a>`:'';

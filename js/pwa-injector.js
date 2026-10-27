@@ -25,12 +25,28 @@ function brand(){ try{ return (window.DataService&&DataService.getBranding)?(Dat
 function logoUrl(){ var b=brand(); if(b.logoUrl&&window.driveThumb) return window.driveThumb(b.logoUrl); if(b.logo) return b.logo; return 'icon-192.png'; }
 
 /* ========== مانيفست + ميتا (تجهيز المنصة للتثبيت) ========== */
+function shortcutsFor(){
+  var u=null; try{ u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():((typeof currentUser!=='undefined')?currentUser:null); }catch(e){}
+  var r=u?u.role:''; var base=location.pathname.replace(/[^/]*$/,'');
+  var page={student:'student-dashboard.html',teacher:'teacher-dashboard.html',assistant:'assistant-dashboard.html',admin:'admin-dashboard.html',super_admin:'admin-dashboard.html',parent:'parent-dashboard.html',center:'center-dashboard.html'}[r]||'index.html';
+  function sc(w,title){ return {name:title, short_name:title.slice(0,12), url:base+page+'?w='+w, icons:[{src:logoUrl(),sizes:'192x192',type:'image/png'}]}; }
+  var map={
+    student:[['attendance','📋 حضوري'],['dashboard','🏠 الرئيسية'],['results','📊 درجاتي'],['fcGames','🎮 الألعاب']],
+    teacher:[['attendance','📋 تسجيل حضور'],['quickEval','⚡ تقييم سريع'],['scheduleBoard','🗓️ جدولي'],['monthly','📒 التحصيل']],
+    assistant:[['monthly','📒 دفتر التحصيل'],['attendance','📋 اعتماد حضور'],['command','🎯 مركز العمليات'],['mySchedule','🗓️ جدولي']],
+    parent:[['grades','📊 الدرجات'],['payments','💰 المدفوعات'],['attendance','📋 الحضور']],
+    admin:[['tower','📊 نظرة عامة'],['ledger','📒 التحصيل'],['students','🎓 الطلاب'],['monitor','🖥️ المتابعة']],
+    center:[['ledger','📒 التحصيل'],['centerSchedule','🗓️ الجدول'],['centerGames','🎮 الألعاب']]
+  };
+  return (map[r]||[]).slice(0,4).map(function(m){ return sc(m[0],m[1]); });
+}
 function ensureManifest(){
   try{
-    if(document.querySelector('link[rel="manifest"]')) return;
+    if(document.querySelector('link[rel="manifest"]')) document.querySelector('link[rel="manifest"]').remove();
     var b=brand(), url=logoUrl();
     var man={name:b.name||document.title||'EduFlow',short_name:(b.shortName||b.name||'EduFlow').slice(0,12),description:'منصة إدارة المراكز التعليمية',start_url:location.pathname,scope:'./',display:'standalone',orientation:'portrait',background_color:'#0a0f1e',theme_color:'#6366f1',lang:'ar',dir:'rtl',
-      icons:[{src:url,sizes:'192x192',type:'image/png',purpose:'any'},{src:url,sizes:'512x512',type:'image/png',purpose:'any'},{src:url,sizes:'192x192',type:'image/png',purpose:'maskable'},{src:url,sizes:'512x512',type:'image/png',purpose:'maskable'}]};
+      icons:[{src:url,sizes:'192x192',type:'image/png',purpose:'any'},{src:url,sizes:'512x512',type:'image/png',purpose:'any'},{src:url,sizes:'192x192',type:'image/png',purpose:'maskable'},{src:url,sizes:'512x512',type:'image/png',purpose:'maskable'}],
+      shortcuts:shortcutsFor()};
     var blob=new Blob([JSON.stringify(man)],{type:'application/manifest+json'});
     var l=document.createElement('link'); l.rel='manifest'; l.href=URL.createObjectURL(blob); document.head.appendChild(l);
   }catch(e){}
@@ -140,6 +156,6 @@ function init(){
   setTimeout(injectSettingsCard,3000);
   setInterval(tick,4000);
 }
-if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){ setTimeout(init,600); });
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){ setTimeout(init,600); setTimeout(ensureManifest,3000); setTimeout(ensureManifest,7000); });
 else setTimeout(init,600);
 })();

@@ -232,9 +232,9 @@ body {
 // 🎯 الصفحة دي PUBLIC - مفيش أي auth check
 (async function boot(){
   try {
-    // تحميل البراندنج
+    // تحميل البراندنج (بالخلفية — منستناش)
     try {
-      if (typeof DataService?.init === 'function') await DataService.init();
+      if (typeof DataService?.init === 'function') DataService.init().catch(()=>{});
       const branding = (typeof DataService?.getBranding === 'function') 
         ? DataService.getBranding() 
         : ((DataService?._getData && DataService._getData().branding) || {});
@@ -254,9 +254,19 @@ body {
       return;
     }
     
-    // 🎯 البحث عن الطالب بالكود (بدون أي auth)
-    await DataService.init();
-    const allUsers = DataService.getUsers ? DataService.getUsers() : [];
+    // 🎯 البحث عن الطالب بالكود (من الكاش المحلي فوراً)
+    let allUsers = [];
+    try { allUsers = DataService.getUsers ? DataService.getUsers() : []; } catch(e) {}
+    
+    // لو الكاش فاضي، استنى init بس بـ timeout 1.5 ثانية
+    if (!allUsers.length) {
+      await Promise.race([
+        DataService.init(),
+        new Promise(r => setTimeout(r, 1500))
+      ]);
+      allUsers = DataService.getUsers ? DataService.getUsers() : [];
+    }
+    
     const student = allUsers.find(u => 
       u.role === 'student' && 
       (u.code||'').toUpperCase() === code.toUpperCase()
@@ -441,7 +451,7 @@ function directLogin(student) {
     
     setTimeout(() => {
       window.location.href = targetUrl;
-    }, 800);
+    }, 200);
     
   } catch(e) {
     console.error('Direct login error:', e);

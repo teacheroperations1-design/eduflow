@@ -108,7 +108,7 @@ window.PushService={
     if(Notification.permission!=='granted'){ promptCard(); return; }
     try{
       var t=await getToken();
-      if(t){ await saveToken(t); foreground(); hidePrompt(); }
+      if(t){ await saveToken(t); localStorage.setItem('pushEnabled','1'); foreground(); hidePrompt(); }
       else promptCard();
     }catch(e){ promptCard(); }
   }
@@ -132,7 +132,35 @@ function pageForUid(uid){
     return {student:'student-dashboard.html',teacher:'teacher-dashboard.html',assistant:'assistant-dashboard.html',admin:'admin-dashboard.html',super_admin:'admin-dashboard.html',parent:'parent-dashboard.html'}[(u&&u.role)||'']||'';
   }catch(e){ return ''; }
 }
-function sendPush(payload){
+function hash(str){
+  var h=0; str=String(str||'');
+  for(var i=0;i<str.length;i++){ h=((h<<5)-h)+str.charCodeAt(i); h|=0; }
+  return String(h);
+}
+function pushKey(p){ return 'pl_'+hash((p.to||'')+'|'+(p.id||'')+'|'+(p.title||'')+'|'+(p.body||'')); }
+async function claimPush(p){
+  var key=pushKey(p), now=Date.now();
+  try{
+    var fl=JSON.parse(localStorage.getItem('eduPushSent')||'{}');
+    if(fl[key]&&now-fl[key]<12*3600*1000) return false;
+    fl[key]=now; var ks=Object.keys(fl);
+    if(ks.length>300) ks.slice(0,150).forEach(function(k){delete fl[k];});
+    localStorage.setItem('eduPushSent',JSON.stringify(fl));
+  }catch(e){}
+  try{
+    if(window.FirebaseService&&FirebaseService._db){
+      var ref=FirebaseService._db.collection('pushLog').doc(key);
+      return await FirebaseService._db.runTransaction(async function(tx){
+        var s=await tx.get(ref);
+        if(s.exists&&now-(s.data().at||0)<12*3600*1000) return false;
+        tx.set(ref,{at:now,to:p.to||''}); return true;
+      });
+    }
+  }catch(e){ console.warn('pushLog',e); }
+  return true;
+}
+function sendPush(payload){ return claimPush(payload).then(function(ok){ return ok?sendPushRaw(payload):{}; }); }
+function sendPushRaw(payload){
   try{
     return fetch(pushApi(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
       .then(function(r){ if(!r.ok) console.warn('push api status:',r.status); return r.json().catch(function(){return {};}); })
@@ -144,7 +172,7 @@ window.PushService.sendPush=sendPush;
 window.PushService.testPush=function(){
   var u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null;
   if(!u){ console.warn('مش مسجل دخول'); return Promise.resolve(); }
-  return sendPush({to:u.id,title:'🔔 اختبار Push من EduFlow',body:'لو الإشعار ده وصلك فالسيستم شغال 100% 🎉',tag:'test',page:pageForUid(u.id)});
+  return sendPush({to:u.id,id:'t'+Date.now(),title:'🔔 اختبار Push من EduFlow',body:'لو الإشعار ده وصلك فالسيستم شغال 100% 🎉',tag:'test',page:pageForUid(u.id)});
 };
 
 function hook(){

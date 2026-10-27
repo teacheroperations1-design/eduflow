@@ -574,3 +574,141 @@ watch(); setTimeout(watch,800); setTimeout(watch,2000);
 setInterval(function(){ watch(); run(); },3000);
 })();
 })();
+/* ============ 🏢 إعدادات السناتر V2 — حق السنتر بالفلوس لكل مرحلة ============ */
+(function(){
+if(window.__csLoaded2) return; window.__csLoaded2=1;
+function db3(){return (window.DataService&&DataService._getData)?DataService._getData():{};}
+function save3(d){if(DataService&&DataService._saveData)DataService._saveData(d);}
+function cur3(){try{return (typeof currentUser!=='undefined'&&currentUser)?currentUser:((window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null);}catch(e){return null;}}
+function monthStr3(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+function cleanCenters(){
+  try{
+    var d=db3(); var seen={}; var changed=false;
+    d.centers=(d.centers||[]).filter(function(c){
+      if(!c||!String(c.name||'').trim()||/^\d+$/.test(String(c.name).trim())){changed=true;return false;}
+      var k=String(c.name).trim(); if(seen[k]){changed=true;return false;} seen[k]=1; c.name=k; return true;
+    });
+    if(changed) save3(d);
+  }catch(e){}
+}
+function migrate(){
+  try{
+    cleanCenters();
+    var d=db3(); var changed=false; d.centers=d.centers||[];
+    d.centers.forEach(function(c){ if(c.centerSharePct!=null&&c.shareDefault==null){ c.shareDefault=Math.round((c.centerSharePct||0)/100*80); delete c.centerSharePct; changed=true; } });
+    (d.groups||[]).forEach(function(g){
+      if(g.centerSharePct!=null&&g.center){
+        var cn=String(g.center).trim();
+        var c=d.centers.find(function(x){return x.name===cn;});
+        if(!c){c={id:'center_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),name:cn,isActive:true,auto:true};d.centers.push(c);}
+        if(c.shareDefault==null){ c.shareDefault=Math.round((g.centerSharePct||0)/100*(g.monthlyFee||80)); changed=true; }
+        delete g.centerSharePct; changed=true;
+      }
+    });
+    if(changed) save3(d);
+  }catch(e){}
+}
+function myCenters(){
+  var u=cur3(); if(!u) return [];
+  var gs=[];
+  if(u.role==='admin'||u.role==='super_admin') gs=(DataService.getGroups?DataService.getGroups():[]);
+  else if(window.ScopedData&&ScopedData.groups) gs=ScopedData.groups();
+  else if(u.role==='teacher') gs=(DataService.getGroups?DataService.getGroups():[]).filter(function(g){return g.teacherId===u.id;});
+  else if(u.role==='center') gs=(DataService.getGroups?DataService.getGroups():[]).filter(function(g){return g.center===(u.centerName||'');});
+  else return [];
+  var names={}; gs.forEach(function(g){ var n=String(g.center||'').trim(); if(n&&!/^\d+$/.test(n)) names[n]=1; });
+  var centers=(DataService.getCenters?DataService.getCenters():[]);
+  return Object.keys(names).sort().map(function(n){return {name:n, rec:centers.find(function(x){return x.name===n;})||null};});
+}
+function centerStats(name){
+  var d=db3(); var mm=monthStr3(); var coll=0, centerTot=0;
+  (d.groups||[]).forEach(function(g){
+    if(g.center!==name) return;
+    var tn=(window.LedgerUI&&LedgerUI.teacherNet)?LedgerUI.teacherNet(g.id,mm):null;
+    if(tn){ coll+=tn.collected; centerTot+=tn.share; }
+  });
+  return {coll:coll, center:centerTot, net:coll-centerTot};
+}
+window.openCenterSettingsModal=function(centerName){
+  var d=db3();
+  var c=(d.centers||[]).find(function(x){return x.name===centerName;})||{name:centerName};
+  var stages=[];
+  try{ var lv=(window.EduFlowConfig&&EduFlowConfig.educationLevels)||{}; Object.keys(lv).forEach(function(k){ var nm=lv[k].nameAr||k; if(stages.indexOf(nm)<0) stages.push(nm); }); }catch(e){}
+  (d.groups||[]).forEach(function(g){ if(g.center===centerName&&g.stage&&stages.indexOf(g.stage)<0) stages.push(g.stage); });
+  var sb=c.shareByStage||{};
+  var groups=(d.groups||[]).filter(function(g){return g.center===centerName;});
+  ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">🏢 إعدادات السنتر: '+centerName+'</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">'+
+   '<div class="filter-info">💡 حق السنتر بالفلوس (ج.م لكل طالب/شهر): افتراضي لكل المراحل، أو مبلغ مخصوص لكل مرحلة، أو استثناء لأي مجموعة. السعر النهائي للطالب = سعر الأستاذ + حق السنتر.</div>'+
+   '<div class="form-group"><label>💰 حق السنتر الافتراضي (ج.م)</label><input type="number" id="csDef" class="form-input" min="0" value="'+((c.shareDefault!=null)?c.shareDefault:0)+'"></div>'+
+   (stages.length?'<div class="form-group"><label>🎓 حق السنتر حسب المرحلة (فارغ = الافتراضي)</label>'+stages.map(function(st){ return '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;"><span style="flex:1;font-size:13px;font-weight:700;">'+st+'</span><input type="number" class="form-input csStage" data-stage="'+st+'" min="0" placeholder="افتراضي" value="'+((sb[st]!=null)?sb[st]:'')+'" style="width:110px;"></div>'; }).join('')+'</div>':'')+
+   '<div class="form-group"><label>📱 رقم دعم السنتر (اختياري)</label><input type="text" id="csPhone" class="form-input" value="'+((c.supportPhone)||'')+'"></div>'+
+   '<div class="form-group"><label>📝 ملاحظة الاتفاق (اختياري)</label><input type="text" id="csNote" class="form-input" value="'+((c.shareNote)||'')+'"></div>'+
+   (groups.length?'<div class="form-group"><label>👥 استثناءات المجموعات</label><div style="max-height:200px;overflow:auto;">'+groups.map(function(g){ var sh=(window.LedgerUI&&LedgerUI.centerShareAmt)?LedgerUI.centerShareAmt(g):0; return '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;background:var(--surface-hover);border-radius:8px;padding:6px 8px;"><div style="flex:1;"><strong style="font-size:12px;">'+g.name+'</strong><div class="text-xs text-muted">🎓 '+(g.stage||'-')+' · 💪 الأستاذ: '+(g.teacherFee!=null?g.teacherFee:(g.monthlyFee||0))+' · 💰 الطالب: '+(g.monthlyFee||0)+'</div></div><input type="number" class="form-input csGroup" data-gid="'+g.id+'" min="0" placeholder="'+sh+' (مرحلة)" value="'+((g.centerShareAmt!=null)?g.centerShareAmt:'')+'" style="width:110px;"></div>'; }).join('')+'</div></div>':'')+
+   '<button class="btn btn-primary w-full" onclick="window.saveCenterSettings(\''+centerName+'\')">💾 حفظ + إعادة حساب أسعار المجموعات</button></div>','modal-md');
+};
+window.openCenterShareModal=window.openCenterSettingsModal;
+window.saveCenterSettings=async function(centerName){
+  var d=db3(); d.centers=d.centers||[];
+  var c=d.centers.find(function(x){return x.name===centerName;});
+  if(!c){ c={id:'center_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),name:centerName,isActive:true,auto:true,createdAt:new Date().toISOString()}; d.centers.push(c); }
+  c.shareDefault=parseFloat((document.getElementById('csDef')||{}).value)||0;
+  c.shareByStage={};
+  Array.prototype.slice.call(document.querySelectorAll('.csStage')).forEach(function(inp){ if(inp.value!=='') c.shareByStage[inp.getAttribute('data-stage')]=parseFloat(inp.value)||0; });
+  c.supportPhone=((document.getElementById('csPhone')||{}).value||'');
+  c.shareNote=((document.getElementById('csNote')||{}).value||'');
+  c.updatedAt=new Date().toISOString();
+  Array.prototype.slice.call(document.querySelectorAll('.csGroup')).forEach(function(inp){
+    var g=(d.groups||[]).find(function(x){return x.id===inp.getAttribute('data-gid');});
+    if(g) g.centerShareAmt=(inp.value==='')?null:(parseFloat(inp.value)||0);
+  });
+  save3(d);
+  try{ if(window.FirebaseService&&FirebaseService._db) await FirebaseService.saveDoc('centers',c.id,c); }catch(e){}
+  try{ if(window.LedgerUI&&LedgerUI.recomputeGroupFees) LedgerUI.recomputeGroupFees(centerName); }catch(e){}
+  ThemeManager.closeModal();
+  if(window.safeToast) window.safeToast('✅ إعدادات '+centerName+' اتحفظت وأسعار الطلاب اتحدثت','success');
+  renderCenterSettings();
+};
+window.saveCenterShare=window.saveCenterSettings;
+function renderCenterSettings(){
+  var sec=document.getElementById('section-centerSettings'); if(!sec) return;
+  var host=sec.querySelector('#csHost'); if(!host) return;
+  var list=myCenters();
+  host.innerHTML=list.length?list.map(function(x){
+    var st=centerStats(x.name);
+    var sbx=(x.rec&&x.rec.shareByStage)||{};
+    var stageTxt=Object.keys(sbx).map(function(k){return k+': '+sbx[k];}).join(' · ');
+    var defAmt=(x.rec&&x.rec.shareDefault!=null)?+x.rec.shareDefault:0;
+    var nG=(DataService.getGroups?DataService.getGroups():[]).filter(function(g){return g.center===x.name;}).length;
+    return '<div class="card" style="padding:12px;margin-bottom:10px;"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;">'+
+      '<div style="flex:1;min-width:240px;"><strong>🏢 '+x.name+'</strong>'+(x.rec?'':' <span class="badge badge-muted">غير مسجل رسمياً</span>')+
+      '<div class="text-xs text-muted" style="margin-top:4px;">👥 '+nG+' مجموعة · 💵 محصّل الشهر: <b>'+st.coll+' ج.م</b> · 🏢 حق السنتر: <b style="color:var(--warning);">'+st.center+' ج.م</b> · 💪 صافي الأساتذة: <b style="color:var(--success);">'+st.net+' ج.م</b></div>'+
+      '<div class="text-xs text-muted" style="margin-top:2px;">💰 الافتراضي: '+defAmt+' ج.م'+(stageTxt?' · 🎓 '+stageTxt+' ج.م':'')+((x.rec&&x.rec.shareNote)?' · 📝 '+x.rec.shareNote:'')+'</div></div>'+
+      '<button class="btn btn-primary btn-sm" onclick="window.openCenterSettingsModal(\''+x.name+'\')">⚙️ إعدادات السنتر</button></div></div>';
+  }).join(''):'<div class="card" style="text-align:center;padding:30px;"><div style="font-size:40px;">🏢</div><strong>مفيش سناتر في نطاقك</strong></div>';
+}
+window.renderCenterSettingsPub=renderCenterSettings;
+function ensureNav(){
+  var nav=document.getElementById('sidebarNav'); if(!nav) return;
+  if(nav.querySelector('[data-section="centerSettings"]')) return;
+  var a=nav.querySelector('[data-section="monthly"]')||nav.querySelector('[data-section="ledger"]')||nav.querySelector('[data-section="centers"]')||nav.querySelector('[data-section="expenses"]');
+  var it='<div class="sidebar-item" data-section="centerSettings" onclick="window.showSection(\'centerSettings\')"><span class="sidebar-item-icon">🏢</span><span class="sidebar-item-label">إعدادات السناتر</span></div>';
+  if(a) a.insertAdjacentHTML('afterend',it); else nav.insertAdjacentHTML('beforeend',it);
+}
+function build(){
+  var u=cur3(); if(!u) return;
+  if(['assistant','teacher','admin','super_admin','center'].indexOf(u.role)<0) return;
+  if(!document.getElementById('section-centerSettings')){
+    var ca=document.querySelector('.content-area'); if(!ca) return;
+    var sec=document.createElement('section'); sec.className='section'; sec.id='section-centerSettings';
+    sec.innerHTML='<div class="section-header"><div><h2 class="section-title">🏢 إعدادات السناتر</h2><p class="text-sm text-muted">حق السنتر بالفلوس لكل مرحلة + استثناءات المجموعات + صافي الأساتذة</p></div><button class="btn btn-ghost btn-sm" onclick="window.renderCenterSettingsPub&&window.renderCenterSettingsPub()">🔄</button></div><div id="csHost"></div>';
+    ca.appendChild(sec);
+  }
+  ensureNav();
+  if(typeof window.showSection==='function'&&!window.__csHook2){ window.__csHook2=1; var os2=window.showSection; window.showSection=function(id){ var r=os2.apply(this,arguments); if(id==='centerSettings'){ setTimeout(renderCenterSettings,150); setTimeout(renderCenterSettings,700); } return r; }; }
+  if(typeof window.buildMenu==='function'&&!window.__csMenuWrap){ window.__csMenuWrap=1; var obm=window.buildMenu; window.buildMenu=function(){ var r=obm.apply(this,arguments); setTimeout(ensureNav,60); setTimeout(ensureNav,400); return r; }; }
+}
+migrate(); setTimeout(migrate,2500);
+build(); setTimeout(build,1000); setTimeout(build,2500);
+setInterval(function(){ try{ ensureNav(); }catch(e){} },4000);
+setInterval(function(){ try{ var sec=document.getElementById('section-centerSettings'); if(sec&&sec.classList.contains('active')){ var h=sec.querySelector('#csHost'); if(h&&!h.innerHTML.trim()) renderCenterSettings(); } }catch(e){} },2500);
+})();

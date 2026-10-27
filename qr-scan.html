@@ -577,11 +577,11 @@ let availableCameras = [];
 
 (async function boot() {
   try {
-    if (typeof DataService?.init === 'function') await DataService.init();
-    currentUser = AuthService?.getCurrentUser ? AuthService.getCurrentUser() : null;
-    
-    await loadCameras();
-    await startCamera();
+    /* 📷 الكاميرا الأول فوراً — والمسح بيشتغل من الكاش المحلي حتى قبل السحابة */
+    loadCameras();
+    startCamera();
+    currentUser = (window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null;
+    if (typeof DataService?.init === 'function') { DataService.init().then(function(){ try{ currentUser = AuthService?.getCurrentUser ? AuthService.getCurrentUser() : null; }catch(e){} }).catch(function(){}); }
     
     setTimeout(() => {
       const input = document.getElementById('manualCode');

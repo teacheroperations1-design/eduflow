@@ -14,10 +14,11 @@ const Ops = {
     /* 🔄 سحب روابط المساعدين من السحابة لو مش موجودة محلياً */
     try{
       if (window.FirebaseService && FirebaseService._db) {
-        const snap = await FirebaseService._db.collection('assignments').get();
-        d.assignments = d.assignments || {};
-        snap.forEach(doc => { if (!d.assignments[doc.id]) d.assignments[doc.id] = doc.data(); });
-        DataService._saveData(d);
+        FirebaseService._db.collection('assignments').get().then(function(snap){
+          var dd = DataService._getData(); dd.assignments = dd.assignments || {};
+          snap.forEach(function(doc){ if (!dd.assignments[doc.id]) dd.assignments[doc.id] = doc.data(); });
+          DataService._saveData(dd);
+        }).catch(function(){});
       }
     }catch(e){}
     if (!d.automations?.length) d.automations = this.defaultAutomations();
@@ -694,6 +695,14 @@ async addManualSessionsForBilling(groupId, studentId, month, sessionsCount, reas
       }
     });
     return res.slice(0, 30);
+  },
+
+    getAttendanceStats(studentId){
+    var d=DataService._getData(); var held=0,present=0,absent=0,late=0;
+    var gids={}; (DataService.getStudentTeachers?DataService.getStudentTeachers(studentId):[]).forEach(function(t){ gids[t.group.id]=1; });
+    var today=new Date().toISOString().slice(0,10);
+    (d.attendance||[]).forEach(function(a){ if(a.status!=='approved'||a.noAtt||!gids[a.groupId]) return; if((a.date||'')>today) return; held++; var r=(a.records||[]).find(function(x){return x.studentId===studentId;}); if(r){ if(r.status==='present')present++; else if(r.status==='absent')absent++; else late++; } else absent++; });
+    return {held:held,present:present,absent:absent,late:late,pct:held?Math.round(present/held*100):100};
   },
 
   getStudentPoints(studentId, teacherId = null, period = 'all') {

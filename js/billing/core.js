@@ -31,7 +31,8 @@ return rs.length?('cycle-'+pad(rs[rs.length-1].n)):m;
 }
 /* 🆕 V3: قائمة دورات المجموعة من المحرك الواحد */
 var DAY_AR={Sunday:'الأحد',Monday:'الإثنين',Tuesday:'الثلاثاء',Wednesday:'الأربعاء',Thursday:'الخميس',Friday:'الجمعة',Saturday:'السبت'};
-function gTimeStr(g){ if(!g) return ''; try{ if(g.schedules&&g.schedules.length) return g.schedules.map(function(s){ return (DAY_AR[s.day]||s.day)+' '+s.time; }).join(' + '); if(g.day) return (DAY_AR[g.day]||g.day)+' '+(g.time||''); }catch(e){} return ''; }
+function t12(t){ if(!t) return ''; var p=String(t).split(':'); var h=parseInt(p[0],10)||0; var m=p[1]||'00'; var ap=h>=12?'م':'ص'; h=h%12; if(h===0)h=12; return h+':'+m+' '+ap; }
+function gTimeStr(g){ if(!g) return ''; try{ if(g.schedules&&g.schedules.length) return g.schedules.map(function(s){ return (DAY_AR[s.day]||s.day)+' '+t12(s.time); }).join(' + '); if(g.day) return (DAY_AR[g.day]||g.day)+' '+t12(g.time); }catch(e){} return ''; }
 function cyclesOfGroup(g){
 if(window.LedgerUI&&LedgerUI.cyclesOf){ try{ return LedgerUI.cyclesOf(g); }catch(e){} }
 var rs=(g&&g.cycleRanges)||[];

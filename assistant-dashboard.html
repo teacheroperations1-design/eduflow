@@ -353,15 +353,6 @@
 <div class="stats-grid" id="makeupStats"></div>
 <div id="makeupsList"></div>
 </section>
-<section class="section" id="section-accounting">
-<div class="section-header"><div><h2 class="section-title">🧮 المحاسبة والتسوية</h2></div></div>
-<div class="card" style="margin-bottom:16px;"><h3 class="card-title" style="margin-bottom:12px;">📊 تسوية شهر</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المجموعة</label><select id="setGroup" class="form-select"></select></div><div class="form-group"><label>الشهر</label><input type="month" id="setMonth" class="form-input"></div></div><button class="btn btn-primary" onclick="window.renderSettlement()">عرض</button><div id="settlementView" style="margin-top:14px;"></div></div>
-<div class="card" style="margin-bottom:12px;"><div class="card-header"><h3 class="card-title">🔍 فلاتر المحاسبة</h3></div><div style="padding:12px;display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;"><div class="form-group" style="margin:0;"><label>بحث بمجموعة أو طالب</label><input type="text" id="accSearch" class="form-input" placeholder="اكتب اسم..." oninput="window.loadAccountingDash()"></div><div class="form-group" style="margin:0;"><label>السنتر</label><select id="accCenter" class="form-select" onchange="window.loadAccountingDash()"><option value="">الكل</option></select></div><div class="form-group" style="margin:0;"><label>الحالة</label><select id="accStatus" class="form-select" onchange="window.loadAccountingDash()"><option value="">الكل</option><option value="due">عليها تحصيل</option><option value="paid">مسدد بالكامل</option><option value="late">طلاب متأخرين</option></select></div></div></div>
-<div id="accStats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;"></div>
-<div class="card" style="margin-bottom:12px;"><div class="card-header"><h3 class="card-title">💰 مجموعات عليها تحصيل</h3><span class="points-badge" id="accGroupsCount">0</span></div><div id="accGroupsList" style="padding:12px;"></div></div>
-<div class="card" style="margin-bottom:12px;"><div class="card-header"><h3 class="card-title">⏰ طلاب متأخرين</h3><span class="points-badge" id="accLateCount">0</span></div><div id="accLateList" style="padding:12px;"></div></div>
-<div class="card"><h3 class="card-title" style="margin-bottom:12px;">🧾 حساب شهر طالب</h3><div class="form-group"><label>الطالب</label><select id="calcStudent" class="form-select"></select></div><button class="btn btn-secondary" onclick="window.calcStudentMonth()">احسب</button><div id="calcView" style="margin-top:12px;"></div></div></section>
-</section>
 <!-- 💸 المصروفات -->
 <section class="section" id="section-expenses">
 <div class="section-header"><div><h2 class="section-title">💸 المصروفات</h2><p class="text-sm text-muted">تسجيل المصروفات النثرية أو الخاصة بالمركز</p></div><button class="btn btn-primary" onclick="window.openExpenseModal()">+ مصروف جديد</button></div>
@@ -496,32 +487,8 @@
 </div>
 <div id="myScheduleBoard"></div>
 </section>
-<!-- 🤖 أدوات الذكاء الاصطناعي -->
-<section class="section" id="section-aiTools">
-<div class="section-header"><div><h2 class="section-title">🤖 أدوات الذكاء الاصطناعي</h2><p class="text-sm text-muted">أدوات ذكية لمساعدتك في التقييم والمتابعة</p></div></div>
-<div class="card" style="margin-bottom:16px;border:2px solid var(--primary);">
-<h3 class="card-title" style="margin-bottom:12px;">📝 التصحيح الذكي للواجبات</h3>
-<p class="text-sm text-muted" style="margin-bottom:12px;">اختار واجب من الواجبات المعلقة والـ AI هيصحح الأسئلة الموضوعية (اختيار من متعدد + صح/خطأ) تلقائياً</p>
-<div class="form-group"><label>اختار واجب للتصحيح الذكي</label><select id="aiHwSelect" class="form-select"></select></div>
-<button class="btn btn-primary w-full" onclick="window.runSmartGrading()">🤖 صحّح بالذكاء الاصطناعي</button>
-<div id="aiGradingResult" style="margin-top:12px;"></div>
-</div>
-<div class="card" style="margin-bottom:16px;border:2px solid var(--warning);">
-<h3 class="card-title" style="margin-bottom:12px;">📊 تحليل الأداء الذكي</h3>
-<p class="text-sm text-muted" style="margin-bottom:12px;">تحليل ذكي لأداء كل طالب وإظهار نقاط القوة والضعف</p>
-<div class="form-group"><label>اختار مجموعة</label><select id="aiAnalyzeGroup" class="form-select"></select></div>
-<button class="btn btn-primary w-full" onclick="window.runSmartAnalysis()">📊 تحليل الأداء</button>
-<div id="aiAnalysisResult" style="margin-top:12px;"></div>
-</div>
-<div class="card" style="border:2px solid var(--success);">
-<h3 class="card-title" style="margin-bottom:12px;">📋 ملخص الحصة الذكي</h3>
-<p class="text-sm text-muted" style="margin-bottom:12px;">اكتب ملخص الحصة والـ AI هيولّد ملخص احترافي + واجب مقترح + إشعار للطلاب</p>
-<div class="form-group"><label>موضوع الحصة</label><input type="text" id="aiTopic" class="form-input" placeholder="مثال: مراجعة قواعد الماضي"></div>
-<div class="form-group"><label>ملخص سريع</label><textarea id="aiSummary" class="form-textarea" rows="3" placeholder="اكتب ملخص سريع للحصة..."></textarea></div>
-<button class="btn btn-primary w-full" onclick="window.runSmartSummary()">🤖 توليد ملخص ذكي</button>
-<div id="aiSummaryResult" style="margin-top:12px;"></div>
-</div>
-</section>
+
+
 <!-- 🏆 Points System -->
 <section class="section" id="section-points">
 <div class="section-header"><div><h2 class="section-title">🏆 نظام النقاط</h2><p class="text-sm text-muted">تحكم كامل في النقاط والتحفيز</p></div></div>
@@ -741,6 +708,42 @@ setInterval(function(){ wrapOps(); wrapModal(); wrapQuickEval(); killMysteryFilt
 <script src="js/theme-manager.js"></script>
 <script src="js/pwa-injector.js"></script>
 <script src="js/auth-service.js"></script>
+<script>
+/* ============ 👁️ View As — لازم يشتغل قبل boot الصفحة ============ */
+window.__applyViewAs = function(){
+  try{
+    var vid = new URLSearchParams(location.search).get('viewas');
+    if(!vid) return false;
+    var u = (window.DataService && DataService.getUsers ? DataService.getUsers() : []).find(function(x){ return x.id === vid; });
+    if(!u) return false;
+    window.__VIEWAS_USER = u;
+    if(window.AuthService){ AuthService.getCurrentUser = function(){ return window.__VIEWAS_USER; }; }
+    try{ currentUser = u; }catch(e){}
+    return true;
+  }catch(e){ return false; }
+};
+(function(){
+  if(!window.__applyViewAs()) {
+    var t=0; var iv=setInterval(function(){ t+=300; if(window.__applyViewAs()||t>9000){ clearInterval(iv); if(window.__viewAsRetry) window.__viewAsRetry(); } },300);
+  }
+  window.__viewAsRetry = function(){
+    try{
+      var u = window.__VIEWAS_USER; if(!u) return;
+      ['userName','sidebarUserName','myName'].forEach(function(id){ var n=document.getElementById(id); if(n) n.textContent=u.name||''; });
+      document.querySelectorAll('.sidebar-user-name,.user-name').forEach(function(n){ n.textContent=u.name||''; });
+      var r=document.querySelector('.sidebar-user-role,.user-role'); if(r) r.textContent={student:'طالب',teacher:'أستاذ',assistant:'مساعد',admin:'أدمن',center:'مدير سنتر',parent:'ولي أمر'}[u.role]||u.role;
+      var a=document.getElementById('userAvatar')||document.querySelector('.sidebar-user-avatar'); if(a) a.textContent=(u.name||'؟').charAt(0);
+      if(window.Ops&&Ops.init) Ops.init().catch(function(){});
+      if(window.loadCommand) window.loadCommand();
+      if(window.loadWorkspace) window.loadWorkspace();
+      if(window.loadTeachers) window.loadTeachers();
+      if(window.loadStudents) window.loadStudents();
+      if(window.loadMyScheduleBoard) window.loadMyScheduleBoard();
+      if(window.renderMonthly) window.renderMonthly();
+    }catch(e){}
+  };
+})();
+</script>
 <script src="js/notify-service.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
 <script src="js/billing/core.js"></script>
@@ -1063,10 +1066,14 @@ window.buildMenu=function(){
 try{
 const menu=[
 {s:'الرئيسية',items:[{id:'command',l:'مركز العمليات',i:'🎯'},{id:'inbox',l:'صندوق الوارد',i:'📥'},{id:'attendance',l:'الحضور',i:'📋'},{id:'students',l:'الطلاب',i:'🎓'}]},
-{s:'التشغيل',items:[{id:'teachers',l:'إدارة المجموعات',i:'👨'},{id:'monthly',l:'دفتر التحصيل',i:'📒'},{id:'mySchedule',l:'جدولي الأسبوعي',i:'🗓️'},{id:'makeups',l:'الحصص التعويضية',i:'📅'},{id:'exams',l:'الإنشاء والتجهيز',i:'🛠️'},{id:'grades',l:'الرصد',i:'📝'}]},
-{s:'المالية',items:[{id:'payclaims',l:'طلبات الدفع ',i:'💵'},{id:'payments',l:'المدفوعات',i:'💵'},{id:'accounting',l:'المحاسبة',i:'🧮'},{id:'expenses',l:'المصروفات',i:'💸'}]},
-{s:'🚀 التحفيز والذكاء',items:[{id:'quickEval',l:'⚡ التقييم السريع',i:'🎙️'},{id:'battles',l:'⚔️ التحديات والتصفيات',i:'🏆'},{id:'games',l:'مختبرات الألعاب',i:'🎮'},{id:'aiTools',l:'🤖 أدوات الذكاء الاصطناعي',i:'🧠'}]},
-{s:'💰 المتجر',items:[{id:'store',l:'المتجر والجرد',i:'🏪'},{id:'pointsStore',l:'متجر تبديل النقاط',i:'🏆'}]},
+{s:'التشغيل',items:[{id:'teachers',l:'إدارة المجموعات',i:'👨🏫'},{id:'monthly',l:'دفتر التحصيل',i:'📒'},{id:'mySchedule',l:'جدولي الأسبوعي',i:'🗓️'},{id:'makeups',l:'الحصص التعويضية',i:'📅'},{id:'exams',l:'الإنشاء والتجهيز',i:'🛠️'},{id:'grades',l:'الرصد',i:'📝'}]},
+{s:'المالية',items:[
+{id:'money',l:'المحاسبة والمركز المالي',i:'💰'},
+{id:'centerSettings',l:'إعدادات السناتر',i:'🏢'},
+{id:'payclaims',l:'طلبات الدفع',i:'💵'},
+{id:'payments',l:'المدفوعات',i:'💰'}]},
+{s:'🚀 التحفيز والذكاء',items:[{id:'quickEval',l:'⚡ التقييم السريع',i:'🎙️'},{id:'battles',l:'⚔️ التحديات والتصفيات',i:'🏆'},{id:'games',l:'مختبرات الألعاب',i:'🎮'}]},
+{s:'️ المتجر',items:[{id:'store',l:'المتجر والجرد',i:'🏪'},{id:'pointsStore',l:'متجر تبديل النقاط',i:'🏆'}]},
 {s:'المحتوى',items:[{id:'classPosts',l:'بوستات الحصة',i:'📰'},{id:'videos',l:'الفيديوهات',i:'🎬'},{id:'interactive',l:'المواد التفاعلية',i:'🧩'},{id:'challenges',l:'المسابقات',i:'🏆'}]},
 {s:'التواصل',items:[{id:'templates',l:'قوالب واتساب',i:'📱'},{id:'whatsappGroups',l:'مجموعات واتساب',i:'💬'}]},
 {s:'المتابعة',items:[{id:'followups',l:'المتابعات',i:'📌'},{id:'pending',l:'طلبات التسجيل',i:'⏳'},{id:'barcode',l:'طلبات الباركود',i:'🎟️'},{id:'churn',l:'خطر التسرب',i:'🚨'},{id:'tasks',l:'مهامي',i:'✅'},{id:'calendar',l:'التقويم',i:'📅'}]},
@@ -1436,10 +1443,12 @@ ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${g?'�
 <div class="form-group"><label>مدة الحصة (دقيقة) *</label><input type="number" id="gDuration" class="form-input" value="${g?.duration||60}" required></div>
 <div class="form-group"><label>حصص/شهر *</label><input type="number" id="gSessions" class="form-input" value="${g?.sessionsPerMonth||8}" oninput="window.calcSP()" required></div>
 </div>
-<div class="form-group"><label>سعر الشهر *</label><input type="number" id="gMonthly" class="form-input" value="${g?.monthlyFee||80}" oninput="window.calcSP()" required></div>
-<div class="card" style="background:var(--info-bg);border-color:var(--info-border);padding:12px;margin-bottom:12px;">سعر الحصة: <strong id="autoSessionPrice">0</strong> ج.م</div>
+<div class="form-group"><label>💪 سعر الأستاذ الصافي *</label><input type="number" id="gTeacherFee" class="form-input" min="0" value="${g?(g.teacherFee!=null?g.teacherFee:Math.max(0,(g.monthlyFee||0)-(g.centerShareAmt||0))):''}" required></div>
+<div class="form-group"><label>🏢 حق السنتر *</label><input type="number" id="gCenterShareAmt" class="form-input" min="0" value="${g?(g.centerShareAmt!=null?g.centerShareAmt:(window.LedgerUI&&LedgerUI.centerShareAmt?LedgerUI.centerShareAmt(g):0)):''}" required></div>
+<div class="card" style="background:var(--warning-bg);border-color:var(--warning);padding:10px;margin-bottom:12px;">🏢 حق السنتر المحسوب: <strong id="autoCenterShare">0</strong> ج.م/طالب</div>
+<div class="card" style="background:var(--info-bg);border-color:var(--info-border);padding:12px;margin-bottom:12px;">💰 السعر النهائي للطالب: <strong id="autoStudentPrice">0</strong> ج.م<input type="hidden" id="gMonthly" value="${g?.monthlyFee||0}"></div><div class="card" style="background:var(--info-bg);border-color:var(--info-border);padding:12px;margin-bottom:12px;">سعر الحصة: <strong id="autoSessionPrice">0</strong> ج.م</div>
 <button class="btn btn-primary w-full">💾 حفظ</button></form></div>`,'modal-lg');
-existingSchedules.forEach(s=>window.addScheduleRow(s.day,s.time));window.calcSP();
+existingSchedules.forEach(s=>window.addScheduleRow(s.day,s.time));window.calcSP(); setTimeout(function(){ window.calcStudentPrice&&window.calcStudentPrice(); },200);
 
 /* 🧠 منع تكرار المجموعات: مسح حي أثناء كتابة الاسم */
 setTimeout(function(){
@@ -3177,81 +3186,6 @@ window.renderBattles();
 }catch(e){}
 };
 
-
-window.loadAiTools=function(){
-try{
-const groups=(typeof Ops?.groupsInScope==='function'&&currentUser)?Ops.groupsInScope(currentUser.id):[];
-const hwSel=document.getElementById('aiHwSelect');
-const grpSel=document.getElementById('aiAnalyzeGroup');
-if(hwSel){
-const d=db();
-const hws=(d.homework||[]).filter(h=>(groups.some(g=>g.id===h.groupId)));
-const pendingHws=hws.filter(h=>{
-const subs=(d.submissions||[]).filter(s=>s.homeworkId===h.id&&s.status!=='graded');
-return subs.length>0;
-});
-hwSel.innerHTML='<option value="">-- اختار واجب --</option>'+pendingHws.map(h=>`<option value="${h.id}">${h.title}</option>`).join('');
-}
-if(grpSel) grpSel.innerHTML='<option value="">-- اختار --</option>'+groups.map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
-}catch(e){console.error(e);}
-};
-
-window.runSmartGrading=function(){
-try{
-const hwId=document.getElementById('aiHwSelect')?.value;
-if(!hwId){ safeToast('اختار واجب الأول','error'); return; }
-const d=db();
-const hw=(d.homework||[]).find(x=>x.id===hwId);
-if(!hw) return;
-const subs=(d.submissions||[]).filter(s=>s.homeworkId===hwId&&s.status!=='graded');
-const resultEl=document.getElementById('aiGradingResult');
-if(!subs.length){ if(resultEl) resultEl.innerHTML='<div class="badge badge-info">مفيش تسليمات معلقة للواجب ده</div>'; return; }
-let graded=0;
-subs.forEach(sub=>{
-let autoScore=0; let totalQ=0;
-(hw.questions||[]).forEach(q=>{
-totalQ+=(q.points||10);
-const ans=(sub.answers||[]).find(a=>a.questionId===q.id);
-if(ans&&String(ans.answer)===String(q.correctAnswer)) autoScore+=(q.points||10);
-});
-if(totalQ>0){
-sub.score=Math.round(autoScore); sub.status='graded'; sub.gradedBy=currentUser?.id; sub.gradedAt=new Date().toISOString();
-graded++;
-}
-});
-save(d);
-if(resultEl) resultEl.innerHTML=`<div class="badge badge-success">🤖 تم تصحيح ${graded} تسليم بالذكاء الاصطناعي!</div>`;
-safeToast(`🤖 تم تصحيح ${graded} تسليم بالذكاء الاصطناعي`,'success');
-}catch(e){ safeToast('خطأ في التصحيح','error'); }
-};
-
-window.runSmartAnalysis=function(){
-try{
-const gid=document.getElementById('aiAnalyzeGroup')?.value;
-if(!gid){ safeToast('اختار مجموعة الأول','error'); return; }
-const students=DataService?.getStudentsByGroup?DataService.getStudentsByGroup(gid):[];
-const resultEl=document.getElementById('aiAnalysisResult');
-if(!students.length){ if(resultEl) resultEl.innerHTML='<div class="badge badge-info">مفيش طلاب في المجموعة دي</div>'; return; }
-let html='';
-students.forEach(s=>{
-const subs=(DataService?.getSubmissions?DataService.getSubmissions({studentId:s.id}):[]).filter(x=>x.status==='graded');
-const atts=(DataService?.getExamAttempts?DataService.getExamAttempts({studentId:s.id}):[]).filter(x=>x.status==='approved');
-const allAtt=(DataService?.getAttendance?DataService.getAttendance():[]).filter(a=>a.status==='approved'&&a.records.some(r=>r.studentId===s.id));
-const present=allAtt.filter(a=>a.records.find(r=>r.studentId===s.id)?.status==='present').length;
-const attRate=allAtt.length?Math.round(present/allAtt.length*100):0;
-const hwAvg=subs.length?Math.round(subs.reduce((a,x)=>a+(x.score||0),0)/subs.length):0;
-let level='جيد', levelColor='var(--success)';
-if(hwAvg<50){ level='يحتاج دعم'; levelColor='var(--danger)'; }
-else if(hwAvg<70){ level='متوسط'; levelColor='var(--warning)'; }
-html+=`<div class="sub-row" style="margin-bottom:6px;">
-<div><strong>${s.name}</strong><div class="text-xs text-muted">حضور: ${attRate}% · متوسط: ${hwAvg}%</div></div>
-<span class="badge" style="background:${levelColor};color:#fff;">${level}</span>
-</div>`;
-});
-if(resultEl) resultEl.innerHTML=html;
-safeToast('📊 تم تحليل الأداء بنجاح','success');
-}catch(e){ safeToast('خطأ في التحليل','error'); }
-};
 
 window.runSmartSummary=function(){
 try{
@@ -5866,7 +5800,7 @@ if(window.safeToast)window.safeToast('✅ اتحفظت إعدادات الصند
 function inject(){
 try{
 var u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():(typeof currentUser!=='undefined'?currentUser:null);
-if(!u||(u.role!=='admin'&&u.role!=='super_admin'&&u.role!=='assistant'))return;
+if(!u||(u.role!=='admin'&&u.role!=='super_admin'))return;
 if(document.getElementById('fbSettingsCard'))return;
 var host=(u.role==='assistant')?document.getElementById('section-points'):document.getElementById('section-gamification');
 if(!host)return;
@@ -7066,7 +7000,7 @@ ThemeManager.closeModal();
 if(window.safeToast)window.safeToast('✅ تم حفظ إعدادات الصندوق العائم','success');
 }catch(e){if(window.safeToast)window.safeToast('خطأ','error');}
 };
-function injectFloatBoxTile(){
+function injectFloatBoxTile(){ return;
 try{
 var u=cur();if(!u||['admin','super_admin','assistant'].indexOf(u.role)<0)return;
 var grid=document.querySelector('#section-command .quick-action')||document.querySelector('#section-overview .quick-action');
@@ -7235,7 +7169,19 @@ f.__profExt=1; window.openStudentProfile=f;
     var t=(DataService.getUserById?DataService.getUserById(tid):null)||{};
     if(!window.SB){ el.innerHTML='<div class="card" style="text-align:center;padding:30px;">⚠️ محرك الجدول مش محمل — اتأكد إن سطر schedule-board.js موجود في الصفحة</div>'; return; }
     el.innerHTML='<div class="filter-info" style="margin-bottom:10px;">🗓️ جدول <strong>'+(t.name||'')+'</strong> — اسحب الحصة لتعديل موعدها (أي تعديل بيتسجل وبيتبلغ الأدمن)</div><div id="asSbBoard"></div><div id="asSbConflicts" style="margin-top:10px;"></div><div class="card" style="margin-top:12px;"><div class="card-header"><h3 class="card-title">📜 سجل تغييرات المواعيد</h3></div><div id="asSbLog"></div></div>';
-    var opts={container:'asSbBoard',editable:true,showTeacher:false,notifyAdmin:true,role:'assistant',teacherFilter:tid,groupFilter:'all',center:'',grade:'',search:''};
+    var __F=window._asSbF=window._asSbF||{center:'',grade:'',group:'all',search:''};
+var __gs=(DataService.getGroupsByTeacher?DataService.getGroupsByTeacher(tid):[]);
+var __u=function(k){var m={},o=[];__gs.forEach(function(g){var v=g[k];if(v&&!m[v]){m[v]=1;o.push(v);}});return o.sort();};
+var __opt=function(arr,sel,all){return '<option value="">'+all+'</option>'+arr.map(function(v){return '<option value="'+String(v).replace(/"/g,'&quot;')+'"'+(v===sel?' selected':'')+'>'+v+'</option>';}).join('');};
+var __bar=document.createElement('div'); __bar.className='card'; __bar.style.cssText='padding:10px;margin-bottom:10px;';
+__bar.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;">'
++'<select class="form-select" onchange="window._asSbF.center=this.value;window.loadMyScheduleBoard()">'+__opt(__u('center'),__F.center,'🏢 كل السناتر')+'</select>'
++'<select class="form-select" onchange="window._asSbF.grade=this.value;window.loadMyScheduleBoard()">'+__opt(__u('grade'),__F.grade,'🎓 كل الصفوف')+'</select>'
++'<select class="form-select" onchange="window._asSbF.group=this.value||\'all\';window.loadMyScheduleBoard()"><option value="">👥 كل المجموعات</option>'+__gs.map(function(g){return '<option value="'+g.id+'"'+(__F.group===g.id?' selected':'')+'>'+g.name+'</option>';}).join('')+'</select>'
++'<input class="form-input" placeholder="🔍 بحث باسم المجموعة..." value="'+String(__F.search||'').replace(/"/g,'&quot;')+'" onchange="window._asSbF.search=this.value;window.loadMyScheduleBoard()">'
++'</div>';
+var __b=document.getElementById('asSbBoard'); if(__b&&__b.parentNode) __b.parentNode.insertBefore(__bar,__b);
+var opts={container:'asSbBoard',editable:true,showTeacher:false,notifyAdmin:true,role:'assistant',teacherFilter:tid,groupFilter:__F.group||'all',center:__F.center,grade:__F.grade,search:__F.search};
     if(typeof SB.render==='function') SB.render(opts);
     else if(typeof SB.renderBoard==='function') SB.renderBoard('asSbBoard',(DataService.getGroupsByTeacher?DataService.getGroupsByTeacher(tid):[]));
     if(SB.allConflicts){
@@ -7476,12 +7422,19 @@ setInterval(function(){ var a=document.querySelector('.section.active'); if(!a) 
   function refreshUI(){
     try{
       var u=window.__VIEWAS_USER; if(!u) return;
-      var n=document.getElementById('userName')||document.querySelector('.sidebar-user-name'); if(n) n.textContent=u.name||'';
+      ['userName','sidebarUserName','myName'].forEach(function(id){ var n=document.getElementById(id); if(n) n.textContent=u.name||''; });
+      document.querySelectorAll('.sidebar-user-name,.user-name').forEach(function(n){ n.textContent=u.name||''; });
+      var roleEl=document.querySelector('.sidebar-user-role,.user-role'); if(roleEl) roleEl.textContent='مساعد';
+      try{ if(window.Ops&&Ops.init) Ops.init().catch(function(){}); }catch(e){}
       var a=document.getElementById('userAvatar')||document.querySelector('.sidebar-user-avatar'); if(a) a.textContent=(u.name||'؟').charAt(0);
       var r=document.querySelector('.sidebar-user-role'); if(r) r.textContent={student:'طالب',teacher:'أستاذ',assistant:'مساعد',admin:'أدمن',center:'مدير سنتر',parent:'ولي أمر'}[u.role]||u.role;
       if(window.renderAll) window.renderAll();
       if(window.loadCommand) window.loadCommand();
       if(window.loadWorkspace) window.loadWorkspace();
+      if(window.loadTeachers) window.loadTeachers();
+      if(window.loadStudents) window.loadStudents();
+      if(window.loadMyScheduleBoard) window.loadMyScheduleBoard();
+      if(window.renderMonthly) window.renderMonthly();
       if(window.loadOverview) window.loadOverview();
       if(window.loadMyScheduleBoard) window.loadMyScheduleBoard();
     }catch(e){}

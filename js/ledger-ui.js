@@ -10,6 +10,8 @@
 • 🆕 V11: فلاتر الدفتر المتتابعة الذكية (السنتر بالأستاذ والصفوف بالمرحلة والمجموعات بالكل)
 • بداية المحاسبة من ldgStartMonth (افتراضي 2026-10)
 ================================================================ */
+/* 🌐 alias عام — بيمنع ReferenceError: LU is not defined في أي بلوك ملحق */
+var LU = window.LedgerUI = window.LedgerUI || {};
 (function(){
 "use strict";
 var LU=window.LedgerUI=window.LedgerUI||{};
@@ -39,9 +41,20 @@ if(g.cycleRanges&&g.cycleRanges.length)return g.cycleRanges;
 return [{n:1,from:(db().platformMeta||{}).countingSince||g.countStart||startMonth()+'-01',to:null}];
 }
 function currentCycleNum(){
-var maxN=1;
-groups().forEach(function(g){(g.cycleRanges||[]).forEach(function(r){if(r.to==null&&r.n>maxN)maxN=r.n;});});
-return maxN;
+/* ✅ الإصلاح: نرجع أقل دورة مفتوحة بين كل المجموعات (مش أكبر واحدة) */
+/* عشان لو مجموعة واحدة كملت نصابها وفتحت دورة 2، المجموعة التانية اللي لسه في دورة 1 تفضل في دورة 1 */
+var minOpenN = 999;
+var hasAny = false;
+groups().forEach(function(g){
+  var rs = g.cycleRanges || [];
+  rs.forEach(function(r){
+    if(r.to == null){
+      hasAny = true;
+      if(r.n < minOpenN) minOpenN = r.n;
+    }
+  });
+});
+return hasAny ? minOpenN : 1;
 }
 function localMonth(){ return cycKey(currentCycleNum()); }
 function normMonth(m){ return m||localMonth(); }
@@ -249,6 +262,10 @@ month=normMonth(month);
 LU._sesCache=LU._sesCache||{};
 var ck=gid+'|'+month; if(LU._sesCache[ck]) return LU._sesCache[ck];
 var g=gById(gid)||{}; var req=reqOf(g); var tStr=localToday();
+/* 🔒 تسلسل صارم: دورة لسه مبتدتش = مربعات فاضية مقفولة */
+var __rs=rangesOf(g); var __openN=1; __rs.forEach(function(r){ if(r.to==null) __openN=r.n; });
+var __reqN=parseInt(String(month).replace('cycle-',''))||1;
+if(__reqN>__openN){ var __res={events:[],done:0,required:req,complete:false,remaining:req,manual:0,isPast:false,warnAt:(g.warnAt!=null&&g.warnAt!=='')?+g.warnAt:(req-1),frozen:!!g.frozen,notStarted:true,isFuture:true}; LU._sesCache[ck]=__res; return __res; }
 var fl0=getFlags(gid,month); var removed={}; (fl0.remove||[]).forEach(function(d){ removed[d]=1; });
 var rng=rangeOf(gid,month); var FROZ=ledgerFrozen();
 function inR(ds){return !!ds&&ds>=rng.from&&(!rng.to||ds<=rng.to);}
@@ -290,14 +307,40 @@ for(var u=0;u<und;u++) ev.push({t:'done',d:'',flag:1});
 ev.sort(function(a,b){ return String(a.d||'0000-00-00').localeCompare(String(b.d||'0000-00-00')); });
 var done=0; ev.forEach(function(e){ if(e.t!=='cancelled') done++; });
 if(g.sessionNow>0&&(g.sessionNowMonth||'')===month){ while(done<+g.sessionNow&&ev.length<req+12){ ev.unshift({t:'manual',d:''}); done++; } }
+/* 🛑 سقف صارم: المحسوب ما يزيدش عن عدد الحصص المحدد في إعدادات المجموعة */
+if(done>req){
+var capped=[],kept=0;
+for(var ci=0;ci<ev.length;ci++){ if(ev[ci].t==='cancelled'){ capped.push(ev[ci]); continue; } kept++; if(kept<=req) capped.push(ev[ci]); }
+ev=capped; done=req;
+}
+/* 🛑 سقف صارم: المحسوب ما يزيدش عن عدد الحصص المحدد في إعدادات المجموعة */
+if(done>req){
+var capped=[],kept=0;
+for(var ci=0;ci<ev.length;ci++){ if(ev[ci].t==='cancelled'){ capped.push(ev[ci]); continue; } kept++; if(kept<=req) capped.push(ev[ci]); }
+ev=capped; done=req;
+}
 var warnAt=(g.warnAt!=null&&g.warnAt!=='')?+g.warnAt:(req-1);
 var cycleNum=parseInt(String(month).replace('cycle-',''))||1;
 var curCycleNum=parseInt(String(localMonth()).replace('cycle-',''))||1;
-var res={events:ev,done:done,required:req,complete:done>=req,remaining:Math.max(0,req-done),manual:M,isPast:cycleNum<curCycleNum,warnAt:warnAt,frozen:!!g.frozen};
+/* ✅ القاعدة الذهبية: منتهي = النصاب اكتمل AND الدورة مقفولة فعلياً */
+var isPast = (done >= req) && !!rng.to;
+var res={events:ev,done:done,required:req,complete:done>=req,remaining:Math.max(0,req-done),manual:M,isPast:isPast,warnAt:warnAt,frozen:!!g.frozen};
 LU._sesCache[ck]=res;
 return res;
 };
-function sqStrip(s){
+function expectedDates(g,count,baseDate){
+var sch=(g.schedules&&g.schedules.length)?g.schedules:(g.day?[{day:g.day}]:[]);
+var WD2={0:'Sunday',1:'Monday',2:'Tuesday',3:'Wednesday',4:'Thursday',5:'Friday',6:'Saturday'};
+var days={};sch.forEach(function(s){days[s.day]=1;});
+var out=[];if(!count||!sch.length)return out;
+var d=new Date((baseDate||localToday())+'T12:00:00');var guard=0;
+while(out.length<count&&guard<200){d.setDate(d.getDate()+1);guard++;if(days[WD2[d.getDay()]])out.push(d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()));}
+return out;
+}
+function nextCycleFrom(g,month){
+try{var n=parseInt(String(month).replace('cycle-',''))||0;var r=(rangesOf(g)||[]).find(function(x){return x.n===n+1;});return r?r.from:'';}catch(e){return '';}
+}
+function sqStrip(s,g,month){
 var html=s.events.map(function(e){
 if(e.t==='manual') return '<span class="ldg-sq green" title="حصة مرحّلة/يدوية (محسوبة)">📥</span>';
 if(!e.d&&e.flag) return '<span class="ldg-sq green" title="مربع مضاف يدوياً">＋</span>';
@@ -306,8 +349,27 @@ if(e.t==='cancelled') return '<span class="ldg-sq red" title="'+e.d+' — ملغ
 if(e.t==='madeup') return '<span class="ldg-sq blue" title="'+e.d+' — حصة تعويضية (محسوبة)">↺'+day+'</span>';
 return '<span class="ldg-sq green" title="'+e.d+' — حصة محسوبة على كل طلاب المجموعة">'+day+'</span>';
 }).join('');
-for(var i=0;i<Math.max(0,s.required-s.done);i++) html+='<span class="ldg-sq gray" title="لسه مأخدتش"></span>';
-return '<div class="ldg-strip">'+html+'<b class="ldg-count">'+s.done+'/'+s.required+'</b>'+(s.frozen?' <span class="badge badge-warning">🧊 مجمدة</span>':'')+(s.complete?' <span class="badge badge-warning">💰 الشهرية مستحقة</span>':'')+'</div>';
+var rem0=Math.max(0,s.required-s.done);
+var datedEv=(s.events||[]).filter(function(e){return e.d&&e.t!=='cancelled';}).map(function(e){return e.d;}).sort();
+var lastD=datedEv.length?datedEv[datedEv.length-1]:'';
+var baseD=lastD>localToday()?lastD:localToday();
+var expD=expectedDates(g,rem0,baseD);
+for(var i=0;i<rem0;i++){
+var ed=expD[i]||'';
+if(ed) html+='<span class="ldg-sq gray" title="⏰ الموعد المتوقع: '+ed+'" style="color:#fff;font-size:9px;">'+String(+ed.slice(8,10))+'</span>';
+else html+='<span class="ldg-sq gray" title="لسه مأخدتش"></span>';
+}
+var cap='';
+if(!s.complete&&expD[0]) cap='<span style="font-size:10px;color:var(--text-muted);margin-inline-start:6px;">⏰ القادمة: '+expD[0]+'</span>';
+if(s.complete){ var nxf=nextCycleFrom(g,month); if(nxf) cap='<span style="font-size:10px;color:var(--info);margin-inline-start:6px;">➡️ الدورة الجاية من: '+nxf+'</span>'; }
+var vbtn='';
+try{
+  var u=cur(); var cw=u&&(u.role==='assistant'||u.role==='super_admin');
+  if(cw&&s.complete&&(+g.expectedStudents||0)>studentsOf(g.id).length){
+    vbtn='<button class="btn btn-ghost btn-sm" style="border-color:var(--warning);color:var(--warning);margin-inline-start:6px;" onclick="LU.addVirtualExpectedDue(\''+g.id+'\',\''+month+'\')" title="ترحيل ديون طلاب متوقعين">📥 ترحيل متوقع</button>';
+  }
+}catch(e){}
+return '<div class="ldg-strip">'+html+'<b class="ldg-count">'+s.done+'/'+s.required+'</b>'+(s.frozen?' <span class="badge badge-warning">🧊 مجمدة</span>':'')+(s.complete?' <span class="badge badge-warning">💰 الشهرية مستحقة</span>':'')+cap+vbtn+'</div>';
 }
 
 /* ========== ✏️ مودال المربعات: تحكم كامل ========== */
@@ -315,6 +377,7 @@ LU.editSquares=function(gid,month){
 try{
 month=normMonth(month||LU._st.month);
 var g=gById(gid); var ses=LU.groupSessions(gid,month);
+if(ses.notStarted){ if(window.safeToast) window.safeToast('🔒 شهر قادم — كمّل الدورة الحالية الأول','error'); return; }
 var rows=ses.events.map(function(e,i){
 var lbl=e.d?('📅 '+e.d):'بدون تاريخ';
 var btns='';
@@ -349,6 +412,7 @@ if(i>=0){ fl.take.splice(i,1); setFlags(gid,month,fl); }
 LU.refresh(); LU.editSquares(gid,month);
 };
 LU.sqAdd=function(gid,month,dated){
+if(LU.groupSessions(gid,month).notStarted){ if(window.safeToast) window.safeToast('🔒 شهر قادم — كمّل الدورة الحالية الأول','error'); return; }
 var fl=getFlags(gid,month);
 if(dated){ var dv=(document.getElementById('sqNewDate')||{}).value; if(!dv){ if(window.safeToast) window.safeToast('اختار التاريخ الأول','error'); return; } if(fl.take.indexOf(dv)<0) fl.take.push(dv); fl.remove=fl.remove.filter(function(d){return d!==dv;}); }
 else fl.take.push('');
@@ -414,8 +478,10 @@ if(window.safeToast) window.safeToast('➖ اتخصمت حصة من العداد
 }catch(e){ if(window.safeToast) window.safeToast('خطأ: '+e.message,'error'); }
 finally{ LU.refresh(); try{ LU.editSquares(gid,month); }catch(e){} }
 };
+
 LU.carryInc=async function(gid,month){
 try{
+if(LU.groupSessions(gid,month).notStarted){ if(window.safeToast) window.safeToast('🔒 شهر قادم — كمّل الدورة الحالية الأول','error'); return; }
 var d=db(); d.manualSessions=d.manualSessions||[]; var touched=[];
 var sts=studentsOf(gid); if(!sts.length){ if(window.safeToast) window.safeToast('مفيش طلاب في المجموعة','error'); return; }
 sts.forEach(function(s){
@@ -482,7 +548,7 @@ function badgeOf(f,ses,month,gid){
 var h='';
 if(f.isLate) h+='<span class="badge badge-danger">⚠️ متأخر: '+f.debts.map(function(dm){return monthName(dm, gid);}).join('، ')+'</span> ';
 if(f.isPaid) h+='<span class="badge badge-success">✓ مسدد '+monthName(month, gid)+'</span>';
-else if(f.isDue) h+= f.paid>0 ? '<span class="badge badge-danger">💰 متبقي من شهرية '+monthName(month, gid)+': '+(f.total-f.paid)+'</span>' : '<span class="badge badge-danger">💰 مطلوب شهرية '+monthName(month, gid)+'</span>';
+else if(f.isDue){ var __dd=dueDateFor(gById(gid),month); var __ddTxt=__dd?('قبل '+fmtD(__dd)):monthName(month, gid); h+= f.paid>0 ? '<span class="badge badge-danger">💰 متبقي من شهرية '+monthName(month, gid)+' — مطلوب '+__ddTxt+': '+(f.total-f.paid)+'</span>' : '<span class="badge badge-danger">💰 مطلوب شهرية '+monthName(month, gid)+' — '+__ddTxt+'</span>'; }
 else if(f.isWarn) h+='<span class="badge badge-warning">🔔 إنذار الدفع ('+ses.done+'/'+ses.required+')</span>';
 else if(f.isPartial) h+='<span class="badge badge-warning">مقدم '+f.paid+'/'+f.total+' (لسه مكملش الحصص)</span>';
 else h+='<span class="text-xs text-muted">لسه — '+ses.done+'/'+ses.required+'</span>';
@@ -528,7 +594,7 @@ return '<div class="card" style="padding:10px;margin-bottom:12px;"><div style="d
 +'<select class="form-select" onchange="LedgerUI.fset(\'grade\',this.value)"><option value="">🎓 كل الصفوف</option>'+gradeList.map(function(g){return '<option value="'+g+'" '+(f.grade===g?'selected':'')+'>'+g+'</option>';}).join('')+'</select>'
 +'<select class="form-select" onchange="LedgerUI.fset(\'gid\',this.value)"><option value="">👥 كل المجموعات المطابقة ('+preGroups.length+')</option>'+preGroups.map(function(g){return '<option value="'+g.id+'" '+(gidVal===g.id?'selected':'')+'>'+g.name+' · '+(g.grade||'-')+' · '+(g.frozen?'🧊':'▶️')+'</option>';}).join('')+'</select>'
 +'<select class="form-select" onchange="LedgerUI.fset(\'status\',this.value)"><option value="">💳 كل الحالات</option><option value="paid" '+(f.status==='paid'?'selected':'')+'>✓ دفعوا</option><option value="warn" '+(f.status==='warn'?'selected':'')+'>🔔 إنذار الدفع</option><option value="due" '+(f.status==='due'?'selected':'')+'>💰 مطلوب الآن</option><option value="late" '+(f.status==='late'?'selected':'')+'>⚠️ متأخرين مرحّلين</option></select>'
-+'<select class="form-select" onchange="LedgerUI.fset(\'month\',this.value)">'+months.map(function(m){return '<option value="'+m+'" '+(nm===m?'selected':'')+'>'+monthName(m,f.gid||'')+(parseInt(m.replace('cycle-',''))<parseInt(localMonth().replace('cycle-',''))?' 🔒':'')+'</option>';}).join('')+'</select>'
++'<select class="form-select" onchange="LedgerUI.fset(\'month\',this.value)">'+months.map(function(m){return '<option value="'+m+'" '+(nm===m?'selected':'')+'>'+monthName(m,f.gid||'')+'</option>';}).join('')+'</select>'
 +'<input type="text" id="ldgQ_'+LU._ctx+'" class="form-input" placeholder="🔍 بحث طالب..." value="'+(f.q||'')+'" oninput="LedgerUI.fset(\'q\',this.value)">'
 +'</div></div>';
 }
@@ -582,6 +648,8 @@ return '<div style="display:flex;justify-content:space-between;align-items:cente
 +(isAdmin()?'<button class="btn '+(LU.countingState().active?'btn-success':'btn-warning')+' btn-sm" onclick="LedgerUI.toggleCounting()">'+(LU.countingState().active?'▶️ العد شغال — دوس للإيقاف':'🧊 العد موقوف — دوس لبدء العد')+'</button>':'')
 +'<button class="btn btn-warning btn-sm" onclick="window.openBulkBackfillModal&&window.openBulkBackfillModal()">📥 ترحيل حصص</button>'
 +'<button class="btn btn-warning btn-sm" onclick="LedgerUI.openCancelModal()">🚫 إلغاء حصة</button>'
++(canWrite()?'<button class="btn btn-ghost btn-sm" title="نسخ رسالة الاستحقاق تلقائياً لجروب المجموعة عند الاستحقاق/الإنذار/بداية الدورة" onclick="LedgerUI.toggleWaOnDue()">'+(waOnDueFlag()?'💬 واتساب تلقائي: شغال':'💬 واتساب تلقائي: متوقف')+'</button>':'')
++(waQueue().length?'<button class="btn btn-warning btn-sm" onclick="LedgerUI.openWaQueue()">💬 '+waQueue().length+' رسالة منتظرة</button>':'')
 +((isAdmin()||((cur()||{}).role==='assistant')||((cur()||{}).role==='center'))?'<button class="btn btn-secondary btn-sm" onclick="LedgerUI.openLegacyDueModal()">📜 مستحق رجعي</button>':'')
 +'</div></div>';
 }
@@ -653,43 +721,148 @@ h+='</div></div>';
 return h;
 }
 
-/* ========== 🔔 إشعار مرة واحدة فقط لكل مجموعة/شهر ========== */
+/* ========== 💬 واتساب تلقائي + تاريخ استحقاق + شارة الدورة السابقة ========== */
+function waOnDueFlag(){ try{ return (db().platformMeta||{}).waOnDue!==false; }catch(e){ return true; } }
+LU.toggleWaOnDue=function(){
+  var d=db(); d.platformMeta=d.platformMeta||{};
+  d.platformMeta.waOnDue=!waOnDueFlag(); saveD(d);
+  try{ if(window.FirebaseService&&FirebaseService._db) FirebaseService.saveDoc('platformMeta','meta',d.platformMeta); }catch(e){}
+  if(window.safeToast)window.safeToast(d.platformMeta.waOnDue?'💬 واتساب تلقائي عند الاستحقاق: شغال':'💬 واتساب تلقائي عند الاستحقاق: متوقف','info');
+  LU.refresh();
+};
+function waQueue(){ return (db().waQueue||[]); }
+function waPush(gid,msg){
+  var d=db(); d.waQueue=d.waQueue||[];
+  if(d.waQueue.some(function(x){return x.gid===gid&&x.msg===msg;})) return;
+  d.waQueue.push({gid:gid,msg:msg,at:new Date().toISOString()});
+  if(d.waQueue.length>20) d.waQueue=d.waQueue.slice(-20);
+  saveD(d);
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(msg); }catch(e){}
+}
+LU.openWaQueue=function(){
+  var q=waQueue();
+  if(!q.length){ if(window.safeToast)window.safeToast('مفيش رسائل منتظرة','info'); return; }
+  var html='<div class="modal-header"><h3 class="modal-title">💬 رسائل واتساب منتظرة الإرسال ('+q.length+')</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">';
+  html+='<div class="filter-info">💡 الرسالة منسوخة تلقائياً — دوس "📤 فتح الجروب" والصقها هناك.</div>';
+  html+=q.map(function(x,i){ return '<div class="sub-row" style="margin-bottom:8px;"><div style="flex:1;"><strong>'+gName(x.gid)+'</strong><div class="text-xs text-muted" style="white-space:pre-line;margin-top:4px;">'+x.msg+'</div></div><div style="display:flex;gap:4px;"><button class="btn btn-success btn-sm" onclick="LedgerUI.sendWaQueued('+i+')">📤 فتح الجروب</button><button class="btn btn-danger btn-sm" onclick="LedgerUI.delWaQueued('+i+')">🗑</button></div></div>'; }).join('');
+  html+='</div>';
+  ThemeManager.openModal(html,'modal-md');
+};
+LU.sendWaQueued=function(i){
+  var d=db(); var x=(d.waQueue||[])[i]; if(!x) return;
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(x.msg); }catch(e){}
+  window.openGroupWa(x.gid,x.msg);
+  d.waQueue.splice(i,1); saveD(d); LU.openWaQueue();
+};
+LU.delWaQueued=function(i){ var d=db(); (d.waQueue||[]).splice(i,1); saveD(d); LU.openWaQueue(); };
+/* 📅 تاريخ استحقاق ملموس = أول حصة في الدورة الجاية */
+function dueDateFor(g,month){
+  try{
+    if(!g) return '';
+    var rs=rangesOf(g); var n=parseInt(String(month).replace('cycle-',''))||1;
+    var nxt=null; rs.forEach(function(r){ if(r.n===n+1) nxt=r; });
+    var base=nxt?nxt.from:null;
+    if(!base){ var curr=null; rs.forEach(function(r){ if(r.n===n) curr=r; }); base=(curr&&curr.to)?nextDay(curr.to):null; }
+    if(!base) return '';
+    var sch=(g.schedules&&g.schedules.length)?g.schedules:(g.day?[{day:g.day}]:[]);
+    if(!sch.length) return base;
+    var WD2={0:'Sunday',1:'Monday',2:'Tuesday',3:'Wednesday',4:'Thursday',5:'Friday',6:'Saturday'};
+    var days={}; sch.forEach(function(s){days[s.day]=1;});
+    var d=new Date(base+'T12:00:00');
+    for(var i=0;i<14;i++){ if(days[WD2[d.getDay()]]) return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); d.setDate(d.getDate()+1); }
+    return base;
+  }catch(e){ return ''; }
+}
+/* ⚠️ شارة "غير مسدد للدورة السابقة" لمودال حصص اليوم */
+function prevUnpaidBadge(g){
+  try{
+    var rs=rangesOf(g);
+    var closed=rs.filter(function(r){return r.to!=null;});
+    if(!closed.length) return '';
+    var fee=feeOf(g); if(!fee) return '';
+    var sts=studentsOf(g.id); var any=false;
+    closed.forEach(function(r){
+      var ck=cycKey(r.n);
+      sts.forEach(function(s){
+        if(any) return;
+        var paid=(LU.paidForCycle)?LU.paidForCycle(s.id,g.id,ck):0;
+        if(paid<fee) any=true;
+      });
+    });
+    return any?' <button type="button" class="badge badge-danger" style="cursor:pointer;border:none;font-size:11px;" title="افتح دفتر التحصيل على المجموعة دي وشوف المتأخرات" onclick="LedgerUI.gotoGroupLedger(\''+g.id+'\')">⚠️ غير مسدد للدورة السابقة</button>':'';
+  }catch(e){ return ''; }
+}
+
+/* 📒 من شارة "غير مسدد للدورة السابقة" → دفتر التحصيل مفلتراً على المجموعة */
+LU.gotoGroupLedger=function(gid){
+  try{
+    var g=gById(gid); if(!g) return;
+    try{ ThemeManager.closeModal(); }catch(e){}
+    /* فعّل فلتر المجموعة دي بس وصفّي باقي الفلاتر */
+    LU._st.gid=gid; LU._st.q=''; LU._st.status=''; LU._st.teacher=''; LU._st.center=''; LU._st.stage=''; LU._st.grade='';
+    /* افتح على شهر آخر دورة مقفولة (فيها المتأخرات) */
+    var rs=rangesOf(g); var lastClosed=null;
+    rs.forEach(function(r){ if(r.to!=null) lastClosed=r; });
+    if(lastClosed) LU._st.month=cycKey(lastClosed.n);
+    var secId=isAdmin()?'ledger':'monthly';
+    if(typeof window.showSection==='function') window.showSection(secId);
+    setTimeout(function(){ LU._sesCache={}; LU.refresh(); },150);
+    if(window.safeToast) window.safeToast('📒 دفتر التحصيل مفتوح على: '+g.name,'info');
+  }catch(e){}
+};
+
+/* ========== 🔔 محرك الإشعارات الموحد (إنذار + استحقاق + بداية دورة + واتساب) ========== */
 function scanNotify(gs,month){
 try{
 if(!countingActiveFlag((db().platformMeta||{}))||notifyFrozen()) return;
-var d=db(); d.warn7=d.warn7||{}; d.due8=d.due8||{};
+var d=db(); d.warn7=d.warn7||{}; d.due8=d.due8||{}; d.cycleStart=d.cycleStart||{};
 gs.forEach(function(g){
 var ses=LU.groupSessions(g.id,month); var key=g.id+'__'+month; var fee=feeOf(g);
+var effFee=function(s){ return (window.LG&&LG.effFee)?LG.effFee(s,g):fee; };
+
+/* 🔄 إشعار بداية دورة جديدة (مرة واحدة لكل دورة) + كل المستحقات السابقة */
+var rs=rangesOf(g); var openR=null; rs.forEach(function(r){ if(r.to==null&&!openR) openR=r; });
+if(openR&&openR.n>=2){
+  var sKey=g.id+'__start__'+openR.n;
+  if(!d.cycleStart[sKey]){
+    d.cycleStart[sKey]=1;
+    studentsOf(g.id).forEach(function(s){
+      var dms=dueMonths(s.id,g.id,effFee(s));
+      if(!dms.length) return;
+      var prevList=dms.filter(function(x){return x.month!==month;});
+      var totRem=dms.reduce(function(a,x){return a+x.rem;},0);
+      var msg='🔄 بدأت دورة جديدة ('+monthName(cycKey(openR.n),g.id)+') — برجاء سداد الشهرية '+fee+' ج.م في أقرب حصة 🌹';
+      if(prevList.length) msg+=' ⚠️ عليك أيضاً مستحقات سابقة: '+prevList.map(function(x){return monthName(x.month,g.id)+' ('+x.rem+' ج.م)';}).join(' + ')+' — الإجمالي المطلوب '+totRem+' ج.م';
+      if(DataService.addNotification) DataService.addNotification({targetUserId:s.id,title:'🔄 دورة جديدة + شهرية مستحقة',message:msg,type:'payment',priority:'high',meta:{event:'cycle_start'}});
+      if(waOnDueFlag()) waPush(g.id,'🔄 *دورة جديدة — '+g.name+'*\n'+msg);
+    });
+  }
+}
+
+/* 🔔 إنذار الدفع عند حصة warnAt — بصيغة "سرعة السداد قبل اكتمال الشهر" */
 if(!ses.complete&&ses.done>=ses.warnAt&&!d.warn7[key]){
 d.warn7[key]=1;
 studentsOf(g.id).forEach(function(s){
 var fl=flagsOf(s.id,g,month,ses); if(fl.isPaid) return;
-if(DataService.addNotification) DataService.addNotification({targetUserId:s.id,title:'🔔 جهز الشهرية',message:'باقي '+(ses.required-ses.done)+' حصة على اكتمال حصص '+monthName(month)+' — الشهرية ('+fee+' ج.م) هتتبطلب لما توصل '+ses.required+'/'+ses.required+'.',type:'payment',priority:'medium',meta:{event:'due_warn'}});
+var wmsg='🔔 برجاء سرعة السداد قبل اكتمال الشهر — باقي '+(ses.required-ses.done)+' حصة على اكتمال حصص '+monthName(month,g.id)+'. الشهرية: '+fee+' ج.م.';
+if(DataService.addNotification) DataService.addNotification({targetUserId:s.id,title:'🔔 سرعة السداد قبل اكتمال الشهر',message:wmsg,type:'payment',priority:'medium',meta:{event:'due_warn'}});
+if(waOnDueFlag()) waPush(g.id,'🔔 *تذكير سداد — '+g.name+'*\n'+wmsg);
 });
 }
+
+/* 💰 إشعار الاستحقاق عند الاكتمال + كل المستحقات السابقة */
 if(ses.complete&&!d.due8[key]){
 d.due8[key]=1;
 studentsOf(g.id).forEach(function(s){
 var fl=flagsOf(s.id,g,month,ses); if(fl.isPaid) return;
-if(DataService.addNotification) DataService.addNotification({targetUserId:s.id,title:'💰 الشهرية مستحقة الآن',message:'اكتملت حصص '+monthName(month)+' ('+ses.done+'/'+ses.required+') — المستحق: '+fee+' ج.م. شكراً لتعاونكم 🌹',type:'payment',priority:'high',meta:{event:'due_now'}});
+var dms=dueMonths(s.id,g.id,effFee(s));
+var prevList=dms.filter(function(x){return x.month!==month;});
+var totRem=dms.reduce(function(a,x){return a+x.rem;},0);
+var msg='اكتملت حصص '+monthName(month,g.id)+' ('+ses.done+'/'+ses.required+') — المستحق: '+fee+' ج.م. شكراً لتعاونكم 🌹';
+if(prevList.length) msg+=' ⚠️ مستحقات سابقة غير مسددة: '+prevList.map(function(x){return monthName(x.month,g.id)+' ('+x.rem+' ج.م)';}).join(' + ')+' — الإجمالي المطلوب '+totRem+' ج.م';
+if(DataService.addNotification) DataService.addNotification({targetUserId:s.id,title:'💰 الشهرية مستحقة الآن',message:msg,type:'payment',priority:'high',meta:{event:'due_now'}});
+if(waOnDueFlag()) waPush(g.id,'💰 *شهرية مستحقة — '+g.name+'*\n'+msg);
 });
-}
-if(ses.complete&&month===localMonth()&&(g.sessionNow||0)>=ses.required){
-var allPaid=true;
-studentsOf(g.id).forEach(function(s){
-var fl=flagsOf(s.id,g,month,ses); if(!fl.isPaid) allPaid=false;
-});
-if(allPaid){
-d.notifyEmitted=d.notifyEmitted||{};
-var transKey='trans_suggest_'+g.id+'_'+month;
-if(!d.notifyEmitted[transKey]){
-d.notifyEmitted[transKey]=Date.now();
-var targets2=(DataService.getUsers?DataService.getUsers():[]).filter(function(u){return u.role==='assistant'||u.role==='admin';});
-targets2.forEach(function(u){
-if(DataService.addNotification) DataService.addNotification({targetUserId:u.id,title:'🔄 '+g.name+' جاهزة للانتقال',message:'الشهر اكتمل وكل الطلاب دفعوا — يمكن طلب الانتقال للشهر الجديد من الدفتر',type:'general',priority:'medium',meta:{event:'month_transition_suggest'}});
-});
-}
-}
 }
 });
 saveD(d);
@@ -805,6 +978,7 @@ LU.addLegacyDue(sid,gid,m,amt,note);
 /* ========== كارت مجموعة ========== */
 function groupCard(g,month,mode,rowsAll){
 var rows=rowsAll?rowsAll.filter(function(r){return r.g.id===g.id;}):buildRows([g],month);
+if(rowsAll&&!rows.length&&(LU._st.q||'')) return '';
 var ses=LU.groupSessions(g.id,month);
 var fee=feeOf(g);
 var collected=rows.reduce(function(a,r){return a+r.f.paid;},0);
@@ -821,7 +995,7 @@ pendHtml='<div style="margin:8px 12px 0;padding:8px 10px;border:1px dashed var(-
 }
 var head='<div class="ldg-ghead">'
 +'<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;">'
-+'<div style="font-weight:800;font-size:13px;">👥 '+g.name+' <span class="text-xs text-muted">· 👨‍ '+tName+' · 🏢 '+(g.center||'-')+' · '+(g.grade||'-')+' · 💰 '+fee+' · '+rows.length+' طالب</span> '+(ses.isPast?'<span class="badge badge-muted">🔒 منتهي</span>':'')+' <span class="badge badge-info">🔔 إنذار عند '+ses.warnAt+'</span>'+(g.frozen?'<span class="badge badge-warning">🧊 '+freezeLabel(g)+'</span>':'')+'</div>'
++'<div style="font-weight:800;font-size:13px;">👥 '+g.name+' <span class="text-xs text-muted">· 👨‍ '+tName+' · 🏢 '+(g.center||'-')+' · '+(g.grade||'-')+' · 💰 '+fee+' · '+rows.length+' طالب</span> '+(ses.isPast?'<span class="badge badge-muted">✅ مكتمل — الشهرية مستحقة</span>':'')+' <span class="badge badge-info">🔔 إنذار عند '+ses.warnAt+'</span>'+(g.frozen?'<span class="badge badge-warning">🧊 '+freezeLabel(g)+'</span>':'')+'</div>'
 +'<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">'
 +'<span class="text-xs" style="color:var(--success);font-weight:800;">💰 محصل '+collected+'</span>'
 +'<span class="text-xs" style="color:var(--danger);font-weight:800;">متبقي '+remaining+'</span>'
@@ -830,9 +1004,8 @@ var head='<div class="ldg-ghead">'
 +(mode==='view'?'':'<button class="btn btn-ghost btn-sm" onclick="LedgerUI.editSquares(\''+g.id+'\',\''+month+'\')">✏️ المربعات</button>')
 +(mode==='view'?'':'<button class="btn btn-primary btn-sm" onclick="window.openGroupModal&&window.openGroupModal(\''+g.id+'\')">⚙️ تعديل المجموعة</button>')
 +(mode==='view'?'':'<button class="btn btn-secondary btn-sm" onclick="LedgerUI.addStudentModal(\''+g.id+'\')">➕ طالب</button>')
-+((!ses.isPast&&ses.complete&&month===localMonth())?'<button class="btn btn-warning btn-sm" onclick="LedgerUI.requestMonthTransition(\''+g.id+'\')">🔄 طلب انتقال للشهر الجديد</button>':'')
-+'</div></div>'
-+sqStrip(ses)
+
++shareChip(g,month)+'</div></div>'+sqStrip(ses,g,month)
 +pendHtml
 +'<div class="text-xs text-muted" style="margin-top:6px;">🟩 بتاريخ = حصة فعلية · 🟦 ↺ = تعويضية · 📥 = مرحّلة · 🟥 = ملغاة · ⬜ لسه — المتبقي محسوب من حصص المجموعة'+(g.frozen?' · 🧊 حصص فترة التجميد مش بتتحسب':'')+'</div></div>';
 if(!rows.length) return '<div class="ldg-gcard">'+head+'<div class="text-xs text-muted" style="padding:10px;">لا طلاب مطابقين</div></div>';
@@ -862,6 +1035,7 @@ LU._ctx='monthly';
 var f=LU._st; f.month=normMonth(f.month);
 var gs=groupFilter(myGroups());
 var rows=buildRows(gs,f.month);
+if(f.q){ var qq=(f.q||'').toLowerCase(); gs=gs.filter(function(g){ return rows.some(function(r){return r.g.id===g.id;})||(g.name||'').toLowerCase().indexOf(qq)>=0; }); }
 scanNotify(gs,f.month);
 var html=toolbarHtml();
 if(!LU.countingState().active){
@@ -881,6 +1055,7 @@ LU._ctx='ledger';
 var f=LU._st; f.month=normMonth(f.month);
 var gs=groupFilter(groups());
 var rows=buildRows(gs,f.month);
+if(f.q){ var qq=(f.q||'').toLowerCase(); gs=gs.filter(function(g){ return rows.some(function(r){return r.g.id===g.id;})||(g.name||'').toLowerCase().indexOf(qq)>=0; }); }
 scanNotify(gs,f.month);
 var per=gs.map(function(g){
 var gr=rows.filter(function(r){return r.g.id===g.id;});
@@ -1405,72 +1580,9 @@ LU.refresh(); ccRender();
 LU.ccBulkReset=function(){ var ids=ccSelectedIds(); if(!ids.length){ if(window.safeToast) window.safeToast('حدّد مجموعات الأول','error'); return; } LU.openResetOptionsFor(ids); };
 LU.ccAllReset=function(){ var ids=ccVisibleIds(); if(!ids.length){ if(window.safeToast) window.safeToast('مفيش مجموعات معروضة','error'); return; } LU.openResetOptionsFor(ids); };
 
-/* ========== 🔄 طلب الانتقال للشهر الجديد (بموافقة المساعد/الأدمن) ========== */
-LU.requestMonthTransition=function(gid){
-try{
-var g=gById(gid); if(!g) return;
-var curM=localMonth();
-var ses=LU.groupSessions(gid,curM);
-if(!ses.complete){ if(window.safeToast) window.safeToast('الشهر الحالي لسه مكملش ('+ses.done+'/'+ses.required+')','error'); return; }
-var d=db(); d.pendingMonthTransitions=d.pendingMonthTransitions||[];
-var existing=d.pendingMonthTransitions.find(function(p){return p.groupId===gid&&p.month===curM&&p.status==='pending';});
-if(existing){ if(window.safeToast) window.safeToast('في طلب سابق لسه معلق على المجموعة دي','info'); return; }
-var nextM=cycKey((parseInt(curM.replace('cycle-',''))||1)+1);
-var u=(window.currentUser||null);
-var req={id:'mt_'+Date.now()+'_'+gid,groupId:gid,groupName:g.name,fromMonth:curM,toMonth:nextM,status:'pending',requestedBy:(u&&u.id)||'',requestedAt:new Date().toISOString()};
-d.pendingMonthTransitions.push(req);
-saveD(d);
-try{ if(window.FirebaseService&&FirebaseService._db) FirebaseService.saveDoc('pendingMonthTransitions',req.id,req); }catch(e){}
-var targets=(DataService.getUsers?DataService.getUsers():[]).filter(function(x){return x.role==='assistant'||x.role==='admin'||x.role==='super_admin';});
-targets.forEach(function(x){
-if(DataService.addNotification) DataService.addNotification({targetUserId:x.id,title:'🔄 طلب انتقال شهر جديد',message:'مجموعة '+g.name+' كملت حصص '+monthName(curM)+' ('+ses.done+'/'+ses.required+') وطلبت فتح شهر '+monthName(nextM)+' — محتاج موافقتك',type:'general',priority:'high',meta:{event:'month_transition_req',kind:'month_transition'}});
-});
-if(window.safeToast) window.safeToast('🔄 تم إرسال الطلب — هيظهر زرار الموافقة فوق الدفتر','success');
-LU.refresh();
-}catch(e){ if(window.safeToast) window.safeToast('خطأ: '+e.message,'error'); }
-};
+LU.requestMonthTransition=function(gid){ /* 🔄 الانتقال تلقائي بالكامل — مفيش طلبات */ try{ var d=db(); d.pendingMonthTransitions=(d.pendingMonthTransitions||[]).filter(function(p){ return !(p.groupId===gid&&p.status==='pending'); }); DataService._saveData(d); }catch(e){} };
 
-/* مودال الطلبات المعلقة */
-window.openMonthTransitionsModal=function(){
-try{
-var d=db(); var list=(d.pendingMonthTransitions||[]).filter(function(p){return p.status==='pending';});
-var html='<div class="modal-header"><h3 class="modal-title">🔔 طلبات الانتقال للشهر الجديد ('+list.length+')</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">';
-if(!list.length) html+='<p class="text-muted" style="text-align:center;padding:20px;">مفيش طلبات معلقة حالياً</p>';
-else html+=list.map(function(p){
-return '<div class="sub-row" style="border-right:3px solid var(--warning);margin-bottom:8px;"><div style="flex:1;"><strong>👥 '+p.groupName+'</strong><div class="text-xs text-muted">من '+monthName(p.fromMonth)+' → '+monthName(p.toMonth)+'</div><div class="text-xs text-muted">🕐 '+new Date(p.requestedAt).toLocaleString('ar-EG')+'</div></div><div style="display:flex;gap:6px;"><button class="btn btn-success btn-sm" onclick="window.approveMonthTransition(\''+p.id+'\')">✓ موافقة</button><button class="btn btn-danger btn-sm" onclick="window.rejectMonthTransition(\''+p.id+'\')">✗ رفض</button></div></div>';
-}).join('');
-html+='</div>';
-ThemeManager.openModal(html,'modal-md');
-}catch(e){ console.error(e); }
-};
-
-window.approveMonthTransition=async function(id){
-try{
-var d=db(); var req=(d.pendingMonthTransitions||[]).find(function(p){return p.id===id;});
-if(!req) return;
-if(!confirm('موافقة على انتقال مجموعة '+req.groupName+' لشهر '+monthName(req.toMonth)+'؟')) return;
-req.status='approved'; req.approvedBy=(cur()||{}).id||''; req.approvedAt=new Date().toISOString();
-var g=gById(req.groupId);
-if(g){ try{ var rs2=rangesOf(g).slice(); var openR2=null; rs2.forEach(function(r){if(r.to==null)openR2=r;}); if(openR2){openR2.to=localToday(); rs2.push({n:openR2.n+1,from:nextDay(localToday()),to:null});} if(DataService.updateGroup) await DataService.updateGroup(g.id,{sessionNow:0,sessionNowMonth:req.toMonth,cycleRanges:rs2}); }catch(e){} }
-saveD(d);
-try{ if(window.FirebaseService&&FirebaseService._db) FirebaseService.saveDoc('pendingMonthTransitions',req.id,req); }catch(e){}
-if(window.safeToast) window.safeToast('✅ تمت الموافقة — العداد صفّر للشهر الجديد','success');
-ThemeManager.closeModal(); LU.refresh();
-}catch(e){ if(window.safeToast) window.safeToast('خطأ','error'); }
-};
-
-window.rejectMonthTransition=async function(id){
-try{
-var d=db(); var req=(d.pendingMonthTransitions||[]).find(function(p){return p.id===id;});
-if(!req) return;
-if(!confirm('رفض طلب الانتقال لمجموعة '+req.groupName+'؟')) return;
-req.status='rejected'; req.rejectedBy=(cur()||{}).id||''; req.rejectedAt=new Date().toISOString();
-saveD(d);
-try{ if(window.FirebaseService&&FirebaseService._db) FirebaseService.saveDoc('pendingMonthTransitions',req.id,req); }catch(e){}
-if(window.safeToast) window.safeToast('✗ تم الرفض','info');
-ThemeManager.closeModal(); LU.refresh();
-}catch(e){}
-};
+window.openMonthTransitionsModal=function(){ try{ var d=db(); var n=(d.pendingMonthTransitions||[]).filter(function(p){return p.status==='pending';}).length; if(n){ d.pendingMonthTransitions=(d.pendingMonthTransitions||[]).map(function(p){ if(p.status==='pending'){p.status='approved'; p.approvedAuto=true;} return p; }); DataService._saveData(d); } if(window.safeToast) window.safeToast('🔄 الانتقال للشهر الجديد تلقائي بالكامل — مفيش طلبات اعتماد','info'); LU.refresh(); }catch(e){} };
 
 /* ========== ⏳ حصص محتاجة تسوية + تأكيد/إلغاء سريع (🆕 بتتخطى فترات التجميد) ========== */
 function pendingSessionDates(gid,month){
@@ -1527,6 +1639,7 @@ html+='</div>';
 ThemeManager.openModal(html,'modal-md');
 }catch(e){if(window.safeToast)window.safeToast('خطأ: '+e.message,'error');}
 };
+
 window.attBulk=function(status){
 var rows=document.querySelectorAll('[id^="attRow_"]');
 rows.forEach(function(r){
@@ -1570,9 +1683,7 @@ var awarded=0;
 for(var i=0;i<present.length;i++){
 try {
   if (typeof Ops !== 'undefined' && Ops.addManualPoints) {
-    Ops.addManualPoints(
-      present[i].studentId,
-      attPts,
+    Ops.addManualPoints(present[i].studentId,attPts,
       'حضور ' + date + ' (' + g.name + ')',
       (cur() || {}).id || '',
       (g.teacherId || null),
@@ -1633,10 +1744,13 @@ LU.openCancelModal=function(prefGid,prefDate){
 try{
 var gs=isAdmin()?groups():myGroups();
 var tStr=localToday();
+var dMax=new Date(); dMax.setDate(dMax.getDate()+30); var tMax=dMax.getFullYear()+'-'+pad2(dMax.getMonth()+1)+'-'+pad2(dMax.getDate());
+var dMax=new Date(); dMax.setDate(dMax.getDate()+30);
+var tMax=dMax.getFullYear()+'-'+String(dMax.getMonth()+1).padStart(2,'0')+'-'+String(dMax.getDate()).padStart(2,'0');
 ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">🚫 إلغاء حصة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">'
 +'<div class="filter-info">💡 الإلغاء بيعلّم المربع أحمر ✗ في دفتر التحصيل فوراً، وبيتحسب دين تعويض، وبيفضل ظاهر في صندوق "حصص محتاجة تسوية" لحد ما تتعوض.</div>'
 +'<div class="form-group"><label>المجموعة</label><select id="cnGroup" class="form-select">'+gs.map(function(g){return '<option value="'+g.id+'" '+(g.id===prefGid?'selected':'')+'>'+g.name+'</option>';}).join('')+'</select></div>'
-+'<div class="form-group"><label>تاريخ الحصة *</label><input type="date" id="cnDate" class="form-input" value="'+(prefDate||tStr)+'" max="'+tStr+'"></div>'
++'<div class="form-group"><label>تاريخ الحصة *</label><input type="date" id="cnDate" class="form-input" value="'+(prefDate||tStr)+'" max="'+tMax+'"></div>'
 +'<div class="form-group"><label>السبب (اختياري)</label><input type="text" id="cnReason" class="form-input" placeholder="مثال: ظرف طارئ / مرض / قرار إداري"></div>'
 +'<label style="display:flex;gap:8px;align-items:center;margin:10px 0;cursor:pointer;"><input type="checkbox" id="cnWa" checked style="width:18px;height:18px;"> 💬 فتح واتساب المجموعة تلقائياً بعد الإلغاء (الرسالة منسوخة)</label>'
 +'<div style="display:flex;gap:6px;"><button class="btn btn-danger w-full" onclick="LedgerUI.cancelFromModal()">🚫 تأكيد الإلغاء</button><button type="button" class="btn btn-success" style="flex:1;" onclick="LedgerUI.waFromModal()">💬 واتساب الآن</button></div>'
@@ -1663,14 +1777,89 @@ var msg='🚫 إلغاء حصة — '+(g?g.name:'')+'\n📅 '+date+(reason?('\n�
 window.openGroupWa(gid,msg);
 };
 
+/* ========== ⚡ حصة طوارئ V2: اختيار المُبلَّغين + قناة الإشعار ========== */
+window.openEmergencySessionModal=function(){
+try{
+var u=cur();
+if(!u||['teacher','assistant','admin','super_admin'].indexOf(u.role)<0){ if(window.safeToast)window.safeToast('❌ غير مصرح','error'); return; }
+var gs=isAdmin()?groups():myGroups();
+var todayStr=localToday();
+ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">⚡ إضافة حصة طوارئ</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">'+
+'<div class="filter-info" style="background:var(--info-bg);color:var(--info);border-color:var(--info);">💡 حصة طوارئ = حصة زيادة عن الجدول الأسبوعي — بتتحسب في دفتر التحصيل تحت ⚡ طوارئ، وبتختار مين يتبلغ وبأي قناة.</div>'+
+'<div class="form-group"><label>👥 المجموعة *</label><select id="emGroup" class="form-select">'+gs.map(function(g){return '<option value="'+g.id+'">'+g.name+' · '+(g.center||'-')+'</option>';}).join('')+'</select></div>'+
+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="form-group"><label>📅 التاريخ *</label><input type="date" id="emDate" class="form-input" value="'+todayStr+'" min="'+todayStr+'"></div><div class="form-group"><label>🕐 الوقت</label><input type="time" id="emTime" class="form-input" value="18:00"></div></div>'+
+'<div class="form-group"><label>📝 الموضوع / ملاحظات</label><input type="text" id="emSubject" class="form-input" placeholder="مثال: مراجعة نهائية / حصة تعويضية"></div>'+
+'<div class="form-group"><label>🎯 مين يتبلغ؟</label><div style="display:grid;gap:6px;">'+
+'<label style="display:flex;gap:8px;align-items:center;cursor:pointer;"><input type="checkbox" id="emRStu" checked style="width:16px;height:16px;"> 🎓 طلاب المجموعة</label>'+
+'<label style="display:flex;gap:8px;align-items:center;cursor:pointer;"><input type="checkbox" id="emRPar" checked style="width:16px;height:16px;"> 👨‍👩‍👦 أولياء الأمور</label>'+
+'<label style="display:flex;gap:8px;align-items:center;cursor:pointer;"><input type="checkbox" id="emRTea" checked style="width:16px;height:16px;"> 👨‍🏫 أستاذ المجموعة</label></div></div>'+
+'<div class="form-group"><label>📢 قناة الإشعار</label><select id="emChan" class="form-select"><option value="both">🔔 داشبورد + 💬 واتساب (الاتنين)</option><option value="dash">🔔 الداشبورد فقط</option><option value="wa">💬 واتساب فقط</option><option value="none">بدون إشعار (تسجيل فقط)</option></select></div>'+
+'<button class="btn btn-primary w-full" onclick="window._submitEmergencySession()" style="margin-top:10px;">⚡ إضافة الحصة + تبليغ</button></div>','modal-md');
+}catch(e){ if(window.safeToast)window.safeToast('خطأ: '+e.message,'error'); }
+};
+window._submitEmergencySession=async function(){
+try{
+var gid=(document.getElementById('emGroup')||{}).value;
+var date=(document.getElementById('emDate')||{}).value;
+var time=(document.getElementById('emTime')||{}).value||'';
+var subject=(document.getElementById('emSubject')||{}).value||'';
+var chan=(document.getElementById('emChan')||{}).value||'both';
+var rStu=(document.getElementById('emRStu')||{}).checked;
+var rPar=(document.getElementById('emRPar')||{}).checked;
+var rTea=(document.getElementById('emRTea')||{}).checked;
+if(!gid||!date){ if(window.safeToast)window.safeToast('❌ اختار المجموعة والتاريخ','error'); return; }
+var g=gById(gid); if(!g){ if(window.safeToast)window.safeToast('❌ المجموعة غير موجودة','error'); return; }
+var sts=studentsOf(gid); if(!sts.length){ if(window.safeToast)window.safeToast('❌ مفيش طلاب','error'); return; }
+var d=db(); d.manualSessions=d.manualSessions||[]; d.attendance=d.attendance||[];
+var ck=cycleOfDate(gid,date)||localMonth();
+sts.forEach(function(s){
+var exists=d.manualSessions.some(function(ms){ return ms.groupId===gid&&ms.studentId===s.id&&ms.type==='emergency'&&ms.emergencyDate===date; });
+if(!exists) d.manualSessions.push({id:'em_'+Date.now()+'_'+s.id,groupId:gid,studentId:s.id,month:ck,sessionsCount:1,type:'emergency',emergencyDate:date,emergencySubject:subject,reason:'⚡ حصة طوارئ '+date,addedBy:(cur()||{}).id||'',addedAt:new Date().toISOString()});
+});
+var existingAtt=(d.attendance||[]).find(function(a){return a.groupId===gid&&a.date===date&&a.status==='approved';});
+if(!existingAtt){ d.attendance.push({id:'att_em_'+Date.now()+'_'+gid,groupId:gid,groupName:g.name,date:date,status:'approved',source:'emergency',emergencySubject:subject,teacherId:g.teacherId||null,createdAt:new Date().toISOString(),records:sts.map(function(s){return {studentId:s.id,status:'present'};})}); }
+saveD(d); LU._sesCache={};
+var title='⚡ حصة طوارئ — '+g.name;
+var msg='تم إضافة حصة طوارئ يوم '+date+(time?(' الساعة '+time):'')+(subject?(' — '+subject):'')+'. برجاء الحضور 🌹';
+if(chan==='dash'||chan==='both'){
+if(rStu) sts.forEach(function(s){ if(DataService.addNotification) DataService.addNotification({targetUserId:s.id,title:title,message:msg,type:'schedule',priority:'high',meta:{event:'schedule_change',refId:gid,kind:'emergency_session'}}); });
+if(rPar){ var pids={}; sts.forEach(function(s){ var pp=String(s.parentPhone||'').replace(/\D/g,''); (DataService.getUsers?DataService.getUsers():[]).forEach(function(u2){ if(u2.role!=='parent')return; var up=String(u2.phone||'').replace(/\D/g,''); if((u2.studentIds||[]).indexOf(s.id)>=0||(pp&&up&&pp===up)) pids[u2.id]=1; }); });
+Object.keys(pids).forEach(function(pid){ if(DataService.addNotification) DataService.addNotification({targetUserId:pid,title:title+' (لابنك)',message:msg,type:'schedule',priority:'high',meta:{event:'schedule_change',refId:gid,kind:'emergency_session_parent'}}); }); }
+if(rTea&&g.teacherId&&DataService.addNotification) DataService.addNotification({targetUserId:g.teacherId,title:title,message:msg+' (مجموعتك)',type:'schedule',priority:'high',meta:{event:'schedule_change',refId:gid,kind:'emergency_session_teacher'}});
+}
+if(chan==='wa'||chan==='both'){ window.openGroupWa(gid,'⚡ *حصة طوارئ — '+g.name+'*\n📅 '+date+(time?('\n🕐 '+time):'')+(subject?('\n📝 '+subject):'')+'\nبرجاء الحضور في الموعد 🌹'); }
+ThemeManager.closeModal();
+if(window.safeToast)window.safeToast('⚡ اتضافت حصة الطوارئ لـ '+sts.length+' طالب واتحسبت في الدفتر','success');
+LU.refresh();
+}catch(e){ if(window.safeToast)window.safeToast('خطأ: '+e.message,'error'); }
+};
+
+
+/* 🆕 حقن زر حصة الطوارئ في الاختصارات السريعة للأسست */
+function injectEmergencyTile(){
+try{
+  var u=cur();
+  if(!u||['teacher','assistant','admin','super_admin'].indexOf(u.role)<0)return;
+  if(document.getElementById('qaEmergencySession'))return;
+  var first=document.querySelector('.quick-action');
+  if(!first||!first.parentNode)return;
+  var b=document.createElement('button');
+  b.type='button';
+  b.className='quick-action';
+  b.id='qaEmergencySession';
+  b.innerHTML='<div class="quick-action-icon">⚡</div><div class="quick-action-label">حصة طوارئ</div>';
+  b.onclick=function(){window.openEmergencySessionModal();};
+  first.parentNode.insertBefore(b,first);
+}catch(e){}
+}
+
 /* 🚫 tile سريع في لوحة الأستاذ/المساعد لو مش موجود */
 function injectCancelTile(){
 try{
 var u=cur(); if(!u||(u.role!=='teacher'&&u.role!=='assistant')) return;
 if(document.getElementById('qaCancelSession')) return;
 if(document.querySelector('[onclick*="openCancelSessionModal"]')) return;
-var first=document.querySelector('#section-overview .quick-action');
-if(!first||!first.parentNode) return;
+var first=document.querySelector('#section-overview .quick-action')||document.querySelector('#section-command .quick-action')||document.querySelector('#section-dashboard .quick-action')||document.querySelector('.quick-action');if(!first||!first.parentNode) return;
 var b=document.createElement('button'); b.type='button'; b.className='quick-action'; b.id='qaCancelSession';
 b.innerHTML='<div class="quick-action-icon">🚫</div><div class="quick-action-label">إلغاء حصة</div>';
 b.onclick=function(){ LedgerUI.openCancelModal(); };
@@ -1678,42 +1867,87 @@ first.parentNode.appendChild(b);
 }catch(e){}
 }
 
-/* ========== 📡 حصص اليوم + إجراءات ========== */
+/* ========== 📡 حصص اليوم V2: إلغاء + تبديل موعد اليوم فقط + مجموعة مكان الملغية ========== */
+function todaysOverrides(date){ return (db().todayOverrides||[]).filter(function(o){return o.date===date;}); }
 window.openTodaySessionsModal=function(){
 try{
 var gs=isAdmin()?groups():myGroups();
-var todayDs=localToday();
-var wd=WD[new Date(todayDs+'T12:00:00').getDay()];
+var todayDs=localToday(); var wd=WD[new Date(todayDs+'T12:00:00').getDay()];
 var d=db(); var rows=[];
 gs.forEach(function(g){
 var sch=(g.schedules&&g.schedules.length)?g.schedules:(g.day?[{day:g.day,time:g.time}]:[]);
-sch.forEach(function(s){
-if(s.day!==wd)return;
-var att=(d.attendance||[]).find(function(a){return a.groupId===g.id&&a.date===todayDs&&a.status==='approved';});
-var canc=(d.cancelledSessions||[]).find(function(c){return c.groupId===g.id&&c.date===todayDs;});
-rows.push({g:g,time:s.time||'',status:canc?'cancelled':(att?'taken':'pending')});
+sch.forEach(function(s){ if(s.day!==wd)return; rows.push({g:g,time:s.time||'',kind:'base'}); });
 });
+todaysOverrides(todayDs).forEach(function(o){
+if(o.kind!=='extra')return; var g=gById(o.groupId); if(!g)return;
+if(rows.some(function(r){return r.g.id===g.id;}))return;
+rows.push({g:g,time:o.time||'',kind:'extra'});
 });
+rows.forEach(function(r){ var ov=todaysOverrides(todayDs).find(function(o){return o.groupId===r.g.id&&o.kind==='move';}); if(ov) r.time=ov.time; });
 rows.sort(function(a,b){return String(a.time||'').localeCompare(String(b.time||''));});
 var html='<div class="modal-header"><h3 class="modal-title">📡 حصص اليوم — '+todayDs+'</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">';
+html+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center;"><button class="btn btn-warning btn-sm" onclick="ThemeManager.closeModal();window.openEmergencySessionModal();">⚡ حصة طوارئ</button><span class="text-xs text-muted">الإلغاء وتبديل الموعد ليوم النهارده بس — الجدول الأساسي مش بيتلمس.</span></div>';
 html+=rows.length?rows.map(function(r){
-var badge=r.status==='taken'?'<span class="badge badge-success">✅ اتأخذت</span>':r.status==='cancelled'?'<span class="badge badge-danger">🚫 ملغية</span>':'<span class="badge badge-warning">⏳ لسه</span>';
-return '<div class="sub-row" style="margin-bottom:8px;"><div style="flex:1;"><strong>'+(r.time||'--:--')+' — '+r.g.name+'</strong><div class="text-xs text-muted">'+(r.g.center||'')+' · '+(r.g.grade||'')+'</div></div><div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;">'+badge+
-(r.status==='pending'?'<button class="btn btn-success btn-sm" onclick="ThemeManager.closeModal();LedgerUI.confirmSession(\''+r.g.id+'\',\''+todayDs+'\')">✅ حضور</button>':'')+
-(r.status!=='cancelled'?'<button class="btn btn-danger btn-sm" onclick="ThemeManager.closeModal();LedgerUI.cancelSessionQuick(\''+r.g.id+'\',\''+todayDs+'\')">🚫 إلغاء</button>':'')+
-'<button class="btn btn-ghost btn-sm" onclick="ThemeManager.closeModal();LedgerUI.editSquares(\''+r.g.id+'\',\''+normMonth(LU._st.month)+'\')">✏️</button>'+
-(r.g.whatsappLink?'<button class="btn btn-ghost btn-sm" onclick="window.openGroupWa(\''+r.g.id+'\')">💬</button>':'')+
+var canc=(d.cancelledSessions||[]).find(function(c){return c.groupId===r.g.id&&c.date===todayDs;});
+var att=(d.attendance||[]).find(function(a){return a.groupId===r.g.id&&a.date===todayDs&&a.status==='approved';});
+var badge=canc?'<span class="badge badge-danger">🚫 ملغية</span>':(att?'<span class="badge badge-success">✅ اتأخذت</span>':'<span class="badge badge-warning">⏳ لسه</span>');
+return '<div class="sub-row" style="margin-bottom:8px;"><div style="flex:1;"><strong>'+(r.time||'--:--')+' — '+r.g.name+'</strong>'+prevUnpaidBadge(r.g)+(r.kind==='extra'?' <span class="badge badge-info">⚡ زيادة اليوم</span>':'')+'<div class="text-xs text-muted">'+(r.g.center||'')+' · '+(r.g.grade||'')+'</div></div><div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;">'+badge+
+(canc?'<button class="btn btn-success btn-sm" onclick="LedgerUI.openFillSlotModal(\''+todayDs+'\',\''+(r.time||'')+'\',\''+r.g.id+'\')">➕ مجموعة مكانها</button>':'')+
+'<button class="btn btn-secondary btn-sm" onclick="LedgerUI.openSwapTodayModal(\''+r.g.id+'\',\''+todayDs+'\',\''+(r.time||'')+'\')">🕐 تبديل موعد اليوم</button>'+
+(!canc?'<button class="btn btn-danger btn-sm" onclick="LedgerUI.cancelSessionQuick(\''+r.g.id+'\',\''+todayDs+'\');setTimeout(function(){LedgerUI.openTodaySessionsModal();},200);">🚫 إلغاء</button>':'')+
 '</div></div>';
 }).join(''):'<p class="text-muted" style="text-align:center;padding:20px;">مفيش حصص مجدولة اليوم</p>';
 html+='</div>';
 ThemeManager.openModal(html,'modal-md');
 }catch(e){console.error(e);}
 };
-window.openGroupWa=function(gid,msg){
-var g=gById(gid);var link=g&&(g.whatsappLink||'');
-if(msg&&navigator.clipboard&&navigator.clipboard.writeText){try{navigator.clipboard.writeText(msg);}catch(e){}}
-if(link){window.open(link,'_blank');if(window.safeToast)window.safeToast(msg?'📋 الرسالة منسوخة — افتحنا الجروب، الصقها وابعتها':'💬 فتحنا جروب المجموعة','info');}
-else if(window.safeToast)window.safeToast('مفيش رابط واتساب مسجل للمجموعة','error');
+/* 🕐 تبديل موعد اليوم فقط */
+LU.openSwapTodayModal=function(gid,date,time){
+try{
+var g=gById(gid); if(!g)return;
+ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">🕐 تبديل موعد اليوم: '+g.name+'</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">'+
+'<div class="filter-info">💡 التغيير ليوم '+date+' بس — الجدول الأسبوعي الأساسي زي ما هو، والحصة بتتحسب في دفتر التحصيل عادي.</div>'+
+'<div class="form-group"><label>🕐 الموعد الجديد اليوم *</label><input type="time" id="swTime" class="form-input" value="'+(time||'18:00')+'"></div>'+
+'<button class="btn btn-primary w-full" onclick="LedgerUI.applyTodayMove(\''+gid+'\',\''+date+'\')">💾 حفظ تبديل اليوم</button></div>','modal-sm');
+}catch(e){}
+};
+LU.applyTodayMove=function(gid,date){
+try{
+var t=(document.getElementById('swTime')||{}).value; if(!t){ if(window.safeToast)window.safeToast('اختار الموعد','error'); return; }
+var d=db(); d.todayOverrides=d.todayOverrides||[];
+d.todayOverrides=d.todayOverrides.filter(function(o){ return !(o.groupId===gid&&o.date===date&&o.kind==='move'); });
+d.todayOverrides.push({id:'ov_'+Date.now(),groupId:gid,date:date,time:t,kind:'move',by:(cur()||{}).name||'-',at:new Date().toISOString()});
+saveD(d); logAct('🕐 تبديل موعد اليوم فقط',{groupId:gid,groupName:gName(gid),text:date+' → '+t});
+ThemeManager.closeModal(); if(window.safeToast)window.safeToast('✅ اتبدل موعد اليوم — الأساس زي ما هو','success');
+LU.openTodaySessionsModal();
+}catch(e){}
+};
+/* ➕ مجموعة تانية مكان الحصة الملغية اليوم (حصة زيادة بتتحسب في الدفتر) */
+LU.openFillSlotModal=function(date,time,srcGid){
+try{
+var gs=isAdmin()?groups():myGroups();
+ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">➕ مجموعة في خانة اليوم دي</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">'+
+'<div class="filter-info">💡 حصة زيادة اليوم في موعد الملغية — بتتحسب في دفتر التحصيل للمجموعة المختارة كحصة ⚡ طوارئ/زيادة، والجدول الأساسي مش بيتغير.</div>'+
+'<div class="form-group"><label>👥 المجموعة *</label><select id="fsGid" class="form-select">'+gs.map(function(g){return '<option value="'+g.id+'">'+g.name+' · '+(g.center||'-')+'</option>';}).join('')+'</select></div>'+
+'<div class="form-group"><label>🕐 الموعد اليوم *</label><input type="time" id="fsTime" class="form-input" value="'+(time||'18:00')+'"></div>'+
+'<button class="btn btn-primary w-full" onclick="LedgerUI.applyFillSlot(\''+date+'\',\''+(srcGid||'')+'\')">💾 إضافة حصة زيادة اليوم</button></div>','modal-sm');
+}catch(e){}
+};
+LU.applyFillSlot=function(date,srcGid){
+try{
+var gid=(document.getElementById('fsGid')||{}).value; var t=(document.getElementById('fsTime')||{}).value;
+if(!gid||!t){ if(window.safeToast)window.safeToast('كمل البيانات','error'); return; }
+var d=db(); d.todayOverrides=d.todayOverrides||[];
+d.todayOverrides.push({id:'ov_'+Date.now(),groupId:gid,date:date,time:t,kind:'extra',srcGroupId:srcGid||'',by:(cur()||{}).name||'-',at:new Date().toISOString()});
+var ck=cycleOfDate(gid,date)||localMonth();
+var fl=getFlags(gid,ck);
+if(fl.take.indexOf(date)<0) fl.take.push(date);   /* 🟩 تتحسب في الدفتر */
+setFlags(gid,ck,fl);
+saveD(d); logAct('➕ حصة زيادة اليوم (مكان ملغية)',{groupId:gid,groupName:gName(gid),text:date+' '+t});
+LU._sesCache={};
+ThemeManager.closeModal(); if(window.safeToast)window.safeToast('✅ اتضافت حصة زيادة اليوم واتحسبت في الدفتر','success');
+LU.openTodaySessionsModal();
+}catch(e){}
 };
 
 /* ========== ✋ اعتراضات الحضور ========== */
@@ -1859,40 +2093,36 @@ LU._sesCache={};
 LU.refresh();
 };
 
-/* ========== 🔁 قفل الدورات تلقائياً لما المربعات تكمل (🆕 بتتخطى فترات التجميد) ========== */
-function countedDatesIn(gid,from,to){
-var d=db();var out={};var start=(d.platformMeta||{}).countingSince||'';
-var gg=gById(gid);
-(d.attendance||[]).forEach(function(a){if(a.groupId===gid&&a.status==='approved'&&a.date&&a.date>=from&&(!to||a.date<=to)&&(!start||a.date>=start)&&!inGroupFreeze(gg,a.date))out[a.date]=1;});
-Object.keys(d.sessionFlags||{}).forEach(function(k){if(k.indexOf(gid+'__')===0){(d.sessionFlags[k].take||[]).forEach(function(t){if(t&&t>=from&&(!to||t<=to)&&!inGroupFreeze(gg,t))out[t]=1;});(d.sessionFlags[k].remove||[]).forEach(function(t){if(t)delete out[t];});}});
-return Object.keys(out).sort();
-}
-function autoCloseCycles(){
-if(readOnly())return; /* 🛡️ قفل الدورات عملية كتابة — إدارة فقط */
-var d=db();var m=d.platformMeta||{};var f=m.freeze||{};
-if(m.ledgerFrozen===true||f.ledger===true||f.full===true)return;
-var changed=false;
-groups().forEach(function(g){
-var rs=g.cycleRanges||[];if(!rs.length)return;
-var open=null;rs.forEach(function(r){if(r.to==null)open=r;});
-if(!open)return;
-var req=reqOf(g)||8;
-var dates=countedDatesIn(g.id,open.from,null);
-var man=0;try{man=manualCount(g.id,'cycle-'+String(open.n).padStart(2,'0'));}catch(e){}
-if(dates.length+man>=req){
-var to=dates.length?dates[dates.length-1]:localToday();
-open.to=to;
-rs.push({n:open.n+1,from:nextDay(to),to:null});
-changed=true;
-}
-});
-if(changed){groups().forEach(function(g){try{if(DataService.updateGroup)DataService.updateGroup(g.id,{cycleRanges:g.cycleRanges});}catch(e){}});saveD(d);LU._sesCache={};}
-}
 
 /* ========== ريفريش ========== */
 LU.refresh=function(){
+  /* 🔄 auto-month: أول حضور معتمد في شهر جديد = الدفتر ينتقل له لوحده */
+/* ✅ إيقاف القفزة التلقائية للشهر الثاني إلا لو كل المجموعات كملت الشهر الأول */
 try{
-autoCloseCycles();
+var __cur=localMonth();
+if(LU._st&&LU._st.month&&LU._st.month<__cur){
+/* نأكد إن كل المجموعات كملت نصاب الشهر الأول قبل ما نقفز */
+var __allComplete = true;
+groups().forEach(function(g){
+  var rs = g.cycleRanges || [];
+  var firstOpen = rs.find(function(r){ return r.to == null; });
+  if(firstOpen){
+    var ck = 'cycle-' + String(firstOpen.n).padStart(2,'0');
+    var ses = LU.groupSessions(g.id, ck);
+    if(!ses.complete) __allComplete = false;
+  }
+});
+if(__allComplete){
+  LU._st.month=__cur;
+}
+}
+    var __pt=(__d||db()).pendingMonthTransitions||[];
+    if(__pt.some(function(p){return p.status==='pending';})){ __pt.forEach(function(p){ if(p.status==='pending'){p.status='approved'; p.approvedAuto=true;} }); DataService._saveData(__d||db()); }
+  }catch(e){}
+  /* 👥 طي قوائم الطلاب بعد كل رسم */
+  setTimeout(function(){ try{ collapseStudents(); }catch(e){} },350);
+  setTimeout(function(){ try{ collapseStudents(); }catch(e){} },900);
+try{
 LU._sesCache={};
 try{ localStorage.setItem('eduflowLedgerPing', String(Date.now())); }catch(e){} /* 📡 نبضة لكل التبويبات المفتوحة */
 var act=document.querySelector('.section.active');
@@ -2084,6 +2314,8 @@ injectSidebar(); setTimeout(injectSidebar,800); setTimeout(injectSidebar,2000);
 injectTeacherMenu(); setTimeout(injectTeacherMenu,800); setTimeout(injectTeacherMenu,2000);
 injectCancelTile(); setTimeout(injectCancelTile,1000); setTimeout(injectCancelTile,2500);
 setInterval(injectCancelTile,5000);
+injectEmergencyTile(); setTimeout(injectEmergencyTile,1200); setTimeout(injectEmergencyTile,3000);
+setInterval(injectEmergencyTile,6000);
 injectActionTiles(); setTimeout(injectActionTiles,1200); setTimeout(injectActionTiles,3000);
 setInterval(injectActionTiles,6000);
 hookShowSection(); setTimeout(hookShowSection,600); setTimeout(hookShowSection,1500);
@@ -2231,4 +2463,584 @@ if(!LU.__enhWrap){ LU.__enhWrap=1;
   var _orF=LU.refresh;
   LU.refresh=function(){ var r=_orF.apply(this,arguments); setTimeout(enhanceLedgerDom,150); setTimeout(enhanceLedgerDom,700); return r; };
 }
+})();
+/* ========== ⚙️ خيارات اعتماد الحضور + 👥 طي قوائم الطلاب ========== */
+(function(){
+if(!window.LedgerUI||LedgerUI.__confWrap) return; LedgerUI.__confWrap=1;
+var LU=window.LedgerUI;
+var oc=LU.confirmSession;
+LU.confirmSession=function(gid,date){
+  var r=oc.apply(this,arguments);
+  setTimeout(function(){
+    var body=document.querySelector('#globalModal .modal-body'); if(!body||body.querySelector('#attPtsCard')) return;
+    var def=1; try{ def=(Ops.getPointsRules()||{}).attendance||1; }catch(e){}
+    var card=document.createElement('div'); card.id='attPtsCard'; card.className='card'; card.style.cssText='padding:10px;margin-top:10px;border-color:var(--primary-border);';
+    card.innerHTML='<strong class="text-sm">⚙️ خيارات الاعتماد</strong>'+
+      '<label style="display:flex;gap:8px;align-items:center;margin-top:8px;cursor:pointer;"><input type="checkbox" id="attUsePts" checked style="width:16px;height:16px;"> <span>منح نقاط حضور للحصة دي</span></label>'+
+      '<div style="display:flex;gap:8px;align-items:center;margin-top:8px;"><span class="text-xs text-muted">نقاط كل طالب حاضر:</span><input type="number" id="attCustomPts" class="form-input" style="width:90px;" value="'+def+'" min="0" step="0.5"></div>'+
+      '<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;"><button type="button" class="btn btn-danger btn-sm" onclick="LedgerUI.cancelSessionQuick(\''+gid+'\',\''+date+'\');ThemeManager.closeModal();">🚫 عدم الاعتماد وإلغاء الحصة</button><button type="button" class="btn btn-ghost btn-sm" onclick="ThemeManager.closeModal()">🕒 تأجيل الاعتماد</button></div>'+
+      '<div class="text-xs text-muted" style="margin-top:6px;">💡 لو قفلت النافذة بـ ✕ الحصة بتفضل معلقة من غير اعتماد — عادي تماماً.</div>';
+    body.appendChild(card);
+  },300);
+  return r;
+};
+/* 👥 طي قوائم الطلاب تحت كل مجموعة (مصحح: .ldg-gcard + جداول .ldg-wrap) */
+var __stuOpen={};
+function collapseStudents(){
+  ['monthlyLedgerHost','ledgerBody'].forEach(function(hid){
+    var host=document.getElementById(hid); if(!host) return;
+    host.querySelectorAll('.ldg-gcard').forEach(function(card){
+      if(card.querySelector('.stuToggle')) return;
+      var wrapEl=card.querySelector('.ldg-wrap');
+      if(!wrapEl) return;
+      var n=wrapEl.querySelectorAll('tbody tr').length;
+      if(!n) return;
+      var nameEl=card.querySelector('strong');
+      var key=nameEl?(nameEl.textContent||'').trim():('card_'+hid);
+      var btn=document.createElement('button'); btn.type='button'; btn.className='btn btn-ghost btn-sm stuToggle'; btn.style.margin='6px 12px 0';
+      function label(open){ btn.innerHTML='👥 '+(open?'إخفاء':'عرض')+' طلاب المجموعة ('+n+') '+(open?'▴':'▾'); }
+      var open=!!__stuOpen[key];           /* 🧠 يتذكر حالتها حتى بعد التحديث */
+      wrapEl.style.display=open?'':'none';
+      label(open);
+      btn.onclick=function(){ open=!open; __stuOpen[key]=open; wrapEl.style.display=open?'':'none'; label(open); };
+      card.insertBefore(btn,wrapEl);
+    });
+  });
+}
+var orf=LU.refresh;
+LU.refresh=function(){ var r=orf.apply(this,arguments); setTimeout(collapseStudents,350); setTimeout(collapseStudents,900); return r; };
+setTimeout(collapseStudents,1200);
+})();
+/* ========== 🎯 ربط "خيارات الاعتماد" بأي دالة منح نقاط (حل مركزي) ========== */
+(function(){
+if(!window.Ops||Ops.__ptsHook2) return; Ops.__ptsHook2=1;
+var oa=Ops.addManualPoints.bind(Ops);
+Ops.addManualPoints=function(studentId,points,reason,awardedBy,teacherId,dedupeKey){
+  try{
+    var card=document.getElementById('attPtsCard');   /* مودال الاعتماد مفتوح؟ */
+    if(card){
+      var use=document.getElementById('attUsePts');
+      var cus=document.getElementById('attCustomPts');
+      if(use&&!use.checked) return Promise.resolve({skipped:true,reason:'user_off'});  /* ✅ اعتماد بدون نقاط */
+      if(cus){ var v=parseFloat(cus.value); if(!isNaN(v)&&v>=0) points=v; }             /* ✅ النقاط المخصصة */
+    }
+    if(!dedupeKey&&typeof reason==='string'&&reason.indexOf('حضور ')===0){
+      var m=reason.match(/(\d{4}-\d{2}-\d{2})/);
+      if(m) dedupeKey='att_auto_'+m[1]+'_'+studentId;   /* 🔒 منع التكرار لو اعتمدت مرتين */
+    }
+  }catch(e){}
+  return oa(studentId,points,reason,awardedBy,teacherId,dedupeKey);
+};
+})();
+/* ========== 📊 نسبة حضور كل طالب داخل حوار تأكيد الحضور ========== */
+(function(){
+if(!window.LedgerUI||LedgerUI.__pctWrap) return; LedgerUI.__pctWrap=1;
+var oc=LedgerUI.confirmSession;
+LedgerUI.confirmSession=function(gid,date){
+  var r=oc.apply(this,arguments);
+  setTimeout(function(){
+    try{
+      var modal=document.querySelector('#globalModal .modal-body')||document.querySelector('.modal-body');
+      if(!modal||modal.querySelector('.pctBadge')) return;
+      modal.querySelectorAll('[id^="attRow"]').forEach(function(row){
+        var sid=row.id.replace('attRow ','').replace('attRow_',''); if(!sid) return;
+        if(row.querySelector('.pctBadge')) return;
+        var st=(window.Ops&&Ops.getAttendanceStats)?Ops.getAttendanceStats(sid):null; if(!st||!st.held) return;
+        var b=document.createElement('span'); b.className='pctBadge';
+        b.style.cssText='font-size:10px;font-weight:800;margin-inline-start:6px;padding:2px 7px;border-radius:99px;'+(st.pct>=85?'background:var(--success-bg);color:var(--success);':st.pct>=70?'background:var(--warning-bg);color:var(--warning);':'background:var(--danger-bg);color:var(--danger);');
+        b.textContent='حضور '+st.pct+'%';
+        var strong=row.querySelector('strong')||row; strong.appendChild(b);
+      });
+    }catch(e){}
+  },350);
+  return r;
+};
+})();
+/* ========== ❓ اعتماد الحصة فقط + نسبة السنتر وصافي الأستاذ (نسخة مصححة: LU معرّف محلياً) ========== */
+(function(){
+"use strict";
+var LU=window.LedgerUI=window.LedgerUI||{};
+function db(){ return (window.DataService&&DataService._getData)?DataService._getData():{}; }
+function saveD(d){ if(DataService._saveData) DataService._saveData(d); }
+function cur(){ try{ return (typeof currentUser!=='undefined'&&currentUser)?currentUser:((window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null);}catch(e){return null;} }
+function gById(id){ return (DataService.getGroups?DataService.getGroups():[]).find(function(g){return g.id===id;}); }
+
+/* ❓ اعتماد الحصة حصلت بدون رصد حضور */
+LU.approveSessionNoAtt=async function(gid,date){
+  try{
+    var d=db();
+    var rec=(d.attendance||[]).find(function(a){return a.groupId===gid&&a.date===date&&a.status==='approved';});
+    if(rec&&!rec.noAtt){ if(window.safeToast) window.safeToast('الحصة معتمدة بحضور بالفعل','info'); return; }
+    if(rec&&rec.noAtt){ if(window.safeToast) window.safeToast('معتمدة كحصة مقامة بالفعل','info'); return; }
+    var g=gById(gid);
+    rec={id:'att_'+gid+'_'+date, groupId:gid, groupName:g?g.name:'', date:date, status:'approved', noAtt:true, records:[], createdAt:new Date().toISOString(), approvedBy:(cur()||{}).id||''};
+    d.attendance.push(rec); saveD(d);
+    try{ if(window.FirebaseService&&FirebaseService._db) FirebaseService.saveDoc('attendance',rec.id,rec); }catch(e){}
+    if(window.safeToast) window.safeToast('✅ الحصة اتعدت مقامة بدون رصد — بتتحسب في الدورة والشهرية ومش بتأثر على نسب الطلاب','success');
+    LU.refresh();
+  }catch(e){ if(window.safeToast) window.safeToast('خطأ','error'); }
+};
+
+/* 🏢 نسبة السنتر من الشهرية */
+LU.centerSharePct=function(g){
+  if(!g) return 0;
+  var c=(DataService.getCenters?DataService.getCenters():[]).find(function(x){return x.name===g.center;});
+  if(c&&c.centerSharePct!=null) return +c.centerSharePct||0;   /* 🏢 المصدر الرسمي: إعدادات السنتر */
+  if(g.centerSharePct!=null) return +g.centerSharePct||0;      /* قيمة قديمة قبل الهجرة */
+  var b=(db().branding||{});
+  if(b.centerSharePct!=null) return +b.centerSharePct||0;
+  return 0;
+};
+LU.setCenterShare=function(gid){
+  var g=gById(gid); if(!g||!g.center) return;
+  if(window.openCenterShareModal) window.openCenterShareModal(g.center);
+  else if(window.safeToast) window.safeToast('افتح صفحة "إعدادات السناتر" لتحديد النسبة','info');
+};
+LU.teacherNet=function(gid,month){
+  var g=gById(gid); if(!g) return {collected:0,share:0,net:0,pct:0};
+  var pct=LU.centerSharePct(g); var mm=String(month||'').slice(0,7); var collected=0;
+  (db().payments||[]).forEach(function(p){
+    if(p.groupId!==gid||String(p.month||'').slice(0,7)!==mm) return;
+    if((p.history||[]).length){ (p.history||[]).forEach(function(h){ collected+=+h.amount||0; }); }
+    else collected+=+p.paidAmount||0;
+  });
+  var share=Math.round(collected*pct/100);
+  return {collected:collected,share:share,net:collected-share,pct:pct};
+};
+
+/* 🏷️ شريحة العرض — global عشان groupCard جوّه الـ IIFE يقدر يناديها */
+window.shareChip=function(g,month){
+  try{
+    var tn=LU.teacherNet(g.id,month);
+    if(!tn.pct&&!tn.collected) return '<div class="text-xs text-muted" style="margin-top:4px;">🏢 نسبة السنتر: <b>0%</b> — تُحدد من صفحة "إعدادات السناتر"</div>';
+    return '<div class="text-xs" style="margin-top:4px;">🏢 السنتر: <b>'+tn.pct+'%</b> ('+tn.share+' ج.م) · 💪 صافي الأستاذ: <b style="color:var(--success);">'+tn.net+' ج.م</b> من محصّل '+tn.collected+' ج.م</div>';
+  }catch(e){ return ''; }
+};
+
+/* ❓ زرار "اعتماد الحصة فقط" جنب أي زرار تأكيد حضور */
+function injectNoAtt2(){
+  try{
+    document.querySelectorAll('button[onclick*="confirmSession("]').forEach(function(b){
+      if(b.parentNode.querySelector('.noAttBtn2')) return;
+      var m=(b.getAttribute('onclick')||'').match(/confirmSession\(\s*'([^']+)'\s*,\s*'([^']+)'/);
+      if(!m) return;
+      var nb=document.createElement('button'); nb.type='button'; nb.className='btn btn-ghost btn-sm noAttBtn2';
+      nb.style.cssText='border-color:var(--warning);color:var(--warning);margin-inline-start:4px;';
+      nb.textContent='❓ اعتماد الحصة فقط';
+      nb.title='الحصة حصلت فعلاً بس من غير رصد حضور — بتتحسب في الدورة والشهرية ومش بتأثر على نسب الطلاب';
+      nb.onclick=function(){ LU.approveSessionNoAtt(m[1],m[2]); };
+      b.parentNode.insertBefore(nb,b.nextSibling);
+    });
+  }catch(e){}
+}
+setInterval(injectNoAtt2,2000); setTimeout(injectNoAtt2,800);
+})();
+/* ========== 🏢 حق السنتر بالفلوس (لكل مرحلة + استثناء لكل مجموعة) ========== */
+(function(){
+var LU=window.LedgerUI=window.LedgerUI||{};
+function db(){ return (window.DataService&&DataService._getData)?DataService._getData():{}; }
+function saveD(d){ if(DataService._saveData) DataService._saveData(d); }
+function gById(id){ return (DataService.getGroups?DataService.getGroups():[]).find(function(g){return g.id===id;}); }
+LU.centerShareAmtFor=function(stage,centerName){
+  var d=db(); var c=(d.centers||[]).find(function(x){return x.name===centerName;});
+  if(c){
+    var sb=c.shareByStage||{};
+    if(stage&&sb[stage]!=null) return +sb[stage]||0;
+    if(c.shareDefault!=null) return +c.shareDefault||0;
+  }
+  var b=d.branding||{};
+  if(b.centerShareDefault!=null) return +b.centerShareDefault||0;
+  return 0;
+};
+LU.centerShareAmt=function(g){
+  if(!g) return 0;
+  if(g.centerShareAmt!=null) return +g.centerShareAmt||0;   /* استثناء المجموعة */
+  return LU.centerShareAmtFor(g.stage||'', g.center||'');
+};
+LU.setCenterShare=function(gid){ if(window.openGroupModal) window.openGroupModal(gid); };
+LU.teacherNet=function(gid,month){
+  var g=gById(gid); if(!g) return {collected:0,share:0,net:0,pct:0,sharePerStudent:0,payers:0};
+  var share=LU.centerShareAmt(g); var mm=String(month||'').slice(0,7);
+  var collected=0,payers=0;
+  (db().payments||[]).forEach(function(p){
+    if(p.groupId!==gid||String(p.month||'').slice(0,7)!==mm) return;
+    var paid=0;
+    if((p.history||[]).length){ (p.history||[]).forEach(function(h){ paid+=+h.amount||0; }); } else paid=+p.paidAmount||0;
+    if(paid>0){ payers++; collected+=paid; }
+  });
+  var centerTotal=Math.min(collected, share*payers);
+  return {collected:collected,sharePerStudent:share,payers:payers,share:centerTotal,net:collected-centerTotal,pct:collected?Math.round(centerTotal/collected*100):0};
+};
+/* 🔄 إعادة حساب أسعار مجموعات سنتر بعد تغيير الحق = أستاذ + سنتر */
+LU.recomputeGroupFees=function(centerName){
+  var d=db(); var changed=[];
+  (d.groups||[]).forEach(function(g){
+    if(centerName&&g.center!==centerName) return;
+    var share=LU.centerShareAmt(g);
+    var tf=(g.teacherFee!=null)?+g.teacherFee:Math.max(0,(g.monthlyFee||0)-share); /* ميجراشن من غير قفزة سعر */
+    g.teacherFee=tf;
+    var total=tf+share;
+    if((g.monthlyFee||0)!==total){ g.monthlyFee=total; g.sessionFee=Math.round(total/(g.sessionsPerMonth||8)); changed.push(g); }
+  });
+  if(changed.length){
+    saveD(d);
+    changed.forEach(function(g){ try{ if(window.FirebaseService&&FirebaseService._db) FirebaseService.saveDoc('groups',g.id,g); }catch(e){} });
+  }
+  return changed.length;
+};
+/* 🧮 حساب لايف جوه مودال المجموعة */
+window.calcStudentPrice=function(){
+  try{
+    var tf=+((document.getElementById('gTeacherFee')||{}).value||0);
+    var ovEl=document.getElementById('gCenterShareAmt'); var ov=ovEl?ovEl.value:null;
+    var stage='',center='';
+    ['gStage','groupStage','gStageSel'].forEach(function(id){ var e=document.getElementById(id); if(e&&e.value) stage=e.value; });
+    ['gCenter','groupCenter','gCenterSel'].forEach(function(id){ var e=document.getElementById(id); if(e&&e.value) center=e.value; });
+    var share=(ov===''||ov==null)?LU.centerShareAmtFor(stage,center):(+ov||0);
+    var a=document.getElementById('autoCenterShare'); if(a) a.textContent=share;
+    var s=document.getElementById('autoStudentPrice'); if(s) s.textContent=tf+share;
+    var h=document.getElementById('gMonthly'); if(h) h.value=tf+share;
+    var n=+((document.getElementById('gSessions')||{}).value||8)||8;
+    var sp=document.getElementById('autoSessionPrice'); if(sp) sp.textContent=Math.round((tf+share)/n);
+  }catch(e){}
+};
+setInterval(function(){
+  try{
+    var tf=document.getElementById('gTeacherFee');
+    if(tf&&!tf.__wired){
+      tf.__wired=1;
+      ['gTeacherFee','gCenterShareAmt','gStage','gCenter','gSessions'].forEach(function(id){
+        var e=document.getElementById(id); if(!e) return;
+        e.addEventListener('input',window.calcStudentPrice);
+        e.addEventListener('change',window.calcStudentPrice);
+      });
+      window.calcStudentPrice();
+    }
+  }catch(e){}
+},1200);
+
+
+/* 🏷️ شريحة العرض في كارت الدفتر (بالفلوس) */
+function shareChip(g,month){
+  var tn=LU.teacherNet(g.id,month);
+  var share=LU.centerShareAmt(g);
+  var tf=(g.teacherFee!=null)?+g.teacherFee:Math.max(0,(g.monthlyFee||0)-share);
+  return '<div class="text-xs" style="margin-top:4px;">💰 الطالب: <b>'+(g.monthlyFee||0)+'</b> ج.م = 💪 الأستاذ <b style="color:var(--success);">'+tf+'</b> + 🏢 السنتر <b style="color:var(--warning);">'+share+'</b>/طالب · المحصّل: '+tn.collected+' (🏢 '+tn.share+' / 💪 '+tn.net+')</div>';
+}
+window.shareChip=shareChip;
+})();
+/* ========== 🧠 مركزية حفظ أسعار المجموعات (أدمن + أسست + أي صفحة) ========== */
+(function(){
+if(!window.DataService||DataService.__grpFeeWrap) return; DataService.__grpFeeWrap=1;
+['addGroup','updateGroup'].forEach(function(fn){
+  var orig=DataService[fn]; if(typeof orig!=='function') return;
+  DataService[fn]=function(a,b){
+    try{
+      var data=(fn==='updateGroup')?(b||{}):(a||{});
+      var tfEl=document.getElementById('gTeacherFee');
+      if(tfEl){ /* مودال المجموعة مفتوح → خد الحقول الجديدة */
+        var tf=parseFloat(tfEl.value)||0;
+        data.teacherFee=tf;
+        var ovEl=document.getElementById('gCenterShareAmt');
+        if(ovEl) data.centerShareAmt=(ovEl.value===''||ovEl.value==null)?null:(parseFloat(ovEl.value)||0);
+        var stage='',center='';
+        var stEl=document.getElementById('gStage'); if(stEl) stage=stEl.value||'';
+        var cEl=document.getElementById('gCenter'); if(cEl) center=cEl.value||'';
+        var share=(data.centerShareAmt!=null)?data.centerShareAmt:((window.LedgerUI&&LedgerUI.centerShareAmtFor)?LedgerUI.centerShareAmtFor(stage,center):0);
+        data.monthlyFee=tf+share;                       /* 💰 سعر الطالب = الأستاذ + السنتر */
+        data.sessionFee=Math.round((tf+share)/(data.sessionsPerMonth||8));
+      }
+    }catch(e){}
+    return orig.apply(this,arguments);
+  };
+});
+/* ═══════════════════════════════════════════════════════════════
+    (خطوة 2) دوال ترحيل مستحقات الطلاب المتوقعين
+   ═══════════════════════════════════════════════════════════════ */
+LU.addVirtualExpectedDue = function(gid, month) {
+  if(!canWrite()){ toast('️ عرض فقط','error'); return; }
+  var g = gById(gid); if(!g) return;
+  var fee = +g.monthlyFee || 0;
+  var expected = +g.expectedStudents || 0;
+  var real = studentsOf(gid).length;
+  var virtual = Math.max(0, expected - real);
+  
+  if(virtual === 0) { toast('لا يوجد طلاب متوقعين إضافيين لهذه المجموعة','info'); return; }
+  
+  ThemeManager.openModal(
+    '<div class="modal-header"><h3 class="modal-title">📥 ترحيل مستحقات متوقعة</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div>'+
+    '<div class="modal-body">'+
+    '<div class="filter-info" style="background:var(--info-bg);color:var(--info);border-color:var(--info);margin-bottom:12px;">'+
+    '💡 <strong>الهدف:</strong> تسجيل أن هناك طلاباً من "العدد المتوقع" لم يدفعوا بعد، ليتم ترحيل هذا المبلغ كـ "مستحقات باقية" للشهر التالي وتظهر في كشف السنتر.<br>'+
+    '⚠️ هذا البند مالي فقط ولا ينشئ طلاباً وهميين في النظام.'+
+    '</div>'+
+    '<div class="form-group"><label>سعر الشهرية للطالب</label><input type="number" class="form-input" value="'+fee+'" disabled></div>'+
+    '<div class="form-group"><label>عدد الطلاب المتوقعين الذين لم يدفعوا بعد</label>'+
+'<input type="number" id="virtUnpaidCount" class="form-input" min="0" max="'+virtual+'" value="0" oninput="window.calcVirtTotal('+fee+')"></div>'+    '<div class="filter-info" style="margin-top:8px;">المبلغ الإجمالي الذي سيرحل كـ "مستحقات باقية": <strong id="virtTotal" style="color:var(--danger)">0 ج.م</strong></div>'+
+    '<div class="form-group"><label>ملاحظة (اختياري)</label><input type="text" id="virtNote" class="form-input" placeholder="مثال: تأخر سداد 3 طلاب من العدد المتوقع"></div>'+
+    '<button class="btn btn-primary w-full" onclick="LU.saveVirtualDue(\''+gid+'\',\''+month+'\')">💾 ترحيل كـ مستحقات باقية</button>'+
+    '</div>', 'modal-sm'
+  );
+};
+
+LU.saveVirtualDue = function(gid, month) {
+  var count = parseInt((document.getElementById('virtUnpaidCount')||{}).value) || 0;
+  if(count <= 0) { toast('أدخل عدداً صحيحاً أكبر من صفر','error'); return; }
+  
+  var g = gById(gid); if(!g) return;
+  var fee = +g.monthlyFee || 0;
+  var amount = count * fee;
+  var note = (document.getElementById('virtNote')||{}).value || 'مستحقات طلاب متوقعين لم يدفعوا';
+  
+  var d = db(); d.payments = d.payments || [];
+  
+  var rec = {
+    id: 'vpay_' + Date.now(),
+    studentId: 'virtual_expected',
+    groupId: gid,
+    teacherId: g.teacherId || null,
+    month: month,
+    amount: amount,
+    paidAmount: 0,
+    status: 'unpaid',
+    isVirtual: true,
+    note: note,
+    createdAt: new Date().toISOString()
+  };
+  
+  d.payments.push(rec);
+  saveD(d);
+  
+  try { if(window.FirebaseService && FirebaseService._db) FirebaseService.saveDoc('payments', rec.id, rec); } catch(e){}
+  try { localStorage.setItem('eduflowLedgerPing', String(Date.now())); } catch(e){}
+  
+  ThemeManager.closeModal();
+  toast('✅ تم ترحيل ' + amount + ' ج.م كـ "مستحقات باقية" للشهر التالي', 'success');
+  LU.refresh();
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   📥 (خطوة 3) إضافة الزر تلقائياً في دفتر التحصيل
+   هذا الكود يبحث عن شارة "الشهرية مستحقة" ويضيف الزر بجانبها
+   ═══════════════════════════════════════════════════════════════ */
+(function injectVirtualButton() {
+  // ننتظر حتى يتم رسم الصفحة
+  setTimeout(function() {
+    // نبحث عن كل العناصر التي تحتوي على نص "الشهرية مستحقة"
+    var badges = document.querySelectorAll('.badge-warning');
+    badges.forEach(function(badge) {
+      if (badge.textContent.indexOf('الشهرية مستحقة') > -1) {
+        // نتأكد أن الزر غير موجود مسبقاً
+        if (!badge.parentNode.querySelector('.btn-virtual-due')) {
+          // نستخرج معرف المجموعة والشهر من العناصر المحيطة (هذا يتطلب معرفة بنية HTML الخاصة بك)
+          // للحل الأبسط، سنضيف الزر في شريط أدوات المجموعة إذا كان متاحاً
+          var card = badge.closest('.card') || badge.closest('.ldg-gcard');
+          if (card) {
+             // نحاول إيجاد أزرار أخرى في الكارت لنضيف الزر بجانبها
+             var btnContainer = card.querySelector('.ldg-strip') || card; 
+             
+             // ملاحظة: بما أن بنية HTML معقدة، سنضيف الزر في مكان عام في الكارت
+             var gid = card.getAttribute('data-gid') || (card.onclick ? card.onclick.toString().match(/'([^']+)'/) : null);
+             // هذا الجزء صعب تخمينه بدون رؤية HTML الكامل، لذا سنستخدم طريقة بديلة:
+             // سنضيف الزر في شريط الأدوات العلوي للمجموعة إذا وجد
+          }
+        }
+      }
+    });
+  }, 1000);
+})();
+})();
+/* ========== 🧭 V16 محرك الدورات الوحيد: الشهر = الدورة، منتهي = اكتمال النصاب فقط ========== */
+(function(){
+"use strict";
+var LU=window.LedgerUI=window.LedgerUI||{};
+function db(){ return (window.DataService&&DataService._getData)?DataService._getData():{}; }
+function saveD(d){ if(DataService._saveData) DataService._saveData(d); }
+function pad2(n){ return String(n).padStart(2,'0'); }
+function iso(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+function today(){ return iso(new Date()); }
+function nextDay(ds){ var d=new Date((ds||today())+'T12:00:00'); d.setDate(d.getDate()+1); return iso(d); }
+function cycKey(n){ return 'cycle-'+String(n).padStart(2,'0'); }
+function byN(a,b){ return (a.n||0)-(b.n||0); }
+function gPub(gid){ return (DataService.getGroups?DataService.getGroups():[]).find(function(g){return g.id===gid;}); }
+function reqOf(g){ return +g.sessionsPerMonth||8; }
+function warnOf(g,req){ return (g.warnAt!=null&&g.warnAt!=='')?+g.warnAt:(req-1); }
+var WD3={0:'Sunday',1:'Monday',2:'Tuesday',3:'Wednesday',4:'Thursday',5:'Friday',6:'Saturday'};
+function isSched(g,ds){
+  var sch=(g.schedules&&g.schedules.length)?g.schedules:(g.day?[{day:g.day}]:[]);
+  var wd=WD3[new Date(ds+'T12:00:00').getDay()];
+  return sch.some(function(s){return s.day===wd;});
+}
+function isCanc(g,ds){ return (db().cancelledSessions||[]).some(function(c){return c.groupId===g.id&&c.date===ds;}); }
+function emptySes(g,notStarted){ var req=reqOf(g); return {events:[],done:0,required:req,complete:false,remaining:req,manual:0,notStarted:!!notStarted,isPast:false,warnAt:warnOf(g,req),frozen:!!g.frozen}; }
+/* 🎯 محرك المربعات الوحيد: أخضر = موعد الحصة جه فعلاً أو اتأكدت يدوياً — ومش قبل كده أبداً */
+LU.groupSessions=function(gid,month){
+  var g=gPub(gid); if(!g) return emptySes(g,true);
+  var req=reqOf(g);
+  var rs=((g.cycleRanges)||[]).slice().sort(byN);
+  if(!rs.length) return emptySes(g,true);
+  var openN=null; rs.forEach(function(r){ if(r.to==null&&openN==null) openN=r.n; });
+  var r=null,n=0;
+  month=String(month||'');
+  if(/^cycle-\d+$/.test(month)){ n=+month.replace('cycle-',''); r=rs.find(function(x){return x.n===n;}); }
+  else { r=rs.find(function(x){return (x.from||'').slice(0,7)===month.slice(0,7);}); if(r) n=r.n; }
+  if(!r) return emptySes(g,true);
+  if(openN!=null&&n>openN) return emptySes(g,true);   /* 🔒 تسلسل: مفيش عدّ في دورة قبل ما اللي قبلها تخلص */
+  var from=r.from||'2000-01-01', to=r.to||null;
+  var d=db(); var tS=today();
+  var nowDt=new Date(); var nowMin=nowDt.getHours()*60+nowDt.getMinutes();
+  var meta=(d.platformMeta||{});
+  var FROZ=metaFrozen(meta); var COUNTING=metaCounting(meta);
+  var autoStart=g.autoMarkSince||meta.countingSince||'';
+  /* خريطة الجدول: يوم الأسبوع → دقيقة بداية الحصة */
+  var sch=(g.schedules&&g.schedules.length)?g.schedules:(g.day?[{day:g.day,time:g.time}]:[]);
+  var WD4={0:'Sunday',1:'Monday',2:'Tuesday',3:'Wednesday',4:'Thursday',5:'Friday',6:'Saturday'};
+  var schMin={};
+  sch.forEach(function(s){ if(schMin[s.day]===undefined){ var tt=String(s.time||'').split(':'); schMin[s.day]=(tt[0]===''||isNaN(+tt[0]))?null:(+tt[0])*60+(+(tt[1]||0)); } });
+  /* الإلغاءات والتعويضات داخل النطاق */
+  var canc=(d.cancelledSessions||[]).filter(function(c){return c.groupId===gid&&c.date>=from&&(!to||c.date<=to);});
+  var cancMap={}; canc.forEach(function(c){ cancMap[c.date]=c; });
+  var madeupMap={}; canc.forEach(function(c){ if(c.makeupStatus==='done'&&c.makeupDate) madeupMap[c.makeupDate]=1; });
+  var ev=[];
+  /* 🟥 مربعات الملغاة (من غير تعويض) */
+  canc.forEach(function(c){ if(c.makeupStatus!=='done') ev.push({t:'cancelled',d:c.date}); });
+  /* 🟩 حضور معتمد = اتأخذت فعلاً (في أي وقت) */
+  var attDates={};
+  (d.attendance||[]).forEach(function(a){
+    if(a.groupId!==gid||a.status!=='approved') return;
+    var ds=a.date||''; if(!ds||ds<from||(to&&ds>to)) return;
+    attDates[ds]=1;
+    var c=cancMap[ds];
+    if(c&&c.makeupStatus!=='done') return;
+    ev.push({t:(a.source==='makeup'||a.makeup||madeupMap[ds])?'madeup':'done',d:ds});
+  });
+  /* 🟢 أوتوماتيك بس لما الموعد يجي فعلاً: يوم عدّى، أو النهارده وعدّى وقت بداية الحصة */
+  if(COUNTING&&!FROZ){
+    var dd=new Date(from+'T12:00:00'); var end=to||tS; var guard=0;
+    while(iso(dd)<=end&&guard<400){
+      var ds2=iso(dd); guard++; dd.setDate(dd.getDate()+1);
+      if(ds2>tS) continue;                 /* مستقبل: لأ */
+      if(ds2<autoStart) continue;          /* قبل بدء العد: لأ */
+      if(attDates[ds2]) continue;          /* متسجلة بالفعل */
+      if(cancMap[ds2]) continue;           /* ملغية: تفضل حمرا */
+      if(gFrozen(g,ds2)) continue;         /* فترة تجميد: مش بتتحسب */
+      var wd=WD4[new Date(ds2+'T12:00:00').getDay()];
+      if(schMin[wd]===undefined) continue; /* مش يوم جدول */
+      var sMin=schMin[wd];
+      if(ds2===tS&&(sMin==null||nowMin<sMin)) continue; /* ✅ النهارده لسه وقت الحصة مجاش → رمادي */
+      ev.push({t:madeupMap[ds2]?'madeup':'done',d:ds2});
+    }
+  }
+  /* ✋ الأعلام اليدوية */
+  var ck=cycKey(n);
+  var fl=(d.sessionFlags||{})[gid+'__'+ck]||{};
+  var removed={}; (fl.remove||[]).forEach(function(t){ removed[t]=1; });
+  ev=ev.filter(function(e){ return !e.d||!removed[e.d]; });
+  (fl.cancel||[]).forEach(function(t){ if(!t||removed[t]) return; var ex=ev.find(function(e){return e.d===t;}); if(ex){ ex.t='cancelled'; } else if(t>=from&&(!to||t<=to)) ev.push({t:'cancelled',d:t,flag:1}); });
+  (fl.take||[]).forEach(function(t){ if(!t||removed[t]) return; var ex=ev.find(function(e){return e.d===t;}); if(ex){ if(ex.t==='cancelled') ex.t='done'; } else if(t>=from&&(!to||t<=to)) ev.push({t:'done',d:t,flag:1}); });
+  var und=0; (fl.take||[]).forEach(function(t){ if(!t) und++; });
+  /* 📥 العداد اليدوي/المرحّل */
+  var man=0;
+  (d.manualSessions||[]).forEach(function(ms){ if(ms.groupId!==gid) return; if((ms.month||'')===ck&&(!ms.type||ms.type==='counter')) man+=(+ms.sessionsCount||1); });
+  ev.sort(function(a,b){ return String(a.d||'9999').localeCompare(String(b.d||'9999')); });
+  /* 🛑 سقف النصاب */
+  var capped=[],kept=0;
+  ev.forEach(function(e){ if(e.t==='cancelled'){capped.push(e);return;} kept++; if(kept<=req) capped.push(e); });
+  ev=capped;
+  for(var i=0;i<man;i++) ev.unshift({t:'manual',d:''});
+  for(var u2=0;u2<und;u2++) ev.push({t:'done',d:'',flag:1});
+  var done=ev.filter(function(e){return e.t!=='cancelled';}).length+man;
+  done=Math.min(done,req);
+  var complete=done>=req;
+  return {events:ev,done:done,required:req,complete:complete,remaining:Math.max(0,req-done),manual:man,notStarted:false,isPast:complete&&!!to,warnAt:warnOf(g,req),frozen:!!g.frozen};
+};
+
+/* 🔄 cyclesOf من النطاقات الفعلية بس (مفيش أشباح) */
+LU.cyclesOf=function(g){
+  return (((g&&g.cycleRanges)||[]).slice().sort(byN)).map(function(r){
+    return {n:r.n,ck:cycKey(r.n),ym:(r.from||'').slice(0,7),from:r.from,to:r.to,range:r};
+  });
+};
+
+/* 💰 teacherNet واحد موحد: من دفعات الدفتر فعلياً (نفس مصدر صفحة المالية) */
+LU.teacherNet=function(gid,month){
+  var g=gPub(gid); if(!g) return {collected:0,share:0,net:0,payers:0,pct:0,sharePerStudent:0};
+  var sh=(LU.centerShareAmt)?LU.centerShareAmt(g):0;
+  var mm=String(month||'').slice(0,7);
+  var c=0,s=0,n=0;
+  (db().payments||[]).forEach(function(p){
+    if(p.groupId!==gid||p.isVirtual) return;
+    var inM=0;
+    (p.history||[]).forEach(function(h){ if(String(h.date||'').slice(0,7)===mm) inM+=+h.amount||0; });
+    if(inM<=0){
+      var tot=0;(p.history||[]).forEach(function(h){tot+=+h.amount||0;}); tot=tot||(+p.paidAmount||0);
+      var pm=String(p.month||'');
+      if(pm.slice(0,7)===mm) inM=tot;
+      else if(/^cycle-\d+$/.test(pm)){ var cc=(LU.cyclesOf(g)||[]).find(function(x){return x.ck===pm;}); if(cc&&String(cc.ym||'').slice(0,7)===mm) inM=tot; }
+      else if(String(p.paidAt||p.updatedAt||p.createdAt||'').slice(0,7)===mm) inM=tot;
+    }
+    if(inM<=0) return;
+    c+=inM; s+=Math.min(inM,sh); n++;
+  });
+  return {collected:c,share:s,net:c-s,payers:n,pct:0,sharePerStudent:sh};
+};
+LU.groupFinAll=function(gid){ return LU.teacherNet(gid,''); };
+function metaCounting(m){ if(!m) return false; return m.countingActive===true||m.counterActive===true||m.billingActive===true||m.billingEnabled===true||m.collectionEnabled===true||((m.counting||{}).active===true); }
+function metaFrozen(m){ if(!m) return false; var f=m.freeze||{}; return m.ledgerFrozen===true||f.ledger===true||f.full===true; }
+function gFrozen(g,ds){ if(!g||!ds) return false; if(g.frozen&&g.frozenSince&&ds>=g.frozenSince) return true; var ps=g.freezePeriods||[]; for(var i=0;i<ps.length;i++){ if(ds>=ps[i].from&&(!ps[i].to||ds<=ps[i].to)) return true; } return false; }
+/* 🔁 تطبيع الدورات: افتح المقفول غلط + اقفل المكتمل + افتح التالية + احذف الأشباح */
+function normalizeCycles(){
+  try{
+    var d=db(); var changed=false;
+    (d.groups||[]).forEach(function(g){
+      var rs=((g.cycleRanges)||[]).slice().sort(byN);
+      if(!rs.length){
+        var first=null;
+        (d.attendance||[]).forEach(function(a){ if(a.groupId===g.id&&a.status==='approved'&&(!first||a.date<first)) first=a.date; });
+        rs=[{n:1,from:first||((d.platformMeta||{}).countingSince)||today(),to:null}];
+        g.cycleRanges=rs; changed=true;
+      }
+      /* 1) دورة مقفولة ونصابها مش مكتمل → افتحها واحذف اللي بعدها */
+      for(var i=0;i<rs.length;i++){
+        if(rs[i].to!=null){
+          var ses=LU.groupSessions(g.id,cycKey(rs[i].n));
+          if(!ses.complete){ rs[i].to=null; rs=rs.slice(0,i+1); changed=true; }
+        }
+      }
+      /* 2) أول دورة مفتوحة واكتمل نصابها → اقفلها بتاريخ آخر حصة وافتح التالية */
+      for(var j=0;j<rs.length;j++){
+        if(rs[j].to==null){
+          var ses2=LU.groupSessions(g.id,cycKey(rs[j].n));
+          if(ses2.complete){
+            var dated=ses2.events.filter(function(e){return e.d&&e.t!=='cancelled';}).map(function(e){return e.d;}).sort();
+            var toD=dated.length?dated[dated.length-1]:today();
+            rs[j].to=toD;
+            rs.push({n:rs[j].n+1,from:nextDay(toD),to:null});
+            changed=true;
+          }
+          break;
+        }
+      }
+      /* 3) مفيش دورة مفتوحة خالص → افتح التالية */
+      var hasOpen=rs.some(function(r){return r.to==null;});
+      if(!hasOpen&&rs.length){
+        var last=rs[rs.length-1];
+        rs.push({n:last.n+1,from:nextDay(last.to||today()),to:null});
+        changed=true;
+      }
+      /* 4) احذف أي دورة بعد أول دورة مفتوحة */
+      var oi=-1; rs.forEach(function(r,k){ if(r.to==null&&oi===-1) oi=k; });
+      if(oi>=0&&rs.length>oi+1){ rs=rs.slice(0,oi+1); changed=true; }
+      g.cycleRanges=rs;
+    });
+    if(changed){
+      saveD(d); LU._sesCache={};
+      try{ localStorage.setItem('eduflowLedgerPing',String(Date.now())); }catch(e){}
+      try{ LU.refresh(); }catch(e){}
+    }
+  }catch(e){}
+}
+LU.normalizeCycles=normalizeCycles;
+setTimeout(normalizeCycles,2000);
+setInterval(normalizeCycles,15000);
 })();

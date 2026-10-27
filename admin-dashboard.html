@@ -884,6 +884,30 @@ section.section.active{display:block !important;}
 </div>
 </section>
 
+<section class="section" id="section-notifControl">
+  <div class="section-header">
+    <div>
+      <h2 class="section-title">🚨 التحكم في الإشعارات (Kill Switch)</h2>
+      <p class="text-sm text-muted">تحكم طارئ فوري في كل الإشعارات على مستوى المنظومة</p>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-danger btn-sm" onclick="window.toggleKillAllNotifications()">
+        🔕 إيقاف / تفعيل كل الإشعارات
+      </button>
+      <button class="btn btn-warning btn-sm" onclick="window.nukeAllNotifications()">
+        🗑️ مسح كل الإشعارات لكل المستخدمين
+      </button>
+    </div>
+  </div>
+  <div class="card" style="padding:16px;">
+    <p style="font-size:13px;">
+      <strong>💡 الاستخدام:</strong><br>
+      • <strong>🔕 إيقاف الإشعارات:</strong> يمنع إرسال أي إشعار لأي مستخدم فوراً (الطلاب، الأساتذة، المساعدين). استخدمه وقت الصيانة أو الطوارئ.<br>
+      • <strong>🗑️ مسح الكل:</strong> يحذف كل الإشعارات القديمة من قاعدة البيانات لكل المستخدمين + يصفّر العدّاد.
+    </p>
+  </div>
+</section>
+
 <!-- 🔔 سياسة الإشعارات (مصوفة الأدوار × الأحداث — من notify-service) -->
 <section class="section" id="section-notifyPolicy">
 <div class="section-header"><div><h2 class="section-title">🔔 سياسة الإشعارات</h2><p class="text-sm text-muted">تحكم كامل: أي حدث يوصل لأي دور — يسري فوراً على كل المستخدمين والأجهزة</p></div><div style="display:flex;gap:8px;"><button class="btn btn-ghost btn-sm" onclick="window.NotifyPolicy&&NotifyPolicy.reset()">♻️ افتراضي</button><button class="btn btn-primary btn-sm" onclick="window.NotifyPolicy&&NotifyPolicy.saveUI()">💾 حفظ السياسة</button></div></div>
@@ -1057,9 +1081,9 @@ section.section.active{display:block !important;}
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
 <script src="js/push-service.js"></script>
 <script src="js/billing/core.js"></script>
-<script src="js/legendary-money.js"></script>
 <script src="js/legendary-comms.js"></script>
 <script src="js/legendary-shield.js"></script>
+<script src="js/legendary-money.js"></script>
 <script src="js/legendary-exams.js"></script>
 <script src="js/footer-injector.js"></script>
 <script src="js/smart-student.js"></script>
@@ -2429,7 +2453,7 @@ row.innerHTML = '<div class="form-group" style="margin:0;"><select class="form-s
 cont.appendChild(row);
 };
 window.__gAddRow = function(){ addRow('', ''); };
-ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${g?'✏️ تعديل مجموعة':'👥 إضافة مجموعة'}</h3><button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return window.saveGroup(event,'${editId||''}')"><div class="form-group"><label>اسم المجموعة *</label><input type="text" id="gName" class="form-input" value="${esc(g?.name)}" required></div><div class="form-group"><label>👨‍🏫 الأستاذ *</label><select id="gTeacher" class="form-select" required><option value="">-- اختر أستاذ --</option>${teachers.map(t=>`<option value="${t.id}" ${g&&g.teacherId===t.id?'selected':''}>${t.name}</option>`).join('')}</select></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المرحلة</label><select id="gStage" class="form-select" onchange="if(window.updGroupGrades)window.updGroupGrades(this.value);"><option value="">--</option>${stageOpts}</select></div><div class="form-group"><label>الصف</label><select id="gGrade" class="form-select">${(g&&g.grade)?`<option selected>${esc(g.grade)}</option>`:'<option value="">--</option>'}</select></div></div><div id="gDupWarn" class="filter-info" style="display:none;background:var(--danger-bg);border-color:var(--danger);color:var(--danger);margin-bottom:10px;"></div><div class="filter-info" style="margin-bottom:10px;">🔢 <strong>المجموعة في الحصة الكام الشهر ده:</strong> رقم <input type="number" id="gSessionNow" class="form-input" style="width:80px;display:inline-block;margin:0 4px;" min="0" value="${g?.sessionNow||0}"> من <input type="number" id="gSessionTotal" class="form-input" style="width:80px;display:inline-block;margin:0 4px;" min="1" value="${g?.sessionsPerMonth||8}"> ${editId?`<button type="button" class="btn btn-primary btn-sm" onclick="window.applyGroupSessionCounter('${editId}')">💾 تطبيق على كل الطلاب</button>`:''}<div class="text-xs text-muted" style="margin-top:4px;">تعديل يدوي للعداد — التطبيق بيظبط كل طلاب المجموعة.</div></div><div class="form-group"><label>📅 مواعيد الحصة (أسبوعياً)</label><div id="schedulesContainer"></div><button type="button" class="btn btn-secondary btn-sm" onclick="window.__gAddRow()">➕ إضافة موعد</button></div><div class="form-group"><label>🏢 السنتر *</label><select id="gCenter" class="form-select" required>${centers.length?centers.map(c=>`<option ${g&&g.center===c?'selected':''}>${esc(c)}</option>`).join(''):'<option value="">⚠️ لا توجد سناتر مسجلة</option>'}</select></div><div class="form-group"><label>📱 رابط واتساب المجموعة</label><input type="url" id="gWhatsapp" class="form-input" value="${esc(g?.whatsappLink)}" placeholder="https://chat.whatsapp.com/..."></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>مدة الحصة (دقيقة) *</label><input type="number" id="gDuration" class="form-input" value="${g?.duration||60}" required></div><div class="form-group"><label>حصص/شهر *</label><input type="number" id="gSessions" class="form-input" value="${g?.sessionsPerMonth||8}" oninput="if(window.calcSP)window.calcSP()" required></div></div><div class="form-group"><label>سعر الشهر *</label><input type="number" id="gMonthly" class="form-input" value="${g?.monthlyFee||0}" oninput="if(window.calcSP)window.calcSP()" required></div><div class="card" style="background:var(--info-bg);border-color:var(--info-border);padding:12px;margin-bottom:12px;">سعر الحصة: <strong id="autoSessionPrice">0</strong> ج.م</div><button class="btn btn-primary w-full">💾 حفظ</button></form></div>`,'modal-lg');
+ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">${g?'✏️ تعديل مجموعة':'👥 إضافة مجموعة'}</h3><button type="button" class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><form onsubmit="return window.saveGroup(event,'${editId||''}')"><div class="form-group"><label>اسم المجموعة *</label><input type="text" id="gName" class="form-input" value="${esc(g?.name)}" required></div><div class="form-group"><label>👨‍🏫 الأستاذ *</label><select id="gTeacher" class="form-select" required><option value="">-- اختر أستاذ --</option>${teachers.map(t=>`<option value="${t.id}" ${g&&g.teacherId===t.id?'selected':''}>${t.name}</option>`).join('')}</select></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>المرحلة</label><select id="gStage" class="form-select" onchange="if(window.updGroupGrades)window.updGroupGrades(this.value);"><option value="">--</option>${stageOpts}</select></div><div class="form-group"><label>الصف</label><select id="gGrade" class="form-select">${(g&&g.grade)?`<option selected>${esc(g.grade)}</option>`:'<option value="">--</option>'}</select></div></div><div id="gDupWarn" class="filter-info" style="display:none;background:var(--danger-bg);border-color:var(--danger);color:var(--danger);margin-bottom:10px;"></div><div class="filter-info" style="margin-bottom:10px;">🔢 <strong>المجموعة في الحصة الكام الشهر ده:</strong> رقم <input type="number" id="gSessionNow" class="form-input" style="width:80px;display:inline-block;margin:0 4px;" min="0" value="${g?.sessionNow||0}"> من <input type="number" id="gSessionTotal" class="form-input" style="width:80px;display:inline-block;margin:0 4px;" min="1" value="${g?.sessionsPerMonth||8}"> ${editId?`<button type="button" class="btn btn-primary btn-sm" onclick="window.applyGroupSessionCounter('${editId}')">💾 تطبيق على كل الطلاب</button>`:''}<div class="text-xs text-muted" style="margin-top:4px;">تعديل يدوي للعداد — التطبيق بيظبط كل طلاب المجموعة.</div></div><div class="form-group"><label>📅 مواعيد الحصة (أسبوعياً)</label><div id="schedulesContainer"></div><button type="button" class="btn btn-secondary btn-sm" onclick="window.__gAddRow()">➕ إضافة موعد</button></div><div class="form-group"><label>🏢 السنتر *</label><select id="gCenter" class="form-select" required>${centers.length?centers.map(c=>`<option ${g&&g.center===c?'selected':''}>${esc(c)}</option>`).join(''):'<option value="">⚠️ لا توجد سناتر مسجلة</option>'}</select></div><div class="form-group"><label>📱 رابط واتساب المجموعة</label><input type="url" id="gWhatsapp" class="form-input" value="${esc(g?.whatsappLink)}" placeholder="https://chat.whatsapp.com/..."></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div class="form-group"><label>مدة الحصة (دقيقة) *</label><input type="number" id="gDuration" class="form-input" value="${g?.duration||60}" required></div><div class="form-group"><label>حصص/شهر *</label><input type="number" id="gSessions" class="form-input" value="${g?.sessionsPerMonth||8}" oninput="if(window.calcSP)window.calcSP()" required></div></div><div class="form-group"><label>💪 سعر الأستاذ الصافي *</label><input type="number" id="gTeacherFee" class="form-input" min="0" value="${g?(g.teacherFee!=null?g.teacherFee:Math.max(0,(g.monthlyFee||0)-(g.centerShareAmt||0))):''}" required></div><div class="form-group"><label>🏢 حق السنتر *</label><input type="number" id="gCenterShareAmt" class="form-input" min="0" value="${g?(g.centerShareAmt!=null?g.centerShareAmt:(window.LedgerUI&&LedgerUI.centerShareAmt?LedgerUI.centerShareAmt(g):0)):''}" required></div><div class="card" style="background:var(--info-bg);border-color:var(--info-border);padding:12px;margin-bottom:12px;">💰 السعر النهائي للطالب: <strong id="autoStudentPrice">0</strong> ج.م<input type="hidden" id="gMonthly" value="${g?.monthlyFee||0}"></div><div class="card" style="background:var(--info-bg);border-color:var(--info-border);padding:12px;margin-bottom:12px;">سعر الحصة: <strong id="autoSessionPrice">0</strong> ج.م</div><button class="btn btn-primary w-full">💾 حفظ</button></form></div>`,'modal-lg');
 const existing = (g && g.schedules && g.schedules.length) ? g.schedules : ((g && g.day) ? [{day:g.day, time:g.time}] : []);
 if (existing.length) { existing.forEach(s=>addRow(s.day, s.time)); }
 else { addRow(defaultDay||'', defaultTime||'10:00'); }
@@ -2587,7 +2611,7 @@ window.loadCenters = function() {
                 <div class="user-stat-label">طالب</div>
               </div>
             </div>
-            <div class="user-actions" style="display:flex; gap:6px; flex-wrap:wrap;">
+            ${window.centerCollectHtml?window.centerCollectHtml(c):''}<div class="user-actions" style="display:flex; gap:6px; flex-wrap:wrap;">
               <button class="btn btn-primary btn-sm" onclick="window.viewCenterDetails('${safeName}')">👁️ تفاصيل</button>
               <button class="btn btn-ghost btn-sm" onclick="window.openCenterModal('${c.id}')">✏️</button>
               <button class="btn btn-danger btn-sm" onclick="window.deleteCenter('${c.id}')">🗑️</button>
@@ -2598,14 +2622,44 @@ window.loadCenters = function() {
   } catch(e) { console.error(e); } 
 };
 
+window.centerCollectHtml=function(c){
+  try{
+    var day=parseInt(c.collectDay)||0;
+    if(!day) return '<div class="text-xs text-muted" style="margin:8px 0;">📅 مفيش يوم تحصيل محدد — دوس ✏️ وحدده</div>';
+    var now=new Date(), y=now.getFullYear(), m=now.getMonth();
+    var at=function(yy,mm){ var last=new Date(yy,mm+1,0).getDate(); return new Date(yy,mm,Math.min(day,last)); };
+    var today=new Date(y,m,now.getDate()), next=at(y,m);
+    if(next<today) next=at(y,m+1);
+    var days=Math.round((next-today)/86400000);
+    var mk=function(dt){ return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'); };
+    var gs=(DataService.getGroups?DataService.getGroups():[]).filter(function(g){ return String(g.center||'').trim()===String(c.name||'').trim(); });
+    var net=function(mm){ var s=0; gs.forEach(function(g){ var tn=(window.LedgerUI&&LedgerUI.teacherNet)?LedgerUI.teacherNet(g.id,mm):null; if(tn) s+=(tn.collected||0)-(tn.share||0); }); return Math.round(s); };
+    var last=(c.settlements||[]).slice(-1)[0];
+    return '<div style="background:var(--warning-bg);border:1px solid var(--warning);border-radius:10px;padding:10px;margin:8px 0;font-size:12px;">'+
+      '<div style="font-weight:800;">📅 التحصيل الجاي: '+next.toLocaleDateString('ar-EG')+' ('+(days===0?'النهارده!':'بعد '+days+' يوم')+')</div>'+
+      '<div style="margin-top:4px;">💰 صافي حقي — الشهر الحالي: <b>'+net(mk(now))+'</b> ج.م · الشهر اللي فات: <b>'+net(mk(new Date(y,m-1,1)))+'</b> ج.م</div>'+
+      (last?'<div class="text-xs text-muted" style="margin-top:4px;">✅ آخر تحصيل: '+new Date(last.date).toLocaleDateString('ar-EG')+' — '+last.amount+' ج.م</div>':'')+
+      '<button class="btn btn-success btn-sm" style="margin-top:6px;" onclick="window.centerMarkCollected(\''+c.id+'\')">✅ تم التحصيل</button></div>';
+  }catch(e){ return ''; }
+};
+window.centerMarkCollected=async function(id){
+  try{
+    var c=DataService.getCenterById?DataService.getCenterById(id):null; if(!c) return;
+    var v=prompt('المبلغ اللي استلمته من '+c.name+' (ج.م):'); if(v===null) return;
+    var amt=parseFloat(v)||0; if(amt<=0){ window.safeToast('مبلغ غير صحيح','error'); return; }
+    var st=(c.settlements||[]).slice(); st.push({date:new Date().toISOString(),amount:amt});
+    await DataService.updateCenter(id,{settlements:st});
+    window.safeToast('✅ اتسجل التحصيل','success'); window.loadCenters();
+  }catch(e){ window.safeToast('خطأ: '+e.message,'error'); }
+};
 window.openCenterModal = function(editId) { 
   const c = editId ? DataService.getCenterById(editId) : null;
-  ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🏢 ${c ? 'تعديل' : 'إضافة'} سنتر</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>الاسم *</label><input id="cName" class="form-input" value="${c?.name || ''}" required></div><div class="form-group"><label>العنوان</label><input id="cAddress" class="form-input" value="${c?.address || ''}"></div><button class="btn btn-primary w-full" onclick="window.saveCenter('${editId || ''}')">💾 حفظ</button></div>`); 
+  ThemeManager.openModal(`<div class="modal-header"><h3 class="modal-title">🏢 ${c ? 'تعديل' : 'إضافة'} سنتر</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>الاسم *</label><input id="cName" class="form-input" value="${c?.name || ''}" required></div><div class="form-group"><label>العنوان</label><input id="cAddress" class="form-input" value="${c?.address || ''}"></div><div class="form-group"><label>📅 يوم التحصيل من السنتر (يوم من الشهر 1–31)</label><input type="number" id="cCollectDay" class="form-input" min="1" max="31" value="${c?.collectDay || ''}"></div><button class="btn btn-primary w-full" onclick="window.saveCenter('${editId || ''}')">💾 حفظ</button></div>`); 
 };
 
 window.saveCenter = async function(editId) { 
   try {
-    const data = { name: document.getElementById('cName').value, address: document.getElementById('cAddress').value };
+    const data = { name: document.getElementById('cName').value, address: document.getElementById('cAddress').value, collectDay: parseInt(document.getElementById('cCollectDay')?.value)||0 };
     if (editId) await DataService.updateCenter(editId, data); else await DataService.addCenter(data); 
     ThemeManager.closeModal(); 
     window.loadCenters(); 
@@ -5541,52 +5595,7 @@ window.showDaySummary = function(teacherId, day) {
     }
 };
 
-/* 🗓️ ربط صفحة جدول الأساتذة — من غير تعديل أي سطر تاني */
-(function(){
-  if(window._sbBoardWired) return;
-  window._sbBoardWired = true;
-  var orig = window.showSection;
-  window.purgeOldDataUI = async function() {
-  if (!confirm('⚠️ متأكد إنك عاوز تمسح البيانات القديمة؟ العملية دي مش هتقدر ترجعها.')) return;
-  const months = parseInt(document.getElementById('purgeMonths').value) || 6;
-  const result = document.getElementById('purgeResult');
-  result.innerHTML = '<div class="text-muted">🔄 جاري الكنس...</div>';
-  
-  try {
-    const res = await Ops.purgeOldData(months);
-    if (res.success) {
-      result.innerHTML = `
-        <div class="card" style="background:var(--success-bg);border-color:var(--success);padding:12px;">
-          <strong style="color:var(--success);">✅ تم الكنس بنجاح!</strong>
-          <div style="margin-top:8px;font-size:13px;">
-            <div>🏆 نقاط: ${res.purged.points}</div>
-            <div>📋 حضور: ${res.purged.attendance}</div>
-            <div>🔔 إشعارات: ${res.purged.notifications}</div>
-            <div>📝 واجبات: ${res.purged.homework}</div>
-            <div>🎓 امتحانات: ${res.purged.exams}</div>
-          </div>
-        </div>
-      `;
-      safeToast('✅ تم كنس البيانات القديمة', 'success');
-    } else {
-      result.innerHTML = `<div class="text-danger">❌ خطأ: ${res.message}</div>`;
-    }
-  } catch (e) {
-    result.innerHTML = `<div class="text-danger">❌ خطأ: ${e.message}</div>`;
-  }
-};
-  window.showSection = function(id){
-    try{ orig.apply(this, arguments); }catch(e){ console.error(e); }
-    if(id === 'scheduleBoard' && typeof window.loadScheduleBoard === 'function'){
-      try{ window.loadScheduleBoard(); }catch(e){ console.error(e); }
-    }
-  };
-  /* لو الصفحة مفتوحة بالفعل على الجدول */
-  var sec=document.getElementById('section-scheduleBoard');
-  if(sec && sec.classList.contains('active') && typeof window.loadScheduleBoard==='function'){
-    window.loadScheduleBoard();
-  }
-})();
+
 /* 🗓️ جدول الأساتذة — باتش شامل (القائمة الجانبية + التوجيه + اللوحة) */
 (function(){
 "use strict";
@@ -5895,7 +5904,7 @@ window.sbFillFilters=function(){
     tS.innerHTML='<option value="all">كل الأساتذة</option>'+ts.map(t=>'<option value="'+t.id+'">'+t.name+'</option>').join(''); tS.value=c1||'all'; }
   if(gS){ var c2=gS.value; var gs=DataService.getGroups?DataService.getGroups():[];
     gS.innerHTML='<option value="all">كل المجموعات</option>'+gs.map(g=>'<option value="'+g.id+'">'+g.name+'</option>').join(''); gS.value=c2||'all'; }
-  if(cS){ var c3=cS.value; var cs=[]; if(DataService.getCenters) cs=(DataService.getCenters()||[]).map(c=>c.name).filter(Boolean); if(!cs.length&&window.getAllCenters) cs=window.getAllCenters(); cs=Array.from(new Set(cs));
+  if(cS){ var c3=cS.value; var cs=[]; if(DataService.getCenters) cs=(DataService.getGroups?DataService.getGroups():[]).map(g=>String(g.center||'').trim()).filter(Boolean); cs=Array.from(new Set(cs)).sort();
     cS.innerHTML='<option value="all">كل السناتر</option>'+cs.map(c=>'<option value="'+c+'">'+c+'</option>').join(''); cS.value=c3||'all'; }
  }catch(e){}
 };
@@ -5915,7 +5924,7 @@ function sbFiltered(){
  var list=DataService.getGroups?DataService.getGroups():[];
  if(tv&&tv!=='all') list=list.filter(g=>g.teacherId===tv);
  if(gv&&gv!=='all') list=list.filter(g=>g.id===gv);
- if(cv&&cv!=='all') list=list.filter(g=>(g.center||'')===cv);
+ if(cv&&cv!=='all') list=list.filter(g=>String(g.center||'').trim()===cv);
  return sbSort(list,sortBy);
 }
 function sbConflicts(list){
@@ -8586,68 +8595,88 @@ setInterval(function(){ var a=document.querySelector('.section.active'); if(!a) 
 })();
 </script>
 <script>
-/* ============ 🧹 كنس البيانات — تخصيص + معاينة دقيقة ============ */
+/* ============ 🧹 كنس البيانات V3 — مش بيفتح نفسه + بيحذف محلي وسحابي ============ */
 (function(){
 function cur(){ try{ return (typeof currentUser!=='undefined'&&currentUser)?currentUser:((window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null);}catch(e){return null;} }
 function db(){ return (window.DataService&&DataService._getData)?DataService._getData():{}; }
+function cloudDel(col,recs){ try{ if(window.FirebaseService&&FirebaseService._db){ (recs||[]).slice(0,400).forEach(function(r){ if(r&&r.id) FirebaseService.deleteDoc(col,r.id); }); } }catch(e){} }
 var CATS=[
- {k:'points',l:'🏆 نقاط يدوية وتفاعل',f:function(d,cs){return ((d.manualPoints||[]).filter(function(x){return x.awardedAt<cs;}).length)+((d.interactionPoints||[]).filter(function(x){return x.awardedAt<cs;}).length);}},
- {k:'attendance',l:'📋 سجلات الحضور',f:function(d,cs){return (d.attendance||[]).filter(function(x){return x.date<cs.slice(0,10);}).length;}},
- {k:'notifications',l:'🔔 إشعارات',f:function(d,cs){return (d.notifications||[]).filter(function(x){return x.createdAt<cs;}).length;}},
- {k:'homework',l:'📝 واجبات قديمة',f:function(d,cs){return (d.homework||[]).filter(function(x){return (x.deadline||x.createdAt||'')<cs;}).length;}},
- {k:'exams',l:'🎓 امتحانات قديمة',f:function(d,cs){return (d.exams||[]).filter(function(x){return (x.date||x.createdAt||'')<cs;}).length;}},
- {k:'submissions',l:'📤 تسليمات واجبات',f:function(d,cs){return (d.submissions||[]).filter(function(x){return (x.submittedAt||'')<cs;}).length;}},
- {k:'gamePlays',l:'🎮 سجلات لعب',f:function(d,cs){return (d.gamePlays||[]).filter(function(x){return (x.at||'')<cs;}).length;}}
+ {k:'points',l:'🏆 نقاط يدوية وتفاعل',f:function(d,cs){return ((d.manualPoints||[]).filter(function(x){return (x.awardedAt||'')<cs;}).length)+((d.interactionPoints||[]).filter(function(x){return (x.awardedAt||'')<cs;}).length);},t:function(d){return (d.manualPoints||[]).length+(d.interactionPoints||[]).length;}},
+ {k:'attendance',l:'📋 سجلات الحضور',f:function(d,cs){return (d.attendance||[]).filter(function(x){return (x.date||'')<cs.slice(0,10);}).length;},t:function(d){return (d.attendance||[]).length;}},
+ {k:'notifications',l:'🔔 إشعارات',f:function(d,cs){return (d.notifications||[]).filter(function(x){return (x.createdAt||'')<cs;}).length;},t:function(d){return (d.notifications||[]).length;}},
+ {k:'homework',l:'📝 واجبات قديمة',f:function(d,cs){return (d.homework||[]).filter(function(x){return (x.deadline||x.createdAt||'')<cs;}).length;},t:function(d){return (d.homework||[]).length;}},
+ {k:'exams',l:'🎓 امتحانات قديمة',f:function(d,cs){return (d.exams||[]).filter(function(x){return (x.date||x.createdAt||'')<cs;}).length;},t:function(d){return (d.exams||[]).length;}},
+ {k:'submissions',l:'📤 تسليمات واجبات',f:function(d,cs){return (d.submissions||[]).filter(function(x){return (x.submittedAt||'')<cs;}).length;},t:function(d){return (d.submissions||[]).length;}},
+ {k:'gamePlays',l:'🎮 سجلات لعب',f:function(d,cs){return (d.gamePlays||[]).filter(function(x){return (x.at||'')<cs;}).length;},t:function(d){return (d.gamePlays||[]).length;}}
 ];
-function cutStr(m){ var c=new Date(); c.setMonth(c.getMonth()-m); return c.toISOString(); }
+function cutStr(m){ if(m===0) return '9999-12-31T23:59:59.999Z'; var c=new Date(); c.setMonth(c.getMonth()-m); return c.toISOString(); }
 function build(){
   var u=cur(); if(!u||(u.role!=='admin'&&u.role!=='super_admin')) return;
   if(document.getElementById('section-purge')) return;
   var ca=document.querySelector('.content-area'); if(!ca) return;
   var sec=document.createElement('section'); sec.className='section'; sec.id='section-purge';
-  sec.innerHTML='<div class="section-header"><div><h2 class="section-title">🧹 كنس البيانات</h2><p class="text-sm text-muted">اختار الفئات والمدة وشوف العدد بالظبط قبل التنفيذ</p></div></div>'+
-  '<div class="card" style="padding:16px;max-width:640px;">'+
-  '<div class="form-group"><label>📅 كنس الأقدم من</label><select id="purgeMonths" class="form-select" style="max-width:220px;" onchange="window.purgePreview()"><option value="3">3 شهور</option><option value="6" selected>6 شهور</option><option value="12">سنة</option><option value="24">سنتين</option></select></div>'+
+  sec.innerHTML='<div class="section-header"><div><h2 class="section-title">🧹 كنس البيانات</h2><p class="text-sm text-muted">اختار الفئات والمدة وشوف العدد والإجمالي قبل التنفيذ</p></div></div>'+
+  '<div class="card" style="padding:16px;max-width:680px;">'+
+  '<div class="form-group"><label>📅 كنس الأقدم من</label><select id="purgeMonths" class="form-select" style="max-width:240px;" onchange="window.purgePreview()"><option value="0">الكل (بدون شرط تاريخ)</option><option value="3">3 شهور</option><option value="6" selected>6 شهور</option><option value="12">سنة</option><option value="24">سنتين</option></select></div>'+
   '<div id="purgeCats" style="display:grid;gap:6px;margin:10px 0;"></div>'+
   '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-secondary" onclick="window.purgePreview()">🔍 تحديث المعاينة</button><button class="btn btn-danger" onclick="window.purgeRun()">🗑️ كنس المحدد فقط</button></div>'+
   '<div id="purgeResult" style="margin-top:12px;"></div></div>';
   ca.appendChild(sec);
   var nav=document.getElementById('sidebarNav');
   if(nav&&!nav.querySelector('[data-section="purge"]')){
-    var a=nav.querySelector('[data-section="logs"]');
+    var a=nav.querySelector('[data-section="logs"]')||nav.querySelector('[data-section="activity"]')||nav.lastElementChild;
     var it='<div class="sidebar-item" data-section="purge" onclick="window.showSection(\'purge\')"><span class="sidebar-item-icon">🧹</span><span class="sidebar-item-label">كنس البيانات</span></div>';
     if(a) a.insertAdjacentHTML('afterend',it); else nav.insertAdjacentHTML('beforeend',it);
   }
   window.purgePreview();
 }
+/* 🛡️ التفعيل بيحصل بس لما المستخدم يدوس على البند — مش لوحده عند الفتح */
+function activate(){
+  var sec=document.getElementById('section-purge'); if(!sec) return;
+  if(!sec.classList.contains('active')){
+    try{ document.querySelectorAll('.section').forEach(function(s){ s.classList.remove('active'); }); sec.classList.add('active'); }catch(e){}
+  }
+  window.purgePreview();
+}
+if(typeof window.showSection==='function'&&!window.__purgeHook){
+  window.__purgeHook=1; var os=window.showSection;
+  window.showSection=function(id){ var r=os.apply(this,arguments); if(id==='purge') setTimeout(activate,80); return r; };
+}
 window.purgePreview=function(){
   var host=document.getElementById('purgeCats'); if(!host) return;
-  var m=parseInt((document.getElementById('purgeMonths')||{}).value)||6;
+  var m=parseInt((document.getElementById('purgeMonths')||{}).value||'6',10); if(isNaN(m)) m=6;
   var cs=cutStr(m); var d=db();
   host.innerHTML=CATS.map(function(c){
-    var n=0; try{ n=c.f(d,cs); }catch(e){}
-    return '<label style="display:flex;gap:8px;align-items:center;padding:8px 10px;background:var(--surface-hover);border-radius:10px;cursor:pointer;"><input type="checkbox" class="purgeCat" value="'+c.k+'" style="width:18px;height:18px;" '+(n?'checked':'')+'><span style="flex:1;">'+c.l+'</span><strong style="font-family:var(--font-en);color:'+(n?'var(--danger)':'var(--text-muted)')+';">'+n+' سجل</strong></label>';
-  }).join('')+'<div class="text-xs text-muted" style="margin-top:6px;">✂️ حد القطع: '+new Date(cs).toLocaleDateString('ar-EG')+'</div>';
+    var n=0,tot=0; try{ n=c.f(d,cs); }catch(e){} try{ tot=c.t(d); }catch(e){}
+    return '<label style="display:flex;gap:8px;align-items:center;padding:8px 10px;background:var(--surface-hover);border-radius:10px;cursor:pointer;"><input type="checkbox" class="purgeCat" value="'+c.k+'" style="width:18px;height:18px;" '+(n?'checked':'')+'><span style="flex:1;">'+c.l+'</span><strong style="font-family:var(--font-en);color:'+(n?'var(--danger)':'var(--text-muted)')+';">هيُكنس: '+n+'</strong><span class="badge badge-muted" style="margin-inline-start:6px;">الإجمالي: '+tot+'</span></label>';
+  }).join('')+'<div class="text-xs text-muted" style="margin-top:6px;">✂️ حد القطع: '+(m===0?'بدون — كل السجلات':new Date(cs).toLocaleDateString('ar-EG'))+'</div>';
 };
 window.purgeRun=function(){
-  var m=parseInt((document.getElementById('purgeMonths')||{}).value)||6;
+  var m=parseInt((document.getElementById('purgeMonths')||{}).value||'6',10); if(isNaN(m)) m=6;
   var cs=cutStr(m);
   var sel=Array.prototype.slice.call(document.querySelectorAll('.purgeCat:checked')).map(function(c){return c.value;});
-  if(!sel.length){ window.safeToast('اختار فئة واحدة على الأقل','warning'); return; }
+  if(!sel.length){ if(window.safeToast)window.safeToast('اختار فئة واحدة على الأقل','warning'); return; }
   var d0=db();
   var summary=sel.map(function(k){ var c=CATS.find(function(x){return x.k===k;}); var n=0; try{n=c.f(d0,cs);}catch(e){} return '• '+c.l+': '+n; }).join('\n');
-  if(!confirm('🧹 هيتم كنس:\n'+summary+'\n(الأقدم من '+new Date(cs).toLocaleDateString('ar-EG')+')</b>\n\nنهائي — متابعة؟')) return;
+  if(!confirm('🧹 هيتم كنس (محلي + سحابي):\n'+summary+'\n('+(m===0?'كل التواريخ':('الأقدم من '+new Date(cs).toLocaleDateString('ar-EG')))+')\n\nنهائي — متابعة؟')) return;
   var d=db(); var done={};
-  if(sel.indexOf('points')>=0){ var p0=((d.manualPoints||[]).length+(d.interactionPoints||[]).length); d.manualPoints=(d.manualPoints||[]).filter(function(x){return !(x.awardedAt<cs);}); d.interactionPoints=(d.interactionPoints||[]).filter(function(x){return !(x.awardedAt<cs);}); done.points=p0-((d.manualPoints||[]).length+(d.interactionPoints||[]).length); }
-  if(sel.indexOf('attendance')>=0){ var a0=(d.attendance||[]).length; d.attendance=(d.attendance||[]).filter(function(x){return !(x.date<cs.slice(0,10));}); done.attendance=a0-(d.attendance||[]).length; }
-  if(sel.indexOf('notifications')>=0){ var n0=(d.notifications||[]).length; d.notifications=(d.notifications||[]).filter(function(x){return !(x.createdAt<cs);}); done.notifications=n0-(d.notifications||[]).length; }
-  if(sel.indexOf('homework')>=0){ var h0=(d.homework||[]).length; d.homework=(d.homework||[]).filter(function(x){return !((x.deadline||x.createdAt||'')<cs);}); done.homework=h0-(d.homework||[]).length; }
-  if(sel.indexOf('exams')>=0){ var e0=(d.exams||[]).length; d.exams=(d.exams||[]).filter(function(x){return !((x.date||x.createdAt||'')<cs);}); done.exams=e0-(d.exams||[]).length; }
-  if(sel.indexOf('submissions')>=0){ var s0=(d.submissions||[]).length; d.submissions=(d.submissions||[]).filter(function(x){return !((x.submittedAt||'')<cs);}); done.submissions=s0-(d.submissions||[]).length; }
-  if(sel.indexOf('gamePlays')>=0){ var g0=(d.gamePlays||[]).length; d.gamePlays=(d.gamePlays||[]).filter(function(x){return !((x.at||'')<cs);}); done.gamePlays=g0-(d.gamePlays||[]).length; }
+  if(sel.indexOf('points')>=0){
+    var rmM=(d.manualPoints||[]).filter(function(x){return (x.awardedAt||'')<cs;});
+    var rmI=(d.interactionPoints||[]).filter(function(x){return (x.awardedAt||'')<cs;});
+    d.manualPoints=(d.manualPoints||[]).filter(function(x){return !((x.awardedAt||'')<cs);});
+    d.interactionPoints=(d.interactionPoints||[]).filter(function(x){return !((x.awardedAt||'')<cs);});
+    cloudDel('manualPoints',rmM); cloudDel('interactionPoints',rmI);
+    done.points=rmM.length+rmI.length;
+  }
+  if(sel.indexOf('attendance')>=0){ var ra=(d.attendance||[]).filter(function(x){return (x.date||'')<cs.slice(0,10);}); d.attendance=(d.attendance||[]).filter(function(x){return !((x.date||'')<cs.slice(0,10));}); cloudDel('attendance',ra); done.attendance=ra.length; }
+  if(sel.indexOf('notifications')>=0){ var rn=(d.notifications||[]).filter(function(x){return (x.createdAt||'')<cs;}); d.notifications=(d.notifications||[]).filter(function(x){return !((x.createdAt||'')<cs);}); cloudDel('notifications',rn); done.notifications=rn.length; }
+  if(sel.indexOf('homework')>=0){ var rh=(d.homework||[]).filter(function(x){return (x.deadline||x.createdAt||'')<cs;}); d.homework=(d.homework||[]).filter(function(x){return !((x.deadline||x.createdAt||'')<cs);}); cloudDel('homework',rh); done.homework=rh.length; }
+  if(sel.indexOf('exams')>=0){ var re=(d.exams||[]).filter(function(x){return (x.date||x.createdAt||'')<cs;}); d.exams=(d.exams||[]).filter(function(x){return !((x.date||x.createdAt||'')<cs);}); cloudDel('exams',re); done.exams=re.length; }
+  if(sel.indexOf('submissions')>=0){ var rs=(d.submissions||[]).filter(function(x){return (x.submittedAt||'')<cs;}); d.submissions=(d.submissions||[]).filter(function(x){return !((x.submittedAt||'')<cs);}); cloudDel('submissions',rs); done.submissions=rs.length; }
+  if(sel.indexOf('gamePlays')>=0){ var rg=(d.gamePlays||[]).filter(function(x){return (x.at||'')<cs;}); d.gamePlays=(d.gamePlays||[]).filter(function(x){return !((x.at||'')<cs);}); cloudDel('gamePlays',rg); done.gamePlays=rg.length; }
   DataService._saveData(d);
   var res=document.getElementById('purgeResult');
-  if(res) res.innerHTML='<div class="filter-info" style="background:var(--success-bg);border-color:var(--success);color:var(--success);">✅ تم الكنس — '+JSON.stringify(done)+'</div>';
+  if(res) res.innerHTML='<div class="filter-info" style="background:var(--success-bg);border-color:var(--success);color:var(--success);">✅ تم الكنس محلياً وسحابياً — '+JSON.stringify(done)+'</div>';
   window.purgePreview();
   if(window.safeToast) window.safeToast('✅ تم كنس البيانات المحددة','success');
 };

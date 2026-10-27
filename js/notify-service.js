@@ -19,6 +19,9 @@ var EVENTS=[
 {k:'late',c:'attendance',i:'⏰',l:'تسجيل تأخر',r:['student','parent']},
 {k:'session_cancel',c:'schedule',i:'🚫',l:'إلغاء حصة / تعويض',r:['student','parent','assistant']},
 {k:'schedule_change',c:'schedule',i:'🗓️',l:'تعديل موعد حصة',r:['student','parent','teacher','assistant']},
+{k:'hw_overdue',c:'grades',i:'⏰',l:'تأخر في تسليم واجب/امتحان',r:['student','parent']},
+{k:'low_grade',c:'grades',i:'📉',l:'درجة منخفضة تحتاج متابعة',r:['student','parent']},
+{k:'absence_repeat',c:'attendance',i:'👀',l:'غياب متكرر (نسبة حضور)',r:['student','parent']},
 {k:'due_warn',c:'payment',i:'🔔',l:'إنذار 7/8 — جهز الشهرية',r:['student','parent']},
 {k:'due_now',c:'payment',i:'💰',l:'الشهرية مستحقة 8/8',r:['student','parent']},
 {k:'payment_received',c:'payment',i:'💵',l:'استلام دفعة / إيصال',r:['student','parent','teacher']},
@@ -46,6 +49,7 @@ function defPolicy(){
   studentEvents.forEach(function(k){ base.student[k]=true; });
   studentEvents.forEach(function(k){ base.parent[k]=true; });
   ['due_warn','due_now','payment_received'].forEach(function(k){ base.parent[k]=true; });
+  ['hw_overdue','low_grade','absence_repeat'].forEach(function(k){ base.student[k]=true; base.parent[k]=true; });
   ['schedule_change','session_cancel','general'].forEach(function(k){ base.teacher[k]=true; });
   ['ledger_act','payment_received','schedule_change','general'].forEach(function(k){ base.assistant[k]=true; });
   ['ledger_act','payment_received','schedule_change','general'].forEach(function(k){ base.admin[k]=true; });
@@ -138,6 +142,17 @@ var TAB_ID=Math.random().toString(36).slice(2)+Date.now();
 function iconUrl(){ try{ var b=(window.DataService&&DataService.getBranding)?DataService.getBranding():{}; if(b.logoUrl&&window.driveThumb) return window.driveThumb(b.logoUrl); if(b.logo) return b.logo; }catch(e){} return ''; }
 function fire(n){
 if(!n) return;
+try{ var d=db(); if((d.platformMeta||{}).killAllNotifications===true) return; }catch(e){}
+var u=cur(); if(!u) return;
+
+/* 🆕 V13: Kill Switch — لو الأدمن قفل الإشعارات، مفيش إشعار يخرج */
+try{
+  var d=db(); var f=(d.platformMeta||{}).freeze||{};
+  if(f.notify===true || f.full===true) return;
+  /* 🆕 زر "إيقاف كل الإشعارات" المخصص */
+  if((d.platformMeta||{}).killAllNotifications===true) return;
+}catch(e){}
+
 var u=cur(); if(!u) return;
 /* 🔒 فحص: الإشعار ده موجه للمستخدم الحالي فعلاً؟ */
 if(n.targetUserId && n.targetUserId !== u.id) return;
@@ -154,7 +169,7 @@ if(p.events&&p.events[ev]===false) return;
 if(inQuiet(p)) return;
 if(p.sound) playSound(catOfEvent(ev));
 try{ if(navigator.vibrate) navigator.vibrate([220,110,220]); }catch(e){}
-if(p.browser&&('Notification' in window)&&Notification.permission==='granted'){
+if(p.browser&&('Notification' in window)&&Notification.permission==='granted'&&localStorage.getItem('pushEnabled')!=='1'){
 try{
 var nf=new Notification(n.title||'EduFlow',{body:n.message||'',icon:iconUrl()||undefined,tag:n.id||('n'+Date.now()),dir:'rtl',lang:'ar'});
 nf.onclick=function(){ try{ window.focus(); nf.close(); }catch(e){} };
@@ -223,21 +238,26 @@ function hookAdd(){
     DataService.__notifyMasterHooked=true;
     var orig=DataService.addNotification.bind(DataService);
     var dedup={}; var once={};
+function nsLoad(){ try{return JSON.parse(localStorage.getItem('eduNsOnce')||'{}');}catch(e){return {};} }
+function nsHas(k){ return !!nsLoad()[k]; }
+function nsSet(k){ try{ var o=nsLoad(); o[k]=Date.now(); var ks=Object.keys(o); if(ks.length>2500){ ks.slice(0,1200).forEach(function(x){delete o[x];}); } localStorage.setItem('eduNsOnce',JSON.stringify(o)); }catch(e){} }
+try{ dedup=JSON.parse(localStorage.getItem('eduNsDedup')||'{}'); }catch(e){}
     DataService.addNotification=function(n){
-      try{
-        if(n){
-          var now=Date.now();
+try{ if((db().platformMeta||{}).killAllNotifications===true){ return Promise.resolve(null); } }catch(e){}
+try{
+if(n){
+var now=Date.now();
           /* 🔒 أحداث المحتوى (امتحان/واجب/فيديو...) = مرة واحدة لكل طالب مهما اختلفت صيغة الرسالة أو المصدر */
           var EV_ONCE={exam_new:1,hw_new:1,video_new:1,post_new:1,material_new:1,challenge_new:1};
           if(n.meta&&EV_ONCE[n.meta.event]){
             var ek=(n.targetUserId||'')+'|ev|'+n.meta.event+'|'+(n.meta.refId||n.title||'');
-            if(once[ek]) return Promise.resolve(null);
+            if(once[ek]||nsHas(ek)) return Promise.resolve(null); nsSet(ek);
             once[ek]=1;
           }
           if(n.meta&&n.meta.refId){
             /* 🔒 refId = الحدث ده يحصل مرة واحدة في العمر لكل طالب */
             var rk=(n.targetUserId||'')+'|ref|'+n.meta.refId;
-            if(once[rk]) return Promise.resolve(null);
+            if(once[rk]||nsHas(rk)) return Promise.resolve(null); nsSet(rk);
             once[rk]=1;
             try{
               var em=JSON.parse(localStorage.getItem('eduNotifyEmitted')||'{}');
@@ -248,7 +268,7 @@ function hookAdd(){
             /* 🔒 نفس النص لنفس الطالب خلال 6 ساعات = مكرر */
             var k=(n.targetUserId||'')+'|'+(n.title||'')+'|'+(n.message||'');
             if(dedup[k]&&now-dedup[k]<6*3600*1000) return Promise.resolve(null);
-            dedup[k]=now;
+            dedup[k]=now; try{ localStorage.setItem('eduNsDedup',JSON.stringify(dedup)); }catch(e){}
             var ks=Object.keys(dedup); if(ks.length>600){ for(var i=0;i<300;i++) delete dedup[ks[i]]; }
           }
         }
@@ -268,6 +288,7 @@ if(!out.length&&DataService.getStudentsByGroup){ (DataService.getStudentsByGroup
 return out;
 }
 function gById(gid){ return (DataService.getGroups?DataService.getGroups():[]).find(function(g){return g.id===gid;}); }
+function parentsOf(sid){ return (db().users||[]).filter(function(u){ return u.role==='parent'&&(u.studentIds||[]).indexOf(sid)>=0; }).map(function(u){ return u.id; }); }
 function scanEvents(){
 try{
 /* 🔒 قفل بين التبويبات: تاب واحد بس هو اللي يمسح */
@@ -287,6 +308,14 @@ var now=Date.now();
 var emits=[];
 function isNew(x){ if(!x||!x.id) return false; if(emitted(x.id)) return false; var ct=Date.parse(x.createdAt||x.addedAt||x.at||'')||0; return ct>last&&ct<=now+5000; }
 function mark(x){ d.notifyEmitted[x.id]=1; lem[x.id]=1; marked++; }
+function emittedK(k){ return d.notifyEmitted[k]||lem[k]; }
+function markK(k){ d.notifyEmitted[k]=1; lem[k]=1; marked++; }
+function attStats(sid){
+  var held=0,present=0,absent=0,late=0; var todayK=new Date().toISOString().slice(0,10);
+  var gids={}; (DataService.getStudentTeachers?DataService.getStudentTeachers(sid):[]).forEach(function(t){ gids[t.group.id]=1; });
+  (d.attendance||[]).forEach(function(a){ if(a.status!=='approved'||a.noAtt||!gids[a.groupId]) return; if((a.date||'')>todayK) return; held++; var r=(a.records||[]).find(function(x){return x.studentId===sid;}); if(r){ if(r.status==='present')present++; else if(r.status==='absent')absent++; else late++; } else absent++; });
+  return {held:held,present:present,absent:absent,late:late,pct:held?Math.round(present/held*100):100};
+}
 function push(sid,ev,title,msg,extra){ var n={targetUserId:sid,type:extra&&extra.type||'general',title:title,message:msg,meta:{event:ev}}; if(extra&&extra.kind) n.meta.kind=extra.kind; if(extra&&extra.refId) n.meta.refId=extra.refId; emits.push(n); }
 (d.homework||[]).forEach(function(h){ if(isNew(h)){ mark(h); studentsOfGroup(h.groupId).forEach(function(sid){ push(sid,'hw_new','📝 واجب جديد: '+h.title,'المجموعة: '+((gById(h.groupId)||{}).name||'-')+' · التسليم: '+(h.deadline||'-'),{type:'grade',refId:h.id}); }); } });
 (d.exams||[]).forEach(function(x){ if(isNew(x)){ mark(x); studentsOfGroup(x.groupId).forEach(function(sid){ push(sid,'exam_new','🎓 امتحان جديد: '+x.title,'المجموعة: '+((gById(x.groupId)||{}).name||'-'),{type:'grade',refId:x.id}); }); } });
@@ -333,7 +362,13 @@ pending.forEach(function(pc){
 });
 d.pendingCancelledSessions=remaining;
 
-(d.attendance||[]).forEach(function(a){ if(isNew(a)&&a.status==='approved'){ mark(a); (a.records||[]).forEach(function(r){ if(r.status==='absent') push(r.studentId,'absent','❌ تسجيل غياب','حصة '+(a.groupName||'')+' — '+(a.date||''),{type:'attendance',refId:a.id}); else if(r.status==='late') push(r.studentId,'late','⏰ تسجيل تأخر','حصة '+(a.groupName||'')+' — '+(a.date||''),{type:'attendance',refId:a.id}); }); } });
+(d.attendance||[]).forEach(function(a){ if(isNew(a)&&a.status==='approved'){ mark(a); (a.records||[]).forEach(function(r){
+  if(r.status==='absent'||r.status==='late'){
+    var stt=attStats(r.studentId);
+    push(r.studentId, r.status==='absent'?'absent':'late', r.status==='absent'?'❌ تسجيل غياب':'⏰ تسجيل تأخر', 'حصة '+(a.groupName||'')+' — '+(a.date||'')+' · 📊 نسبة حضورك الحالية: '+stt.pct+'% ('+stt.present+'/'+stt.held+')', {type:'attendance',refId:a.id});
+    if(stt.held>=3&&stt.pct<=75){ parentsOf(r.studentId).forEach(function(pid){ push(pid,'absence_repeat','👀 لوحظ الغياب المتكرر','نسبة حضور ابنك/بنتك '+stt.pct+'% فقط ('+stt.present+'/'+stt.held+' حصص) — نتمنى المتابعة معنا 🌹',{type:'attendance',refId:a.id}); }); }
+  }
+}); } });
 try{
   var groups=(DataService.getGroups?DataService.getGroups():[]);
   d.warn7=d.warn7||{}; d.due8=d.due8||{};
@@ -345,14 +380,14 @@ try{
     var req=ses.required||8;
     var warnAt=(g.warnAt!=null&&g.warnAt!=='')?+g.warnAt:(req-1);
     var key=g.id+'__'+open.ck;
-    if(!ses.complete && ses.done>=warnAt && !d.warn7[key]){
+    if(false){
       d.warn7[key]=1;
       studentsOfGroup(g.id).forEach(function(sid){
         if((LedgerUI.paidForCycle(sid,g.id,open.ck)||0)>=fee) return;
         emits.push({targetUserId:sid,type:'payment',title:'🔔 جهز الشهرية',message:'باقي '+(req-ses.done)+' حصة على اكتمال الدورة الحالية لمجموعة '+g.name+' — الشهرية ('+fee+' ج.م) هتتبطلب لما توصل '+req+'/'+req+'.',meta:{event:'due_warn'}});
       });
     }
-    if(ses.complete && !d.due8[key]){
+    if(false){
       d.due8[key]=1;
       studentsOfGroup(g.id).forEach(function(sid){
         var paid=LedgerUI.paidForCycle(sid,g.id,open.ck)||0;
@@ -362,6 +397,88 @@ try{
     }
   });
 }catch(e){}
+/* ⏰ تذكير الشهرية: قبل أقرب حصة بيوم + قبلها بساعة (لغير المسدّدين بس) */
+try{
+  var __DEN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var __nd=new Date();
+  (DataService.getGroups?DataService.getGroups():[]).forEach(function(g){
+    var fee=g.monthlyFee||0; if(!fee) return;
+    if(!(window.LedgerUI&&LedgerUI.groupSessions&&LedgerUI.cyclesOf&&LedgerUI.paidForCycle)) return;
+    var cyc=LedgerUI.cyclesOf(g); var open=cyc[cyc.length-1]; if(!open) return;
+    var ses=LedgerUI.groupSessions(g.id, open.ck);
+    var req=ses.required||8;
+    var warnAt=(g.warnAt!=null&&g.warnAt!=='')?+g.warnAt:(req-1);
+    if(!(ses.complete||ses.done>=warnAt)) return;
+    var sch=(g.schedules&&g.schedules.length)?g.schedules:[{day:g.day,time:g.time}];
+    var best=null;
+    sch.forEach(function(s){
+      if(!s||!s.day||!s.time) return;
+      var di=__DEN.indexOf(s.day); if(di<0) return;
+      var p=String(s.time).split(':');
+      for(var k=0;k<8;k++){
+        var dt=new Date(__nd.getFullYear(),__nd.getMonth(),__nd.getDate()+k,+p[0]||0,+p[1]||0,0);
+        if(dt.getDay()!==di||dt.getTime()<=now) continue;
+        if(!best||dt<best) best=dt; break;
+      }
+    });
+    if(!best) return;
+    var ds=best.getFullYear()+'-'+String(best.getMonth()+1).padStart(2,'0')+'-'+String(best.getDate()).padStart(2,'0');
+    if((d.cancelledSessions||[]).some(function(c){return c.groupId===g.id&&c.date===ds;})) return;
+    var diff=best.getTime()-now, kind=null;
+    if(diff<=3600000) kind='h1'; else if(diff<=86400000) kind='d1';
+    if(!kind) return;
+    studentsOfGroup(g.id).forEach(function(sid){
+      var paid=LedgerUI.paidForCycle(sid,g.id,open.ck)||0;
+      if(paid>=fee) return;
+      var key='payrem|'+kind+'|'+g.id+'|'+sid+'|'+ds;
+      if(emittedK(key)) return;
+      markK(key);
+      emits.push({targetUserId:sid,type:'payment',title:kind==='h1'?'⏰ الحصة بعد ساعة — الشهرية مستحقة':'🔔 تذكير بالشهرية',message:(kind==='h1'?'حصتك في ':'بكرة حصتك في ')+g.name+' ('+ses.done+'/'+req+') — المطلوب '+fee+' ج.م (متبقي '+(fee-paid)+' ج.م). يا ريت تجهزها 🌹',meta:{event:'due_remind',refId:key}});
+    });
+  });
+}catch(e){}
+/* 🆕 قواعد ولي الأمر: تأخر تسليم + درجة منخفضة + إحصائية غياب */
+var todayS=new Date().toISOString().slice(0,10);
+(d.homework||[]).forEach(function(h){
+  if(!h.deadline||h.deadline>=todayS) return;
+  studentsOfGroup(h.groupId).forEach(function(sid){
+    var sub=(d.submissions||[]).find(function(s){return s.homeworkId===h.id&&s.studentId===sid;});
+    var k1='od_hw_'+h.id+'_'+sid;
+    if(!sub&&!emittedK(k1)){ markK(k1);
+      push(sid,'hw_overdue','⏰ واجب متأخر',h.title+' — فات معاد التسليم ('+h.deadline+')',{type:'grade',refId:h.id});
+      parentsOf(sid).forEach(function(pid){ push(pid,'hw_overdue','⏰ تأخر في تسليم واجب','ابنك/بنتك لم يسلّم: '+h.title+' (مجموعة '+((gById(h.groupId)||{}).name||'')+')',{type:'grade',refId:h.id}); });
+    }
+    if(sub&&sub.score!=null){
+      var mx=sub.maxScore||h.totalPoints||20; var pc=Math.round(sub.score/mx*100); var k2='lg_hw_'+h.id+'_'+sid;
+      if(pc<50&&!emittedK(k2)){ markK(k2);
+        push(sid,'low_grade','📉 درجة محتاجة مراجعة','حصلت على '+pc+'% في: '+h.title,{type:'grade',refId:h.id});
+        parentsOf(sid).forEach(function(pid){ push(pid,'low_grade','📉 درجة ابنك محتاجة متابعة',pc+'% في '+h.title+' — تواصلوا مع الأستاذ للخطة',{type:'grade',refId:h.id}); });
+      }
+    }
+  });
+});
+(d.exams||[]).forEach(function(e){
+  studentsOfGroup(e.groupId).forEach(function(sid){
+    var at=(d.examAttempts||[]).find(function(x){return x.examId===e.id&&x.studentId===sid&&(x.status==='approved'||x.status==='graded');});
+    if(at&&at.score!=null){
+      var mx2=at.maxScore||e.totalPoints||100; var pc2=Math.round(at.score/mx2*100); var k3='lg_ex_'+e.id+'_'+sid;
+      if(pc2<50&&!emittedK(k3)){ markK(k3);
+        push(sid,'low_grade','📉 نتيجة محتاجة مراجعة',pc2+'% في امتحان: '+e.title,{type:'grade',refId:e.id});
+        parentsOf(sid).forEach(function(pid){ push(pid,'low_grade','📉 نتيجة ابنك محتاجة متابعة',pc2+'% في امتحان: '+e.title,{type:'grade',refId:e.id}); });
+      }
+    }
+  });
+});
+(DataService.getStudents?DataService.getStudents():[]).forEach(function(s){
+  var st=attStats(s.id);
+  if(st.held>=4&&st.pct<=75){
+    var k4='abs_rep_'+s.id+'_'+Math.floor(st.held/4);
+    if(!emittedK(k4)){ markK(k4);
+      push(s.id,'absence_repeat','📊 إحصائية حضورك','نسبة حضورك '+st.pct+'% ('+st.present+'/'+st.held+') — حافظ على شعلة الحضور 🔥',{type:'attendance'});
+      parentsOf(s.id).forEach(function(pid){ push(pid,'absence_repeat','👀 لوحظ الغياب المتكرر','نسبة حضور ابنك/بنتك '+st.pct+'% فقط ('+st.present+'/'+st.held+' حصص) — نتمنى المتابعة 🌹',{type:'attendance'}); });
+    }
+  }
+});
 (d.scheduledNotifs||[]).slice().forEach(function(sn){ if(sn&&sn.sendAt&&Date.parse(sn.sendAt)<=now){ d.scheduledNotifs=(d.scheduledNotifs||[]).filter(function(x){ return x.id!==sn.id; }); emits.push(sn); } });
 try{ var lks=Object.keys(lem); if(lks.length>3000){ lks.slice(0,1500).forEach(function(k){ delete lem[k]; }); } localStorage.setItem('eduNotifyEmitted',JSON.stringify(lem)); }catch(e){}
 if(emits.length||marked>0){ saveD(d); emits.slice(0,50).forEach(function(n){ try{ DataService.addNotification(n); }catch(e){} }); }
@@ -521,6 +638,90 @@ if(window.safeToast)window.safeToast('🗑 اتمسحت الإشعارات ال�
 }catch(e){}
 };
 
+/* 🆕 V13: مسح جميع إشعارات جميع المستخدمين (للأدمن فقط) */
+window.nukeAllNotifications=function(){
+try{
+  var u=cur();
+  if(!u||(u.role!=='admin'&&u.role!=='super_admin')){
+    if(window.safeToast)window.safeToast('❌ للأدمن فقط','error');
+    return;
+  }
+  if(!confirm('⚠️ تحذير: هيمسح كل إشعارات كل المستخدمين (طلاب، أساتذة، مساعدين، أولياء أمور).\n\nمتأكد؟'))return;
+  var d=db();
+  var total=(d.notifications||[]).length;
+  /* 🗑️ المسح الشامل */
+  var oldNotifs=d.notifications||[];
+  d.notifications=[];
+  d.notifyEmitted={};
+  d.warn7={};
+  d.due8={};
+  saveD(d);
+  /* 🗑️ المسح من Firebase (batch) */
+  if(window.FirebaseService&&FirebaseService._db){
+    oldNotifs.slice(0,500).forEach(function(nn){
+      try{ FirebaseService.deleteDoc('notifications',nn.id); }catch(e){}
+    });
+    try{ FirebaseService.saveDoc('platformMeta','meta',{notifyEmitted:{},warn7:{},due8:{}}); }catch(e){}
+  }
+  /* 🧹 تصفير العداد في localStorage */
+  Object.keys(localStorage).forEach(function(k){
+    if(k.indexOf('eduNotifyReadAt_')===0) localStorage.removeItem(k);
+    if(k.indexOf('eduNotifyFired')===0) localStorage.removeItem(k);
+  });
+  try{ localStorage.setItem('eduNotifyFired','{}'); }catch(e){}
+  bumpBadge();
+  if(window.safeToast)window.safeToast('🗑️ تم مسح '+total+' إشعار لكل المستخدمين','success');
+}catch(e){ if(window.safeToast)window.safeToast('خطأ: '+e.message,'error'); }
+};
+
+/* 🆕 V13: Kill Switch — إيقاف/تفعيل كل الإشعارات */
+window.toggleKillAllNotifications=function(){
+try{
+  var u=cur();
+  if(!u||(u.role!=='admin'&&u.role!=='super_admin')){
+    if(window.safeToast)window.safeToast('❌ للأدمن فقط','error');
+    return;
+  }
+  var d=db(); d.platformMeta=d.platformMeta||{};
+  d.platformMeta.killAllNotifications = !d.platformMeta.killAllNotifications;
+  saveD(d);
+  if(window.FirebaseService&&FirebaseService._db){
+    try{ FirebaseService.saveDoc('platformMeta','meta',d.platformMeta); }catch(e){}
+  }
+  var on=d.platformMeta.killAllNotifications;
+  if(window.safeToast)window.safeToast(on?'🔕 تم إيقاف كل الإشعارات — مفيش إشعار هيوصل لأي حد':'🔔 تم تفعيل الإشعارات — الرجوع للوضع الطبيعي',on?'warning':'success');
+  /* 🔄 ريفريش أي صفحة مفتوحة */
+  try{ localStorage.setItem('eduflowLedgerPing',String(Date.now())); }catch(e){}
+}catch(e){}
+};
+
+/* 🚨 Kill Switch + مسح شامل */
+window.toggleKillAllNotifications=function(){
+try{
+var u=cur(); if(!u||(u.role!=='admin'&&u.role!=='super_admin')){ if(window.safeToast)window.safeToast('❌ للأدمن فقط','error'); return; }
+var d=db(); d.platformMeta=d.platformMeta||{};
+d.platformMeta.killAllNotifications=!d.platformMeta.killAllNotifications;
+saveD(d);
+try{ if(window.FirebaseService&&FirebaseService._db) FirebaseService.saveDoc('platformMeta','meta',d.platformMeta); }catch(e){}
+if(window.safeToast)window.safeToast(d.platformMeta.killAllNotifications?'🔕 تم إيقاف كل الإشعارات فوراً':'🔔 تم إعادة تفعيل الإشعارات',d.platformMeta.killAllNotifications?'warning':'success');
+}catch(e){}
+};
+window.nukeAllNotifications=function(){
+try{
+var u=cur(); if(!u||(u.role!=='admin'&&u.role!=='super_admin')){ if(window.safeToast)window.safeToast('❌ للأدمن فقط','error'); return; }
+if(!confirm('⚠️ هيمسح كل إشعارات كل المستخدمين نهائياً — متأكد؟')) return;
+var d=db(); var total=(d.notifications||[]).length;
+var old=d.notifications||[];
+d.notifications=[]; d.notifyEmitted={}; d.warn7={}; d.due8={};
+saveD(d);
+old.slice(0,400).forEach(function(n){ try{ if(window.FirebaseService&&FirebaseService._db) FirebaseService.deleteDoc('notifications',n.id); }catch(e){} });
+Object.keys(localStorage).forEach(function(k){ if(k.indexOf('eduNotifyReadAt_')===0||k.indexOf('eduNotifyFired')===0) localStorage.removeItem(k); });
+try{ localStorage.setItem('eduNotifyFired','{}'); }catch(e){}
+bumpBadge();
+if(window.safeToast)window.safeToast('🗑 تم مسح '+total+' إشعار لكل المستخدمين','success');
+}catch(e){}
+};
+
 window.openNotifPanel=openNotifPanel;
 /* 🧹 كنس المكررات: نفس الهدف+العنوان+الرسالة = إشعار واحد بس */
 window.cleanDupNotifs=function(){
@@ -639,6 +840,13 @@ function bell(){
 function injectPolicySection(){
 try{
 var u=cur(); if(!u||(u.role!=='admin'&&u.role!=='super_admin')) return;
+/* 🚨 عنصر القائمة الجانبية للتحكم في الإشعارات */
+var nav0=document.getElementById('sidebarNav');
+if(nav0&&!nav0.querySelector('[data-section="notifControl"]')){
+var it0='<div class="sidebar-item" data-section="notifControl" onclick="window.showSection(\'notifControl\')"><span class="sidebar-item-icon">🚨</span><span class="sidebar-item-label">التحكم في الإشعارات</span></div>';
+var a0=nav0.querySelector('[data-section="notifyPolicy"]');
+if(a0) a0.insertAdjacentHTML('afterend',it0); else nav0.insertAdjacentHTML('beforeend',it0);
+}
 if(document.getElementById('section-notifyPolicy')) return;
 var host=document.querySelector('.content-area')||document.getElementById('mainContent');
 if(!host) return;
@@ -888,4 +1096,26 @@ function cleanBellNow(){
   if(b) cleanBell(b);
 }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+window.toggleKillAllNotifications=function(){
+try{
+var u=cur(); if(!u||(u.role!=='admin'&&u.role!=='super_admin')){ if(window.safeToast)window.safeToast('❌ للأدمن فقط','error'); return; }
+var d=db(); d.platformMeta=d.platformMeta||{};
+d.platformMeta.killAllNotifications=!d.platformMeta.killAllNotifications;
+saveD(d);
+try{ if(window.FirebaseService&&FirebaseService._db) FirebaseService.saveDoc('platformMeta','meta',d.platformMeta); }catch(e){}
+if(window.safeToast)window.safeToast(d.platformMeta.killAllNotifications?'🔕 تم إيقاف كل الإشعارات':'🔔 تم تفعيل الإشعارات',d.platformMeta.killAllNotifications?'warning':'success');
+}catch(e){}
+};
+window.nukeAllNotifications=function(){
+try{
+var u=cur(); if(!u||(u.role!=='admin'&&u.role!=='super_admin')){ if(window.safeToast)window.safeToast('❌ للأدمن فقط','error'); return; }
+if(!confirm('⚠️ هيمسح كل إشعارات كل المستخدمين — متابعة؟')) return;
+var d=db(); var total=(d.notifications||[]).length;
+d.notifications=[]; d.notifyEmitted={}; d.warn7={}; d.due8={};
+saveD(d);
+Object.keys(localStorage).forEach(function(k){ if(k.indexOf('eduNotifyReadAt_')===0||k.indexOf('eduNotifyFired')===0) localStorage.removeItem(k); });
+try{ localStorage.setItem('eduNotifyFired','{}'); }catch(e){}
+if(window.safeToast)window.safeToast('🗑 تم مسح '+total+' إشعار','success');
+}catch(e){}
+};
 })();
