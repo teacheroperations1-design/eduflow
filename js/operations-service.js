@@ -1409,6 +1409,8 @@ async recordEmergencySession(groupId, date, addedBy) {
     const targets = new Set(); if(g.teacherId) targets.add(g.teacherId);
     (d.users||[]).forEach(u=>{ if(u.role==='assistant'){ const a=this.getAssignment(u.id); if(a&&a.teacherId===g.teacherId) targets.add(u.id); } });
     for(const tid of targets){ await DataService.addNotification({targetUserId:tid,title:'🎖️ حضور مسجل من الليدر',message:'ليدر مجموعة '+g.name+' سجل حضور اليوم — بانتظار اعتمادك',type:'attendance',priority:'high',meta:{event:'absent',refId:rec.id}}); }
+   /* 🏅 +5 نقاط للليدر لاعتماد حضور اليوم */
+    try{ await this.awardLeaderPoints(leaderId, groupId, '📋 اعتماد حضور '+g.name+' ('+today+')', 5, 'leader_att_'+groupId+'_'+today); }catch(e){}    
     return {success:true,id:rec.id};
   },
   async leaderSubmitBoard(groupId, images, note, leaderId){
@@ -1423,6 +1425,8 @@ async recordEmergencySession(groupId, date, addedBy) {
     const targets = new Set(); if(g.teacherId) targets.add(g.teacherId);
     (d.users||[]).forEach(u=>{ if(u.role==='assistant'){ const a=this.getAssignment(u.id); if(a&&a.teacherId===g.teacherId) targets.add(u.id); } });
     for(const tid of targets){ await DataService.addNotification({targetUserId:tid,title:'📸 سبورة الحصة اترفعت',message:'ليدر مجموعة '+g.name+' رفع '+((images||[]).length)+' صورة للسبورة'+(note?' — '+note:''),type:'general',priority:'medium',meta:{event:'post_new',refId:post.id}}); }
+    /* 🏅 +5 نقاط للليدر لرفع صورة السبورة */
+try{ await this.awardLeaderPoints(leaderId, groupId, '🖼️ صورة سبورة '+g.name+' ('+today+')', 5, 'leader_board_'+groupId+'_'+today+'_'+((images||[]).length)); }catch(e){}
     return {success:true,id:post.id};
   },
   async submitPaymentClaim(studentId, groupId, amount, method, receiptImage, month){
@@ -1782,4 +1786,36 @@ cb&&cb(Ops.supportContact());
     }catch(e){}
     return orig.apply(this,arguments);
   };
+  /* 🏅 نظام نقاط الليدر: +5 لاعتماد الحضور، +5 لرفع صورة السبورة */
+Ops.awardLeaderPoints = async function(leaderId, groupId, reason, points, dedupeKey){
+  try{
+    if(!leaderId||!points) return;
+    const d = DataService._getData();
+    d.manualPoints = d.manualPoints || [];
+    /* 🔒 منع التكرار بنفس المفتاح */
+    if(dedupeKey && d.manualPoints.some(m => m.dedupeKey === dedupeKey)) return { skipped:true };
+    const rec = {
+      id:'lp_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
+      studentId:leaderId,
+      points:+points,
+      reason:reason,
+      awardedBy:'system_leader',
+      teacherId:null,
+      groupId:groupId,
+      dedupeKey:dedupeKey||null,
+      awardedAt:new Date().toISOString()
+    };
+    d.manualPoints.push(rec);
+    DataService._saveData(d);
+    if(window.FirebaseService&&FirebaseService._db){ try{ await FirebaseService.saveDoc('manualPoints',rec.id,rec); }catch(e){} }
+    /* إشعار للليدر */
+    try{ await DataService.addNotification({
+      targetUserId:leaderId, title:'🏅 نقاط ليدر',
+      message:'+'+points+' نقطة — '+reason,
+      type:'points', priority:'medium'
+    }); }catch(e){}
+    if(window.safeToast) window.safeToast('🏅 +'+points+' نقطة للليدر','success');
+    return rec;
+  }catch(e){ console.error(e); return null; }
+};
 })();

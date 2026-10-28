@@ -688,14 +688,17 @@ function renderCenterSettings(){
 }
 window.renderCenterSettingsPub=renderCenterSettings;
 function ensureNav(){
-  var nav=document.getElementById('sidebarNav'); if(!nav) return;
+var u0=null; try{ u0=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():((typeof currentUser!=='undefined')?currentUser:null); }catch(e){}
+if(u0&&(u0.role==='student'||u0.role==='parent')){ var old=document.querySelector('[data-section="centerSettings"]'); if(old) old.remove(); return; }
+var nav=document.getElementById('sidebarNav'); if(!nav) return;
   if(nav.querySelector('[data-section="centerSettings"]')) return;
   var a=nav.querySelector('[data-section="monthly"]')||nav.querySelector('[data-section="ledger"]')||nav.querySelector('[data-section="centers"]')||nav.querySelector('[data-section="expenses"]');
   var it='<div class="sidebar-item" data-section="centerSettings" onclick="window.showSection(\'centerSettings\')"><span class="sidebar-item-icon">🏢</span><span class="sidebar-item-label">إعدادات السناتر</span></div>';
   if(a) a.insertAdjacentHTML('afterend',it); else nav.insertAdjacentHTML('beforeend',it);
 }
 function build(){
-  var u=cur3(); if(!u) return;
+var u=cur3(); if(!u) return;
+if(u.role==='student'||u.role==='parent'){ var s0=document.getElementById('section-centerSettings'); if(s0) s0.remove(); var n0=document.querySelector('[data-section="centerSettings"]'); if(n0) n0.remove(); return; }
   if(['assistant','teacher','admin','super_admin','center'].indexOf(u.role)<0) return;
   if(!document.getElementById('section-centerSettings')){
     var ca=document.querySelector('.content-area'); if(!ca) return;

@@ -1827,23 +1827,8 @@ window.loadPayments = function(){
   try{
     if(!activeChild) return;
     window.renderTeacherPicker('payTeacherPicker');
-    const ts = window.myTeachers();
-    const filteredTs = selectedTeacherId ? ts.filter(t => t.teacher?.id === selectedTeacherId) : ts;
-    const el = document.getElementById('pPayList'); if(!el) return;
-    if(!filteredTs.length){ el.innerHTML = '<p class="text-muted" style="text-align:center;padding:20px">لا مستحقات</p>'; return; }
-    el.innerHTML = filteredTs.map(t => {
-      const g = t.group; if(!g) return '';
-      const fee = g.monthlyFee||0;
-      const cc = curCycle(g); const ck = cc ? cycleKeyOf(g, cc.n) : 'cycle-01';
-      const st = ledState(g.id, ck) || {done:0, required:g.sessionsPerMonth||8, complete:false, remaining:g.sessionsPerMonth||8};
-      const ym = cc ? (cc.from||'').slice(0,7) : new Date().toISOString().slice(0,7);
-      const paid = paidForCycle(activeChild.id, g.id, ck, ym);
-      const rem = (st.complete && fee>0) ? Math.max(0, fee-paid) : 0;
-      const photo = t.teacher?.photoUrl ? window.driveThumb(t.teacher.photoUrl) : '';
-      const badge = (fee>0&&paid>=fee) ? '<span class="badge badge-success">✓ مسدد</span>' : (st.complete&&fee>0) ? '<span class="badge badge-danger">💰 مطلوب '+rem+' ج.م</span>' : (paid>0 ? '<span class="badge badge-info">مقدم '+paid+'/'+fee+'</span>' : '<span class="badge badge-muted">لسه مكملش الحصص ('+st.done+'/'+st.required+')</span>');
-      return '<div class="modern-card"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div style="flex:1"><strong>'+(g.name||'-')+'</strong><div class="text-xs text-muted" style="margin-top:4px">'+(photo?'<img src="'+photo+'" style="width:16px;height:16px;border-radius:50%" onerror="this.style.display=\'none\'"> ':'')+(t.teacher?.name||'-')+' · دورة '+(cc?cc.n:1)+' من '+(cc?cc.from:'-')+'</div><div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;font-size:11px"><span class="badge badge-info">✓ '+st.done+' حصة محسوبة</span><span class="badge '+(st.complete?'badge-success':'badge-muted')+'">'+(st.complete?'مطلوب الدفع':'لسه مكملش')+'</span>'+(g.frozen?'<span class="badge badge-warning">🧊 موقوف</span>':'')+'</div></div><div style="text-align:left;min-width:100px"><div style="font-family:var(--font-en);font-weight:900;font-size:18px">'+paid+'/'+fee+'</div><div class="text-xs text-muted">ج.م</div>'+(rem>0?'<div class="progress-bar" style="margin-top:6px"><div class="progress-bar-fill" style="width:'+Math.round((paid/(fee||1))*100)+'%"></div></div><div class="text-xs" style="color:var(--danger);margin-top:4px">متبقي '+rem+'</div>':'<span class="badge badge-success" style="margin-top:6px">✓ مسدد</span>')+'</div></div><div style="margin-top:8px">'+badge+'</div></div>';
-    }).join('');
-  }catch(e){ console.error('loadPayments error', e); }
+    if(window.__bcLoadPayments){ window.__bcLoadPayments(); return; } /* ✅ من محرك core.js: كل الدورات + الملخص */
+  }catch(e){ console.error(e); }
 };
 /* ==========================================================
    🚪 Logout

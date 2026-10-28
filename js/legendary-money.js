@@ -52,7 +52,13 @@ function fmtMoney(n){ n=+n||0; return n.toLocaleString('ar-EG',{minimumFractionD
 function myGroups(){
   var gs=(DataService.getGroups?DataService.getGroups():[]);
   var u=cur(); if(!u) return gs;
-  if(isAssistant()&&window.Ops&&Ops.groupsInScope){ return Ops.groupsInScope(u.id)||gs; }
+  if(isAssistant()){
+  var sc=(window.Ops&&Ops.groupsInScope)?(Ops.groupsInScope(u.id)||[]):[];
+  if(sc.length) return sc;
+  var tid0=(window.getMyTeacherId?window.getMyTeacherId():null);
+  if(tid0){ var f0=gs.filter(function(g){return g.teacherId===tid0;}); if(f0.length) return f0; }
+  return gs; /* 🛡️ مفيش تعيين؟ يشوف الكل بدل شاشة "مش في النطاق" */
+}
   if(role()==='teacher'){ return gs.filter(function(g){return g.teacherId===u.id;}); }
   return gs;
 }

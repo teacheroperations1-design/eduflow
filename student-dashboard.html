@@ -458,6 +458,7 @@ box-shadow:0 4px 12px rgba(220,38,38,.4);
 </section>
 <section class="section" id="section-payments">
 <div class="section-header"><div><h2 class="section-title">💰 مدفوعاتي</h2></div></div>
+<button class="btn btn-primary btn-sm" onclick="window.openPayClaimModal()">💵 دفعت — اعتراض علي الدفع</button>
 <div id="paymentsList"></div>
 </section>
 
@@ -937,7 +938,7 @@ window.buildMenu = function(){
 const menu = [
     {s:'الرئيسية', items:[{id:'dashboard', l:'لوحة التحكم', i:'🎯'}]},
     {s:'التعلم', items:[{id:'homework', l:'الواجبات', i:'📝'}, {id:'exams', l:'الامتحانات', i:'🎓'}, {id:'results', l:'النتائج', i:'📊'}, {id:'attendance',l:'الحضور', i:'📋'}, {id:'classPosts', l:'بوستات الحصة', i:'📰'}, {id:'fcGames', l:'الألعاب', i:'🎮'}]},
-    {s:'🏆 التحفيز', items:[{id:'points', l:'نقاطي', i:'🏆'}, {id:'store', l:'استبدال النقاط', i:'🏆'}, {id:'realStore', l:'متجر المذكرات', i:'🛍️'}, {id:'myOrders', l:'طلباتي', i:'📦'}, {id:'challenges', l:'المسابقات', i:'🏆'},{id:'leader', l:'أنا الليدر', i:'🎖️'},{id:'mypay', l:'مدفوعاتي', i:'💵'}]},
+    {s:'🏆 التحفيز', items:[{id:'points', l:'نقاطي', i:'🏆'}, {id:'store', l:'استبدال النقاط', i:'🏆'}, {id:'realStore', l:'متجر المذكرات', i:'🛍️'}, {id:'myOrders', l:'طلباتي', i:'📦'}, {id:'challenges', l:'المسابقات', i:'🏆'},{id:'leader', l:'أنا الليدر', i:'🎖️'}]},
     {s:'المحتوى', items:[{id:'videos', l:'الفيديوهات', i:'🎬'}, {id:'interactive', l:'المواد التفاعلية', i:'🧩'}]},
     {s:'أساتذتي', items:[{id:'teachers', l:'قائمة الأساتذة', i:'👨‍🏫'}, {l:'تعرّف على أساتذة المنصة', i:'🌟', href:'teachers-showcase.html'}]},
     {s:'المالية والمتابعة', items:[{id:'payments', l:'المدفوعات', i:'💰'}, {id:'followups', l:'المتابعات', i:'📌'}]},
@@ -1993,6 +1994,7 @@ ${statusBadge}
 </div>`;
 }).join('');
 };
+
 window.loadClassPosts=function(){
 const posts = typeof DataService?.getClassPostsForStudent === 'function' ? DataService.getClassPostsForStudent(activeStudentId) : [];
 const el = document.getElementById('classPostsList');
@@ -2015,9 +2017,11 @@ ${photo}
 ${p.summary ? `<p style="margin-top:6px;">${p.summary}</p>` : ''}
 ${p.homeworkText ? `<div style="margin-top:8px;padding:8px;background:var(--warning-bg);border-radius:6px;"><strong>📋 الواجب:</strong> ${p.homeworkText}</div>` : ''}
 ${p.imageUrl ? `<img src="${window.driveThumb(p.imageUrl)}" class="post-image" loading="lazy" ${imgClick}>` : ''}
+${p.waLink ? `<a href="${p.waLink}" target="_blank" class="btn btn-success btn-sm" style="margin-top:8px;background:#25d366;border-color:#25d366;color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">💬 شاهد الشرح على واتساب</a>` : ''}
 </div>`;
 }).join('');
 };
+
 window.loadInteractive=function(){
 const materials = typeof DataService?.getInteractiveMaterialsForStudent === 'function' ? DataService.getInteractiveMaterialsForStudent(activeStudentId) : [];
 const el = document.getElementById('interactiveList');
@@ -2062,6 +2066,7 @@ el.innerHTML = followups.map(f => `
 </div>
 `).join('');
 };
+
 window.loadCalendar=function(){
 const ts=(typeof DataService?.getStudentTeachers==='function')?DataService.getStudentTeachers(activeStudentId):[];
 const el=document.getElementById('calendarView');
@@ -3000,8 +3005,6 @@ function build(){
   sec.innerHTML='<div class="section-header"><div><h2 class="section-title">🎖️ منطقة الليدر</h2><p class="text-sm text-muted">سجل حضور مجموعتك وصوّر السبورة — يوصل للأسست والأستاذ للاعتماد</p></div></div><div id="leaderHost"></div>';
   ca.appendChild(sec);
   var sec2=document.createElement('section'); sec2.className='section'; sec2.id='section-mypay';
-  sec2.innerHTML='<div class="section-header"><div><h2 class="section-title">💵 مدفوعاتي</h2><p class="text-sm text-muted">سجل إنك دفعت الشهرية والأسست/الأستاذ يعتمد</p></div><button class="btn btn-primary btn-sm" onclick="window.openPayClaimModal()">+ سجلت دفعة</button></div><div id="myPayHost"></div>';
-  ca.appendChild(sec2);
   var nav=document.getElementById('sidebarNav');
   if(nav){
     if(!nav.querySelector('[data-section="leader"]')){
@@ -3141,6 +3144,146 @@ setInterval(function(){
 },900);
 build(); setTimeout(build,1200); setTimeout(build,2600);
 })();
+</script>
+<script>
+/* ========== 💵 اعتراض الدفع + ✋ اعتراض الحضور + 🧠 داشبورد ذكي ========== */
+window.openPayClaimModal=function(){
+  var u=cur(); var ts=(DataService.getStudentTeachers?DataService.getStudentTeachers(u.id):[]);
+  ThemeManager.openModal('<div class="modal-header"><h3 class="modal-title">💵 اعتراض علي الدفع</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">'+
+  '<div class="filter-info">💡 دفعت الشهرية بس مش متسجلة عندك؟ ابعت اعتراض بالمبلغ والتاريخ — المساعد يعتمدها وتتنزل في دفتر التحصيل فوراً.</div>'+
+  '<div class="form-group"><label>المجموعة *</label><select id="pcG" class="form-select">'+ts.map(function(t){return '<option value="'+t.group.id+'">'+t.group.name+' — '+(t.teacher?t.teacher.name:'')+'</option>';}).join('')+'</select></div>'+
+  '<div class="form-group"><label>📅 شهر الدفعة</label><select id="pcMonth" class="form-select">'+(function(){ var out=[]; var now=new Date(); for(var i=0;i<6;i++){ var d2=new Date(now.getFullYear(),now.getMonth()-i,1); out.push('<option value="'+d2.toISOString().slice(0,7)+'">'+d2.toLocaleDateString('ar-EG',{month:'long',year:'numeric'})+'</option>'); } return out.join(''); })()+'</select></div>'+
+  '<div class="form-group"><label>المبلغ *</label><input type="number" id="pcA" class="form-input" placeholder="مثال: 150"></div>'+
+  '<div class="form-group"><label>طريقة الدفع</label><select id="pcM" class="form-select"><option value="cash">كاش في السنتر</option><option value="vodafone">فودافون كاش</option><option value="instapay">إنستا باي</option></select></div>'+
+  '<div class="form-group"><label>📷 صورة الإيصال (اختياري)</label><input type="file" accept="image/*" id="pcImg" class="form-input"></div>'+
+  '<button class="btn btn-primary w-full" onclick="window.submitPayClaim()">📤 إرسال للاعتماد</button></div>','modal-sm');
+};
+
+window.submitPayClaim=async function(){
+  try{
+    var u=cur(); if(!u){ if(window.safeToast) safeToast('سجّل دخول الأول','error'); return; }
+    var gid=(document.getElementById('pcG')||{}).value;
+    var amt=parseFloat((document.getElementById('pcA')||{}).value)||0;
+    var m=(document.getElementById('pcM')||{}).value||'cash';
+    var month=(document.getElementById('pcMonth')||{}).value||'';
+    if(!gid||!amt){ if(window.safeToast) safeToast('أكمل البيانات','error'); return; }
+    var f=(document.getElementById('pcImg')||{}).files;
+    function send(img){
+      if(window.Ops&&Ops.submitPaymentClaim){
+        Ops.submitPaymentClaim(u.id,gid,amt,m,img||'',month).then(function(){
+          ThemeManager.closeModal();
+          if(window.safeToast) safeToast('✅ تم إرسال الطلب — المساعد هيعتمده','success');
+        }).catch(function(e){ if(window.safeToast) safeToast('خطأ: '+e.message,'error'); });
+      } else {
+        /* Fallback: سجله يدوياً في pendingClaims */
+        var d=DataService._getData();
+        d.pendingClaims=d.pendingClaims||[];
+        d.pendingClaims.push({id:'cl_'+Date.now(),studentId:u.id,groupId:gid,amount:amt,method:m,month:month,receipt:img||'',status:'pending',at:new Date().toISOString()});
+        DataService._saveData(d);
+        ThemeManager.closeModal();
+        if(window.safeToast) safeToast('✅ تم إرسال الطلب','success');
+      }
+    }
+    if(f&&f[0]){
+      var reader=new FileReader();
+      reader.onload=function(e){ send(e.target.result); };
+      reader.readAsDataURL(f[0]);
+    } else send('');
+  }catch(e){ if(window.safeToast) safeToast('خطأ','error'); }
+};
+
+/* 🧠 داشبورد ذكي — اختصارات شرطية + نافذة ±15 دقيقة */
+function myGroupsMe(){
+  var u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null;
+  var sid=window.activeStudentId||(u?u.id:null);
+  return (DataService.getStudentTeachers?DataService.getStudentTeachers(sid):[]).map(function(t){return t.group;}).filter(Boolean);
+}
+function sessionWindowToday(){
+  var gs=myGroupsMe(); var now=new Date(); var nowMin=now.getHours()*60+now.getMinutes();
+  var wd=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][now.getDay()];
+  var best=null;
+  gs.forEach(function(g){
+    var sch=(g.schedules&&g.schedules.length)?g.schedules:(g.day?[{day:g.day,time:g.time}]:[]);
+    sch.forEach(function(s){
+      if(s.day!==wd) return;
+      var tt=String(s.time||'00:00').split(':'); var sm=(+tt[0])*60+(+(tt[1]||0));
+      var dur=+g.duration||60;
+      var open=sm-15, close=sm+dur+15;
+      if(!best||sm<best.sm) best={sm:sm,dur:dur,open:open,close:close,g:g};
+    });
+  });
+  return {nowMin:nowMin,best:best};
+}
+window.checkInAllowed=function(){
+  var w=sessionWindowToday();
+  if(!w.best) return {ok:false,msg:'مفيش حصة النهارده في جدولك'};
+  if(w.nowMin<w.best.open) return {ok:false,msg:'التشيك-إن يفتح الساعة '+String(Math.floor(w.best.sm/60)).padStart(2,'0')+':'+String(w.best.sm%60).padStart(2,'0')+' - 15 دقيقة'};
+  if(w.nowMin>w.best.close) return {ok:false,msg:'وقت التشيك-إن لحصة النهارده خلص — لو كنت موجود اعترض من "اعتراض الحضور"'};
+  return {ok:true,msg:''};
+};
+window.openMyAttDisputes=function(){
+  var u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null;
+  var sid=window.activeStudentId||(u?u.id:null);
+  var d=DataService._getData(); var rows=[];
+  myGroupsMe().forEach(function(g){
+    (d.attendance||[]).forEach(function(a){
+      if(a.groupId!==g.id||a.status!=='approved') return;
+      var r=(a.records||[]).find(function(x){return x.studentId===sid;});
+      if(!r||r.status!=='absent') return;
+      var pend=(d.attDisputes||[]).some(function(x){return x.gid===g.id&&x.date===a.date&&x.sid===sid&&x.status==='pending';});
+      rows.push({g:g,date:a.date,pend:pend});
+    });
+  });
+  rows.sort(function(a,b){return String(b.date).localeCompare(String(a.date));});
+  var html='<div class="modal-header"><h3 class="modal-title">✋ اعتراض الحضور</h3><button class="btn btn-ghost btn-icon" onclick="ThemeManager.closeModal()">✕</button></div><div class="modal-body">';
+  html+=rows.length?rows.slice(0,15).map(function(x){
+    return '<div class="sub-row" style="margin-bottom:8px;"><div style="flex:1;"><strong>'+x.g.name+'</strong><div class="text-xs text-muted">📅 '+x.date+' — متسجل غائب</div></div>'+(x.pend?'<span class="badge badge-warning">⏳ قيد المراجعة</span>':'<button class="btn btn-success btn-sm" onclick="window.disputeAbsent(null,\''+x.g.id+'\',\''+x.date+'\');ThemeManager.closeModal();">✋ كنت حاضر</button>')+'</div>';
+  }).join(''):'<p class="text-muted" style="text-align:center;padding:20px;">مفيش غياب تقدر تعترض عليه 🎉</p>';
+  html+='</div>';
+  ThemeManager.openModal(html,'modal-md');
+};
+function smartTilesRun(){
+  try{
+    var host=document.querySelector('#quickActionsGrid, .quick-actions, [id*="quickAction"], [id*="shortcut"]');
+    if(!host) return;
+    var u=(window.AuthService&&AuthService.getCurrentUser)?AuthService.getCurrentUser():null;
+    var sid=window.activeStudentId||(u?u.id:null); if(!sid) return;
+    var anyDue=false, anyAbsent=false;
+    myGroupsMe().forEach(function(g){
+      var st=(window.BC&&BC.statusOf)?BC.statusOf(sid,g):'active';
+      if(st==='due'||st==='overdue') anyDue=true;
+      var d=DataService._getData();
+      (d.attendance||[]).forEach(function(a){
+        if(a.groupId!==g.id||a.status!=='approved') return;
+        var r=(a.records||[]).find(function(x){return x.studentId===sid;});
+        if(r&&r.status==='absent') anyAbsent=true;
+      });
+    });
+    if(anyDue&&!document.getElementById('tilePayClaim')){
+      var b=document.createElement('button'); b.type='button'; b.className='quick-action'; b.id='tilePayClaim';
+      b.innerHTML='<div class="quick-action-icon">💵</div><div class="quick-action-label">اعتراض علي الدفع</div>';
+      b.onclick=function(){ window.openPayClaimModal(); };
+      host.appendChild(b);
+    }
+    if(!anyDue&&document.getElementById('tilePayClaim')) document.getElementById('tilePayClaim').remove();
+    if(anyAbsent&&!document.getElementById('tileAttDispute')){
+      var b2=document.createElement('button'); b2.type='button'; b2.className='quick-action'; b2.id='tileAttDispute';
+      b2.innerHTML='<div class="quick-action-icon">✋</div><div class="quick-action-label">اعتراض الحضور</div>';
+      b2.onclick=function(){ window.openMyAttDisputes(); };
+      host.appendChild(b2);
+    }
+    if(!anyAbsent&&document.getElementById('tileAttDispute')) document.getElementById('tileAttDispute').remove();
+    var ci=document.querySelector('[onclick*="checkin"], [onclick*="CheckIn"], #tileCheckIn');
+    if(ci){
+      var w=window.checkInAllowed();
+      ci.style.opacity=w.ok?'1':'.45';
+      ci.title=w.ok?'التشيك-إن مفتوح الآن':w.msg;
+      if(!ci.__guarded){ ci.__guarded=1; ci.addEventListener('click',function(ev){ var ww=window.checkInAllowed(); if(!ww.ok){ ev.preventDefault(); ev.stopPropagation(); if(window.safeToast) window.safeToast('⏳ '+ww.msg,'warning'); } },true); }
+    }
+  }catch(e){}
+}
+setInterval(smartTilesRun,2500);
+window.addEventListener('ledger-sync',function(){ setTimeout(smartTilesRun,300); });
 </script>
 </body>
 </html>

@@ -33,6 +33,12 @@ return rs.length?('cycle-'+pad(rs[rs.length-1].n)):m;
 var DAY_AR={Sunday:'الأحد',Monday:'الإثنين',Tuesday:'الثلاثاء',Wednesday:'الأربعاء',Thursday:'الخميس',Friday:'الجمعة',Saturday:'السبت'};
 function t12(t){ if(!t) return ''; var p=String(t).split(':'); var h=parseInt(p[0],10)||0; var m=p[1]||'00'; var ap=h>=12?'م':'ص'; h=h%12; if(h===0)h=12; return h+':'+m+' '+ap; }
 function gTimeStr(g){ if(!g) return ''; try{ if(g.schedules&&g.schedules.length) return g.schedules.map(function(s){ return (DAY_AR[s.day]||s.day)+' '+t12(s.time); }).join(' + '); if(g.day) return (DAY_AR[g.day]||g.day)+' '+t12(g.time); }catch(e){} return ''; }
+/* 🎯 مفتاح الدورة الشغالة فقط (المفتوحة) لمجموعة */
+function openCycleKey(g){
+  var cyc=cyclesOfGroup(g);
+  for(var i=cyc.length-1;i>=0;i--){ if(!cyc[i].range||cyc[i].range.to==null) return cyc[i].ck; }
+  return cyc.length?cyc[cyc.length-1].ck:localMonth();
+}
 function cyclesOfGroup(g){
 if(window.LedgerUI&&LedgerUI.cyclesOf){ try{ return LedgerUI.cyclesOf(g); }catch(e){} }
 var rs=(g&&g.cycleRanges)||[];
@@ -209,10 +215,11 @@ var ts=(DataService.getStudentTeachers?DataService.getStudentTeachers(sid):[]);
 var html='',anyOver=false;
 ts.forEach(function(t){
 var g=t.group;if(!g)return;
-var st=BC.statusOf(sid,g),sq=BC.squaresOf(g.id,localMonth()),c=BC.monthRow(sid,g,localMonth());
-var cls='cycle-card',txt='✓ '+BC.monthName(localMonth())+' — لسه مش مطلوب دفع';
+var okc=openCycleKey(g);
+var st=BC.statusOf(sid,g),sq=BC.squaresOf(g.id,okc),c=BC.monthRow(sid,g,okc);
+var cls='cycle-card',txt='✓ الدورة الحالية — لسه مش مطلوب دفع';
 if(st==='overdue'){cls+=' overdue';anyOver=true;txt='🚨 متأخرات مرحّلة — برجاء السداد';}
-else if(st==='due'){cls+=' due';anyOver=true;txt='💰 شهرية '+BC.monthName(localMonth())+' مستحقة: '+c.rem+' ج.م';}
+else if(st==='due'){cls+=' due';anyOver=true;txt='💰 شهرية الدورة الحالية مستحقة: '+c.rem+' ج.م';}
 else if(st==='warning'){cls+=' warning';txt='⚠️ إنذار الدفع ('+sq.done+'/'+sq.req+') — جهّز الشهرية للحصة الجايه';}
 else if(st==='paid'){txt='✅ مسدد — شكراً ليك 🌟';}
 var pct=Math.min(100,Math.round(sq.done/sq.req*100));
@@ -228,6 +235,7 @@ var photo=(tch&&tch.photoUrl)?(window.driveThumb?driveThumb(tch.photoUrl):tch.ph
 '<div class="cycle-progress"><div class="cycle-progress-bar" style="width:'+pct+'%"></div></div>'+
 '<div class="cycle-meta">'+txt+'</div>'+
 ((st==='due'||st==='overdue')?'<button class="btn btn-light btn-sm" style="margin-top:8px" onclick="window.showSection(\'payments\')">💳 عرض الفاتورة</button>':'')+
+((g.whatsappLink)?'<a href="'+g.whatsappLink+'" target="_blank" class="btn btn-light btn-sm" style="margin-top:8px;margin-inline-start:6px;background:#25d366;border-color:#25d366;color:#fff;text-decoration:none;">💬 جروب الواتساب</a>':'')+
 '</div>';
 });
 el.innerHTML=html;
@@ -247,7 +255,7 @@ var stF=((document.getElementById('asCycleStatus')||document.getElementById('cyc
 var gs=(window.myGroups?window.myGroups():(DataService.getGroups?DataService.getGroups():[]));
 var rows=[];
 gs.forEach(function(g){(DataService.getStudentsByGroup?DataService.getStudentsByGroup(g.id):[]).forEach(function(s){
-var st=BC.statusOf(s.id,g),sq=BC.squaresOf(g.id,localMonth());
+var st=BC.statusOf(s.id,g),sq=BC.squaresOf(g.id,openCycleKey(g));
 rows.push({s:s,g:g,st:st,sq:sq});
 });});
 if(q)rows=rows.filter(function(r){return (r.s.name||'').toLowerCase().indexOf(q)>=0;});
@@ -262,7 +270,7 @@ var colors={active:'var(--success)',warning:'var(--warning)',due:'var(--info)',o
 var labels={active:'✓ نشط',warning:'⚠️ إنذار أول',due:'💰 مستحق',overdue:'🚨 متأخر مرحّل',paid:'✅ مسدد'};
 var el=document.getElementById('asCyclesList')||document.getElementById('studentCyclesList');if(!el)return;
 el.innerHTML=rows.length?rows.map(function(r){
-var c=BC.monthRow(r.s.id,r.g,localMonth());
+var c=BC.monthRow(r.s.id,r.g,openCycleKey(r.g));
 var money=(r.st==='due'||r.st==='overdue')?'<div class="text-xs" style="color:var(--danger);font-weight:800;">متبقي: '+c.rem+' ج.م</div>':(r.st==='warning'?'<div class="text-xs" style="color:var(--warning);font-weight:700;">الحصة الجاية الدفع — '+r.sq.done+'/'+r.sq.req+'</div>':'');
 var payBtn=(r.st==='due'||r.st==='overdue')?((window.recordAsPayment?'<button class="btn btn-success btn-sm" onclick="window.recordAsPayment(\''+r.s.id+'\',\''+r.g.id+'\')">💰 تسجيل دفع</button>':'')+(window.recordCyclePayment?'<button class="btn btn-success btn-sm" onclick="window.recordCyclePayment(\''+r.s.id+'\',\''+r.g.id+'\')">💰 تسجيل دفع</button>':'')):'';
 return '<div class="sub-row" style="border-right:4px solid '+colors[r.st]+';"><div><strong>'+r.s.name+'</strong><div class="text-xs text-muted">📚 '+r.g.name+' · 🔄 '+r.sq.done+'/'+r.sq.req+'</div>'+money+'</div><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;"><span class="badge" style="background:'+colors[r.st]+';color:#fff;">'+labels[r.st]+'</span>'+payBtn+'</div></div>';
@@ -281,7 +289,9 @@ var gDue=0,gPaid=0,gRem=0,html='';
 ts.forEach(function(t){
 var g=t.group;if(!g)return;
 var cyc=BC.cyclesOfGroup(g);
-var rows=cyc.map(function(c){ var r=BC.monthRow(sid,g,c.ck); r.ym=c.ym; r.n=c.n; return r; });
+var openCk=openCycleKey(g);
+/* 📋 كل الدورات بالترتيب: المكتملة المسددة تظهر "✓ مكتملة ومسددة"، المكتملة غير المسددة دين، والمفتوحة هي الشغالة */
+var rows=cyc.map(function(c){ var r=BC.monthRow(sid,g,c.ck); r.ym=c.ym; r.n=c.n; r.isOpen=(c.ck===openCk); return r; });
 (db().payments||[]).forEach(function(p){ if(p&&p.studentId===sid&&p.groupId===g.id&&p.legacy&&/^\d{4}-\d{2}$/.test(p.month||'')&&!rows.some(function(r){return r.month===p.month;})){ var amt=p.amount||0,pd=p.paidAmount||0; rows.push({month:p.month,ym:p.month,n:'📜',done:0,req:0,fee:amt,paid:pd,completed:true,rem:Math.max(0,amt-pd),legacy:true}); } });
 rows.sort(function(a,b){ return String(b.month).localeCompare(String(a.month)); });
 var done=rows.filter(function(r){return r.completed;});
@@ -327,6 +337,7 @@ billingCards(sid,el);
 }catch(e){console.error(e);}
 };
 window.loadPayments.__bc=1;
+window.__bcLoadPayments=window.loadPayments;
 window.renderLedger=function(){
 try{
 var el=document.getElementById('ledgerContent');if(!el)return;
@@ -336,6 +347,7 @@ billingCards(sid,el);
 }catch(e){console.error(e);}
 };
 window.renderLedger.__bc=1;
+window.__bcRenderLedger=window.renderLedger;
 }
 
 /* 🆕 V3: تعريف مرة واحدة لو ناقص — مفيش اختطاف دوري */
