@@ -277,6 +277,144 @@ body.pdf-capture .cm{display:block!important;border-style:solid!important;border
   .cm-bl{bottom:-2.2mm;left:-2.2mm;border-bottom:0.5pt solid #000;border-left:0.5pt solid #000;border-top:none;border-right:none;}
   .cm-br{bottom:-2.2mm;right:-2.2mm;border-bottom:0.5pt solid #000;border-right:0.5pt solid #000;border-top:none;border-left:none;}
 }
+/* 🖨️ تمييز البطاقات المطبوعة سابقاً */
+.qr-card.printed-before{
+  background:linear-gradient(135deg,rgba(245,158,11,.06),transparent);
+  border-color:var(--warning);
+  position:relative;
+}
+.qr-card.printed-before::after{
+  content:'✓ مطبوع';
+  position:absolute;
+  top:4px;
+  right:4px;
+  background:var(--warning);
+  color:#fff;
+  font-size:9px;
+  font-weight:800;
+  padding:2px 7px;
+  border-radius:6px;
+  z-index:5;
+  font-family:var(--font-en);
+  letter-spacing:.5px;
+}
+body[data-shape="landscape"] .qr-card.printed-before::after{
+  top:4px;
+  right:auto;
+  left:4px;
+}
+.print-stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:8px;
+  margin-bottom:14px;
+}
+.print-stat-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px 14px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.print-stat-icon{
+  font-size:20px;
+  width:36px;
+  height:36px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--surface-hover);
+  border-radius:10px;
+}
+.print-stat-info{
+  flex:1;
+  min-width:0;
+}
+.print-stat-value{
+  font-size:16px;
+  font-weight:800;
+  font-family:var(--font-en);
+  color:var(--primary);
+  line-height:1.2;
+}
+.print-stat-label{
+  font-size:10px;
+  color:var(--text-muted);
+  font-weight:600;
+}
+.printed-date{
+  font-size:9px;
+  color:var(--text-muted);
+  margin-top:2px;
+  font-family:var(--font-en);
+  letter-spacing:.5px;
+}
+.print-filter-tabs{
+  display:flex;
+  gap:6px;
+  margin-bottom:14px;
+  flex-wrap:wrap;
+}
+.print-tab{
+  padding:8px 16px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  font-size:12px;
+  font-weight:700;
+  color:var(--text-secondary);
+  cursor:pointer;
+  transition:all .2s;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.print-tab:hover{border-color:var(--primary);color:var(--primary);}
+.print-tab.active{
+  background:var(--primary);
+  border-color:var(--primary);
+  color:#fff;
+}
+.print-tab .count{
+  background:rgba(255,255,255,.2);
+  padding:2px 7px;
+  border-radius:99px;
+  font-family:var(--font-en);
+  font-size:11px;
+  font-weight:800;
+}
+.print-tab:not(.active) .count{
+  background:var(--surface-hover);
+  color:var(--primary);
+}
+.btn-clear-print-log{
+  background:linear-gradient(135deg,var(--danger),#dc2626);
+  color:#fff;
+  padding:8px 14px;
+  border-radius:10px;
+  border:none;
+  font-weight:700;
+  font-size:12px;
+  cursor:pointer;
+  font-family:inherit;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.btn-clear-print-log:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
+@media print{
+  .qr-card.printed-before{background:#fff!important;border-color:#aaa!important;}
+  .qr-card.printed-before::after{
+    content:'✓ مطبوع سابقاً';
+    background:#fff;
+    color:#d97706;
+    border:1px solid #d97706;
+    top:1mm;
+    right:1mm;
+  }
+}
 </style>
 </head>
 <body data-theme="dark" data-shape="vertical" data-page="a4">
@@ -318,6 +456,13 @@ body.pdf-capture .cm{display:block!important;border-style:solid!important;border
           <option value="groups">💬 واتساب جروبات</option>
         </select>
       </div>
+      <div class="filter-box"><label>🖨️ حالة الطباعة</label>
+  <select id="prPrintStatus" class="form-select" onchange="window.onFilterChange()">
+    <option value="all">📋 الكل (مطبوع + غير مطبوع)</option>
+    <option value="never">🆕 لم يُطبع من قبل</option>
+    <option value="printed">✅ تم طباعته سابقاً</option>
+  </select>
+</div>
       <div class="filter-box"><label>🔍 بحث طالب</label>
         <input type="text" id="prSearch" class="form-input" placeholder="اسم أو كود..." oninput="window.onSearchChange()">
       </div>
@@ -430,7 +575,47 @@ body.pdf-capture .cm{display:block!important;border-style:solid!important;border
         </div>
       </div>
     </div>
+<div class="print-stats" id="printStatsRow">
+  <div class="print-stat-card">
+    <div class="print-stat-icon">🖨️</div>
+    <div class="print-stat-info">
+      <div class="print-stat-value" id="printedTotalCount">0</div>
+      <div class="print-stat-label">إجمالي طبعات سابقة</div>
+    </div>
+  </div>
+  <div class="print-stat-card">
+    <div class="print-stat-icon">👥</div>
+    <div class="print-stat-info">
+      <div class="print-stat-value" id="printedStudentsCount">0</div>
+      <div class="print-stat-label">طلاب تم طباعتهم</div>
+    </div>
+  </div>
+  <div class="print-stat-card">
+    <div class="print-stat-icon">🆕</div>
+    <div class="print-stat-info">
+      <div class="print-stat-value" id="neverPrintedCount">0</div>
+      <div class="print-stat-label">لم يُطبعوا من قبل</div>
+    </div>
+  </div>
+  <div class="print-stat-card" style="border-color:var(--warning);">
+    <div class="print-stat-icon">📅</div>
+    <div class="print-stat-info">
+      <div class="print-stat-value" id="lastPrintDate">-</div>
+      <div class="print-stat-label">آخر طباعة</div>
+    </div>
+  </div>
+</div>
 
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+  <div class="print-filter-tabs" id="printTabs">
+    <button class="print-tab active" data-filter="all" onclick="window.setPrintFilter('all',this)">📋 الكل <span class="count" id="tabCountAll">0</span></button>
+    <button class="print-tab" data-filter="never" onclick="window.setPrintFilter('never',this)">🆕 لم يُطبع <span class="count" id="tabCountNever">0</span></button>
+    <button class="print-tab" data-filter="printed" onclick="window.setPrintFilter('printed',this)">✅ مطبوع سابقاً <span class="count" id="tabCountPrinted">0</span></button>
+  </div>
+  <button class="btn-clear-print-log" onclick="window.clearPrintLog()">🗑️ مسح سجل الطباعة</button>
+</div>
+
+    
     <div class="stats-row">
       <div class="stat-pill">📊 الإجمالي: <strong id="totalCount">0</strong></div>
       <div class="stat-pill">🎓 طلاب: <strong id="studentsCount">0</strong></div>
@@ -491,6 +676,92 @@ body.pdf-capture .cm{display:block!important;border-style:solid!important;border
 <script src="js/auth-service.js"></script>
 
 <script>
+  /* ============ 🖨️ نظام تتبع الطباعات السابقة ============ */
+const PRINT_LOG_KEY = 'eduflow_printed_barcodes_log_v1';
+
+function getPrintLog(){
+  try{
+    var raw = localStorage.getItem(PRINT_LOG_KEY);
+    if(!raw) return {entries:{}, lastPrint:null};
+    var data = JSON.parse(raw);
+    if(!data.entries) data.entries = {};
+    return data;
+  }catch(e){ return {entries:{}, lastPrint:null}; }
+}
+
+function savePrintLog(log){
+  try{ localStorage.setItem(PRINT_LOG_KEY, JSON.stringify(log)); }catch(e){}
+}
+
+/** تسجيل طباعة بطاقة (أو عدة بطاقات) */
+function logPrint(cardList, source){
+  if(!cardList || !cardList.length) return;
+  var log = getPrintLog();
+  var now = new Date().toISOString();
+  var byId = (window.currentUser && currentUser.id) || 'anonymous';
+  var byName = (window.currentUser && currentUser.name) || 'مجهول';
+  
+  cardList.forEach(function(c){
+    var key = c.type + ':' + c.code;
+    if(!log.entries[key]){
+      log.entries[key] = {
+        type: c.type,
+        code: c.code,
+        name: c.name || '',
+        printCount: 0,
+        history: []
+      };
+    }
+    log.entries[key].printCount++;
+    log.entries[key].lastPrinted = now;
+    log.entries[key].history.unshift({
+      at: now,
+      by: byName,
+      source: source || 'manual'
+    });
+    // احتفظ بآخر 10 طبعات بس
+    if(log.entries[key].history.length > 10){
+      log.entries[key].history = log.entries[key].history.slice(0, 10);
+    }
+  });
+  
+  log.lastPrint = now;
+  savePrintLog(log);
+}
+
+/** هل الكارت اِتطبع قبل كده؟ */
+function wasPrintedBefore(card){
+  var log = getPrintLog();
+  var key = card.type + ':' + card.code;
+  return !!log.entries[key];
+}
+
+/** بيانات الطباعة السابقة للكارت */
+function getPrintInfo(card){
+  var log = getPrintLog();
+  var key = card.type + ':' + card.code;
+  return log.entries[key] || null;
+}
+
+/** مسح السجل (مع تأكيد) */
+window.clearPrintLog = function(){
+  var log = getPrintLog();
+  var count = Object.keys(log.entries).length;
+  if(count === 0){ toast('السجل فاضي بالفعل', 'info'); return; }
+  if(!confirm('⚠️ هل تريد مسح سجل الطباعة بالكامل؟\n\n' + count + ' بطاقة مسجلة\n\nلن يتم حذف أي بيانات طلاب — فقط سجل الطباعة.')) return;
+  savePrintLog({entries:{}, lastPrint:null});
+  toast('✅ تم مسح سجل الطباعة', 'success');
+  refresh(true);
+};
+
+window.setPrintFilter = function(filter, btn){
+  var sel = document.getElementById('prPrintStatus');
+  if(sel) sel.value = filter;
+  document.querySelectorAll('.print-tab').forEach(function(t){
+    t.classList.toggle('active', t.dataset.filter === filter);
+  });
+  window.onFilterChange();
+};
 const SITE_BASE='https://eduflow-nine-dusky.vercel.app/';
 const qrData=(code,type='student')=>{
   if(type==='teacher')return SITE_BASE+'teacher-dashboard.html';
@@ -766,6 +1037,15 @@ function buildCards(){
     if(fc) list=list.filter(function(s){ return centersOfStudent(s.id).indexOf(fc)>=0; });
     if(q) list=list.filter(function(s){ return norm(s.name).indexOf(q)>=0||norm(s.code).indexOf(q)>=0; });
     list=list.filter(function(s){ return s.code; });
+
+// 🖨️ فلتر حالة الطباعة
+var printStatus = val('prPrintStatus') || 'all';
+if(printStatus !== 'all'){
+  list = list.filter(function(s){
+    var was = wasPrintedBefore({type:'student', code:s.code});
+    return printStatus === 'printed' ? was : !was;
+  });
+}
     list.forEach(function(s){
       var sl=stageLabel(s.stage);
       var meta='';
@@ -777,7 +1057,13 @@ function buildCards(){
     var gs=scopeGroups();
     if(ft) gs=gs.filter(function(g){ return g.teacherId===ft; });
     gs.filter(function(g){ return g.whatsappLink&&(!fc||(g.center||'')===fc)&&(!fs||(g.stage||'')===fs)&&(!fg||(g.grade||'')===fg); }).forEach(function(g){
-      cards.push({type:'group',id:g.id,code:g.id,name:g.name,meta:'💬 جروب واتساب',whatsappLink:g.whatsappLink});
+      var groupCard = {type:'group',id:g.id,code:g.id,name:g.name,meta:'💬 جروب واتساب',whatsappLink:g.whatsappLink};
+var printStatus2 = val('prPrintStatus') || 'all';
+if(printStatus2 === 'all' || 
+   (printStatus2 === 'printed' && wasPrintedBefore(groupCard)) || 
+   (printStatus2 === 'never' && !wasPrintedBefore(groupCard))){
+  cards.push(groupCard);
+}
     });
   }
   return cards;
@@ -786,12 +1072,23 @@ function buildCards(){
 function cardHtml(card){
   var safe=(card.name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
   var sel=selectedCards.has(card.id);
-  return '<div class="qr-card'+(sel?' selected':'')+'" data-id="'+card.id+'">'+
+  var info = getPrintInfo(card);
+  var printed = !!info;
+  var printedClass = printed ? ' printed-before' : '';
+  var printDateHtml = '';
+  if(printed && info.lastPrinted){
+    var d = new Date(info.lastPrinted);
+    var dateStr = d.toLocaleDateString('ar-EG',{day:'numeric',month:'short'}) + ' · ' + 
+                  d.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit',hour12:true});
+    printDateHtml = '<div class="printed-date no-print">🖨️ ' + info.printCount + '× آخرها ' + dateStr + '</div>';
+  }
+  return '<div class="qr-card'+(sel?' selected':'')+printedClass+'" data-id="'+card.id+'">'+
     '<span class="cm cm-tl"></span><span class="cm cm-tr"></span><span class="cm cm-bl"></span><span class="cm cm-br"></span>'+
     '<span class="card-checkwrap no-print"><input type="checkbox" '+(sel?'checked':'')+' onchange="window.toggleSelection(\''+card.id+'\',this.checked)" title="تحديد"></span>'+
     '<div class="qr-wrap"><img src="'+qrImg(card.code,300,card.type)+'" crossorigin="anonymous" alt="'+card.code+'"></div>'+
     '<div class="card-txt"><div class="card-name">'+safe+'</div><span class="card-code">'+card.code+'</span>'+
     (card.meta?'<div class="card-meta">'+card.meta+'</div>':'')+
+    printDateHtml+
     '<div class="card-brand">'+brandLine()+'</div></div></div>';
 }
 function sheetHtml(sh,i,total){
@@ -839,6 +1136,37 @@ function updateStats(){
   document.getElementById('perPageCount').textContent=cardsPerPage;
   document.getElementById('cardsPerPageValue').textContent=(autoFill?'🤖':'')+cardsPerPage;
   document.getElementById('selectedCount').textContent=selectedCards.size;
+  
+  // 🖨️ إحصائيات الطباعة
+  var log = getPrintLog();
+  var allEntries = Object.keys(log.entries).length;
+  var printedInCurrent = allCards.filter(function(c){ return !!log.entries[c.type+':'+c.code]; }).length;
+  var neverInCurrent = allCards.length - printedInCurrent;
+  
+  var totalCountEl = document.getElementById('printedTotalCount');
+  if(totalCountEl) totalCountEl.textContent = allEntries;
+  var stuCountEl = document.getElementById('printedStudentsCount');
+  if(stuCountEl) stuCountEl.textContent = Object.values(log.entries).filter(function(e){ return e.type==='student'; }).length;
+  var neverCountEl = document.getElementById('neverPrintedCount');
+  if(neverCountEl) neverCountEl.textContent = neverInCurrent;
+  var lastEl = document.getElementById('lastPrintDate');
+  if(lastEl){
+    if(log.lastPrint){
+      var d = new Date(log.lastPrint);
+      lastEl.textContent = d.toLocaleDateString('ar-EG',{day:'numeric',month:'short'});
+    } else {
+      lastEl.textContent = '-';
+    }
+  }
+  
+  // تحديث عدادات التابات
+  var tabAll = document.getElementById('tabCountAll');
+  var tabNever = document.getElementById('tabCountNever');
+  var tabPrinted = document.getElementById('tabCountPrinted');
+  if(tabAll) tabAll.textContent = allCards.length;
+  if(tabNever) tabNever.textContent = neverInCurrent;
+  if(tabPrinted) tabPrinted.textContent = printedInCurrent;
+  
   var sl=document.getElementById('cardsPerPageSlider');
   if(sl){ sl.disabled=autoFill; sl.value=Math.min(40,cardsPerPage); }
 }
@@ -930,6 +1258,7 @@ window.waitForImages=function(){
 };
 window.printAll=async function(){
   if(!allCards.length) return;
+  logPrint(allCards, 'print_all');  // 🖨️ تسجيل الطباعة
   toast('⏳ جاري تجهيز الأوراق...','info');
   window.__tmpAll=1; applyPager();
   await window.waitForImages();
@@ -940,6 +1269,7 @@ window.printAll=async function(){
 window.printSelected=async function(){
   if(!selectedCards.size){ toast('حدد بطاقات أولاً','warning'); return; }
   var list=allCards.filter(function(c){return selectedCards.has(c.id);});
+  logPrint(list, 'print_selected');  // 🖨️ تسجيل الطباعة
   window._overrideList=list; refresh(true);
   window.__tmpAll=1; applyPager();
   await window.waitForImages();
@@ -964,6 +1294,7 @@ window.downloadPDF = async function() {
     }
     
     toast('📥 جاري تجهيز PDF... ' + cardsToPrint.length + ' بطاقة', 'info');
+    logPrint(cardsToPrint, 'pdf_export');  // 🖨️ تسجيل الطباعة
     
     const btn = document.querySelector('.btn-pdf-action');
     const originalText = btn ? btn.innerHTML : '';
@@ -1133,6 +1464,7 @@ document.getElementById('previewModal')?.addEventListener('click',function(e){ i
 window.downloadAllAsZip=async function(){
   if(!allCards.length||typeof JSZip==='undefined') return;
   toast('📦 جاري تجهيز '+allCards.length+' صورة...','info');
+  logPrint(allCards, 'zip_export');  // 🖨️ تسجيل الطباعة
   try{
     var zip=new JSZip(), folder=zip.folder('EduFlow_QR_Cards');
     for(var i=0;i<allCards.length;i++){

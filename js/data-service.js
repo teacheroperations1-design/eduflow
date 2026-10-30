@@ -1775,6 +1775,12 @@ try{ old=(DataService.getGroups()||[]).find(function(g){return g.id===id;})||nul
 var oldFee=(old&&old.monthlyFee!==undefined)?old.monthlyFee:null;
 var res=await origUpdateGroup.call(DataService,id,updates);
 try{
+if(updates&&updates.monthlyFee!==undefined&&oldFee!==null){
+  var pctChange = oldFee>0 ? Math.abs(updates.monthlyFee - oldFee)/oldFee : 0;
+  if(pctChange < 0.05) { /* أقل من 5% = تغيير بسيط (تصحيح) — مش نبعت إشعار */
+    return res;
+  }
+}
 if(updates&&updates.monthlyFee!==undefined&&oldFee!==null&&updates.monthlyFee!==oldFee){
 var g2=(DataService.getGroups()||[]).find(function(g){return g.id===id;});
 var msg='💰 تم تحديث سعر شهرية مجموعة '+(g2?g2.name:'')+' من '+oldFee+' ج.م إلى '+updates.monthlyFee+' ج.م.\nالتغيير بيتطبق من الدورة الجاية — الدورة الحالية بتكمل بسعرها القديم.';

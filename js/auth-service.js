@@ -137,8 +137,31 @@ const AuthService = {
   /** المستخدم الحالي: View As ← جلسة باركود ← session ← local */
   getCurrentUser() {
     try {
+      /* 🎭 View-As: المستخدم المختار للعرض + نحمل assignment بتاعه */
       const viewAs = sessionStorage.getItem('eduflow_view_as') || localStorage.getItem('eduflow_view_as');
-      if (viewAs) { try { return JSON.parse(viewAs); } catch(e){} }
+      if (viewAs) { 
+        try { 
+          const vu = JSON.parse(viewAs);
+          /* 🔑 لو مساعد ومفيهوش assignment، نحمله من السحابة */
+          if(vu && vu.role === 'assistant' && !vu.assistant){
+            try{
+              const d = DataService._getData ? DataService._getData() : {};
+              const assign = (d.assignments||{})[vu.id];
+              if(assign){
+                vu.assistant = {
+                  level: assign.level || 'primary',
+                  scope: {
+                    teacherIds: assign.teacherId ? [assign.teacherId] : (assign.teacherIds || []),
+                    groupIds: assign.groupIds || [],
+                    centerIds: assign.centerIds || []
+                  }
+                };
+              }
+            }catch(e){}
+          }
+          return vu; 
+        } catch(e){} 
+      }
 
       const qr = window.getQrQuickSession ? window.getQrQuickSession() : null;
       if (qr) {
